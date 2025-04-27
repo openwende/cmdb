@@ -3,9 +3,13 @@
 
  const { Content: AntContent } = Layout;
 
- const Content: React.FC = () => {
+ interface ContentProps {
+    children: React.ReactNode;
+ }
+
+ const Content: React.FC<ContentProps> = ({children}) => {
     return <AntContent>
-        Contant
+        {children}
     </AntContent>
  }
 
