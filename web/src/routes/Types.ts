@@ -1,18 +1,25 @@
-export interface Navigation {
+export interface NavigationItem {
     name: string;
     key: string;
     path: string;
     element: React.ReactNode;
-    children?: Navigation[];
+    children?: NavigationItem[];
+    hideInMenu?: boolean;
 }
 
 export enum PrimaryNavKey {
     Home = 'home',
     Business = 'business',
-    Resource = 'resource'
+    Resource = 'resource',
+    NotFound = 'notfound'
 }
 
 export enum BusinessNavKey {
     Topology = 'topology',
     Template = 'template'
+}
+
+export enum ResourceKey {
+    Content = 'content',
+    Project = 'project'
 }

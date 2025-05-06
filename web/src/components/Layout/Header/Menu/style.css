@@ -1,0 +1,9 @@
+.header-menu {
+    display: flex;
+    justify-content: center;
+}
+
+.header-menu .ant-menu-item {
+    padding: 0 20px;
+    margin: 0 10px;
+} 

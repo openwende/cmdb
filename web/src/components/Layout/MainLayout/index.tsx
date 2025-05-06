@@ -1,73 +1,55 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Layout } from 'antd';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useRoutes } from 'react-router-dom';
 import Header from '../Header';
 import Sidebar from '../Sidebar';
 import Content from '../Content';
-import HomePage from '../../../pages/Home';
-import BusinessPage from '../../../pages/Business';
-import ResourcePage from '../../../pages/Resource';
-import NotFoundPage from '../../../pages/NotFound';
+import { routes } from '../../../routes';
 import './style.css';
-import BusinessTopology from '../../../pages/Business/BusinessTopology';
-import ServiceTemplate from '../../../pages/Business/ServiceTemplate';
-import { Navigation, PrimaryNavKey, BusinessNavKey } from '../Types';
-
-const navigation: Navigation[] = [
-    {
-        name: '首页',
-        key: PrimaryNavKey.Home,
-        path: '/',
-        element: <HomePage />
-    },
-    {
-        name: '业务',
-        key: PrimaryNavKey.Business,
-        path: '/business',
-        element: <BusinessPage />,
-        children: [
-            {
-                name: '业务拓扑',
-                key: BusinessNavKey.Topology,
-                path: '/business/topology',
-                element: <BusinessTopology />
-            },
-            {
-                name: '服务模板',
-                key: BusinessNavKey.Template,
-                path: '/business/template',
-                element: <ServiceTemplate />
-            }
-        ]
-    },
-    {
-        name: '资源',
-        key: PrimaryNavKey.Resource,
-        path: '/resource',
-        element: <ResourcePage />
-    }
-]
 
 const MainLayout: React.FC = () => {
-    const [activeTopMenu, setActiveTopMenu] = useState()
-    const location = useLocation();
+    // Function to transform our route configuration into React Router's format
+    const generateRouteObjects = () => {
+        const transformRoutes = (routeItems: typeof routes) => {
+            return routeItems.map(route => {
+                const routeObject: any = {
+                    path: route.path === '/' ? '/' : route.path.replace(/^\//, ''),
+                    element: route.element
+                };
+
+                // Handle nested routes
+                if (route.children && route.children.length > 0) {
+                    // For routes with children, we'll create the children array
+                    routeObject.children = transformRoutes(route.children);
+                    
+                    // Add an index route that redirects to first child
+                    routeObject.children.unshift({
+                        index: true,
+                        element: <Navigate to={route.children[0].path.replace(/^\//, '')} replace />
+                    });
+                }
+
+                return routeObject;
+            });
+        };
+
+        return transformRoutes(routes);
+    };
+
+    // Use the useRoutes hook to render routes
+    const routeElements = useRoutes(generateRouteObjects());
+
     return (
         <Layout className="app-layout">
             <Header />
             <Layout>
                 <Sidebar />
-                <Content >
-                    <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/business" element={<BusinessPage />} />
-                    <Route path="/resource" element={<ResourcePage />} />
-                    <Route path='*' element={<NotFoundPage />}></Route>
-                    </Routes>
+                <Content>
+                    {routeElements}
                 </Content>
             </Layout>
         </Layout>
-    )
-}
-
+    );
+};
 
 export default MainLayout;
