@@ -14,7 +14,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ currentSection }) => {
     const getSelectedName = () => {
         const path = location.pathname;
         if (sidebarItems.length > 0) {
-            const selectedItem = sidebarItems.find(item => item.path === path);
+            const selectedItem = sidebarItems.find(item => path.endsWith(item.path));
             return selectedItem ? selectedItem.name : '';
         }
         return '';

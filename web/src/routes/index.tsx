@@ -38,14 +38,14 @@ export const routes: NavigationItem[] = [
       {
         name: '业务拓扑',
         key: BusinessNavKey.Topology,
-        path: '/business/topology',
+        path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <UnorderedListOutlined />
       },
       {
         name: '服务模板',
         key: BusinessNavKey.Template,
-        path: '/business/template',
+        path: 'template',
         element: withSuspense(ServiceTemplate),
         icon: <PieChartOutlined />
       }
@@ -60,14 +60,14 @@ export const routes: NavigationItem[] = [
       {
         name: '资源目录',
         key: ResourceKey.Content,
-        path: '/resource/content',
+        path: 'content',
         element: withSuspense(ResourceContent),
         icon: <ContainerOutlined />
       },
       {
         name: '项目',
         key: ResourceKey.Project,
-        path: '/resource/project',
+        path: 'project',
         element: withSuspense(ResourceProject),
         icon: <AppstoreOutlined />
       }
