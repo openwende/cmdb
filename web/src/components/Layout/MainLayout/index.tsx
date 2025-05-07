@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Layout } from 'antd';
-import { Navigate, useRoutes } from 'react-router-dom';
+import { Navigate, useLocation, useRoutes } from 'react-router-dom';
 import Header from '../Header';
 import Sidebar from '../Sidebar';
+import Breadcrumb from '../Breadcrumb';
 import Content from '../Content';
+import Footer from '../Footer';
 import { routes } from '../../../routes';
 import './style.css';
+import { PrimaryNavKey } from '../../../routes/Types';
 
 const MainLayout: React.FC = () => {
+    const location = useLocation();
+
+    // Determine which top-level section we're in
+    const getCurrentTopLevel = () => {
+        const path = location.pathname;
+        return routes.find(nav =>
+            path === nav.path || path.startsWith(`${nav.path}/`)
+        );
+    };
+
+    const currentSection = getCurrentTopLevel();
+
     // Function to transform our route configuration into React Router's format
     const generateRouteObjects = () => {
         const transformRoutes = (routeItems: typeof routes) => {
@@ -21,7 +36,7 @@ const MainLayout: React.FC = () => {
                 if (route.children && route.children.length > 0) {
                     // For routes with children, we'll create the children array
                     routeObject.children = transformRoutes(route.children);
-                    
+
                     // Add an index route that redirects to first child
                     routeObject.children.unshift({
                         index: true,
@@ -36,6 +51,7 @@ const MainLayout: React.FC = () => {
         return transformRoutes(routes);
     };
 
+    const obj = generateRouteObjects();
     // Use the useRoutes hook to render routes
     const routeElements = useRoutes(generateRouteObjects());
 
@@ -43,11 +59,15 @@ const MainLayout: React.FC = () => {
         <Layout className="app-layout">
             <Header />
             <Layout>
-                <Sidebar />
-                <Content>
-                    {routeElements}
-                </Content>
+                <Sidebar currentSection={currentSection} />
+                <Layout className="right-layout">
+                    <Breadcrumb currentSection={currentSection} />
+                    <Content>
+                        {routeElements}
+                    </Content>
+                </Layout>
             </Layout>
+            {currentSection?.key === PrimaryNavKey.Home && <Footer />}
         </Layout>
     );
 };

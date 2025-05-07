@@ -1,0 +1,12 @@
+.app-footer {
+    background-color: rgb(245, 246, 250);
+    border-top: 1px solid rgb(220, 222, 229);
+    bottom: 0px;
+    color: rgb(99, 101, 110);
+    font-size: 12px;
+    left: 25px;
+    position: absolute;
+    right: 25px;
+    text-align: center;
+    z-index: 2;
+}

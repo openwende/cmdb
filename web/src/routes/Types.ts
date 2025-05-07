@@ -5,6 +5,7 @@ export interface NavigationItem {
     element: React.ReactNode;
     children?: NavigationItem[];
     hideInMenu?: boolean;
+    icon?: any;
 }
 
 export enum PrimaryNavKey {

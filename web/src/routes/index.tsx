@@ -1,5 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { NavigationItem, PrimaryNavKey, BusinessNavKey, ResourceKey } from './Types';
+import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined} from '@ant-design/icons';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
@@ -38,13 +39,15 @@ export const routes: NavigationItem[] = [
         name: '业务拓扑',
         key: BusinessNavKey.Topology,
         path: '/business/topology',
-        element: withSuspense(BusinessTopology)
+        element: withSuspense(BusinessTopology),
+        icon: <UnorderedListOutlined />
       },
       {
         name: '服务模板',
         key: BusinessNavKey.Template,
         path: '/business/template',
-        element: withSuspense(ServiceTemplate)
+        element: withSuspense(ServiceTemplate),
+        icon: <PieChartOutlined />
       }
     ]
   },
@@ -58,13 +61,15 @@ export const routes: NavigationItem[] = [
         name: '资源目录',
         key: ResourceKey.Content,
         path: '/resource/content',
-        element: withSuspense(ResourceContent)
+        element: withSuspense(ResourceContent),
+        icon: <ContainerOutlined />
       },
       {
         name: '项目',
         key: ResourceKey.Project,
         path: '/resource/project',
-        element: withSuspense(ResourceProject)
+        element: withSuspense(ResourceProject),
+        icon: <AppstoreOutlined />
       }
     ]
   },

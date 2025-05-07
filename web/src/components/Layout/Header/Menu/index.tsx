@@ -2,7 +2,7 @@ import React from 'react';
 import { Menu as AntMenu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '../../../../routes';
-import './style.css';
+import '../style.css';
 
 const Menu: React.FC = () => {
     const location = useLocation();

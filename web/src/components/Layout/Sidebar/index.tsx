@@ -1,24 +1,25 @@
-import React, { Fragment } from "react";
-import { Layout, Menu } from 'antd';
+import React, { Fragment, useState } from "react";
+import { Button, Layout, Menu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { routes } from '../../../routes';
 import './style.css';
+import { NavigationItem } from "../../../routes/Types";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 
 const { Sider } = Layout;
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+    currentSection: NavigationItem | undefined;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
+    const [collapsed, setCollapsed] = useState(false);
+
+    const toggleCollapsed = () => {
+      setCollapsed(!collapsed);
+    };
+
     const location = useLocation();
     const navigate = useNavigate();
-    
-    // Determine which top-level section we're in
-    const getCurrentTopLevel = () => {
-        const path = location.pathname;
-        return routes.find(nav => 
-            path === nav.path || path.startsWith(`${nav.path}/`)
-        );
-    };
-    
-    const currentSection = getCurrentTopLevel();
     const sidebarItems = currentSection?.children || [];
     
     // Get the currently selected sidebar item
@@ -33,11 +34,10 @@ const Sidebar: React.FC = () => {
 
     return (
         <Fragment>
-            {sidebarItems.length > 0 ? <Sider className="app-sidebar" width={200}>
+            {sidebarItems.length > 0 ? <Sider className="app-sidebar" width={collapsed ? 60 : 260}>
                 <Menu
                     mode="inline"
                     selectedKeys={[getSelectedKey()]}
-                    style={{ height: '100%', borderRight: 0 }}
                     onClick={({ key }) => {
                         const item = sidebarItems.find(item => item.key === key);
                         if (item) {
@@ -46,9 +46,14 @@ const Sidebar: React.FC = () => {
                     }}
                     items={sidebarItems.map(item => ({
                         key: item.key,
-                        label: item.name
+                        label: item.name,
+                        icon: item.icon
                     }))}
+                    inlineCollapsed={collapsed}
                 />
+                <div onClick={toggleCollapsed} className="menu-toggler">
+                    {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                </div>
             </Sider> : null}
         </Fragment>
     );

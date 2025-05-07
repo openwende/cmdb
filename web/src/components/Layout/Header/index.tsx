@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Layout } from 'antd';
 import Logo from './Logo';
 import Menu from './Menu';
@@ -9,8 +9,10 @@ const { Header: AntHeader } = Layout;
 
 const Header: React.FC = () => {
     return <AntHeader className="app-header">
-        <Logo />
-        <Menu />
+        <div className="header-left">
+            <Logo />
+            <Menu />
+        </div>
         <Function />
     </AntHeader>
 }

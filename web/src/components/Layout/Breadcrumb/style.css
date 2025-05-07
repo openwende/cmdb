@@ -1,0 +1,13 @@
+.app-breadcrumb {
+    background-color: #fff;
+    overflow: hidden;
+    position: relative;
+    z-index: 100;
+    align-items: center;
+    background: #fff;
+    box-shadow: 0 2px 4px 0 #0000000f;
+    display: flex;
+    height: 53px;
+    padding: 14px 20px;
+    font-size: 16px;
+}

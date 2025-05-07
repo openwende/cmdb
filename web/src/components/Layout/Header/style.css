@@ -1,4 +1,36 @@
 .app-header {
     width: 100%;
     display: flex;
+    justify-content: space-between;
+}
+
+.header-left {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.header-menu {
+    text-align: left;
+
+}
+
+.header-menu .ant-menu-item {
+    padding: 0 20px;
+    margin: 0 10px;
+} 
+
+.header-logo {
+    flex: 290px 0 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.header-function {
+    display: flex;
+    color: #fff;
+
+    div {
+        margin: 0 20px 0 0;
+        cursor: pointer;
+    }
 }

@@ -1,4 +1,9 @@
 .app-layout {
     height: 100vh;
     width: 100vw;
+
+    .right-layout {
+        display: flex;
+        flex-direction: column;
+    }
 }
