@@ -1,7 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Input, Tree } from "antd";
 import { businessData, idleCluster } from "../../../../mock/business";
 import "./style.css";
+
+const MIN_WIDTH = 200;
+const MAX_WIDTH = 480;
 
 interface Props {
     selectedKey: string | null;
@@ -34,18 +37,52 @@ function buildTreeData() {
 }
 
 const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
-    const [search, setSearch] = useState("");
     const treeData = useMemo(() => buildTreeData(), []);
+    const [search, setSearch] = useState("");
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const [isDragging, setIsDragging] = useState(false);
+    const [isHover, setIsHover] = useState(false);
+    const dragging = useRef(false);
+
+    // the dragger event
+    const onMouseDown = (e: React.MouseEvent) => {
+        dragging.current = true;
+        setIsDragging(true);
+        const startX = e.clientX;
+        const startWidth = sidebarWidth;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            if (!dragging.current) return;
+            const delta = moveEvent.clientX - startX;
+            let newWidth = startWidth + delta;
+            if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+            if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
+            setSidebarWidth(newWidth);
+        };
+
+        const onMouseUp = () => {
+            dragging.current = false;
+            setIsDragging(false);
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    };
 
     return (
-        <div className="tree-wrapper">
+        <div className="tree-wrapper" style={{
+            width: sidebarWidth,
+            minWidth: MIN_WIDTH,
+            maxWidth: MAX_WIDTH
+        }}>
             <div className="search-wrapper">
                 <Input.Search
                     placeholder="请输入关键词"
                     allowClear
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    style={{ width: 240 }}
                 />
             </div>
             <Tree
@@ -56,8 +93,24 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                 selectedKeys={selectedKey ? [selectedKey] : []}
                 className="ant-tree"
             />
+            <div
+                style={{
+                    position: "absolute",
+                    right: 0,
+                    top: 0,
+                    width: 6,
+                    height: "100%",
+                    cursor: "col-resize",
+                    zIndex: 10,
+                    background: isDragging || isHover ? "#1890ff" : "transparent",
+                    borderRadius: 3,
+                    transition: "background 0.2s"
+                }}
+                onMouseDown={onMouseDown}
+                onMouseEnter={() => setIsHover(true)}
+                onMouseLeave={() => setIsHover(false)}
+            />
         </div>
-
     );
 };
 
