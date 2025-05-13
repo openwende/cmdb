@@ -1,7 +1,8 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { Fragment, useMemo, useRef, useState } from "react";
 import { Input, Tree } from "antd";
 import { businessData, idleCluster } from "../../../../mock/business";
 import "./style.css";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -42,6 +43,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     const [sidebarWidth, setSidebarWidth] = useState(320);
     const [isDragging, setIsDragging] = useState(false);
     const [isHover, setIsHover] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
     const dragging = useRef(false);
 
     // the dragger event
@@ -72,44 +74,69 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     };
 
     return (
-        <div className="tree-wrapper" style={{
-            width: sidebarWidth,
-            minWidth: MIN_WIDTH,
-            maxWidth: MAX_WIDTH
-        }}>
-            <div className="search-wrapper">
-                <Input.Search
-                    placeholder="请输入关键词"
-                    allowClear
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                />
-            </div>
-            <Tree
-                treeData={treeData}
-                defaultExpandAll={true}
-                blockNode={true}
-                onSelect={keys => onSelect(keys[0] as string)}
-                selectedKeys={selectedKey ? [selectedKey] : []}
-                className="ant-tree"
-            />
+        <div className="tree-wrapper"
+            style={{
+                width: collapsed ? 0 : sidebarWidth,
+                minWidth: collapsed ? 0 : MIN_WIDTH,
+                maxWidth: collapsed ? 0 : MAX_WIDTH,
+                margin: collapsed ? 0 : 8,
+                marginRight: collapsed ? 0 : 20
+            }}
+        >
+            {/* the search input and tree*/}
+            {
+                !collapsed && <Fragment>
+                    <div className="search-wrapper">
+                        <Input.Search
+                            placeholder="请输入关键词"
+                            allowClear
+                            value={search}
+                            onChange={e => setSearch(e.target.value)}
+                        />
+                    </div>
+                    <Tree
+                        treeData={treeData}
+                        defaultExpandAll={true}
+                        blockNode={true}
+                        onSelect={keys => onSelect(keys[0] as string)}
+                        selectedKeys={selectedKey ? [selectedKey] : []}
+                        className="ant-tree"
+                    />
+                    {/* the dragger */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: 0,
+                            top: 0,
+                            width: 6,
+                            height: "100%",
+                            cursor: "col-resize",
+                            zIndex: 10,
+                            background: isDragging || isHover ? "#1890ff" : "transparent",
+                            borderRadius: 3,
+                            transition: "background 0.2s"
+                        }}
+                        onMouseDown={onMouseDown}
+                        onMouseEnter={() => setIsHover(true)}
+                        onMouseLeave={() => setIsHover(false)}
+                    />
+                </Fragment>
+            }
+            {/* the collapsed button */}
             <div
+                className="collapsed-button"
                 style={{
                     position: "absolute",
-                    right: 0,
-                    top: 0,
-                    width: 6,
-                    height: "100%",
-                    cursor: "col-resize",
-                    zIndex: 10,
-                    background: isDragging || isHover ? "#1890ff" : "transparent",
-                    borderRadius: 3,
-                    transition: "background 0.2s"
+                    right: -15,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: 16,
+                    height: 100
                 }}
-                onMouseDown={onMouseDown}
-                onMouseEnter={() => setIsHover(true)}
-                onMouseLeave={() => setIsHover(false)}
-            />
+                onClick={() => setCollapsed(c => !c)}
+            >
+                {collapsed ? <RightOutlined /> : <LeftOutlined />}
+            </div>
         </div>
     );
 };

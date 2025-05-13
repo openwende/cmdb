@@ -91,9 +91,7 @@ const BusinessTopology: React.FC = () => {
 
     return (
         <div style={{ display: "flex", height: "calc(100vh - 100px)" }}>
-            <div style={{ width: 320, background: "#f5f7fa", borderRight: "1px solid #eee", padding: 8 }}>
-                <BusinessTree selectedKey={selectedKey} onSelect={setSelectedKey} />
-            </div>
+            <BusinessTree selectedKey={selectedKey} onSelect={setSelectedKey} />
             <div style={{ flex: 1, background: "#fff", padding: 16 }}>
                 <HostTable hosts={filteredHosts} />
             </div>
