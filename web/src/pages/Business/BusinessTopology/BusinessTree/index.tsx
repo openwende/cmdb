@@ -1,8 +1,9 @@
 import React, { Fragment, useMemo, useRef, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import { Input, Tree } from "antd";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import { businessData, idleCluster } from "../../../../mock/business";
 import "./style.css";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -38,6 +39,7 @@ function buildTreeData() {
 }
 
 const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
+    const { t } = useTranslation();
     const treeData = useMemo(() => buildTreeData(), []);
     const [search, setSearch] = useState("");
     const [sidebarWidth, setSidebarWidth] = useState(320);
@@ -88,7 +90,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                 !collapsed && <Fragment>
                     <div className="search-wrapper">
                         <Input.Search
-                            placeholder="请输入关键词"
+                            placeholder={t("business.topology.tree.search")}
                             allowClear
                             value={search}
                             onChange={e => setSearch(e.target.value)}
