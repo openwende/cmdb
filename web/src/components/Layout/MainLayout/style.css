@@ -5,5 +5,10 @@
     .right-layout {
         display: flex;
         flex-direction: column;
+
+        .ant-layout-content {
+            overflow-x: hidden;
+            overflow-y: scroll;
+        }
     }
 }

@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Tree } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
@@ -57,7 +58,9 @@ function buildTreeData() {
 }
 
 const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
+    const navigate = useNavigate();
     const { t } = useTranslation();
+
     const [search, setSearch] = useState<string>("");
     // the tree state
     const [treeData, setTreeData] = useState<TreeData[]>([]);
@@ -85,7 +88,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
 
     const createNode = (type: string) => {
         if (type === 'business') {
-            // TODO: create business
+            navigate('/resource/business');
         } else if (type === 'cluster') {
             // TODO: create cluster
         } else if (type === 'module') {

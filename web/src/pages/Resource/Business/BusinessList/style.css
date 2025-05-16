@@ -1,0 +1,27 @@
+.business-list {
+    margin: 15px 20px 0;
+
+    .list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+
+        .list-operation {
+            display: flex;
+            gap: 10px;
+        }
+
+        .list-search {
+            display: flex;
+            gap: 10px;
+        }
+    }
+
+    .pagination-container {
+        border-top: 1px solid #dfe0e5;
+        margin-top: -1px;
+        padding: 15px;
+        background-color: #fff;
+    }
+}
