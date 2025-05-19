@@ -1,0 +1,16 @@
+.host-wrapper {
+    margin: 0 20px;
+
+    .ant-tabs-nav-wrap {
+        border-bottom: 1px solid #dcdee5;
+    }
+
+    .ant-tabs-content {
+        height: 100%;
+    }
+
+    .unassigned-wrapper {
+        display: flex;
+        height: 100%;
+    }
+}

@@ -11,6 +11,7 @@ const ResourcePage = lazy(() => import('../pages/Resource'));
 const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
 const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
+const ResourceHost = lazy(() => import('../pages/Resource/Host'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Loading component for Suspense
@@ -77,6 +78,13 @@ export const routes: NavigationItem[] = [
         key: ResourceKey.Business,
         path: 'business',
         element: withSuspense(ResourceBusiness),
+        icon: <AppstoreOutlined />
+      },
+      {
+        name: '主机',
+        key: ResourceKey.Host,
+        path: 'host',
+        element: withSuspense(ResourceHost),
         icon: <AppstoreOutlined />
       }
     ]

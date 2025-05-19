@@ -23,5 +23,6 @@ export enum BusinessNavKey {
 export enum ResourceKey {
     Content = 'content',
     Project = 'project',
-    Business = 'business'
+    Business = 'business',
+    Host = 'host'
 }
