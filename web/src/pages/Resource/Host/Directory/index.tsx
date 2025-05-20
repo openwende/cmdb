@@ -1,16 +1,22 @@
 import React, { useState, useRef } from "react";
-import { Input, Tooltip, Dropdown, Menu, Modal, Tree } from "antd";
+import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps } from "antd";
 import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined } from "@ant-design/icons";
 import { hostDirectoryMock } from "@/mock/resource";
 import "./style.css";
+import { DirectoryData } from "../../Types";
 
+const DEFAULT_WIDTH = 320;
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
+
+// The host pool and idle hosts cannot be modified
+const unmodifiableDirIds: number[] = [0, 1];
 
 const Directory: React.FC<{
     selectedId: number | null;
     onSelect: (id: number | null) => void;
 }> = ({ selectedId, onSelect }) => {
+    // The directory state
     const [dirs, setDirs] = useState(hostDirectoryMock);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [newDir, setNewDir] = useState(false);
@@ -18,12 +24,12 @@ const Directory: React.FC<{
     const [delId, setDelId] = useState<number | null>(null);
     const [hoverId, setHoverId] = useState<number | null>(null);
     const inputRef = useRef<any>(null);
-    // the sidebar state
-    const [sidebarWidth, setSidebarWidth] = useState<number>(320);
+    // The sidebar state
+    const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const [isHover, setIsHover] = useState<boolean>(false);
     const dragging = useRef<boolean>(false);
-    // the collapsed state
+    // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
     // 新建目录
@@ -73,13 +79,15 @@ const Directory: React.FC<{
         if (selectedId === id) onSelect(null);
     };
 
-    // 置顶
+    // Pin the current directory item to the top
     const handlePin = (id: number) => {
+        // TODO: api
         const idx = dirs.findIndex(d => d.bk_module_id === id);
         if (idx > -1) {
             const newDirs = [...dirs];
             const [item] = newDirs.splice(idx, 1);
-            newDirs.splice(1, 0, item); // 空闲机后面
+            // The idle host directory is always at the first position
+            newDirs.splice(1, 0, item);
             setDirs(newDirs);
         }
     };
@@ -111,168 +119,136 @@ const Directory: React.FC<{
         document.addEventListener("mouseup", onMouseUp);
     };
 
-    // 目录右侧菜单
-    const menu = (dir: any) => (
-        <Menu>
-            <Menu.Item key="rename" onClick={() => handleRename(dir.bk_module_id, dir.bk_module_name)}>
-                重命名
-            </Menu.Item>
-            <Menu.Item key="delete" onClick={() => setDelId(dir.bk_module_id)}>
-                删除
-            </Menu.Item>
-        </Menu>
-    );
+    const handleMenuClick = (key: string, id: number, name: string) => {
+        if (key === 'rename') {
+            handleRename(id, name);
+        } else if (key === 'delete') {
+            handleDelete(id);
+        }
+    }
 
-    // Tree 数据
-    const getTreeData = () => {
+    const items: MenuProps['items'] = [
+        {
+            key: 'rename',
+            label: "重命名",
+        },
+        {
+            key: 'delete',
+            label: "删除",
+        }
+    ]
+
+    const renderTitle = (dir: DirectoryData) => {
+        const isSelected = selectedId === dir.key;
+        return (
+            <>
+                {editingId === dir.key ? (
+                    <Input
+                        ref={inputRef}
+                        size="small"
+                        value={inputValue}
+                        onChange={e => setInputValue(e.target.value)}
+                        onPressEnter={() => handleRenameConfirm(dir.key)}
+                        onBlur={() => setEditingId(null)}
+                    />
+                ) : (
+                    <div
+                        className="title-wrapper"
+                        onMouseEnter={() => setHoverId(dir.key)}
+                        onMouseLeave={() => setHoverId(null)}
+                    >
+                        <span className="left-wrapper">
+                            <FolderOutlined className="folder-icon" />
+                            <span>{dir.title}</span>
+                            {editingId === dir.key ? (
+                                <Input
+                                    ref={inputRef}
+                                    size="small"
+                                    value={inputValue}
+                                    onChange={e => setInputValue(e.target.value)}
+                                    onPressEnter={() => handleRenameConfirm(dir.key)}
+                                    onBlur={() => setEditingId(null)}
+                                />
+                            ) : (
+                                <span>{dir.title}</span>
+                            )}
+                        </span>
+                        <span className="right-wrapper">
+                            {hoverId === dir.key && !unmodifiableDirIds.includes(dir.key) && (
+                                <span className="right-operation">
+                                    <Tooltip title="置顶">
+                                        <span
+                                            className="pin-to-top"
+                                            onClick={e => { e.stopPropagation(); handlePin(dir.key) }}
+                                        >
+                                            不
+                                        </span>
+                                    </Tooltip>
+                                    <Dropdown
+                                        menu={{
+                                            items: items,
+                                            onClick: (e) => handleMenuClick(e.key, dir.key, dir.title as string)
+                                        }}
+                                        trigger={['click']}
+                                    >
+                                        <MoreOutlined className="more-operation" />
+                                    </Dropdown>
+                                </span>
+                            )}
+                            <span className={`right-count ${isSelected ? 'selected' : ''}`}>
+                                {dir.key === 0 ? dirs.reduce((sum, d) => sum + (d.host_count || 0), 0) : dir.count}
+                            </span>
+                        </span>
+                    </div>
+                )}
+            </>
+        )
+    }
+
+    const getDirectoryData = (): DirectoryData[] => {
         const [idle, ...rest] = dirs;
-        const children: any[] = [
+
+        // Idle directory
+        const children: DirectoryData[] = [
             {
                 key: idle.bk_module_id,
-                title: (
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            background: selectedId === idle.bk_module_id ? "#eaf3ff" : undefined,
-                            color: selectedId === idle.bk_module_id ? "#1976d2" : undefined,
-                            borderRadius: 4,
-                            padding: "0 4px"
-                        }}
-                        onMouseEnter={() => setHoverId(idle.bk_module_id)}
-                        onMouseLeave={() => setHoverId(null)}
-                        onClick={e => { e.stopPropagation(); onSelect(idle.bk_module_id); }}
-                    >
-                        <FolderOutlined style={{ marginRight: 6 }} />
-                        <span style={{ flex: 1 }}>{idle.bk_module_name}</span>
-                        <span style={{
-                            marginLeft: 8,
-                            background: "#f0f1f5",
-                            color: "#888",
-                            borderRadius: 8,
-                            padding: "0 8px",
-                            fontSize: 12
-                        }}>{idle.host_count}</span>
-                    </div>
-                ),
-                selectable: false
+                title: idle.bk_module_name,
+                count: idle.host_count
             }
         ];
 
-        // 新建目录输入框节点
+        // New directory input field
         if (newDir) {
             children.push({
-                key: "newDirInput",
+                key: Date.now(),
                 title: (
                     <Input
                         ref={inputRef}
                         size="small"
                         value={inputValue}
-                        style={{ margin: "4px 0 2px 0", width: 120 }}
                         placeholder="请输入目录名称，回车结束"
                         onChange={e => setInputValue(e.target.value)}
                         onPressEnter={handleAddConfirm}
                         onBlur={() => setNewDir(false)}
                     />
                 ),
-                selectable: false
             });
         }
 
-        // 其他目录
+        // Other directories
         rest.forEach(dir => {
             children.push({
                 key: dir.bk_module_id,
-                title: (
-                    <div
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            background: selectedId === dir.bk_module_id ? "#eaf3ff" : undefined,
-                            color: selectedId === dir.bk_module_id ? "#1976d2" : undefined,
-                            borderRadius: 4,
-                            padding: "0 4px"
-                        }}
-                        onMouseEnter={() => setHoverId(dir.bk_module_id)}
-                        onMouseLeave={() => setHoverId(null)}
-                        onClick={e => { e.stopPropagation(); onSelect(dir.bk_module_id); }}
-                    >
-                        <FolderOutlined style={{ marginRight: 6 }} />
-                        {editingId === dir.bk_module_id ? (
-                            <Input
-                                ref={inputRef}
-                                size="small"
-                                value={inputValue}
-                                style={{ width: 80 }}
-                                onChange={e => setInputValue(e.target.value)}
-                                onPressEnter={() => handleRenameConfirm(dir.bk_module_id)}
-                                onBlur={() => setEditingId(null)}
-                            />
-                        ) : (
-                            <span style={{ flex: 1 }}>{dir.bk_module_name}</span>
-                        )}
-                        <span style={{
-                            marginLeft: 8,
-                            background: "#f0f1f5",
-                            color: "#888",
-                            borderRadius: 8,
-                            padding: "0 8px",
-                            fontSize: 12
-                        }}>{dir.host_count}</span>
-                        {hoverId === dir.bk_module_id && (
-                            <>
-                                <Tooltip title="置顶">
-                                    <span
-                                        style={{
-                                            marginLeft: 8,
-                                            color: "#1976d2",
-                                            background: "#fff",
-                                            borderRadius: "50%",
-                                            width: 24,
-                                            height: 24,
-                                            display: "inline-flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            cursor: "pointer",
-                                            border: "1px solid #eaf3ff"
-                                        }}
-                                        onClick={e => { e.stopPropagation(); handlePin(dir.bk_module_id); }}
-                                    >不</span>
-                                </Tooltip>
-                                <Dropdown
-                                    overlay={menu(dir)}
-                                    trigger={['click']}
-                                    placement="bottomRight"
-                                >
-                                    <MoreOutlined style={{ marginLeft: 4, fontSize: 16, color: "#888", cursor: "pointer" }} />
-                                </Dropdown>
-                            </>
-                        )}
-                    </div>
-                ),
-                selectable: false
+                title: dir.bk_module_name,
+                count: dir.host_count
             });
         });
 
         return [
             {
-                key: "root",
-                title: (
-                    <div style={{ display: "flex", alignItems: "center", color: "#1976d2", fontWeight: 500 }}>
-                        主机池
-                        <span style={{
-                            marginLeft: "auto",
-                            background: "#eaf3ff",
-                            color: "#1976d2",
-                            borderRadius: 8,
-                            padding: "0 8px",
-                            fontSize: 12
-                        }}>
-                            {dirs.reduce((sum, d) => sum + (d.host_count || 0), 0)}
-                        </span>
-                    </div>
-                ),
-                children
+                key: 0,
+                title: "主机池",
+                children,
             }
         ];
     };
@@ -283,8 +259,7 @@ const Directory: React.FC<{
                 width: collapsed ? 0 : sidebarWidth,
                 minWidth: collapsed ? 0 : MIN_WIDTH,
                 maxWidth: collapsed ? 0 : MAX_WIDTH,
-                margin: collapsed ? 0 : 8,
-                marginRight: collapsed ? 0 : 20
+                marginRight: collapsed ? 0 : 20,
             }}
         >
             <div className="directory-header">
@@ -302,14 +277,13 @@ const Directory: React.FC<{
                 </Tooltip>
             </div>
             <Tree
-                treeData={getTreeData()}
-                defaultExpandAll
-                selectedKeys={selectedId ? [selectedId] : []}
-                showLine={false}
+                treeData={getDirectoryData()}
+                defaultExpandAll={true}
+                showLine={true}
                 blockNode={true}
-                onSelect={(_, info) => {
-                    if (info.node.key === "root") onSelect(null);
-                }}
+                selectedKeys={selectedId ? [selectedId] : []}
+                onSelect={keys => { keys.length && onSelect(keys[0] as number) }}
+                titleRender={renderTitle}
                 className="directory-tree"
             />
             {/* the dragger */}

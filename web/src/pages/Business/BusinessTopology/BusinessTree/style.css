@@ -28,7 +28,7 @@
         box-shadow: none;
 
         &:hover {
-            background: #3a84ff;
+            background: #1677ff;
             opacity: 0.5;
             box-shadow: 0 0 8px #1890ff55;
         }
@@ -71,18 +71,6 @@
         align-items: center;
         justify-content: center;
 
-        .right-suffix {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            /* width: 20px;
-            height: 20px; */
-            border-radius: 2px;
-            background-color: #f1f0f5;
-            color: #979ba5;
-            opacity: 0.5;
-        }
-
         .suffix-count {
             display: flex;
             align-items: center;
@@ -97,7 +85,7 @@
     }
 
     .selected {
-        background-color: #3a84ff !important;
+        background-color: #1677ff !important;
         color: #fff !important;
     }
 }

@@ -10,3 +10,11 @@ export interface TabsProps {
     label: string;
     children: React.ReactNode;
 }
+
+export interface DirectoryData {
+    key: number;
+    title: React.ReactNode;
+    count?: number;
+    children?: DirectoryData[];
+    icon?: React.ReactNode;
+}

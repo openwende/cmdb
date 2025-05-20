@@ -1,0 +1,26 @@
+.host-list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #fff;
+    padding: 15px;
+
+    .host-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+    }
+
+}

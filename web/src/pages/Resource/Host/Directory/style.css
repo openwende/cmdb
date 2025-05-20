@@ -18,7 +18,6 @@
         }
     }
 
-    
     .ant-tree {
         height: 100%;
         padding: 8px;
@@ -53,5 +52,84 @@
     .ant-tree-switcher:hover {
         height: 36px !important;
         line-height: 36px;
+    }
+
+    .title-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .left-wrapper {
+            display: flex;
+            align-items: center;
+
+            .folder-icon {
+                margin-right: 10px;
+            }
+        }
+
+        .right-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .right-operation {
+                display: flex;
+
+                .pin-to-top {
+                    color: #1677ff;
+                    width: 24px;
+                    height: 24px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .more-operation {
+                    margin-left: 4px;
+                    font-size: 20px;
+                    color: #1677ff;
+                    width: 24px;
+                    height: 24px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+
+                .pin-to-top,
+                .more-operation {
+                    &:hover {
+                        background: #fff;
+                        border-radius: 50%;
+                        border: 1px solid #eaf3ff;
+                    }
+                }
+            }
+
+            .right-count {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 2px;
+                background-color: #f1f0f5;
+                color: #979ba5;
+                opacity: 0.5;
+                margin-left: 4px;
+            }
+        }
+
+        .selected {
+            background-color: #1677ff !important;
+            color: #fff !important;
+        }
+
+        &:hover {
+            .right-count {
+                background-color: #1677ff !important;
+                color: #fff !important;
+            }
+        }
     }
 }
