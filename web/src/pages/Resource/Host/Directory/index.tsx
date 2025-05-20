@@ -1,21 +1,37 @@
-import React, { useState, useRef } from "react";
-import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps } from "antd";
+import React, { useState, useRef, useEffect } from "react";
+import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message } from "antd";
 import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined } from "@ant-design/icons";
 import { hostDirectoryMock } from "@/mock/resource";
 import "./style.css";
 import { DirectoryData } from "../../Types";
 
+// The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
+// The width and height of the delete modal
+const MODAL_WIDTH = 400;
+const MODAL_HEIGHT = 200;
 
 // The host pool and idle hosts cannot be modified
 const unmodifiableDirIds: number[] = [0, 1];
+// The directory menu items
+const items: MenuProps['items'] = [
+    {
+        key: 'rename',
+        label: "重命名",
+    },
+    {
+        key: 'delete',
+        label: "删除",
+    }
+]
 
 const Directory: React.FC<{
     selectedId: number | null;
     onSelect: (id: number | null) => void;
 }> = ({ selectedId, onSelect }) => {
+    const [messageApi] = message.useMessage();
     // The directory state
     const [dirs, setDirs] = useState(hostDirectoryMock);
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -32,18 +48,24 @@ const Directory: React.FC<{
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
-    // 新建目录
+    const [inputError, setInputError] = useState(false);
+
+    // Create a new directory
     const handleAdd = () => {
         setNewDir(true);
         setEditingId(null);
         setTimeout(() => inputRef.current?.focus(), 0);
     };
 
-    // 确认新建
+    // Confirm the creation of a new directory
     const handleAddConfirm = () => {
+        // if (!verifyInputValue()) return;
+
+        // TODO: api
         if (inputValue.trim()) {
             setDirs([
-                dirs[0], // 空闲机
+                // Idle host
+                dirs[0],
                 {
                     bk_module_id: Date.now(),
                     bk_module_name: inputValue,
@@ -58,25 +80,48 @@ const Directory: React.FC<{
         setInputValue("");
     };
 
-    // 目录重命名
+    // Directory renaming
     const handleRename = (id: number, name: string) => {
         setEditingId(id);
         setInputValue(name);
         setTimeout(() => inputRef.current?.focus(), 0);
     };
 
-    // 确认重命名
+    // 在 effect 中触发 message
+    useEffect(() => {
+        if (inputError) {
+            message.error({
+                content: "请输入正确的目录名称",
+            });
+            setInputError(false); // 重置标记
+        }
+    }, [inputError]);
+
     const handleRenameConfirm = (id: number) => {
+        if (inputValue.trim() === "") {
+            message.error({
+                content: "请输入正确的目录名称",
+            });
+            return;
+        }
+
+        // ✅ 正常执行重命名逻辑
         setDirs(dirs.map(d => d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d));
         setEditingId(null);
         setInputValue("");
     };
 
-    // 删除目录
+    // Directory to be deleted
     const handleDelete = (id: number) => {
-        setDirs(dirs.filter(d => d.bk_module_id !== id));
+        setDelId(id);
+    };
+
+    // Confirm the deletion of a directory
+    const handleDeleteConfirm = (id: number) => {
+        // TODO: api
         setDelId(null);
-        if (selectedId === id) onSelect(null);
+        setDirs(dirs.filter(d => d.bk_module_id !== id));
+        if (selectedId === id) onSelect(unmodifiableDirIds[0]);
     };
 
     // Pin the current directory item to the top
@@ -92,6 +137,14 @@ const Directory: React.FC<{
         }
     };
 
+    const handleMenuClick = (key: string, id: number, name: string) => {
+        if (key === 'rename') {
+            handleRename(id, name);
+        } else if (key === 'delete') {
+            handleDelete(id);
+        }
+    }
+
     // the dragger event
     const onMouseDown = (e: React.MouseEvent) => {
         dragging.current = true;
@@ -101,6 +154,7 @@ const Directory: React.FC<{
 
         const onMouseMove = (moveEvent: MouseEvent) => {
             if (!dragging.current) return;
+            // Calculate the width of the sidebar
             const delta = moveEvent.clientX - startX;
             let newWidth = startWidth + delta;
             if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
@@ -119,29 +173,11 @@ const Directory: React.FC<{
         document.addEventListener("mouseup", onMouseUp);
     };
 
-    const handleMenuClick = (key: string, id: number, name: string) => {
-        if (key === 'rename') {
-            handleRename(id, name);
-        } else if (key === 'delete') {
-            handleDelete(id);
-        }
-    }
-
-    const items: MenuProps['items'] = [
-        {
-            key: 'rename',
-            label: "重命名",
-        },
-        {
-            key: 'delete',
-            label: "删除",
-        }
-    ]
-
     const renderTitle = (dir: DirectoryData) => {
         const isSelected = selectedId === dir.key;
         return (
             <>
+                {/* Edit mode */}
                 {editingId === dir.key ? (
                     <Input
                         ref={inputRef}
@@ -152,6 +188,7 @@ const Directory: React.FC<{
                         onBlur={() => setEditingId(null)}
                     />
                 ) : (
+                    // Normal mode
                     <div
                         className="title-wrapper"
                         onMouseEnter={() => setHoverId(dir.key)}
@@ -160,18 +197,6 @@ const Directory: React.FC<{
                         <span className="left-wrapper">
                             <FolderOutlined className="folder-icon" />
                             <span>{dir.title}</span>
-                            {editingId === dir.key ? (
-                                <Input
-                                    ref={inputRef}
-                                    size="small"
-                                    value={inputValue}
-                                    onChange={e => setInputValue(e.target.value)}
-                                    onPressEnter={() => handleRenameConfirm(dir.key)}
-                                    onBlur={() => setEditingId(null)}
-                                />
-                            ) : (
-                                <span>{dir.title}</span>
-                            )}
                         </span>
                         <span className="right-wrapper">
                             {hoverId === dir.key && !unmodifiableDirIds.includes(dir.key) && (
@@ -262,6 +287,7 @@ const Directory: React.FC<{
                 marginRight: collapsed ? 0 : 20,
             }}
         >
+            {/* The search input and the add icon */}
             <div className="directory-header">
                 <Input.Search
                     placeholder="分组目录"
@@ -276,6 +302,7 @@ const Directory: React.FC<{
                     />
                 </Tooltip>
             </div>
+            {/* The directory tree */}
             <Tree
                 treeData={getDirectoryData()}
                 defaultExpandAll={true}
@@ -286,7 +313,7 @@ const Directory: React.FC<{
                 titleRender={renderTitle}
                 className="directory-tree"
             />
-            {/* the dragger */}
+            {/* The dragger */}
             <div
                 style={{
                     position: "absolute",
@@ -304,17 +331,7 @@ const Directory: React.FC<{
                 onMouseEnter={() => setIsHover(true)}
                 onMouseLeave={() => setIsHover(false)}
             />
-            <Modal
-                open={!!delId}
-                title="确认删除目录"
-                onOk={() => handleDelete(delId!)}
-                onCancel={() => setDelId(null)}
-                okText="确定"
-                cancelText="取消"
-            >
-                即将删除目录
-            </Modal>
-            {/* the collapsed button */}
+            {/* The collapsed button */}
             <div
                 className="collapsed-button"
                 style={{
@@ -329,6 +346,19 @@ const Directory: React.FC<{
             >
                 {collapsed ? <RightOutlined /> : <LeftOutlined />}
             </div>
+            {/* The delete modal */}
+            <Modal
+                open={delId !== null}
+                title="确认删除目录"
+                onOk={() => handleDeleteConfirm(delId!)}
+                onCancel={() => setDelId(null)}
+                okText="确定"
+                cancelText="取消"
+                width={MODAL_WIDTH}
+                height={MODAL_HEIGHT}
+            >
+                即将删除目录
+            </Modal>
         </div>
     );
 };
