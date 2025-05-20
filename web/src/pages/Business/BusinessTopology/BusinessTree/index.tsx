@@ -88,7 +88,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
 
     const createNode = (type: string) => {
         if (type === 'business') {
-            navigate('/resource/business');
+            // TODO: create business
         } else if (type === 'cluster') {
             // TODO: create cluster
         } else if (type === 'module') {

@@ -8,12 +8,12 @@
 
     .directory-header {
         display: flex;
-        gap: 8px;
         margin-bottom: 15px;
 
         .directory-add {
             font-size: 18px;
             color: #1976d2;
+            margin-left: 8px;
             cursor: pointer;
         }
     }

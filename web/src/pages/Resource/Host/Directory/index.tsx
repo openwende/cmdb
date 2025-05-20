@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message } from "antd";
-import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined } from "@ant-design/icons";
+import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled } from "@ant-design/icons";
 import { hostDirectoryMock } from "@/mock/resource";
 import "./style.css";
 import { DirectoryData } from "../../Types";
@@ -9,12 +9,11 @@ import { DirectoryData } from "../../Types";
 const DEFAULT_WIDTH = 320;
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
-// The width and height of the delete modal
-const MODAL_WIDTH = 400;
-const MODAL_HEIGHT = 200;
 
 // The host pool and idle hosts cannot be modified
 const unmodifiableDirIds: number[] = [0, 1];
+// The new directory key
+const newDirId = -1;
 // The directory menu items
 const items: MenuProps['items'] = [
     {
@@ -31,15 +30,15 @@ const Directory: React.FC<{
     selectedId: number | null;
     onSelect: (id: number | null) => void;
 }> = ({ selectedId, onSelect }) => {
-    const [messageApi] = message.useMessage();
+    const { confirm } = Modal;
     // The directory state
     const [dirs, setDirs] = useState(hostDirectoryMock);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editDirId, setEditDirId] = useState<number | null>(null);
     const [newDir, setNewDir] = useState(false);
     const [inputValue, setInputValue] = useState("");
-    const [delId, setDelId] = useState<number | null>(null);
     const [hoverId, setHoverId] = useState<number | null>(null);
     const inputRef = useRef<any>(null);
+    const [inputError, setInputError] = useState(false);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -48,18 +47,31 @@ const Directory: React.FC<{
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
-    const [inputError, setInputError] = useState(false);
+    // Trigger the message inside an effect 
+    // to avoid the uncertainty caused by React's concurrent rendering.
+    useEffect(() => {
+        if (inputError) {
+            message.error({
+                content: "请输入正确的目录名称",
+            });
+            setInputError(false);
+        }
+    }, [inputError]);
 
     // Create a new directory
     const handleAdd = () => {
         setNewDir(true);
-        setEditingId(null);
+        setEditDirId(null);
         setTimeout(() => inputRef.current?.focus(), 0);
     };
 
     // Confirm the creation of a new directory
     const handleAddConfirm = () => {
-        // if (!verifyInputValue()) return;
+        // Trigger the error message
+        if (inputValue.trim() === "") {
+            setInputError(true);
+            return;
+        }
 
         // TODO: api
         if (inputValue.trim()) {
@@ -80,48 +92,60 @@ const Directory: React.FC<{
         setInputValue("");
     };
 
-    // Directory renaming
+    // Directory to be renamed
     const handleRename = (id: number, name: string) => {
-        setEditingId(id);
+        setEditDirId(id);
         setInputValue(name);
         setTimeout(() => inputRef.current?.focus(), 0);
     };
 
-    // 在 effect 中触发 message
-    useEffect(() => {
-        if (inputError) {
-            message.error({
-                content: "请输入正确的目录名称",
-            });
-            setInputError(false); // 重置标记
-        }
-    }, [inputError]);
-
+    // Confirm the renaming of a directory
     const handleRenameConfirm = (id: number) => {
+        // Trigger the error message
         if (inputValue.trim() === "") {
-            message.error({
-                content: "请输入正确的目录名称",
-            });
+            setInputError(true);
             return;
         }
 
-        // ✅ 正常执行重命名逻辑
         setDirs(dirs.map(d => d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d));
-        setEditingId(null);
+        setEditDirId(null);
         setInputValue("");
     };
 
+    // The input press enter event
+    const handleInputPress = (id: number) => {
+        if (id === newDirId) {
+            handleAddConfirm();
+        } else if (id === editDirId) {
+            handleRenameConfirm(id);
+        }
+    }
+
+    // The input blur event
+    const handleInputBlur = (id: number) => {
+        if (id === newDirId) {
+            setNewDir(false);
+        } else if (id === editDirId) {
+            setEditDirId(null);
+        }
+        setInputValue("");
+    }
+
     // Directory to be deleted
     const handleDelete = (id: number) => {
-        setDelId(id);
-    };
-
-    // Confirm the deletion of a directory
-    const handleDeleteConfirm = (id: number) => {
-        // TODO: api
-        setDelId(null);
-        setDirs(dirs.filter(d => d.bk_module_id !== id));
-        if (selectedId === id) onSelect(unmodifiableDirIds[0]);
+        confirm({
+            title: "确认删除目录",
+            icon: <ExclamationCircleFilled />,
+            content: "即将删除目录",
+            okText: "确定",
+            cancelText: "取消",
+            onOk() {
+                // TODO: api
+                setDirs(dirs.filter(d => d.bk_module_id !== id));
+                if (selectedId === id) onSelect(unmodifiableDirIds[0]);
+            },
+            onCancel() {},
+        });
     };
 
     // Pin the current directory item to the top
@@ -132,7 +156,7 @@ const Directory: React.FC<{
             const newDirs = [...dirs];
             const [item] = newDirs.splice(idx, 1);
             // The idle host directory is always at the first position
-            newDirs.splice(1, 0, item);
+            newDirs.splice(0, 0, item);
             setDirs(newDirs);
         }
     };
@@ -145,7 +169,7 @@ const Directory: React.FC<{
         }
     }
 
-    // the dragger event
+    // The sidebar dragger event
     const onMouseDown = (e: React.MouseEvent) => {
         dragging.current = true;
         setIsDragging(true);
@@ -178,14 +202,14 @@ const Directory: React.FC<{
         return (
             <>
                 {/* Edit mode */}
-                {editingId === dir.key ? (
+                {dir.key === editDirId || dir.key === newDirId ? (
                     <Input
                         ref={inputRef}
                         size="small"
                         value={inputValue}
                         onChange={e => setInputValue(e.target.value)}
-                        onPressEnter={() => handleRenameConfirm(dir.key)}
-                        onBlur={() => setEditingId(null)}
+                        onPressEnter={() => handleInputPress(dir.key)}
+                        onBlur={() => handleInputBlur(dir.key)}
                     />
                 ) : (
                     // Normal mode
@@ -195,7 +219,11 @@ const Directory: React.FC<{
                         onMouseLeave={() => setHoverId(null)}
                     >
                         <span className="left-wrapper">
-                            <FolderOutlined className="folder-icon" />
+                            {
+                                dir.key !== unmodifiableDirIds[0] && (
+                                    <FolderOutlined className="folder-icon" />
+                                )
+                            }
                             <span>{dir.title}</span>
                         </span>
                         <span className="right-wrapper">
@@ -245,18 +273,8 @@ const Directory: React.FC<{
         // New directory input field
         if (newDir) {
             children.push({
-                key: Date.now(),
-                title: (
-                    <Input
-                        ref={inputRef}
-                        size="small"
-                        value={inputValue}
-                        placeholder="请输入目录名称，回车结束"
-                        onChange={e => setInputValue(e.target.value)}
-                        onPressEnter={handleAddConfirm}
-                        onBlur={() => setNewDir(false)}
-                    />
-                ),
+                key: newDirId,
+                title: "",
             });
         }
 
@@ -292,14 +310,9 @@ const Directory: React.FC<{
                 <Input.Search
                     placeholder="分组目录"
                     size="middle"
-                    style={{ marginRight: 8 }}
                 />
                 <Tooltip title="新建目录">
-                    <PlusOutlined
-                        style={{ fontSize: 18, color: "#1976d2", cursor: "pointer" }}
-                        className="directory-add"
-                        onClick={handleAdd}
-                    />
+                    <PlusOutlined className="directory-add" onClick={handleAdd} />
                 </Tooltip>
             </div>
             {/* The directory tree */}
@@ -346,19 +359,6 @@ const Directory: React.FC<{
             >
                 {collapsed ? <RightOutlined /> : <LeftOutlined />}
             </div>
-            {/* The delete modal */}
-            <Modal
-                open={delId !== null}
-                title="确认删除目录"
-                onOk={() => handleDeleteConfirm(delId!)}
-                onCancel={() => setDelId(null)}
-                okText="确定"
-                cancelText="取消"
-                width={MODAL_WIDTH}
-                height={MODAL_HEIGHT}
-            >
-                即将删除目录
-            </Modal>
         </div>
     );
 };
