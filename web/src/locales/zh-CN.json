@@ -1,8 +1,39 @@
 {
+  "common": {
+    "rename": "重命名",
+    "delete": "删除",
+    "confirm": "确定",
+    "cancel": "取消"
+  },
     "business": {
       "topology": {
         "tree": {
             "search": "请输入关键词"
+        }
+      }
+    },
+    "host": {
+      "directory": {
+        "host_pool": "主机池",
+        "grouped": "分组目录",
+        "add": "新建目录",
+        "input": {
+          "placeholder": "请输入目录名称，回车结束"
+        },
+        "pin": "置顶",
+        "unpin": "取消置顶",
+        "message": {
+          "correct_name": "请输入正确的目录名称",
+          "exist_name": "目录名称已存在",
+          "add_success": "新建成功",
+          "rename_success": "修改成功",
+          "delete_success": "删除成功",
+          "pin_success": "已置顶",
+          "unpin_success": "已取消置顶"
+        },
+        "confirm": {
+          "title": "确定删除目录",
+          "content": "即将删除目录"
         }
       }
     }

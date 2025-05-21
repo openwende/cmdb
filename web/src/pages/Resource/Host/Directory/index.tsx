@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message } from "antd";
-import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled } from "@ant-design/icons";
+import { useTranslation } from 'react-i18next';
+import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message, InputRef } from "antd";
+import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled, PushpinOutlined } from "@ant-design/icons";
 import { hostDirectoryMock } from "@/mock/resource";
+import { DirectoryData, DirMenuKey } from "../../Types";
 import "./style.css";
-import { DirectoryData, DirMenuKey, DirPinToTopKey } from "../../Types";
 
 // The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
@@ -14,65 +15,44 @@ const MAX_WIDTH = 480;
 const unmodifiableDirIds: number[] = [0, 1];
 // The new directory key
 const newDirId = -1;
-// The directory menu items
-const items: MenuProps['items'] = [
-    {
-        key: DirMenuKey.Rename,
-        label: "重命名",
-    },
-    {
-        key: DirMenuKey.Delete,
-        label: "删除",
-    }
-]
 
 const Directory: React.FC<{
     selectedId: number | null;
     onSelect: (id: number | null) => void;
 }> = ({ selectedId, onSelect }) => {
+    const { t } = useTranslation();
     const { confirm } = Modal;
-    // The directory state
     const [dirs, setDirs] = useState(hostDirectoryMock);
+    // State for adding and editing directories
     const [editDirId, setEditDirId] = useState<number | null>(null);
-    const [newDir, setNewDir] = useState(false);
-    const [inputValue, setInputValue] = useState("");
+    const [newDir, setNewDir] = useState<boolean>(false);
+    const inputRef = useRef<InputRef>(null);
+    const [inputValue, setInputValue] = useState<string>("");
+    const [messageStatus, setMessageStatus] = useState<{ type: "error" | "success"; content: string }>();
+    // State for the pinned directory
+    const [pinnedDirs, setPinnedDirs] = useState(hostDirectoryMock);
     const [hoverId, setHoverId] = useState<number | null>(null);
-    const [isPinned, setIsPinned] = useState(DirPinToTopKey.None);
-    const inputRef = useRef<any>(null);
-    const [inputError, setInputError] = useState(false);
-    // The sidebar state
+    const [pinnedOrder, setPinnedOrder] = useState<number[]>([]);
+    // State for the sidebar
     const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     const [isDragging, setIsDragging] = useState<boolean>(false);
     const [isHover, setIsHover] = useState<boolean>(false);
     const dragging = useRef<boolean>(false);
-    // The collapsed state
+    // State for the collapsed
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
-    // Trigger the message inside an effect 
+    // Trigger the message inside an effect
     // to avoid the uncertainty caused by React's concurrent rendering.
     useEffect(() => {
-        if (inputError) {
-            message.error({
-                content: "请输入正确的目录名称",
+        if (messageStatus) {
+            message.open({
+                type: messageStatus.type,
+                content: messageStatus.content,
             });
-            setInputError(false);
         }
-    }, [inputError]);
+    }, [messageStatus]);
 
-    useEffect(() => {
-        let content = "";
-        if (isPinned === DirPinToTopKey.Pin) {
-            content = "已置顶";
-        } else if (isPinned === DirPinToTopKey.Unpin) {
-            content = "已取消置顶";
-        }
-        content && message.success({
-            content,
-        });
-        setIsPinned(DirPinToTopKey.None);
-    }, [isPinned]);
-
-    // Create a new directory
+    // Directory to be created
     const handleAdd = () => {
         setNewDir(true);
         setEditDirId(null);
@@ -83,27 +63,53 @@ const Directory: React.FC<{
     const handleAddConfirm = () => {
         // Trigger the error message
         if (inputValue.trim() === "") {
-            setInputError(true);
+            setMessageStatus({
+                type: "error",
+                content: t("host.directory.message.correct_name"),
+            });
+            return;
+        }
+
+        if (!isInputValueAvailable()) {
+            setMessageStatus({
+                type: "error",
+                content: t("host.directory.message.exist_name"),
+            });
             return;
         }
 
         // TODO: api
-        if (inputValue.trim()) {
-            setDirs([
-                // Idle host
-                dirs[0],
-                {
-                    bk_module_id: Date.now(),
-                    bk_module_name: inputValue,
-                    default: 4,
-                    host_count: 0,
-                    children: []
-                },
-                ...dirs.slice(1)
-            ]);
-        }
+        setDirs([
+            // Idle host
+            dirs[0],
+            {
+                bk_module_id: Date.now(),
+                bk_module_name: inputValue,
+                default: 4,
+                host_count: 0,
+                children: []
+            },
+            ...dirs.slice(1)
+        ]);
+        setPinnedDirs([
+            // Idle host
+            pinnedDirs[0],
+            {
+                bk_module_id: Date.now(),
+                bk_module_name: inputValue,
+                default: 4,
+                host_count: 0,
+                children: []
+            },
+            ...pinnedDirs.slice(1)
+        ])
+
         setNewDir(false);
         setInputValue("");
+        setMessageStatus({
+            type: "success",
+            content: t("host.directory.message.add_success"),
+        });
     };
 
     // Directory to be renamed
@@ -115,18 +121,41 @@ const Directory: React.FC<{
 
     // Confirm the renaming of a directory
     const handleRenameConfirm = (id: number) => {
-        // Trigger the error message
         if (inputValue.trim() === "") {
-            setInputError(true);
+            setMessageStatus({
+                type: "error",
+                content: t("host.directory.message.correct_name")
+            });
+            return;
+        }
+
+        if (!isInputValueAvailable()) {
+            setMessageStatus({
+                type: "error",
+                content: t("host.directory.message.exist_name"),
+            });
             return;
         }
 
         setDirs(dirs.map(d => d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d));
         setEditDirId(null);
         setInputValue("");
+        setMessageStatus({
+            type: "success",
+            content: t("host.directory.message.rename_success"),
+        });
     };
 
-    // The input press enter event
+    // Check if the input value is available
+    const isInputValueAvailable = () => {
+        const isAvailable = dirs.filter(d => d.bk_module_id !== editDirId)
+            .every(d => d.bk_module_name !== inputValue);
+        if (isAvailable) {
+            return true;
+        }
+        return false;
+    }
+
     const handleInputPress = (id: number) => {
         if (id === newDirId) {
             handleAddConfirm();
@@ -135,7 +164,6 @@ const Directory: React.FC<{
         }
     }
 
-    // The input blur event
     const handleInputBlur = (id: number) => {
         if (id === newDirId) {
             setNewDir(false);
@@ -148,31 +176,58 @@ const Directory: React.FC<{
     // Directory to be deleted
     const handleDelete = (id: number) => {
         confirm({
-            title: "确认删除目录",
+            title: t("host.directory.confirm.title"),
             icon: <ExclamationCircleFilled />,
-            content: "即将删除目录",
-            okText: "确定",
-            cancelText: "取消",
+            content: t("host.directory.confirm.content"),
+            okText: t("common.confirm"),
+            cancelText: t("common.cancel"),
             onOk() {
                 // TODO: api
                 setDirs(dirs.filter(d => d.bk_module_id !== id));
+                setPinnedDirs(pinnedDirs.filter(d => d.bk_module_id !== id));
                 if (selectedId === id) onSelect(unmodifiableDirIds[0]);
+                setMessageStatus({
+                    type: "success",
+                    content: t("host.directory.message.delete_success")
+                });
             },
             onCancel() { },
         });
     };
 
-    // Pin the current directory item to the top
+    // Pin or unpin the current directory item
     const handlePin = (id: number) => {
-        // TODO: api
-        const idx = dirs.findIndex(d => d.bk_module_id === id);
-        if (idx > -1) {
-            const newDirs = [...dirs];
-            const [item] = newDirs.splice(idx, 1);
-            // The idle host directory is always at the first position
-            newDirs.splice(0, 0, item);
-            setDirs(newDirs);
-            setIsPinned(DirPinToTopKey.Pin);
+        const isPinned = pinnedOrder.includes(id);
+
+        if (isPinned) {
+            // unpin
+            setDirs(prevDirs => {
+                const newDirs = [...prevDirs];
+                const currentIndex = newDirs.findIndex(d => d.bk_module_id === id);
+                const [item] = newDirs.splice(currentIndex, 1);
+                const insertIdx = pinnedDirs.findIndex(d => d.bk_module_id === id);
+                newDirs.splice(insertIdx, 0, item);
+                return newDirs;
+            });
+            setPinnedOrder(prev => prev.filter(pinnedId => pinnedId !== id));
+            setMessageStatus({
+                type: "success",
+                content: t("host.directory.message.unpin_success")
+            });
+        } else {
+            // Pin
+            setDirs(prevDirs => {
+                const newDirs = [...prevDirs];
+                const currentIndex = newDirs.findIndex(d => d.bk_module_id === id);
+                const [item] = newDirs.splice(currentIndex, 1);
+                newDirs.splice(0, 0, item);
+                return newDirs;
+            });
+            setPinnedOrder(prev => [id, ...prev]);
+            setMessageStatus({
+                type: "success",
+                content: t("host.directory.message.pin_success"),
+            });
         }
     };
 
@@ -212,6 +267,18 @@ const Directory: React.FC<{
         document.addEventListener("mouseup", onMouseUp);
     };
 
+    // The directory menu items
+    const items: MenuProps['items'] = [
+        {
+            key: DirMenuKey.Rename,
+            label: t("common.rename"),
+        },
+        {
+            key: DirMenuKey.Delete,
+            label: t("common.delete"),
+        }
+    ]
+
     const renderTitle = (dir: DirectoryData) => {
         const isSelected = selectedId === dir.key;
         return (
@@ -222,6 +289,7 @@ const Directory: React.FC<{
                         ref={inputRef}
                         size="small"
                         value={inputValue}
+                        placeholder={t("host.directory.input.placeholder")}
                         onChange={e => setInputValue(e.target.value)}
                         onPressEnter={() => handleInputPress(dir.key)}
                         onBlur={() => handleInputBlur(dir.key)}
@@ -244,12 +312,16 @@ const Directory: React.FC<{
                         <span className="right-wrapper">
                             {hoverId === dir.key && !unmodifiableDirIds.includes(dir.key) && (
                                 <span className="right-operation">
-                                    <Tooltip title="置顶">
+                                    <Tooltip title={pinnedOrder.includes(dir.key) ? t("host.directory.unpin") : t("host.directory.pin")}>
                                         <span
                                             className="pin-to-top"
                                             onClick={e => { e.stopPropagation(); handlePin(dir.key) }}
                                         >
-                                            不
+                                            {pinnedOrder.includes(dir.key) ? (
+                                                <PushpinOutlined style={{ fontSize: 14 }} />
+                                            ) : (
+                                                "不"
+                                            )}
                                         </span>
                                     </Tooltip>
                                     <Dropdown
@@ -274,10 +346,22 @@ const Directory: React.FC<{
     }
 
     const getDirectoryData = (): DirectoryData[] => {
-        const [idle, ...rest] = dirs;
+        // Get the idle directory
+        const idle = dirs.find(d => d.bk_module_id === unmodifiableDirIds[1])!;
+        // Get the rest of the directories
+        const rest = dirs.filter(d => d.bk_module_id !== unmodifiableDirIds[1]);
 
-        // Idle directory
         const children: DirectoryData[] = [
+            // Pinned directories
+            ...pinnedOrder.map(id => {
+                const dir = rest.find(d => d.bk_module_id === id)!;
+                return {
+                    key: dir.bk_module_id,
+                    title: dir.bk_module_name,
+                    count: dir.host_count
+                }
+            }),
+            // Idle directory
             {
                 key: idle.bk_module_id,
                 title: idle.bk_module_name,
@@ -285,7 +369,7 @@ const Directory: React.FC<{
             }
         ];
 
-        // New directory input field
+        // New directory
         if (newDir) {
             children.push({
                 key: newDirId,
@@ -293,19 +377,20 @@ const Directory: React.FC<{
             });
         }
 
-        // Other directories
-        rest.forEach(dir => {
-            children.push({
-                key: dir.bk_module_id,
-                title: dir.bk_module_name,
-                count: dir.host_count
+        // The rest of the directory
+        rest.filter(dir => !pinnedOrder.includes(dir.bk_module_id))
+            .forEach(dir => {
+                children.push({
+                    key: dir.bk_module_id,
+                    title: dir.bk_module_name,
+                    count: dir.host_count
+                });
             });
-        });
 
         return [
             {
-                key: 0,
-                title: "主机池",
+                key: unmodifiableDirIds[0],
+                title: t("host.directory.host_pool"),
                 children,
             }
         ];
@@ -323,10 +408,10 @@ const Directory: React.FC<{
             {/* The search input and the add icon */}
             <div className="directory-header">
                 <Input.Search
-                    placeholder="分组目录"
+                    placeholder={t("host.directory.grouped")}
                     size="middle"
                 />
-                <Tooltip title="新建目录">
+                <Tooltip title={t("host.directory.add")}>
                     <PlusOutlined className="directory-add" onClick={handleAdd} />
                 </Tooltip>
             </div>

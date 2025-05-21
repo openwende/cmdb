@@ -1,5 +1,4 @@
 import React, { Fragment, useEffect, useRef, useState } from "react";
-import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button, Input, Tree } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
@@ -58,7 +57,6 @@ function buildTreeData() {
 }
 
 const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
-    const navigate = useNavigate();
     const { t } = useTranslation();
 
     const [search, setSearch] = useState<string>("");

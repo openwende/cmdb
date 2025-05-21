@@ -23,10 +23,3 @@ export enum DirMenuKey {
     Rename = 'rename',
     Delete = 'delete'
 }
-
-// The key of the directory pinned to the top
-export enum DirPinToTopKey {
-    None = -1,
-    Unpin = 0,
-    Pin = 1
-}
