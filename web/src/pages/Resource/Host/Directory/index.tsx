@@ -3,7 +3,7 @@ import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message } from "antd"
 import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled } from "@ant-design/icons";
 import { hostDirectoryMock } from "@/mock/resource";
 import "./style.css";
-import { DirectoryData } from "../../Types";
+import { DirectoryData, DirMenuKey, DirPinToTopKey } from "../../Types";
 
 // The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
@@ -17,11 +17,11 @@ const newDirId = -1;
 // The directory menu items
 const items: MenuProps['items'] = [
     {
-        key: 'rename',
+        key: DirMenuKey.Rename,
         label: "重命名",
     },
     {
-        key: 'delete',
+        key: DirMenuKey.Delete,
         label: "删除",
     }
 ]
@@ -37,6 +37,7 @@ const Directory: React.FC<{
     const [newDir, setNewDir] = useState(false);
     const [inputValue, setInputValue] = useState("");
     const [hoverId, setHoverId] = useState<number | null>(null);
+    const [isPinned, setIsPinned] = useState(DirPinToTopKey.None);
     const inputRef = useRef<any>(null);
     const [inputError, setInputError] = useState(false);
     // The sidebar state
@@ -57,6 +58,19 @@ const Directory: React.FC<{
             setInputError(false);
         }
     }, [inputError]);
+
+    useEffect(() => {
+        let content = "";
+        if (isPinned === DirPinToTopKey.Pin) {
+            content = "已置顶";
+        } else if (isPinned === DirPinToTopKey.Unpin) {
+            content = "已取消置顶";
+        }
+        content && message.success({
+            content,
+        });
+        setIsPinned(DirPinToTopKey.None);
+    }, [isPinned]);
 
     // Create a new directory
     const handleAdd = () => {
@@ -144,7 +158,7 @@ const Directory: React.FC<{
                 setDirs(dirs.filter(d => d.bk_module_id !== id));
                 if (selectedId === id) onSelect(unmodifiableDirIds[0]);
             },
-            onCancel() {},
+            onCancel() { },
         });
     };
 
@@ -158,13 +172,14 @@ const Directory: React.FC<{
             // The idle host directory is always at the first position
             newDirs.splice(0, 0, item);
             setDirs(newDirs);
+            setIsPinned(DirPinToTopKey.Pin);
         }
     };
 
     const handleMenuClick = (key: string, id: number, name: string) => {
-        if (key === 'rename') {
+        if (key === DirMenuKey.Rename) {
             handleRename(id, name);
-        } else if (key === 'delete') {
+        } else if (key === DirMenuKey.Delete) {
             handleDelete(id);
         }
     }
