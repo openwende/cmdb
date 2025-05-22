@@ -12,13 +12,13 @@ const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
 
 // The host pool and idle hosts cannot be modified
-const unmodifiableDirIds: number[] = [0, 1];
+export const unmodifiableDirIds: number[] = [0, 1];
 // The new directory key
 const newDirId = -1;
 
 const Directory: React.FC<{
-    selectedId: number | null;
-    onSelect: (id: number | null) => void;
+    selectedId: number;
+    onSelect: (id: number) => void;
 }> = ({ selectedId, onSelect }) => {
     const { t } = useTranslation();
     const { confirm } = Modal;
@@ -315,7 +315,7 @@ const Directory: React.FC<{
                                     <Tooltip title={pinnedOrder.includes(dir.key) ? t("host.directory.unpin") : t("host.directory.pin")}>
                                         <span
                                             className="pin-to-top"
-                                            onClick={e => { e.stopPropagation(); handlePin(dir.key) }}
+                                            onClick={()=> { handlePin(dir.key) }}
                                         >
                                             {pinnedOrder.includes(dir.key) ? (
                                                 <PushpinOutlined style={{ fontSize: 14 }} />

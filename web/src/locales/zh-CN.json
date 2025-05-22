@@ -35,6 +35,26 @@
           "title": "确定删除目录",
           "content": "即将删除目录"
         }
+      },
+      "assign": {
+        "modal": {
+          "title": {
+            "biz": "分配到业务空闲机池",
+            "pool": "分配到主机池其他目录"
+          },
+          "ok": "确定",
+          "cancel": "取消",
+          "selected_prefix": "已选择",
+          "selected_suffix": "台主机",
+          "placeholder": {
+            "biz": "请选择业务",
+            "pool": "请选择目录"
+          },
+          "text": {
+            "biz": "业务列表",
+            "pool": "主机列表"
+          }
+        }
       }
     }
   }

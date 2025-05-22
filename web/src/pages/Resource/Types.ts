@@ -4,13 +4,11 @@ export enum TabsKey {
     Assigned = 'assigned',
     All = 'all'
 }
-
 export interface TabsProps {
     key: TabsKey;
     label: string;
     children: React.ReactNode;
 }
-
 export interface DirectoryData {
     key: number;
     title: React.ReactNode;
@@ -18,8 +16,12 @@ export interface DirectoryData {
     children?: DirectoryData[];
     icon?: React.ReactNode;
 }
-
 export enum DirMenuKey {
     Rename = 'rename',
     Delete = 'delete'
+}
+export enum AssignType {
+    Biz = "biz",
+    HostPool = "hostPool",
+    None = "none"
 }

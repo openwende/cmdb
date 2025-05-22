@@ -1,34 +1,34 @@
 import React, { useState } from "react";
 import { Tabs } from "antd";
-import Directory from "./Directory";
+import Directory, { unmodifiableDirIds } from "./Directory";
 import HostList from "./HostList";
 import { TabsKey, TabsProps } from "../Types";
 import "./style.css";
 
 const HostPage: React.FC = () => {
     const [tab, setTab] = useState(TabsKey.Unassigned);
-    const [selectedDir, setSelectedDir] = useState<number | null>(null);
+    const [selectedId, setSelectedId] = useState<number>(unmodifiableDirIds[0]);
 
     const items: TabsProps[] = [
         {
             key: TabsKey.Unassigned,
             label: '未分配',
             children: <div className="unassigned-wrapper">
-                    <Directory selectedId={selectedDir} onSelect={setSelectedDir} />
+                    <Directory selectedId={selectedId} onSelect={setSelectedId} />
                 <div style={{ flex: 1 }}>
-                    <HostList />
+                    <HostList selectedId={selectedId} tabKey={TabsKey.Unassigned} />
                 </div>
             </div>,
         },
         {
             key: TabsKey.Assigned,
             label: '已分配',
-            children: <HostList />,
+            children: <HostList tabKey={TabsKey.Assigned} />,
         },
         {
             key: TabsKey.All,
             label: '全部',
-            children: <HostList />,
+            children: <HostList tabKey={TabsKey.All} />,
         },
     ];
 

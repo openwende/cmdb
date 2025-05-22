@@ -1,0 +1,26 @@
+.assign-modal {
+    .ant-modal-title {
+        font-size: 20px;
+    }
+
+    .ant-modal-footer {
+        margin-top: 24px;
+    }
+
+    .selected-tip {
+        margin-top: 20px;
+        display: block;
+
+        .selected-count {
+            font-weight: 700;
+        }
+    }
+
+    .assign-target {
+        margin: 20px auto 10px;
+
+        .target-label {
+            font-size: 16px;
+        }
+    }
+}
