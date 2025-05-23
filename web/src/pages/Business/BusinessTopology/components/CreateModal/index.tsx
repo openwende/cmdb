@@ -1,0 +1,255 @@
+import React, { useState, useEffect } from "react";
+import { useTranslation } from 'react-i18next';
+import { Modal, Radio, Select, Input, Form, Button, Tooltip, Cascader } from "antd";
+import { PlusOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { setTemplate, serviceTemplate, serviceCategoryMock } from "@/mock/business";
+import { CascaderOption, CreateMode, CreateType } from "@/pages/Business/Types";
+import { buildCascaderOptions } from "@/pages/Business/utils";
+import "./style.css";
+
+const { Option } = Select;
+
+interface CreateModalProps {
+    visible: boolean;
+    type: CreateType;
+    parentNode: any;
+    onClose: () => void;
+}
+
+const CreateModal: React.FC<CreateModalProps> = ({ visible, type, parentNode, onClose }) => {
+    const { t } = useTranslation();
+    const [form] = Form.useForm();
+    const [mode, setMode] = useState<CreateMode>(CreateMode.Template);
+    const [serviceCategory, setServiceCategory] = useState<string[]>([]);
+    const [cascaderOptions, setCascaderOptions] = useState<CascaderOption[]>([]);
+    const formItemRules = [{
+        required: true,
+        message: t("business.topology.tree.create.form.rules_message")
+    }];
+
+    useEffect(() => {
+        const cascaderOptions = buildCascaderOptions(serviceCategoryMock);
+        setCascaderOptions(cascaderOptions);
+    }, [serviceCategory])
+
+    const onOk = async () => {
+        try {
+            const values = await form.validateFields();
+            if (
+                type === CreateType.Module
+                && mode === CreateMode.Direct
+                && serviceCategory.length === 0
+            ) {
+                return;
+            }
+            console.log(values, serviceCategory);
+        } catch (err) {
+            console.log(err);
+        }
+
+        // TODO: api
+        /**
+         * 新建集群payload
+         * 直接新建
+         * {
+            "sets": [
+                {
+                    "set_template_id": 0,
+                    "bk_set_name": "set1",
+                    "bk_biz_id": 4,
+                    "bk_parent_id": 4
+                }
+            ]
+        }
+        * 
+        */
+        /**
+         * 新建模块payload
+         * 直接新建
+         * {
+            "bk_module_name": "module1",
+            "service_category_id": 2,
+            "service_template_id": 0,
+            "bk_biz_id": 4,
+            "bk_parent_id": 7
+        }
+         * 
+        */
+    }
+
+    const onCancel = () => {
+        reset();
+        onClose();
+    }
+
+    const reset = () => {
+        form.resetFields();
+        setMode(CreateMode.Template);
+        setServiceCategory([]);
+    }
+
+    const handleCreateSet = () => {
+        return <>
+            {mode === CreateMode.Template && (
+                // Set template
+                <Form.Item
+                    label={t("business.topology.tree.create.form.label1")}
+                    name="setTemplate"
+                    rules={formItemRules}
+                >
+                    <Select
+                        placeholder={t("business.topology.tree.create.form.placeholder1")}
+                        notFoundContent={t("business.topology.tree.create.form.noContent")}
+                        popupRender={menu => (
+                            <>
+                                {menu}
+                                <div style={{ textAlign: "center" }}>
+                                    <Button type="link" icon={<PlusOutlined />} style={{ padding: 0 }}>
+                                        {t("business.topology.tree.create.form.create_setTemplate")}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    >
+                        {setTemplate.map(t => (
+                            <Option key={t.set_template.id} value={t.set_template.id}>
+                                {t.set_template.name}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+            )}
+            {/* Set name */}
+            <Form.Item
+                label={t("business.topology.tree.create.form.label2")}
+                name="setName"
+                rules={formItemRules}
+            >
+                <Input placeholder={t("business.topology.tree.create.form.placeholder2")} />
+            </Form.Item>
+        </>
+    }
+
+    const handleCreateModule = () => {
+        return <>
+            {mode === CreateMode.Template && (
+                // Service template
+                <Form.Item
+                    label={t("business.topology.tree.create.form.label3")}
+                    name="serviceTemplate"
+                    rules={formItemRules}
+                >
+                    <Select
+                        placeholder={t("business.topology.tree.create.form.placeholder3")}
+                        onChange={v => {
+                            const selectedName = serviceTemplate.find(t => t.id === v)?.name;
+                            form.setFieldsValue({ moduleName: selectedName });
+                        }}
+                        popupRender={menu => (
+                            <>
+                                {menu}
+                                <div style={{ textAlign: "center" }}>
+                                    <Button type="link" icon={<PlusOutlined />} style={{ padding: 0 }}>
+                                        {t("business.topology.tree.create.form.create_serviceTemplate")}
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                        notFoundContent={t("business.topology.tree.create.form.noContent")}
+                    >
+                        {serviceTemplate.map(t => (
+                            <Option key={t.id} value={t.id}>
+                                {t.name}
+                            </Option>
+                        ))}
+                    </Select>
+                </Form.Item>
+            )}
+            {/* Module name */}
+            <Form.Item
+                label={
+                    <span>
+                        {t("business.topology.tree.create.form.label4")}
+                        {
+                            mode === CreateMode.Template
+                                ? <Tooltip title={t("business.topology.tree.create.form.tooltip4")}>
+                                    <InfoCircleOutlined style={{ marginLeft: 4 }} />
+                                </Tooltip> : null
+                        }
+                    </span>
+                }
+                name="moduleName"
+                rules={formItemRules}
+            >
+                <Input
+                    placeholder={t("business.topology.tree.create.form.placeholder4")}
+                    disabled={mode === CreateMode.Template}
+                />
+            </Form.Item>
+            {mode === CreateMode.Direct && (
+                // Service category
+                <Form.Item
+                    label={t("business.topology.tree.create.form.label5")}
+                    required={true}
+                    rules={formItemRules}
+                >
+                    <Cascader
+                        placeholder={t("business.topology.tree.create.form.placeholder5")}
+                        style={{ width: "100%" }}
+                        options={cascaderOptions}
+                        showSearch={true}
+                        changeOnSelect={false}
+                        onChange={(value) => setServiceCategory(value)}
+                    />
+                </Form.Item>
+            )}
+        </>
+    }
+
+    return (
+        <Modal
+            open={visible}
+            title={
+                type === CreateType.Set
+                    ? t("business.topology.tree.create.set_title")
+                    : t("business.topology.tree.create.module_title")
+            }
+            okText={t("common.confirm")}
+            cancelText={t("common.cancel")}
+            width={580}
+            onOk={onOk}
+            onCancel={onCancel}
+            maskClosable={false}
+            className="create-modal"
+        >
+            <div className="selected-tip">
+                {/* TODO: When selected module, where should show the bizName together */}
+                {t("business.topology.tree.create.selected")}: {parentNode?.title || "--"}
+            </div>
+            <Form form={form} layout="vertical">
+                {/* Create mode, like template mode and direct mode */}
+                <Form.Item>
+                    <Radio.Group
+                        value={mode}
+                        onChange={e => {
+                            form.resetFields();
+                            setMode(e.target.value);
+                        }}
+                    >
+                        <Radio value={CreateMode.Template}>
+                            {t("business.topology.tree.create.templateMode")}
+                        </Radio>
+                        <Radio value={CreateMode.Direct}>
+                            {t("business.topology.tree.create.directMode")}
+                        </Radio>
+                    </Radio.Group>
+                </Form.Item>
+                {type === CreateType.Set && handleCreateSet()}
+                {type === CreateType.Module && handleCreateModule()}
+            </Form>
+        </Modal>
+    );
+};
+
+export default CreateModal;
+

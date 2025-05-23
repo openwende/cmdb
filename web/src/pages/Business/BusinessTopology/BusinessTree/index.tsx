@@ -7,6 +7,8 @@ import { businessData, idleCluster } from "../../../../mock/business";
 import HostSvg from '@/assets/icons/host.svg';
 import FaultHostSvg from '@/assets/icons/faultHost.svg';
 import "./style.css";
+import CreateModal from "../components/CreateModal";
+import { CreateType } from "../../Types";
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
@@ -71,6 +73,10 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     const dragging = useRef<boolean>(false);
     // the collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
+    // State for creating set and module
+    const [modalVisible, setModalVisible] = useState(false);
+    const [createType, setCreateType] = useState<CreateType>(CreateType.Set);
+    const [parentNode, setParentNode] = useState<any>();
 
     useEffect(() => {
         // getTopologyTree().then(res => {
@@ -84,15 +90,15 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
         setExpandedKeys([treeData[0].key]);
     }, [businessData])
 
-    const createNode = (type: string) => {
-        if (type === 'business') {
-            // TODO: create business
-        } else if (type === 'cluster') {
-            // TODO: create cluster
-        } else if (type === 'module') {
-            // TODO: create module
+    const handleCreate = (node: any) => {
+        if (node.type === "business") {
+            setCreateType(CreateType.Set);
+        } else if (node.type === "cluster") {
+            setCreateType(CreateType.Module);
         }
-    }
+        setParentNode(node);
+        setModalVisible(true);
+    };
 
     // the dragger event
     const onMouseDown = (e: React.MouseEvent) => {
@@ -124,20 +130,30 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     const renderTitle = (node: TreeData) => {
         const isSelected = selectedKey === node.key;
         return (
-            <span className="title-wrapper">
+            <span
+                className="title-wrapper"
+                onMouseEnter={() => setHoveredKey(node.key)}
+                onMouseLeave={() => setHoveredKey(null)}
+            >
                 <span className="left-wrapper">
-                    {node.type === 'business' && <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>业</span>}
-                    {node.type === 'cluster' && <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>集</span>}
-                    {node.type === 'module' && <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>模</span>}
+                    {
+                        node.type === 'business' && (
+                        <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>业</span>
+                    )}
+                    {
+                        node.type === 'cluster' && (
+                        <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>集</span>
+                    )}
+                    {
+                        node.type === 'module' && (
+                        <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>模</span>
+                    )}
                     {node.title}
                 </span>
-                <span className="right-wrapper"
-                    onMouseEnter={() => setHoveredKey(node.key)}
-                    onMouseLeave={() => setHoveredKey(null)}
-                >
+                <span className="right-wrapper">
                     {/* TODO: count */}
-                    {hoveredKey === node.key && node.type !== 'idle'
-                        ? <Button type="primary" size="small" onClick={() => createNode(node.type)}>新建</Button>
+                    {hoveredKey === node.key && node.type !== 'idle' && node.type !== 'module'
+                        ? <Button type="primary" size="small" onClick={() => handleCreate(node)}>新建</Button>
                         : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
                     }
                 </span>
@@ -155,7 +171,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                 marginRight: collapsed ? 0 : 20
             }}
         >
-            {/* the search input and tree*/}
+            {/* The search input and tree*/}
             {
                 !collapsed && <Fragment>
                     <div className="search-wrapper">
@@ -170,14 +186,13 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                         treeData={treeData}
                         blockNode={true}
                         titleRender={renderTitle}
-                        // showIcon={true}
                         selectedKeys={selectedKey ? [selectedKey] : []}
                         onSelect={keys => { keys.length && onSelect(keys[0] as string) }}
                         expandedKeys={expandedKeys}
                         onExpand={keys => setExpandedKeys(keys as string[])}
                         className="ant-tree"
                     />
-                    {/* the dragger */}
+                    {/* The dragger */}
                     <div
                         style={{
                             position: "absolute",
@@ -197,7 +212,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                     />
                 </Fragment>
             }
-            {/* the collapsed button */}
+            {/* The collapsed button */}
             <div
                 className="collapsed-button"
                 style={{
@@ -212,6 +227,13 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
             >
                 {collapsed ? <RightOutlined /> : <LeftOutlined />}
             </div>
+            {/* Modal for creating set and module*/}
+            <CreateModal
+                visible={modalVisible}
+                type={createType}
+                parentNode={parentNode}
+                onClose={() => setModalVisible(false)}
+            />
         </div>
     );
 };

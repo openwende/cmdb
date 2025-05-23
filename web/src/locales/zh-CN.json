@@ -5,56 +5,80 @@
     "confirm": "确定",
     "cancel": "取消"
   },
-    "business": {
-      "topology": {
-        "tree": {
-            "search": "请输入关键词"
+  "business": {
+    "topology": {
+      "tree": {
+        "search": "请输入关键词",
+        "create": {
+          "form": {
+            "label1": "集群模板",
+            "placeholder1": "请选择集群模板",
+            "noContent": "暂无选项",
+            "create_setTemplate": "创建集群模板",
+            "label2": "集群名称",
+            "placeholder2": "请输入集群名称，需批量创建多个可使用换行分隔",
+            "label3": "服务模板",
+            "placeholder3": "请选择服务模板",
+            "create_serviceTemplate": "新建服务模板",
+            "label4": "模块名称",
+            "tooltip4": "模块名称需同服务模板名称保持一致",
+            "placeholder4": "请输入模块名称",
+            "label5": "所属服务分类",
+            "placeholder5": "请选择服务分类",
+            "rules_message": "该字段是必填项"
+          },
+          "set_title": "新建集群",
+          "module_title": "新建模块",
+          "templateMode": "从模板新建",
+          "directMode": "直接新建",
+          "selected": "已选择"
         }
       }
-    },
-    "host": {
-      "directory": {
-        "host_pool": "主机池",
-        "grouped": "分组目录",
-        "add": "新建目录",
-        "input": {
-          "placeholder": "请输入目录名称，回车结束"
-        },
-        "pin": "置顶",
-        "unpin": "取消置顶",
-        "message": {
-          "correct_name": "请输入正确的目录名称",
-          "exist_name": "目录名称已存在",
-          "add_success": "新建成功",
-          "rename_success": "修改成功",
-          "delete_success": "删除成功",
-          "pin_success": "已置顶",
-          "unpin_success": "已取消置顶"
-        },
-        "confirm": {
-          "title": "确定删除目录",
-          "content": "即将删除目录"
-        }
+    }
+  },
+  "host": {
+    "directory": {
+      "host_pool": "主机池",
+      "grouped": "分组目录",
+      "add": "新建目录",
+      "input": {
+        "placeholder": "请输入目录名称，回车结束"
       },
-      "assign": {
-        "modal": {
-          "title": {
-            "biz": "分配到业务空闲机池",
-            "pool": "分配到主机池其他目录"
-          },
-          "ok": "确定",
-          "cancel": "取消",
-          "selected_prefix": "已选择",
-          "selected_suffix": "台主机",
-          "placeholder": {
-            "biz": "请选择业务",
-            "pool": "请选择目录"
-          },
-          "text": {
-            "biz": "业务列表",
-            "pool": "主机列表"
-          }
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "message": {
+        "correct_name": "请输入正确的目录名称",
+        "exist_name": "目录名称已存在",
+        "add_success": "新建成功",
+        "rename_success": "修改成功",
+        "delete_success": "删除成功",
+        "pin_success": "已置顶",
+        "unpin_success": "已取消置顶"
+      },
+      "confirm": {
+        "title": "确定删除目录",
+        "content": "即将删除目录"
+      }
+    },
+    "assign": {
+      "modal": {
+        "title": {
+          "biz": "分配到业务空闲机池",
+          "pool": "分配到主机池其他目录"
+        },
+        "ok": "确定",
+        "cancel": "取消",
+        "selected_prefix": "已选择",
+        "selected_suffix": "台主机",
+        "placeholder": {
+          "biz": "请选择业务",
+          "pool": "请选择目录"
+        },
+        "text": {
+          "biz": "业务列表",
+          "pool": "主机列表"
         }
       }
     }
   }
+}

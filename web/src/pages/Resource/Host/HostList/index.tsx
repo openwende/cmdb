@@ -170,8 +170,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                     // onOpenChange={setAssignOpen}
                     >
                         <Button disabled={selectedRowKeys.length === 0}>
-                            分配到
                             <Space>
+                                分配到
                                 <DownOutlined rotate={assignOpen ? 180 : 0} />
                             </Space>
                         </Button>
