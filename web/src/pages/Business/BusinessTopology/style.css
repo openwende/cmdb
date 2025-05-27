@@ -1,0 +1,13 @@
+.topology-wrapper {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 100px);
+
+    .topology-tabs {
+        flex: 1;
+    }
+
+    .ant-tabs-nav-wrap {
+        border-bottom: 1px solid #dcdee5;
+    }
+}

@@ -485,9 +485,139 @@ export const serviceTemplate = [
 // 服务实例
 export const serviceInst = [
   {
-      "bk_obj_id": "module",
-      "bk_inst_id": 15,
-      "host_count": 1,
-      "service_instance_count": 0
+      "bk_biz_id": 4,
+      "bk_host_id": 1,
+      "bk_module_id": 15,
+      "bk_supplier_account": "0",
+      "create_time": "2025-05-27T06:52:15.748Z",
+      "creator": "bk-cmdb",
+      "id": 1,
+      "labels": null,
+      "last_time": "2025-05-27T06:52:15.748Z",
+      "modifier": "bk-cmdb",
+      "name": "192.168.0.2_devTest",
+      "process_count": 1,
+      "service_template_id": 0
   }
 ];
+export const processInst = [
+  {
+      "property": {
+          "auto_start": false,
+          "bind_info": [],
+          "bk_biz_id": 4,
+          "bk_created_at": "2025-05-27T06:52:15.757Z",
+          "bk_created_by": "bk-cmdb",
+          "bk_func_name": "devTest",
+          "bk_process_id": 1,
+          "bk_process_name": "devTest",
+          "bk_start_check_secs": null,
+          "bk_start_param_regex": "",
+          "bk_supplier_account": "0",
+          "bk_updated_at": "2025-05-27T06:52:15.757Z",
+          "bk_updated_by": "",
+          "create_time": "2025-05-27T06:52:15.757Z",
+          "description": "",
+          "face_stop_cmd": "",
+          "last_time": "2025-05-27T06:52:15.757Z",
+          "pid_file": "",
+          "priority": null,
+          "proc_num": null,
+          "reload_cmd": "",
+          "restart_cmd": "",
+          "service_instance_id": 1,
+          "start_cmd": "",
+          "stop_cmd": "",
+          "timeout": null,
+          "user": "",
+          "work_path": ""
+      },
+      "relation": {
+          "bk_biz_id": 4,
+          "bk_process_id": 1,
+          "service_instance_id": 1,
+          "process_template_id": 0,
+          "bk_host_id": 1,
+          "bk_supplier_account": "0"
+      }
+  }
+];
+export const processInfo = [
+  {
+      "bk_process_name": "devTest",
+      "process_ids": [
+          1
+      ]
+  }
+];
+export const processDetail = [
+  {
+      "process_id": 1,
+      "service_instance_name": "192.168.0.2_devTest",
+      "property": {
+          "auto_start": false,
+          "bind_info": [],
+          "bk_biz_id": 4,
+          "bk_created_at": "2025-05-27T06:52:15.757Z",
+          "bk_created_by": "bk-cmdb",
+          "bk_func_name": "devTest",
+          "bk_process_id": 1,
+          "bk_process_name": "devTest",
+          "bk_start_check_secs": null,
+          "bk_start_param_regex": "",
+          "bk_supplier_account": "0",
+          "bk_updated_at": "2025-05-27T06:52:15.757Z",
+          "bk_updated_by": "",
+          "create_time": "2025-05-27T06:52:15.757Z",
+          "description": "",
+          "face_stop_cmd": "",
+          "last_time": "2025-05-27T06:52:15.757Z",
+          "pid_file": "",
+          "priority": null,
+          "proc_num": null,
+          "reload_cmd": "",
+          "restart_cmd": "",
+          "service_instance_id": 1,
+          "start_cmd": "",
+          "stop_cmd": "",
+          "timeout": null,
+          "user": "",
+          "work_path": ""
+      },
+      "relation": {
+          "bk_biz_id": 4,
+          "bk_process_id": 1,
+          "service_instance_id": 1,
+          "process_template_id": 0,
+          "bk_host_id": 1,
+          "bk_supplier_account": "0"
+      }
+  }
+];
+export const nodeInfo = [
+  {
+      "bk_bak_operator": null,
+      "bk_biz_id": 4,
+      "bk_created_at": "2025-05-18T13:02:33.698Z",
+      "bk_created_by": "bk-cmdb",
+      "bk_module_id": 15,
+      "bk_module_name": "game",
+      "bk_module_type": "1",
+      "bk_parent_id": 6,
+      "bk_set_id": 6,
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-05-18T13:02:33.698Z",
+      "bk_updated_by": null,
+      "create_time": "2025-05-18T13:02:33.698Z",
+      "default": 0,
+      "host_apply_enabled": false,
+      "last_time": "2025-05-18T13:02:33.698Z",
+      "operator": null,
+      "service_category_id": 2,
+      "service_template_id": 0,
+      "set_template_id": 0
+  }
+];
+
+// 从serviceCategoryMock中提取serviceCategory数据
+export const serviceCategory = serviceCategoryMock.map(item => item.category);

@@ -1,8 +1,12 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React from 'react';
+import BusinessTopology from './BusinessTopology';
 
 const Business: React.FC = () => {
-    return <Outlet />
-}
+  return (
+    <div>
+      <BusinessTopology />
+    </div>
+  );
+};
 
 export default Business;
