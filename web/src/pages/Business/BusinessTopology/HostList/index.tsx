@@ -4,6 +4,7 @@ import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons'
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import { AppendMenuItemKey, DropdownMenuType, MoreMenuItemKey, RemoveMenuItemKey, TransferMenuItemKey } from '../../Types';
+import AddHostModal from '../components/AddHostModal';
 import './style.css';
 
 interface Props {
@@ -14,9 +15,10 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [addModalVisible, setAddModalVisible] = useState(false);
 
   // Check if the selected node is module type
-  const isModuleSelected = selectedNode?.bk_obj_id === 'module';
+  const isModuleSelected = selectedNode?.type === 'module';
 
   const columns = [
     {
@@ -97,17 +99,28 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
     message.info(`${key}`);
   };
 
+  const handleAddHost = () => {
+    setAddModalVisible(true);
+  };
+
+  const handleAddHostConfirm = (hosts: any[]) => {
+    console.log('添加主机:', hosts);
+    message.success(`成功添加 ${hosts.length} 台主机`);
+    // 这里可以添加实际的添加主机逻辑
+  };
+
   return (
     <div className='list-wrapper'>
       {/* The operation botton bar */}
       <div className='operation-bar'>
-        {isModuleSelected ? (
-          <Button type="primary">新增</Button>
+      <Button type="primary" onClick={handleAddHost}>新增</Button>
+        {/* {isModuleSelected ? (
+          <Button type="primary" onClick={handleAddHost}>新增</Button>
         ) : (
           <Tooltip title="仅能在业务模块下新增">
             <Button type="primary" disabled>新增</Button>
           </Tooltip>
-        )}
+        )} */}
 
         <Button
           disabled={selectedRowKeys.length === 0}
@@ -213,6 +226,13 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
           }}
         />
       </div>
+
+      {/* Add host modal */}
+      <AddHostModal
+        visible={addModalVisible}
+        onClose={() => setAddModalVisible(false)}
+        onConfirm={handleAddHostConfirm}
+      />
     </div>
   );
 };
