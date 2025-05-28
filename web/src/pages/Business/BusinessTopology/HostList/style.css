@@ -1,28 +1,28 @@
 .list-wrapper {
     background: #fff;
     padding: 16px;
+}
 
-    .operation-bar {
-        margin-bottom: 16px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
+.operation-bar {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 
-        .search-bar {
-            margin-left: auto;
-            display: flex;
-            gap: 8px;
-        }
-    }
+.search-bar {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+}
 
-    .pagination-wrapper {
-        margin-top: 16px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+.pagination-wrapper {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
 
-        .selected-count {
-            font-weight: 700;
-        }
-    }
+.selected-count {
+    font-weight: 700;
 }

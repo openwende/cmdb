@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Form, Input, Select, Button, Collapse, message } from 'antd';
-import { nodeInfo, serviceTemplate, serviceCategoryMock } from '@/mock/business';
+import { Form, Input, Select, Button, Collapse, message, CollapseProps } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
+import { nodeInfo } from '@/mock/business';
+import ServiceCategorySelector from '../components/ServiceCategory';
 
-const { Panel } = Collapse;
 const { Option } = Select;
 
 interface Props {
@@ -12,38 +13,41 @@ interface Props {
 const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const [form] = Form.useForm();
     const [isEditing, setIsEditing] = useState(false);
-    const [selectedServiceCategory, setSelectedServiceCategory] = useState<number>();
+    const [serviceCategory, setServiceCategory] = useState<number[]>([]);
 
     // 获取当前节点信息
     const currentNodeInfo = nodeInfo[0] || {};
 
-    // 获取服务模板名称
-    const getServiceTemplateName = (id: number) => {
-        const template = serviceTemplate.find(t => t.id === id);
-        return template?.name || '--';
-    };
-
-    // 获取服务分类名称
-    const getServiceCategoryName = (id: number) => {
-        const category = serviceCategoryMock.find(c => c.category.id === id);
-        return category?.category.name || '--';
+    // 复制功能
+    const handleCopy = async (text: string, label: string) => {
+        try {
+            await navigator.clipboard.writeText(text);
+            message.success(`${label}复制成功`);
+        } catch (error) {
+            message.error('复制失败');
+        }
     };
 
     const handleEdit = () => {
         setIsEditing(true);
         form.setFieldsValue({
             bk_module_name: currentNodeInfo.bk_module_name,
-            service_template_id: currentNodeInfo.service_template_id,
-            service_category_id: currentNodeInfo.service_category_id,
+            module_type: '普通',
             operator: currentNodeInfo.operator,
             bk_bak_operator: currentNodeInfo.bk_bak_operator
         });
+        // 设置默认的服务分类值
+        setServiceCategory([1, 2]); // Default -> Default
     };
+
+    const handleDelete = () => {
+        message.success('删除成功')
+    }
 
     const handleSave = async () => {
         try {
             const values = await form.validateFields();
-            console.log('保存数据:', values);
+            console.log('保存数据:', { ...values, serviceCategory });
             message.success('保存成功');
             setIsEditing(false);
         } catch (error) {
@@ -54,91 +58,149 @@ const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const handleCancel = () => {
         setIsEditing(false);
         form.resetFields();
+        setServiceCategory([]);
     };
+
+    // The component of the information item, support hover to show the copy icon
+    const InfoItem: React.FC<{ label: string; value: string }> = ({ label, value }) => {
+        const [isHovered, setIsHovered] = useState(false);
+
+        return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ color: '#666', marginBottom: 4 }}>{label}：</div>
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        position: 'relative'
+                    }}
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                >
+                    <span>{value}</span>
+                    {isHovered && (
+                        <CopyOutlined
+                            style={{
+                                cursor: 'pointer',
+                                color: '#1890ff',
+                                fontSize: 12
+                            }}
+                            onClick={() => handleCopy(value, label)}
+                        />
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const normalCollapseItems: CollapseProps['items'] = [
+        {
+            key: '1',
+            label: '基础信息',
+            children: <>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px 32px' }}>
+                    <InfoItem
+                        label="创建时间"
+                        value={new Date(currentNodeInfo.create_time).toLocaleString()}
+                    />
+                    <InfoItem
+                        label="创建人"
+                        value={currentNodeInfo.bk_created_by}
+                    />
+                    <InfoItem
+                        label="更新时间"
+                        value={new Date(currentNodeInfo.last_time).toLocaleString()}
+                    />
+                    <InfoItem
+                        label="更新人"
+                        value={currentNodeInfo.bk_updated_by || '--'}
+                    />
+                    <InfoItem
+                        label="ID"
+                        value={currentNodeInfo.bk_module_id?.toString() || '15'}
+                    />
+                    <InfoItem
+                        label="主要维护人"
+                        value={currentNodeInfo.operator || '--'}
+                    />
+                    <InfoItem
+                        label="模块名"
+                        value={currentNodeInfo.bk_module_name}
+                    />
+                    <InfoItem
+                        label="模块类型"
+                        value="普通"
+                    />
+                    <InfoItem
+                        label="备份维护人"
+                        value={currentNodeInfo.bk_bak_operator || '--'}
+                    />
+                </div>
+            </>
+        }
+    ]
+
+    const editCollapseItems: CollapseProps['items'] = [
+        {
+            key: '1',
+            label: '基础信息',
+            children: <>
+                <Form form={form} layout="vertical">
+                    <div style={{ display: 'flex', gap: 16 }}>
+                        <Form.Item
+                            label="模块名称"
+                            name="bk_module_name"
+                            rules={[{ required: true, message: '请输入模块名称' }]}
+                            style={{ flex: 1 }}
+                        >
+                            <Input placeholder="请输入模块名称" />
+                        </Form.Item>
+                        <Form.Item
+                            label="模块类型"
+                            name="module_type"
+                            style={{ flex: 1 }}
+                        >
+                            <Select placeholder="请选择模块类型">
+                                <Option value="普通">普通</Option>
+                                <Option value="数据库">数据库</Option>
+                            </Select>
+                        </Form.Item>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 16 }}>
+                        <Form.Item
+                            label="主要维护人"
+                            name="operator"
+                            style={{ flex: 1 }}
+                        >
+                            <Input placeholder="请输入主要维护人" />
+                        </Form.Item>
+                        <Form.Item
+                            label="备份维护人"
+                            name="bk_bak_operator"
+                            style={{ flex: 1 }}
+                        >
+                            <Input placeholder="请输入备份维护人" />
+                        </Form.Item>
+                    </div>
+                </Form>
+            </>,
+        }
+    ]
 
     if (isEditing) {
         return (
             <div style={{ background: '#fff', padding: 24 }}>
-                <h2>编辑节点</h2>
-
-                <div style={{ marginBottom: 24 }}>
-                    <h3>服务分类</h3>
-                    <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                        <Select
-                            placeholder="请选择一级分类"
-                            style={{ width: 200 }}
-                            onChange={(value) => setSelectedServiceCategory(value)}
-                        >
-                            {serviceCategoryMock
-                                .filter(item => item.category.bk_parent_id === 0)
-                                .map(item => (
-                                    <Option key={item.category.id} value={item.category.id}>
-                                        {item.category.name}
-                                    </Option>
-                                ))
-                            }
-                        </Select>
-                        <Select
-                            placeholder="请选择二级分类"
-                            style={{ width: 200 }}
-                            disabled={!selectedServiceCategory}
-                        >
-                            {serviceCategoryMock
-                                .filter(item => item.category.bk_parent_id === selectedServiceCategory)
-                                .map(item => (
-                                    <Option key={item.category.id} value={item.category.id}>
-                                        {item.category.name}
-                                    </Option>
-                                ))
-                            }
-                        </Select>
-                    </div>
+                <div style={{ marginBottom: 60 }}>
+                    <div style={{ marginBottom: 8, fontWeight: 500 }}>服务分类</div>
+                    <ServiceCategorySelector
+                        value={serviceCategory}
+                        onChange={(value) => setServiceCategory(value)}
+                        style={{ width: 400 }}
+                    />
                 </div>
-
-                <Collapse defaultActiveKey={['basic']} ghost>
-                    <Panel header="基础信息" key="basic">
-                        <Form form={form} layout="vertical">
-                            <div style={{ display: 'flex', gap: 16 }}>
-                                <Form.Item
-                                    label="模块名称"
-                                    name="bk_module_name"
-                                    rules={[{ required: true, message: '请输入模块名称' }]}
-                                    style={{ flex: 1 }}
-                                >
-                                    <Input placeholder="请输入模块名称" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="模块类型"
-                                    name="module_type"
-                                    style={{ flex: 1 }}
-                                >
-                                    <Select placeholder="请选择模块类型">
-                                        <Option value="1">普通</Option>
-                                        <Option value="2">数据库</Option>
-                                    </Select>
-                                </Form.Item>
-                            </div>
-
-                            <div style={{ display: 'flex', gap: 16 }}>
-                                <Form.Item
-                                    label="主要维护人"
-                                    name="operator"
-                                    style={{ flex: 1 }}
-                                >
-                                    <Input placeholder="请输入主要维护人" />
-                                </Form.Item>
-                                <Form.Item
-                                    label="备份维护人"
-                                    name="bk_bak_operator"
-                                    style={{ flex: 1 }}
-                                >
-                                    <Input placeholder="请输入备份维护人" />
-                                </Form.Item>
-                            </div>
-                        </Form>
-                    </Panel>
-                </Collapse>
-
+                <Collapse defaultActiveKey={['1']} ghost items={editCollapseItems} />
                 <div style={{ marginTop: 24 }}>
                     <Button type="primary" onClick={handleSave} style={{ marginRight: 8 }}>
                         保存
@@ -154,78 +216,21 @@ const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
     return (
         <div style={{ background: '#fff', padding: 24 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-                <h2>查看节点</h2>
+                <div style={{ marginBottom: 8 }}>服务模板：无</div>
+                <div style={{ marginBottom: 8 }}>服务分类：Default / Default</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                    <span>主机属性自动应用：</span>
+                    <Button type="link" style={{ padding: 0 }}>未启用</Button>
+                </div>
+            </div>
+            <Collapse defaultActiveKey={['1']} ghost items={normalCollapseItems} />
+            <div style={{ display: 'flex', gap: 16, marginTop: 24 }}>
                 <Button type="primary" onClick={handleEdit}>
                     编辑
                 </Button>
-            </div>
-
-            <Collapse defaultActiveKey={['basic']} ghost>
-                <Panel header="基础信息" key="basic">
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px 32px' }}>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>创建时间：</div>
-                            <div>{new Date(currentNodeInfo.create_time).toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>创建人：</div>
-                            <div>{currentNodeInfo.bk_created_by}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>更新时间：</div>
-                            <div>{new Date(currentNodeInfo.last_time).toLocaleString()}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>更新人：</div>
-                            <div>{currentNodeInfo.bk_updated_by || '--'}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>模块名称：</div>
-                            <div>{currentNodeInfo.bk_module_name}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>模块类型：</div>
-                            <div>普通</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>主要维护人：</div>
-                            <div>{currentNodeInfo.operator || '--'}</div>
-                        </div>
-                        <div>
-                            <div style={{ color: '#666', marginBottom: 4 }}>备份维护人：</div>
-                            <div>{currentNodeInfo.bk_bak_operator || '--'}</div>
-                        </div>
-                    </div>
-                </Panel>
-            </Collapse>
-
-            <div style={{ marginTop: 32 }}>
-                <h3>服务分类</h3>
-                <div style={{ display: 'flex', gap: 16, marginBottom: 16 }}>
-                    <Select
-                        value={getServiceCategoryName(currentNodeInfo.service_category_id)}
-                        style={{ width: 200 }}
-                        disabled
-                    >
-                        <Option value="Default">Default</Option>
-                    </Select>
-                    <Select
-                        value="Default"
-                        style={{ width: 200 }}
-                        disabled
-                    >
-                        <Option value="Default">Default</Option>
-                    </Select>
-                </div>
-
-                <h3>服务模板</h3>
-                <div style={{ marginBottom: 16 }}>
-                    <span>{getServiceTemplateName(currentNodeInfo.service_template_id)}</span>
-                </div>
-
-                <div style={{ marginTop: 24 }}>
-                    <Button type="primary" onClick={handleEdit}>编辑</Button>
-                </div>
+                <Button type="primary" danger onClick={handleDelete}>
+                    删除节点
+                </Button>
             </div>
         </div>
     );

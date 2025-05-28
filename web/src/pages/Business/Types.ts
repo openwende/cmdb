@@ -17,13 +17,14 @@ export enum DropdownMenuType {
     Append = "append",
     Remove = "remove",
     Copy = "copy",
-    More = "more"
+    More = "more",
+    Instance = "instance"
 }
 export enum TransferMenuItemKey {
     IdlePool = "idlePool",
     Business = "business",
     HostPool = "hostPool",
-    Other = "other",
+    Other = "other"
 }
 export enum AppendMenuItemKey {
     Business = "business"
@@ -35,4 +36,9 @@ export enum MoreMenuItemKey {
     ExportSelected = "exportSelected",
     ExportAll = "exportAll",
     ImportExcel = "importExcel"
+}
+export enum InstanceMenuItemKey {
+    BatchDelete = "batchDelete",
+    CopyIP = "copyIP",
+    EditLabel = "editLabel"
 }

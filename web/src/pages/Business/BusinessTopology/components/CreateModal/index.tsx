@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { Modal, Radio, Select, Input, Form, Button, Tooltip, Cascader } from "antd";
+import { Modal, Radio, Select, Input, Form, Button, Tooltip } from "antd";
 import { PlusOutlined, InfoCircleOutlined } from "@ant-design/icons";
-import { setTemplate, serviceTemplate, serviceCategoryMock } from "@/mock/business";
-import { CascaderOption, CreateMode, CreateType } from "@/pages/Business/Types";
-import { buildCascaderOptions } from "@/pages/Business/utils";
+import { setTemplate, serviceTemplate } from "@/mock/business";
+import { CreateMode, CreateType } from "@/pages/Business/Types";
+import ServiceCategorySelector from "../ServiceCategory";
 import "./style.css";
 
 const { Option } = Select;
@@ -20,17 +20,11 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, parentNode, on
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [mode, setMode] = useState<CreateMode>(CreateMode.Template);
-    const [serviceCategory, setServiceCategory] = useState<string[]>([]);
-    const [cascaderOptions, setCascaderOptions] = useState<CascaderOption[]>([]);
+    const [serviceCategory, setServiceCategory] = useState<number[]>([]);
     const formItemRules = [{
         required: true,
         message: t("business.topology.tree.create.form.rules_message")
     }];
-
-    useEffect(() => {
-        const cascaderOptions = buildCascaderOptions(serviceCategoryMock);
-        setCascaderOptions(cascaderOptions);
-    }, [serviceCategory])
 
     const onOk = async () => {
         try {
@@ -193,13 +187,10 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, parentNode, on
                     required={true}
                     rules={formItemRules}
                 >
-                    <Cascader
-                        placeholder={t("business.topology.tree.create.form.placeholder5")}
-                        style={{ width: "100%" }}
-                        options={cascaderOptions}
-                        showSearch={true}
-                        changeOnSelect={false}
+                    <ServiceCategorySelector
+                        value={serviceCategory}
                         onChange={(value) => setServiceCategory(value)}
+                        style={{ width: "100%" }}
                     />
                 </Form.Item>
             )}
