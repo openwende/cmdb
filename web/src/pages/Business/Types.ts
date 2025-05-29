@@ -42,3 +42,9 @@ export enum InstanceMenuItemKey {
     CopyIP = "copyIP",
     EditLabel = "editLabel"
 }
+// The type of the tail element in the tree node
+export enum TailEleType {
+    All = "all",
+    Count = "count",
+    None = "none"
+}

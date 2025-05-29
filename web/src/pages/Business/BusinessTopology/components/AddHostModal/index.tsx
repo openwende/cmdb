@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { Modal, Radio, Table, Button, Input, Tag, message } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
-import BusinessTreeComponent from '../TopologyTree';
+import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps } from 'antd';
+import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
+import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
+import { TailEleType } from '@/pages/Business/Types';
+import Pagination from '@/components/common/Pagination';
+import './style.css';
 
 interface Props {
     visible: boolean;
@@ -17,14 +20,27 @@ interface HostData {
     bk_cloud_id: any[];
 }
 
+enum MenuItemKey {
+    CopyIP = 'copyIP',
+    RemoveAll = 'removeAll'
+}
+
+enum TabItemKey {
+    StaticTopo = 'staticTopo',
+    CustomInput = 'customInput'
+}
+
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
-    const [mode, setMode] = useState<'static' | 'custom'>('static');
+    const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedTreeKey, setSelectedTreeKey] = useState<string | null>(null);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
     const [customInput, setCustomInput] = useState<string>('');
     const [customHosts, setCustomHosts] = useState<HostData[]>([]);
+    const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
 
-    // 表格列定义
+    // Table columns definition
     const columns = [
         {
             title: '内网IP',
@@ -49,9 +65,9 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     ];
 
-    // 获取当前显示的主机数据
+    // Get current hosts data based on active tab
     const getCurrentHosts = () => {
-        if (mode === 'static') {
+        if (activeTab === TabItemKey.StaticTopo) {
             return allHosts2.map(item => ({
                 ...item.host,
                 key: item.host.bk_host_id
@@ -64,7 +80,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     };
 
-    // 处理自定义输入添加主机
+    // Handle custom input add hosts
     const handleAddCustomHosts = () => {
         if (!customInput.trim()) {
             message.warning('请输入主机IP');
@@ -97,7 +113,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         if (newHosts.length > 0) {
             const updatedHosts = [...customHosts, ...newHosts];
             setCustomHosts(updatedHosts);
-            // 自动选中新添加的主机
+            // Auto select newly added hosts
             const newSelectedKeys = [...selectedHosts, ...newHosts.map(h => h.bk_host_id)];
             setSelectedHosts(newSelectedKeys);
             setCustomInput('');
@@ -107,9 +123,9 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     };
 
-    // 移除选中的主机
+    // Handle remove host
     const handleRemoveHost = (hostId: React.Key) => {
-        if (mode === 'static') {
+        if (activeTab === TabItemKey.StaticTopo) {
             setSelectedHosts(prev => prev.filter(id => id !== hostId));
         } else {
             setCustomHosts(prev => prev.filter(h => h.bk_host_id !== hostId));
@@ -117,45 +133,234 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     };
 
-    // 获取已选择的主机标签
-    const getSelectedHostTags = () => {
+    // Handle copy IPs
+    const handleCopyIPs = async () => {
         const currentHosts = getCurrentHosts();
-        return selectedHosts.map(hostId => {
+        const selectedIPs = selectedHosts.map(hostId => {
             const host = currentHosts.find(h => h.key === hostId);
-            if (host) {
-                return (
-                    <Tag
-                        key={hostId}
-                        closable
-                        onClose={() => handleRemoveHost(hostId)}
-                        icon={<CloseOutlined />}
-                    >
-                        {host.bk_host_innerip}
-                    </Tag>
-                );
-            }
-            return null;
+            return host?.bk_host_innerip;
+        }).filter(Boolean).join('\n');
+
+        try {
+            await navigator.clipboard.writeText(selectedIPs);
+            message.success('IP复制成功');
+        } catch (error) {
+            message.error('复制失败');
+        }
+    };
+
+    // Handle remove all selected hosts
+    const handleRemoveAll = () => {
+        setSelectedHosts([]);
+        if (activeTab === TabItemKey.CustomInput) {
+            setCustomHosts([]);
+        }
+    };
+
+    // Get selected hosts for list display
+    const getSelectedHostsList = () => {
+        return selectedHosts.map(hostId => {
+            const currentHosts = getCurrentHosts();
+            const host = currentHosts.find(h => h.key === hostId);
+            return host ? {
+                id: hostId,
+                ip: host.bk_host_innerip
+            } : null;
         }).filter(Boolean);
     };
 
     const handleConfirm = () => {
         const currentHosts = getCurrentHosts();
-        const selectedHostData = selectedHosts.map(hostId => 
+        const selectedHostData = selectedHosts.map(hostId =>
             currentHosts.find(h => h.key === hostId)
         ).filter(Boolean);
-        
+
         onConfirm(selectedHostData);
         handleCancel();
     };
 
     const handleCancel = () => {
-        setMode('static');
+        setActiveTab(TabItemKey.StaticTopo);
         setSelectedTreeKey(null);
         setSelectedHosts([]);
         setCustomInput('');
         setCustomHosts([]);
+        setHoveredHostId(null);
         onClose();
     };
+
+    const handleMenuClick = (key: MenuItemKey, domEvent: React.MouseEvent | React.KeyboardEvent) => {
+        domEvent.stopPropagation();
+        if (key === MenuItemKey.CopyIP) {
+            handleCopyIPs();
+        } else if (key === MenuItemKey.RemoveAll) {
+            handleRemoveAll();
+        }
+    }
+
+    const renderHostList = () => {
+        const total = getCurrentHosts().length;
+        return (
+            <div className='table-wrapper'>
+                <Input.Search
+                    placeholder="请输入"
+                    className='search-input'
+                />
+                <Table
+                    rowSelection={{
+                        selectedRowKeys: selectedHosts,
+                        onChange: setSelectedHosts
+                    }}
+                    columns={columns}
+                    dataSource={getCurrentHosts()}
+                    rowKey={item => item.bk_host_id}
+                    pagination={false}
+                    size="small"
+                    className='table-list'
+                />
+                {
+                    total > 0 && <Pagination
+                        total={total}
+                        pageSize={pageSize}
+                        current={page}
+                        onChange={setPage}
+                        onSizeChange={(_, size) => {
+                            setPage(1);
+                            setPageSize(size);
+                        }}
+                    />
+                }
+            </div>
+        )
+    }
+
+    // Render static topology tab content
+    const renderStaticTopology = () => (
+        <div className='topology-wrapper'>
+            <div className='tree-wrapper'>
+                <Input.Search
+                    placeholder="搜索拓扑节点"
+                    className='search-input'
+                />
+                <TopologyTree
+                    selectedKey={selectedTreeKey}
+                    onSelect={(key) => setSelectedTreeKey(key)}
+                    tailEleType={TailEleType.Count}
+                />
+            </div>
+            {renderHostList()}
+        </div>
+    );
+
+    // Render custom input tab content
+    const renderCustomInput = () => (
+        <div className='custom-input-wrapper'>
+            <div className='input-area'>
+                <Input.TextArea
+                    value={customInput}
+                    onChange={(e) => setCustomInput(e.target.value)}
+                    placeholder="请输入IP，换行分隔"
+                    className='text-area'
+                />
+                <div className='error-text'>
+                    IP不正确或主机不存在
+                </div>
+                <Button
+                    onClick={handleAddCustomHosts}
+                    color="primary"
+                    variant="outlined"
+                >
+                    添加至列表
+                </Button>
+            </div>
+            {renderHostList()}
+        </div>
+    );
+
+    // Render result preview
+    const renderResultPreview = () => (
+        <>
+            <List
+                size="small"
+                dataSource={getSelectedHostsList()}
+                renderItem={(item: any) => (
+                    <List.Item
+                        className='result-item'
+                        onMouseEnter={() => setHoveredHostId(item.id)}
+                        onMouseLeave={() => setHoveredHostId(null)}
+                    >
+                        <div className='item-content'>
+                            <span>{item.ip}</span>
+                            {hoveredHostId === item.id && (
+                                <CloseOutlined
+                                    className='remove-icon'
+                                    onClick={() => handleRemoveHost(item.id)}
+                                />
+                            )}
+                        </div>
+                    </List.Item>
+                )}
+                locale={{ emptyText: '暂无选中主机' }}
+            />
+        </>
+    )
+
+    const inputTabItems: TabsProps['items'] = [
+        {
+            key: TabItemKey.StaticTopo,
+            label: '静态拓扑',
+            children: renderStaticTopology(),
+        },
+        {
+            key: TabItemKey.CustomInput,
+            label: '自定义输入',
+            children: renderCustomInput(),
+        }
+    ]
+
+    const menuItems: MenuProps['items'] = [
+        {
+            key: MenuItemKey.CopyIP,
+            label: '复制IP',
+            disabled: selectedHosts.length === 0
+        },
+        {
+            key: MenuItemKey.RemoveAll,
+            label: '移除所有',
+            disabled: selectedHosts.length === 0
+        }
+    ]
+
+    const collapseItems: CollapseProps['items'] = [
+        {
+            key: 'result',
+            label: <span>已选择 <span className="selected-count">{selectedHosts.length}</span> 台主机</span>,
+            children: renderResultPreview(),
+            extra: <Dropdown menu={{
+                items: menuItems,
+                onClick: ({ key, domEvent }) => handleMenuClick(key as MenuItemKey, domEvent)
+            }}
+                placement='bottomRight'
+                trigger={['click']}
+            >
+                <div className='more-operation' onClick={(e) => e.stopPropagation()}>
+                    <MoreOutlined />
+                </div>
+            </Dropdown>
+        }
+    ]
+
+    const resultTabItems: TabsProps['items'] = [
+        {
+            key: 'result',
+            label: '结果预览',
+            children: <Collapse
+                ghost
+                defaultActiveKey={['result']}
+                items={collapseItems}
+            />,
+        }
+    ]
 
     return (
         <Modal
@@ -171,91 +376,17 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                     下一步
                 </Button>
             ]}
+            className='add-modal'
         >
-            <div style={{ display: 'flex', gap: 16 }}>
-                {/* 左侧内容 */}
-                <div style={{ flex: 1 }}>
-                    {/* 模式选择 */}
-                    <Radio.Group 
-                        value={mode} 
-                        onChange={(e) => setMode(e.target.value)}
-                        style={{ marginBottom: 16 }}
-                    >
-                        <Radio.Button value="static">静态拓扑</Radio.Button>
-                        <Radio.Button value="custom">自定义输入</Radio.Button>
-                    </Radio.Group>
-
-                    {mode === 'static' ? (
-                        // 静态拓扑模式
-                        <BusinessTreeComponent
-                            selectedKey={selectedTreeKey}
-                            onSelect={(key) => setSelectedTreeKey(key)}
-                            style={{ height: 400, overflow: 'auto', border: '1px solid #d9d9d9', padding: 8 }}
-                        />
-                    ) : (
-                        // 自定义输入模式
-                        <div>
-                            <Input.TextArea
-                                value={customInput}
-                                onChange={(e) => setCustomInput(e.target.value)}
-                                placeholder="请输入主机IP，多个IP请换行分隔"
-                                rows={10}
-                                style={{ marginBottom: 8 }}
-                            />
-                            <div style={{ color: '#666', fontSize: 12, marginBottom: 8 }}>
-                                IP不正确或主机不存在
-                            </div>
-                            <Button 
-                                type="primary" 
-                                onClick={handleAddCustomHosts}
-                                style={{ width: '100%' }}
-                            >
-                                添加至列表
-                            </Button>
-                        </div>
-                    )}
+            <div className='modal-content'>
+                {/* Left side - Tabs for mode selection */}
+                <div className='left-content'>
+                    <Tabs items={inputTabItems} activeKey={activeTab} onChange={setActiveTab} />
                 </div>
 
-                {/* 右侧内容 */}
-                <div style={{ flex: 1 }}>
-                    <div style={{ marginBottom: 16 }}>
-                        <div style={{ marginBottom: 8 }}>结果预览</div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span>已选择 1 台主机</span>
-                            <Button type="link" size="small">
-                                复制IP
-                            </Button>
-                            <Button type="link" size="small">
-                                移除所有
-                            </Button>
-                        </div>
-                        <div style={{ marginTop: 8, minHeight: 32, border: '1px solid #d9d9d9', padding: 8 }}>
-                            {getSelectedHostTags()}
-                        </div>
-                    </div>
-
-                    <Input.Search
-                        placeholder="请输入"
-                        style={{ marginBottom: 16 }}
-                    />
-
-                    <Table
-                        rowSelection={{
-                            selectedRowKeys: selectedHosts,
-                            onChange: setSelectedHosts
-                        }}
-                        columns={columns}
-                        dataSource={getCurrentHosts()}
-                        rowKey="key"
-                        pagination={{
-                            pageSize: 10,
-                            showSizeChanger: true,
-                            showQuickJumper: true,
-                            showTotal: (_, range) => 
-                                `每页 ${range[1] - range[0] + 1} 条 共计 1 条`
-                        }}
-                        size="small"
-                    />
+                {/* Right side - Results and table */}
+                <div className='right-content'>
+                    <Tabs items={resultTabItems} />
                 </div>
             </div>
         </Modal>

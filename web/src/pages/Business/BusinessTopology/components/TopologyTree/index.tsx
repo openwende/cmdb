@@ -4,12 +4,12 @@ import { businessData, idleCluster } from '@/mock/business';
 import HostSvg from '@/assets/icons/host.svg';
 import FaultHostSvg from '@/assets/icons/faultHost.svg';
 import CreateModal from '../CreateModal';
-import { CreateType } from '@/pages/Business/Types';
+import { CreateType, TailEleType } from '@/pages/Business/Types';
 
 interface Props {
     selectedKey?: string | null;
     onSelect?: (key: string | null, node?: any) => void;
-    style?: React.CSSProperties;
+    tailEleType?: TailEleType;
 }
 
 interface TreeData {
@@ -55,7 +55,7 @@ function buildTreeData() {
 const TopologyTree: React.FC<Props> = ({
     selectedKey,
     onSelect,
-    style
+    tailEleType = TailEleType.All,
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -84,6 +84,33 @@ const TopologyTree: React.FC<Props> = ({
         setExpandedKeys([treeData[0].key]);
     }, [businessData]);
 
+
+    const handleSelect = (keys: React.Key[], info: any) => {
+        if (keys.length && onSelect) {
+            onSelect(keys[0] as string, info.node);
+        }
+    };
+
+    const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
+        if (tailEleType === TailEleType.All) {
+            return (
+                <span className="right-wrapper">
+                    {hoveredKey === node.key && node.type !== 'idle' && node.type !== 'module'
+                        ? <Button type="primary" size="small" onClick={() => handleCreate(node)}>新建</Button>
+                        : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
+                    }
+                </span>
+            );
+        } else if (tailEleType === TailEleType.Count) {
+            return (
+                <span className="right-wrapper">
+                    <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
+                </span>
+            );
+        }
+        return null;
+    }
+
     const renderTitle = (node: TreeData) => {
         const isSelected = selectedKey === node.key;
         return (
@@ -107,25 +134,13 @@ const TopologyTree: React.FC<Props> = ({
                         )}
                     {node.title}
                 </span>
-                <span className="right-wrapper">
-                    {/* TODO: count */}
-                    {hoveredKey === node.key && node.type !== 'idle' && node.type !== 'module'
-                        ? <Button type="primary" size="small" onClick={() => handleCreate(node)}>新建</Button>
-                        : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
-                    }
-                </span>
+                {renderTailElement(node, hoveredKey!, isSelected)}
             </span>
         )
     };
 
-    const handleSelect = (keys: React.Key[], info: any) => {
-        if (keys.length && onSelect) {
-            onSelect(keys[0] as string, info.node);
-        }
-    };
-
     return (
-        <div style={style}>
+        <>
             <Tree
                 treeData={treeData}
                 blockNode={true}
@@ -143,7 +158,7 @@ const TopologyTree: React.FC<Props> = ({
                 parentNode={parentNode}
                 onClose={() => setModalVisible(false)}
             />
-        </div>
+        </>
     );
 };
 
