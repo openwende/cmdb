@@ -58,13 +58,48 @@
                 }
             }
 
+            .ant-spin-container {
+                max-height: 496px;
+                overflow-x: hidden;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                /* Firefox */
+                scrollbar-color: #c1c1c1 transparent;
+                /* Firefox */
+            }
+
+            /* Webkit browsers (Chrome, Safari, Edge) */
+            .ant-spin-container::-webkit-scrollbar {
+                width: 6px;
+                /* Width of the scrollbar */
+            }
+
+            .ant-spin-container::-webkit-scrollbar-track {
+                background: transparent;
+                /* Track background */
+            }
+
+            .ant-spin-container::-webkit-scrollbar-thumb {
+                background-color: rgba(0, 0, 0, 0.2);
+                /* Scrollbar color */
+                border-radius: 4px;
+                /* Rounded corners */
+                transition: background-color 0.3s;
+            }
+
+            .ant-spin-container::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(0, 0, 0, 0.35);
+                /* On hover */
+            }
+
             .result-item {
                 padding: 8px 12px;
                 cursor: pointer;
-                background-color: #f2f2f2;
+                background-color: #f5f5f5;
+                margin-bottom: 2px;
 
                 &:hover {
-                    background-color: #f5f5f5;
+                    background-color: #f2f2f2;
                 }
 
                 .item-content {
@@ -87,7 +122,7 @@
                 height: 24px;
                 border-radius: 2px;
                 font-size: 16px;
-                
+
                 &:hover {
                     background-color: #e1ecff;
                     color: #3a84ff;
@@ -111,6 +146,41 @@
             width: 280px;
             padding-right: 20px;
             border-right: 1px solid #e6e6e6;
+
+            .ant-tree-list-holder-inner {
+                max-height: 496px;
+                overflow-x: hidden;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                /* Firefox */
+                scrollbar-color: #c1c1c1 transparent;
+                /* Firefox */
+            }
+
+            /* Webkit browsers (Chrome, Safari, Edge) */
+            .ant-tree-list-holder-inner::-webkit-scrollbar {
+                width: 6px;
+                /* Width of the scrollbar */
+            }
+
+            .ant-tree-list-holder-inner::-webkit-scrollbar-track {
+                background: transparent;
+                /* Track background */
+            }
+
+            .ant-tree-list-holder-inner::-webkit-scrollbar-thumb {
+                background-color: rgba(0, 0, 0, 0.2);
+                /* Scrollbar color */
+                border-radius: 4px;
+                /* Rounded corners */
+                transition: background-color 0.3s;
+            }
+
+            .ant-tree-list-holder-inner::-webkit-scrollbar-thumb:hover {
+                background-color: rgba(0, 0, 0, 0.35);
+                /* On hover */
+            }
+
         }
     }
 
@@ -122,11 +192,12 @@
         .input-area {
             display: flex;
             flex-direction: column;
+            justify-content: space-between;
             gap: 8;
             width: 280px;
 
             .text-area {
-                flex: 1;
+                height: 490px;
             }
 
             .error-text {
@@ -145,9 +216,74 @@
         .table-list {
             margin-bottom: 12px;
         }
+
+        .ant-table-wrapper {
+            overflow-x: hidden;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            /* Firefox */
+            scrollbar-color: #c1c1c1 transparent;
+            /* Firefox */
+        }
+
+        /* Webkit browsers (Chrome, Safari, Edge) */
+        .ant-table-wrapper::-webkit-scrollbar {
+            width: 6px;
+            /* Width of the scrollbar */
+        }
+
+        .ant-table-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+            /* Track background */
+        }
+
+        .ant-table-wrapper::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.2);
+            /* Scrollbar color */
+            border-radius: 4px;
+            /* Rounded corners */
+            transition: background-color 0.3s;
+        }
+
+        .ant-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.35);
+            /* On hover */
+        }
     }
 
     .search-input {
         margin-bottom: 12px;
     }
+}
+
+/* Add styles for search popover */
+.tree-search-popover .ant-popover-content {
+    max-width: 400px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.search-popover-content {
+    min-width: 300px;
+}
+
+.search-popover-content .ant-tree {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.search-popover-content .title-wrapper.search-result {
+    cursor: pointer;
+    padding: 4px 8px;
+    margin: 2px 0;
+    border-radius: 4px;
+}
+
+.search-popover-content .title-wrapper.search-result:hover {
+    background-color: #f5f7fa;
+}
+
+.search-popover-content .empty-search-result {
+    padding: 24px;
+    min-width: 280px;
 }

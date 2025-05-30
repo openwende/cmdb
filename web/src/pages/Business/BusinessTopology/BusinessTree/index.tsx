@@ -2,6 +2,7 @@ import React, { Fragment, useRef, useState } from "react";
 import { Input } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import TopologyTree from "../components/TopologyTree";
+import EmptySearchResult from "@/components/common/EmptySearchResult";
 import "./style.css";
 import { useTranslation } from "react-i18next";
 
@@ -16,6 +17,7 @@ interface Props {
 const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     const { t } = useTranslation();
     const [search, setSearch] = useState<string>("");
+    const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(320);
     const [isDragging, setIsDragging] = useState<boolean>(false);
@@ -23,6 +25,11 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     const dragging = useRef<boolean>(false);
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
+
+    // Handle clear search
+    const handleClearSearch = () => {
+        setSearch('');
+    };
 
     // The dragger event
     const onMouseDown = (e: React.MouseEvent) => {
@@ -72,10 +79,17 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                             onChange={e => setSearch(e.target.value)}
                         />
                     </div>
-                    <TopologyTree
-                        selectedKey={selectedKey}
-                        onSelect={onSelect}
-                    />
+                    {!hasSearchResults && search ? (
+                        <EmptySearchResult onClearFilter={handleClearSearch} />
+                    ) : (
+                        <TopologyTree
+                            selectedKey={selectedKey}
+                            onSelect={onSelect}
+                            searchValue={search}
+                            onSearchResult={setHasSearchResults}
+                            onClearSearch={handleClearSearch}
+                        />
+                    )}
                     {/* The dragger */}
                     <div
                         style={{

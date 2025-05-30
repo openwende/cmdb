@@ -10,7 +10,7 @@ export const bizInfo = {
     },
     {
       "bk_biz_id": 3,
-      "bk_biz_name": "project1"
+      "bk_biz_name": "business2"
     },
     {
       "bk_biz_id": 4,
@@ -32,54 +32,63 @@ export const bizInfo2 = {
   "count": 0
 };
 
-
+// 业务拓扑->业务树
 export const businessData = [
   {
-    id: "biz1",
-    name: "官网业务",
-    clusters: [
-      {
-        id: "cluster2",
-        name: "上海区",
-        modules: [
-          { id: "mod1", name: "模块A" },
-          { id: "mod2", name: "模块B" }
-        ]
-      },
-      {
-        id: "cluster3",
-        name: "广东区",
-        modules: [
-          { id: "mod3", name: "模块C" }
-        ]
-      }
-    ]
-  },
-  {
-    id: "biz2",
-    name: "测试业务",
-    clusters: [
-      {
-        id: "cluster4",
-        name: "北京区",
-        modules: [
-          { id: "mod4", name: "模块D" }
-        ]
-      }
-    ]
+      "bk_inst_id": 3,
+      "bk_inst_name": "business2",
+      "bk_obj_id": "biz",
+      "bk_obj_name": "业务",
+      "default": 0,
+      "child": [
+          {
+              "bk_inst_id": 4,
+              "bk_inst_name": "set2",
+              "bk_obj_id": "set",
+              "bk_obj_name": "集群",
+              "default": 0,
+              "child": [
+                  {
+                      "bk_inst_id": 10,
+                      "bk_inst_name": "module2",
+                      "bk_obj_id": "module",
+                      "bk_obj_name": "模块",
+                      "default": 0,
+                      "child": []
+                  }
+              ]
+          }
+      ]
   }
 ];
-
+// 业务拓扑->空闲机池
 export const idleCluster = {
-  id: "idlepool",
-  name: "空闲机池",
-  modules: [
-    { id: "recycle", name: "待回收" },
-    { id: "fault", name: "故障机" },
-    { id: "idle", name: "空闲机" }
+  "bk_set_id": 3,
+  "bk_set_name": "空闲机池",
+  "module": [
+      {
+          "bk_module_id": 9,
+          "bk_module_name": "待回收",
+          "default": 3,
+          "host_apply_enabled": false,
+          "host_apply_rule_count": 0
+      },
+      {
+          "bk_module_id": 8,
+          "bk_module_name": "故障机",
+          "default": 2,
+          "host_apply_enabled": false,
+          "host_apply_rule_count": 0
+      },
+      {
+          "bk_module_id": 7,
+          "bk_module_name": "空闲机",
+          "default": 1,
+          "host_apply_enabled": false,
+          "host_apply_rule_count": 0
+      }
   ]
 };
-
 // 树状结构数据
 export const businessData2 = [
   {
@@ -138,17 +147,7 @@ export const idleCluster2 = {
     }
   ]
 };
-
-export const allHosts = [
-  { id: "h1", ip: "192.168.1.30", name: "主机1", businessId: "biz1", clusterId: "cluster2", moduleId: "mod1" },
-  { id: "h2", ip: "192.168.1.101", name: "主机2", businessId: "biz1", clusterId: "cluster2", moduleId: "mod2" },
-  { id: "h3", ip: "192.168.2.30", name: "主机3", businessId: "biz2", clusterId: "cluster4", moduleId: "mod4" },
-  // 空闲机池相关
-  { id: "h4", ip: "192.168.1.150", name: "主机4", businessId: "biz1", clusterId: "idlepool", moduleId: "idle" },
-  { id: "h5", ip: "192.168.1.160", name: "主机5", businessId: "biz1", clusterId: "idlepool", moduleId: "fault" },
-  { id: "h6", ip: "192.168.1.196", name: "主机6", businessId: "biz1", clusterId: "idlepool", moduleId: "recycle" }
-];
-
+// 业务拓扑->主机列表
 export const allHosts2 = [
   {
     "biz": [

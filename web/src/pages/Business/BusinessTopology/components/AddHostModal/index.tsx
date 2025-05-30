@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps } from 'antd';
+import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
 import { TailEleType } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
 
 interface Props {
@@ -36,9 +37,48 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
+    // Custom input states
     const [customInput, setCustomInput] = useState<string>('');
     const [customHosts, setCustomHosts] = useState<HostData[]>([]);
+    const [inputError, setInputError] = useState<boolean>(false);
+    // Search related states
+    const [treeSearchValue, setTreeSearchValue] = useState<string>('');
+    const [hostSearchValue, setHostSearchValue] = useState<string>('');
+    const [hasTreeSearchResults, setHasTreeSearchResults] = useState<boolean>(true);
+    const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
+    // Result preview list items - independent of tab switching
+    const [resultPreviewItems, setResultPreviewItems] = useState<Array<{ id: React.Key, ip: string }>>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
+    // Global host mapping - stores all hosts info to avoid dependency on current tab
+    const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, { id: React.Key, ip: string }>>(new Map());
+
+    // Handle host selection changes - updates both selectedHosts and resultPreviewItems
+    const handleHostSelectionChange = (newSelectedKeys: React.Key[]) => {
+        setSelectedHosts(newSelectedKeys);
+
+        // Get current hosts and update mapping
+        const currentHosts = getCurrentHosts();
+        const newMapping = new Map(allHostsMapping);
+
+        // Add current hosts to mapping
+        currentHosts.forEach(host => {
+            if (!newMapping.has(host.key)) {
+                newMapping.set(host.key, {
+                    id: host.key,
+                    ip: host.bk_host_innerip
+                });
+            }
+        });
+
+        setAllHostsMapping(newMapping);
+
+        // Update result preview using mapping
+        const newResultItems = newSelectedKeys.map(hostId => {
+            return newMapping.get(hostId);
+        }).filter(Boolean) as Array<{ id: React.Key, ip: string }>;
+
+        setResultPreviewItems(newResultItems);
+    };
 
     // Table columns definition
     const columns = [
@@ -65,27 +105,45 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     ];
 
-    // Get current hosts data based on active tab
+    // Get current hosts data based on active tab with search filtering
     const getCurrentHosts = () => {
+        let hosts: any[] = [];
+
         if (activeTab === TabItemKey.StaticTopo) {
-            return allHosts2.map(item => ({
+            hosts = allHosts2.map(item => ({
                 ...item.host,
                 key: item.host.bk_host_id
             }));
         } else {
-            return customHosts.map(host => ({
+            hosts = customHosts.map(host => ({
                 ...host,
                 key: host.bk_host_id
             }));
         }
+
+        // Apply search filter
+        if (hostSearchValue && hostSearchValue.trim()) {
+            const searchTerm = hostSearchValue.trim().toLowerCase();
+            hosts = hosts.filter(host =>
+                host.bk_host_innerip?.toLowerCase().includes(searchTerm) ||
+                host.bk_host_innerip_v6?.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        return hosts;
     };
 
     // Handle custom input add hosts
     const handleAddCustomHosts = () => {
         if (!customInput.trim()) {
-            message.warning('请输入主机IP');
+            message.warning('请输入IP');
             return;
         }
+
+        // TODO: check ip is valid or not
+        // if (!customInput.isValid) {
+        //     setInputError(true);
+        // }
 
         const ips = customInput.split('\n').filter(ip => ip.trim());
         const newHosts: HostData[] = [];
@@ -94,6 +152,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         ips.forEach((ip, index) => {
             const trimmedIp = ip.trim();
             if (trimmedIp && !existingIps.has(trimmedIp)) {
+                // TODO: the default field name is what?
                 newHosts.push({
                     bk_host_id: Date.now() + index,
                     bk_host_innerip: trimmedIp,
@@ -113,9 +172,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         if (newHosts.length > 0) {
             const updatedHosts = [...customHosts, ...newHosts];
             setCustomHosts(updatedHosts);
-            // Auto select newly added hosts
-            const newSelectedKeys = [...selectedHosts, ...newHosts.map(h => h.bk_host_id)];
-            setSelectedHosts(newSelectedKeys);
             setCustomInput('');
             message.success(`成功添加 ${newHosts.length} 台主机`);
         } else {
@@ -125,12 +181,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
 
     // Handle remove host
     const handleRemoveHost = (hostId: React.Key) => {
-        if (activeTab === TabItemKey.StaticTopo) {
-            setSelectedHosts(prev => prev.filter(id => id !== hostId));
-        } else {
-            setCustomHosts(prev => prev.filter(h => h.bk_host_id !== hostId));
-            setSelectedHosts(prev => prev.filter(id => id !== hostId));
-        }
+        setSelectedHosts(prev => prev.filter(id => id !== hostId));
+        setSelectedHosts(prev => prev.filter(id => id !== hostId));
+        // Also remove from result preview items
+        setResultPreviewItems(prev => prev.filter(item => item.id !== hostId));
     };
 
     // Handle copy IPs
@@ -143,7 +197,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
 
         try {
             await navigator.clipboard.writeText(selectedIPs);
-            message.success('IP复制成功');
+            message.success('复制成功');
         } catch (error) {
             message.error('复制失败');
         }
@@ -152,21 +206,43 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     // Handle remove all selected hosts
     const handleRemoveAll = () => {
         setSelectedHosts([]);
-        if (activeTab === TabItemKey.CustomInput) {
-            setCustomHosts([]);
+        // Also clear result preview items
+        setResultPreviewItems([]);
+    };
+
+    // Clear tree search
+    const handleClearTreeSearch = () => {
+        setTreeSearchValue('');
+        setShowSearchPopover(false);
+    };
+
+    // Clear host search
+    const handleClearHostSearch = () => {
+        setHostSearchValue('');
+    };
+
+    // Handle topology tree selection
+    const handleTreeSelect = (key: string | null) => {
+        setSelectedTreeKey(key);
+        // Dismiss search panel by clearing search when item is clicked
+        if (treeSearchValue) {
+            setTreeSearchValue('');
+            setShowSearchPopover(false);
         }
     };
 
-    // Get selected hosts for list display
-    const getSelectedHostsList = () => {
-        return selectedHosts.map(hostId => {
-            const currentHosts = getCurrentHosts();
-            const host = currentHosts.find(h => h.key === hostId);
-            return host ? {
-                id: hostId,
-                ip: host.bk_host_innerip
-            } : null;
-        }).filter(Boolean);
+    // Handle search popover result item click
+    const handleSearchResultClick = (key: string) => {
+        setSelectedTreeKey(key);
+        setTreeSearchValue('');
+        setShowSearchPopover(false);
+    };
+
+    // Handle tree search input change
+    const handleTreeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setTreeSearchValue(value);
+        setShowSearchPopover(!!value.trim());
     };
 
     const handleConfirm = () => {
@@ -180,12 +256,19 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     };
 
     const handleCancel = () => {
+        // Reset all states to initial values
         setActiveTab(TabItemKey.StaticTopo);
         setSelectedTreeKey(null);
         setSelectedHosts([]);
         setCustomInput('');
         setCustomHosts([]);
         setHoveredHostId(null);
+        setTreeSearchValue('');
+        setHostSearchValue('');
+        setHasTreeSearchResults(true);
+        setShowSearchPopover(false);
+        setResultPreviewItems([]);
+        setAllHostsMapping(new Map());
         onClose();
     };
 
@@ -198,38 +281,69 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     }
 
+    // Render search popover content
+    const renderSearchPopoverContent = () => {
+        if (!hasTreeSearchResults) {
+            return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
+        }
+
+        return (
+            <div className="search-popover-content">
+                <TopologyTree
+                    selectedKey={null}
+                    onSelect={(key) => handleSearchResultClick(key!)}
+                    tailEleType={TailEleType.None}
+                    searchValue={treeSearchValue}
+                    onSearchResult={setHasTreeSearchResults}
+                />
+            </div>
+        );
+    };
+
     const renderHostList = () => {
-        const total = getCurrentHosts().length;
+        const hosts = getCurrentHosts();
+        const total = hosts.length;
+        const hasHostSearchResults = hostSearchValue ? hosts.length > 0 : true;
+
         return (
             <div className='table-wrapper'>
                 <Input.Search
                     placeholder="请输入"
                     className='search-input'
+                    value={hostSearchValue}
+                    onChange={(e) => setHostSearchValue(e.target.value)}
+                    allowClear
                 />
-                <Table
-                    rowSelection={{
-                        selectedRowKeys: selectedHosts,
-                        onChange: setSelectedHosts
-                    }}
-                    columns={columns}
-                    dataSource={getCurrentHosts()}
-                    rowKey={item => item.bk_host_id}
-                    pagination={false}
-                    size="small"
-                    className='table-list'
-                />
-                {
-                    total > 0 && <Pagination
-                        total={total}
-                        pageSize={pageSize}
-                        current={page}
-                        onChange={setPage}
-                        onSizeChange={(_, size) => {
-                            setPage(1);
-                            setPageSize(size);
-                        }}
-                    />
-                }
+                {!hasHostSearchResults ? (
+                    <EmptySearchResult onClearFilter={handleClearHostSearch} />
+                ) : (
+                    <>
+                        <Table
+                            rowSelection={{
+                                selectedRowKeys: selectedHosts,
+                                onChange: handleHostSelectionChange
+                            }}
+                            columns={columns}
+                            dataSource={hosts}
+                            rowKey={item => item.bk_host_id}
+                            pagination={false}
+                            size="small"
+                            className='table-list'
+                        />
+                        {
+                            total > 0 && <Pagination
+                                total={total}
+                                pageSize={pageSize}
+                                current={page}
+                                onChange={setPage}
+                                onSizeChange={(_, size) => {
+                                    setPage(1);
+                                    setPageSize(size);
+                                }}
+                            />
+                        }
+                    </>
+                )}
             </div>
         )
     }
@@ -238,13 +352,30 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const renderStaticTopology = () => (
         <div className='topology-wrapper'>
             <div className='tree-wrapper'>
-                <Input.Search
-                    placeholder="搜索拓扑节点"
-                    className='search-input'
-                />
+                <Popover
+                    content={renderSearchPopoverContent()}
+                    title="搜索结果"
+                    trigger={[]}
+                    open={showSearchPopover}
+                    onOpenChange={setShowSearchPopover}
+                    placement="bottomLeft"
+                    overlayClassName="tree-search-popover"
+                >
+                    <Input.Search
+                        placeholder="搜索拓扑节点"
+                        className='search-input'
+                        value={treeSearchValue}
+                        onChange={handleTreeSearchChange}
+                        allowClear
+                        onClear={() => {
+                            setTreeSearchValue('');
+                            setShowSearchPopover(false);
+                        }}
+                    />
+                </Popover>
                 <TopologyTree
                     selectedKey={selectedTreeKey}
-                    onSelect={(key) => setSelectedTreeKey(key)}
+                    onSelect={handleTreeSelect}
                     tailEleType={TailEleType.Count}
                 />
             </div>
@@ -256,15 +387,22 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const renderCustomInput = () => (
         <div className='custom-input-wrapper'>
             <div className='input-area'>
-                <Input.TextArea
-                    value={customInput}
-                    onChange={(e) => setCustomInput(e.target.value)}
-                    placeholder="请输入IP，换行分隔"
-                    className='text-area'
-                />
-                <div className='error-text'>
-                    IP不正确或主机不存在
-                </div>
+                <>
+                    <Input.TextArea
+                        value={customInput}
+                        onChange={(e) => {
+                            setCustomInput(e.target.value);
+                            setInputError(false);
+                        }}
+                        placeholder="请输入IP，换行分隔"
+                        className='text-area'
+                    />
+                    {
+                        inputError && <div className='error-text'>
+                            IP不正确或主机不存在
+                        </div>
+                    }
+                </>
                 <Button
                     onClick={handleAddCustomHosts}
                     color="primary"
@@ -277,12 +415,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         </div>
     );
 
-    // Render result preview
+    // Render result preview - This should persist across tab changes
     const renderResultPreview = () => (
         <>
             <List
                 size="small"
-                dataSource={getSelectedHostsList()}
+                dataSource={resultPreviewItems}
                 renderItem={(item: any) => (
                     <List.Item
                         className='result-item'
@@ -300,7 +438,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                         </div>
                     </List.Item>
                 )}
-                locale={{ emptyText: '暂无选中主机' }}
+                locale={{ emptyText: '暂无主机选中' }}
             />
         </>
     )

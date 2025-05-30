@@ -4,12 +4,12 @@
     position: relative;
     user-select: none;
 
-    .search-wrapper {
+    .ant-tree {
+        height: 100%;
         padding: 8px;
     }
 
-    .ant-tree {
-        height: 100%;
+    .search-wrapper {
         padding: 8px;
     }
 
@@ -32,65 +32,5 @@
             opacity: 0.5;
             box-shadow: 0 0 8px #1890ff55;
         }
-    }
-
-    .ant-tree-treenode {
-        height: 36px;
-        line-height: 36px;
-    }
-
-    .ant-tree-switcher:hover {
-        height: 36px !important;
-        line-height: 36px;
-    }
-}
-
-.title-wrapper {
-    display: flex;
-    justify-content: space-between;
-
-    .left-wrapper {
-        display: flex;
-        align-items: center;
-
-        .title-prefix {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: #c4c6cc;
-            color: #fff;
-            margin-right: 10px;
-
-            &:hover {
-                background-color: #1677ff !important;
-                color: #fff !important;
-            }
-        }
-    }
-
-    .right-wrapper {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-
-        .suffix-count {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 20px;
-            height: 20px;
-            border-radius: 2px;
-            background-color: #f1f0f5;
-            color: #979ba5;
-            opacity: 0.5;
-        }
-    }
-
-    .selected {
-        background-color: #1677ff !important;
-        color: #fff !important;
     }
 }
