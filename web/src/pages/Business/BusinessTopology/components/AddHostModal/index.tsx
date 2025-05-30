@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
@@ -7,6 +7,9 @@ import { TailEleType } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
+
+const MIN_WIDTH = 280;
+const MAX_WIDTH = 420;
 
 interface Props {
     visible: boolean;
@@ -34,9 +37,14 @@ enum TabItemKey {
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedTreeKey, setSelectedTreeKey] = useState<string | null>(null);
-    const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
+    const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [pageSize, setPageSize] = useState(20);
+    // The sidebar state
+    const [sidebarWidth, setSidebarWidth] = useState<number>(320);
+    const [isDragging, setIsDragging] = useState<boolean>(false);
+    const [isDraggerHover, setDraggerHover] = useState<boolean>(false);
+    const dragging = useRef<boolean>(false);
     // Custom input states
     const [customInput, setCustomInput] = useState<string>('');
     const [customHosts, setCustomHosts] = useState<HostData[]>([]);
@@ -281,6 +289,33 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         }
     }
 
+    // The dragger event
+    const onMouseDown = (e: React.MouseEvent) => {
+        dragging.current = true;
+        setIsDragging(true);
+        const startX = e.clientX;
+        const startWidth = sidebarWidth;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            if (!dragging.current) return;
+            const delta = moveEvent.clientX - startX;
+            let newWidth = startWidth + delta;
+            if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
+            if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
+            setSidebarWidth(newWidth);
+        };
+
+        const onMouseUp = () => {
+            dragging.current = false;
+            setIsDragging(false);
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    };
+
     // Render search popover content
     const renderSearchPopoverContent = () => {
         if (!hasTreeSearchResults) {
@@ -351,7 +386,14 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     // Render static topology tab content
     const renderStaticTopology = () => (
         <div className='topology-wrapper'>
-            <div className='tree-wrapper'>
+            <div
+                className='tree-wrapper'
+                style={{
+                    width: sidebarWidth,
+                    minWidth: MIN_WIDTH,
+                    maxWidth: MAX_WIDTH,
+                }}
+            >
                 <Popover
                     content={renderSearchPopoverContent()}
                     title="搜索结果"
@@ -377,6 +419,24 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                     selectedKey={selectedTreeKey}
                     onSelect={handleTreeSelect}
                     tailEleType={TailEleType.Count}
+                />
+                {/* The dragger */}
+                <div
+                    style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 0,
+                        width: 2,
+                        height: "100%",
+                        cursor: "col-resize",
+                        zIndex: 10,
+                        background: isDragging || isDraggerHover ? "#1890ff" : "transparent",
+                        borderRadius: 3,
+                        transition: "background 0.2s"
+                    }}
+                    onMouseDown={onMouseDown}
+                    onMouseEnter={() => setDraggerHover(true)}
+                    onMouseLeave={() => setDraggerHover(false)}
                 />
             </div>
             {renderHostList()}
@@ -510,7 +570,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                 <Button key="cancel" onClick={handleCancel}>
                     取消
                 </Button>,
-                <Button key="confirm" type="primary" onClick={handleConfirm}>
+                <Button key="confirm" type="primary" disabled={!selectedHosts.length} onClick={handleConfirm}>
                     下一步
                 </Button>
             ]}
