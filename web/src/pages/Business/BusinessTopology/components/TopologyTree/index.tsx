@@ -3,7 +3,6 @@ import { Button, Tree } from 'antd';
 import { businessData2, idleCluster2 } from '@/mock/business';
 import CreateModal from '../CreateModal';
 import { CreateType, TailEleType } from '@/pages/Business/Types';
-import { WalletOutlined } from '@ant-design/icons';
 import './style.css';
 
 interface Props {
@@ -11,8 +10,7 @@ interface Props {
     onSelect?: (key: string | null, node?: any) => void;
     tailEleType?: TailEleType;
     searchValue?: string;
-    onSearchResult?: (hasResults: boolean) => void;
-    onClearSearch?: () => void;
+    onSearchDataChange?: (data: TreeData[]) => void;
 }
 
 interface TreeData {
@@ -20,49 +18,144 @@ interface TreeData {
     key: string;
     type: string;
     children?: TreeData[];
-    icon?: React.ReactNode;
     bk_obj_id?: string;
     bk_inst_name?: string;
-    searchPath?: string;
 }
 
 function buildTreeData(searchValue?: string): TreeData[] {
-    const flattenAndFilter = (nodes: any[], searchValue: string): any[] => {
-        let result: any[] = [];
+    // Helper function to check if a node matches the search term
+    const nodeMatches = (node: any, searchTerm: string): boolean => {
+        return node.bk_inst_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+               node.bk_set_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+               node.bk_module_name?.toLowerCase().includes(searchTerm.toLowerCase());
+    };
 
-        const traverse = (node: any, path: string[] = []) => {
-            const currentPath = [...path, node.bk_inst_name];
-            const fullPath = currentPath.join(' / ');
+    // Helper function to build all children (when parent matches or we need full subtree)
+    const buildAllChildren = (children: any[], bizId: number): TreeData[] => {
+        return children.map(child => ({
+            title: child.bk_inst_name,
+            key: `${child.bk_obj_id}-${child.bk_inst_id}-${bizId}`,
+            type: getNodeType(child.bk_obj_id),
+            bk_obj_id: child.bk_obj_id,
+            bk_inst_name: child.bk_inst_name,
+            children: child.child && child.child.length > 0
+                ? buildAllChildren(child.child, bizId)
+                : undefined
+        }));
+    };
 
-            // Check if current node matches search
-            if (node.bk_inst_name?.toLowerCase().includes(searchValue.toLowerCase())) {
-                result.push({
-                    ...node,
-                    searchPath: fullPath
+    // Helper function to check if node or any descendant matches
+    const hasMatchingDescendant = (node: any, searchTerm: string): boolean => {
+        if (nodeMatches(node, searchTerm)) return true;
+        if (node.child && node.child.length > 0) {
+            return node.child.some((child: any) => hasMatchingDescendant(child, searchTerm));
+        }
+        return false;
+    };
+
+    // Helper function to filter tree while maintaining hierarchy
+    const filterTreeWithHierarchy = (nodes: any[], searchTerm: string, bizId: number): TreeData[] => {
+        return nodes.map(node => {
+            const nodeMatch = nodeMatches(node, searchTerm);
+            const hasMatchingChild = node.child && node.child.length > 0 && 
+                node.child.some((child: any) => hasMatchingDescendant(child, searchTerm));
+
+            if (nodeMatch || hasMatchingChild) {
+                return {
+                    title: node.bk_inst_name,
+                    key: `${node.bk_obj_id}-${node.bk_inst_id}-${bizId}`,
+                    type: getNodeType(node.bk_obj_id),
+                    bk_obj_id: node.bk_obj_id,
+                    bk_inst_name: node.bk_inst_name,
+                    children: nodeMatch 
+                        ? buildAllChildren(node.child || [], bizId) // If node matches, include all children
+                        : filterTreeWithHierarchy(node.child || [], searchTerm, bizId) // Otherwise filter children
+                };
+            }
+            return null;
+        }).filter(Boolean) as TreeData[];
+    };
+
+    // If searching, return filtered tree structure
+    if (searchValue && searchValue.trim()) {
+        const searchTerm = searchValue.trim();
+        const results: TreeData[] = [];
+
+        // Process each business
+        businessData2.forEach(biz => {
+            const bizChildren: TreeData[] = [];
+            const bizMatches = nodeMatches(biz, searchTerm);
+
+            // Check idle cluster and its modules
+            const idleMatches = nodeMatches(idleCluster2, searchTerm);
+            const idleHasMatchingModules = idleCluster2.module.some(mod => nodeMatches(mod, searchTerm));
+
+            if (idleMatches || idleHasMatchingModules) {
+                const idleModules = idleMatches 
+                    ? idleCluster2.module.map(mod => ({ // If idle cluster matches, include all modules
+                        title: mod.bk_module_name,
+                        key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
+                        type: 'idle'
+                    }))
+                    : idleCluster2.module // Otherwise only include matching modules
+                        .filter(mod => nodeMatches(mod, searchTerm))
+                        .map(mod => ({
+                            title: mod.bk_module_name,
+                            key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
+                            type: 'idle'
+                        }));
+
+                bizChildren.push({
+                    title: idleCluster2.bk_set_name,
+                    key: `idle-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
+                    type: 'idle',
+                    children: idleModules
                 });
             }
 
-            // Recursively check children
-            if (node.child && node.child.length > 0) {
-                node.child.forEach((child: any) => traverse(child, currentPath));
+            // Process regular children
+            if (biz.child && biz.child.length > 0) {
+                if (bizMatches) {
+                    // If business matches, include ALL children
+                    bizChildren.push(...buildAllChildren(biz.child, biz.bk_inst_id));
+                } else {
+                    // If business doesn't match, filter children but maintain hierarchy
+                    const filteredChildren = filterTreeWithHierarchy(biz.child, searchTerm, biz.bk_inst_id);
+                    bizChildren.push(...filteredChildren);
+                }
             }
-        };
 
-        nodes.forEach(node => traverse(node));
-        return result;
-    };
+            // If business matches or has matching children, include it
+            const hasRegularMatches = biz.child && biz.child.length > 0 && 
+                biz.child.some((child: any) => hasMatchingDescendant(child, searchTerm));
 
-    // If searching, return flattened filtered results
-    if (searchValue && searchValue.trim()) {
-        const filtered = flattenAndFilter(businessData2, searchValue.trim());
-        return filtered.map((node: any) => ({
-            title: node.bk_inst_name,
-            key: `${node.bk_obj_id}-${node.bk_inst_id}`,
-            type: getNodeType(node.bk_obj_id),
-            bk_obj_id: node.bk_obj_id,
-            bk_inst_name: node.bk_inst_name,
-            searchPath: node.searchPath
-        }));
+            if (bizMatches || idleMatches || idleHasMatchingModules || hasRegularMatches) {
+                // If business matches, also include idle cluster with all modules (if not already added)
+                if (bizMatches && !idleMatches && !idleHasMatchingModules) {
+                    bizChildren.unshift({ // Add to beginning
+                        title: idleCluster2.bk_set_name,
+                        key: `idle-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
+                        type: 'idle',
+                        children: idleCluster2.module.map(mod => ({
+                            title: mod.bk_module_name,
+                            key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
+                            type: 'idle'
+                        }))
+                    });
+                }
+
+                results.push({
+                    title: biz.bk_inst_name,
+                    key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
+                    type: getNodeType(biz.bk_obj_id),
+                    bk_obj_id: biz.bk_obj_id,
+                    bk_inst_name: biz.bk_inst_name,
+                    children: bizChildren
+                });
+            }
+        });
+
+        return results;
     }
 
     // Normal tree structure when not searching
@@ -102,16 +195,8 @@ function buildChildrenFromData(children: any[], bizId: number): TreeData[] {
 }
 
 function getNodeType(bkObjId?: string): string {
-    switch (bkObjId) {
-        case 'biz':
-            return 'business';
-        case 'set':
-            return 'cluster';
-        case 'module':
-            return 'module';
-        default:
-            return 'idle'; // For idle pool nodes that don't have bk_obj_id
-    }
+    if (bkObjId) return bkObjId;
+    return 'idle';
 }
 
 const TopologyTree: React.FC<Props> = ({
@@ -119,21 +204,20 @@ const TopologyTree: React.FC<Props> = ({
     onSelect,
     tailEleType = TailEleType.All,
     searchValue,
-    onSearchResult,
+    onSearchDataChange
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-    const [isSearching, setIsSearching] = useState(false);
     // State for creating set and module
     const [modalVisible, setModalVisible] = useState(false);
     const [createType, setCreateType] = useState<CreateType>(CreateType.Set);
     const [parentNode, setParentNode] = useState<any>();
 
     const handleCreate = (node: any) => {
-        if (node.type === "business") {
+        if (node.type === "biz") {
             setCreateType(CreateType.Set);
-        } else if (node.type === "cluster") {
+        } else if (node.type === "set") {
             setCreateType(CreateType.Module);
         }
         setParentNode(node);
@@ -142,14 +226,13 @@ const TopologyTree: React.FC<Props> = ({
 
     useEffect(() => {
         const newIsSearching = !!(searchValue && searchValue.trim());
-        setIsSearching(newIsSearching);
 
         const newTreeData = buildTreeData(searchValue);
         setTreeData(newTreeData);
 
-        // Notify parent about search results
-        if (onSearchResult) {
-            onSearchResult(newTreeData.length > 0);
+        // Notify parent about search data changes
+        if (onSearchDataChange) {
+            onSearchDataChange(newTreeData);
         }
 
         if (!newIsSearching) {
@@ -200,24 +283,7 @@ const TopologyTree: React.FC<Props> = ({
     const renderTitle = (node: TreeData) => {
         const isSelected = selectedKey === node.key;
 
-        // For search results, show the full path
-        if (isSearching && node.searchPath) {
-            return (
-                <span
-                    className="title-wrapper search-result"
-                    onMouseEnter={() => setHoveredKey(node.key)}
-                    onMouseLeave={() => setHoveredKey(null)}
-                >
-                    <span className="left-wrapper">
-                        {renderNodeTypePrefix(node.type, isSelected)}
-                        <span className="search-path">{node.searchPath}</span>
-                    </span>
-                    {renderTailElement(node, hoveredKey!, isSelected)}
-                </span>
-            );
-        }
-
-        // Normal tree display
+        // Normal tree display (same for both search and normal mode)
         return (
             <span
                 className="title-wrapper"
@@ -235,14 +301,14 @@ const TopologyTree: React.FC<Props> = ({
 
     const renderNodeTypePrefix = (type: string, isSelected: boolean) => {
         switch (type) {
-            case 'business':
+            case 'biz':
                 return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>业</span>;
-            case 'cluster':
+            case 'set':
                 return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>集</span>;
             case 'module':
                 return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>模</span>;
             default:
-                return <WalletOutlined className='title-icon' />;
+                return null;
         }
     };
 

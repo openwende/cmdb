@@ -31,64 +31,6 @@ export const bizInfo2 = {
   ],
   "count": 0
 };
-
-// 业务拓扑->业务树
-export const businessData = [
-  {
-      "bk_inst_id": 3,
-      "bk_inst_name": "business2",
-      "bk_obj_id": "biz",
-      "bk_obj_name": "业务",
-      "default": 0,
-      "child": [
-          {
-              "bk_inst_id": 4,
-              "bk_inst_name": "set2",
-              "bk_obj_id": "set",
-              "bk_obj_name": "集群",
-              "default": 0,
-              "child": [
-                  {
-                      "bk_inst_id": 10,
-                      "bk_inst_name": "module2",
-                      "bk_obj_id": "module",
-                      "bk_obj_name": "模块",
-                      "default": 0,
-                      "child": []
-                  }
-              ]
-          }
-      ]
-  }
-];
-// 业务拓扑->空闲机池
-export const idleCluster = {
-  "bk_set_id": 3,
-  "bk_set_name": "空闲机池",
-  "module": [
-      {
-          "bk_module_id": 9,
-          "bk_module_name": "待回收",
-          "default": 3,
-          "host_apply_enabled": false,
-          "host_apply_rule_count": 0
-      },
-      {
-          "bk_module_id": 8,
-          "bk_module_name": "故障机",
-          "default": 2,
-          "host_apply_enabled": false,
-          "host_apply_rule_count": 0
-      },
-      {
-          "bk_module_id": 7,
-          "bk_module_name": "空闲机",
-          "default": 1,
-          "host_apply_enabled": false,
-          "host_apply_rule_count": 0
-      }
-  ]
-};
 // 树状结构数据
 export const businessData2 = [
   {

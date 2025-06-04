@@ -26,6 +26,11 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
+    // Handle search data changes from TopologyTree
+    const handleSearchDataChange = (data: any[]) => {
+        setHasSearchResults(data.length > 0);
+    };
+
     // Handle clear search
     const handleClearSearch = () => {
         setSearch('');
@@ -86,8 +91,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                             selectedKey={selectedKey}
                             onSelect={onSelect}
                             searchValue={search}
-                            onSearchResult={setHasSearchResults}
-                            onClearSearch={handleClearSearch}
+                            onSearchDataChange={handleSearchDataChange}
                         />
                     )}
                     {/* The dragger */}

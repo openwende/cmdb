@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
+import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover, Tree } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
@@ -54,11 +54,14 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const [hostSearchValue, setHostSearchValue] = useState<string>('');
     const [hasTreeSearchResults, setHasTreeSearchResults] = useState<boolean>(true);
     const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
+    const [searchTreeData, setSearchTreeData] = useState<any[]>([]);
     // Result preview list items - independent of tab switching
     const [resultPreviewItems, setResultPreviewItems] = useState<Array<{ id: React.Key, ip: string }>>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
     // Global host mapping - stores all hosts info to avoid dependency on current tab
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, { id: React.Key, ip: string }>>(new Map());
+    // Ref for tree wrapper to control popover container
+    const treeWrapperRef = useRef<HTMLDivElement>(null);
 
     // Handle host selection changes - updates both selectedHosts and resultPreviewItems
     const handleHostSelectionChange = (newSelectedKeys: React.Key[]) => {
@@ -253,6 +256,14 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         setShowSearchPopover(!!value.trim());
     };
 
+    // Handle search data changes from TopologyTree
+    const handleSearchDataChange = (data: any[]) => {
+        setSearchTreeData(data);
+        setHasTreeSearchResults(data.length > 0);
+        const isSearching = !!(treeSearchValue && treeSearchValue.trim());
+        setShowSearchPopover(isSearching && data.length > 0);
+    };
+
     const handleConfirm = () => {
         const currentHosts = getCurrentHosts();
         const selectedHostData = selectedHosts.map(hostId =>
@@ -321,15 +332,18 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         if (!hasTreeSearchResults) {
             return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
         }
-
+        
         return (
             <div className="search-popover-content">
-                <TopologyTree
-                    selectedKey={null}
-                    onSelect={(key) => handleSearchResultClick(key!)}
-                    tailEleType={TailEleType.None}
-                    searchValue={treeSearchValue}
-                    onSearchResult={setHasTreeSearchResults}
+                <Tree
+                    treeData={searchTreeData}
+                    blockNode={true}
+                    onSelect={(keys) => {
+                        if (keys.length > 0) {
+                            handleSearchResultClick(keys[0] as string);
+                        }
+                    }}
+                    className="topology-tree"
                 />
             </div>
         );
@@ -386,13 +400,13 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     // Render static topology tab content
     const renderStaticTopology = () => (
         <div className='topology-wrapper'>
-            <div
-                className='tree-wrapper'
+            <div className='tree-wrapper'
                 style={{
                     width: sidebarWidth,
                     minWidth: MIN_WIDTH,
                     maxWidth: MAX_WIDTH,
                 }}
+                ref={treeWrapperRef}
             >
                 <Popover
                     content={renderSearchPopoverContent()}
@@ -402,6 +416,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                     onOpenChange={setShowSearchPopover}
                     placement="bottomLeft"
                     overlayClassName="tree-search-popover"
+                    getPopupContainer={() => treeWrapperRef.current || document.body}
                 >
                     <Input.Search
                         placeholder="搜索拓扑节点"
@@ -419,6 +434,8 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                     selectedKey={selectedTreeKey}
                     onSelect={handleTreeSelect}
                     tailEleType={TailEleType.Count}
+                    searchValue={treeSearchValue}
+                    onSearchDataChange={handleSearchDataChange}
                 />
                 {/* The dragger */}
                 <div
