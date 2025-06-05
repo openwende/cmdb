@@ -1,24 +1,22 @@
 import React, { useState } from 'react';
-import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
+import { Table, Button, Dropdown, Input, message } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
-import { AppendMenuItemKey, DropdownMenuType, MoreMenuItemKey, RemoveMenuItemKey, TransferMenuItemKey } from '../../Types';
+import { AppendMenuItemKey, DropdownMenuType, MoreMenuItemKey, RemoveMenuItemKey, TopoTreeNodeType, TransferMenuItemKey, TreeData } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import './style.css';
 
 interface Props {
-  selectedNode?: any;
+  selectedNode: TreeData | null;
+  onGoToHostTransfer?: (selectedHosts: any[], targetModuleId?: string) => void;
 }
 
-const HostList: React.FC<Props> = ({ selectedNode }) => {
+const HostList: React.FC<Props> = ({ selectedNode, onGoToHostTransfer }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
-
-  // Check if the selected node is module type
-  const isModuleSelected = selectedNode?.type === 'module';
 
   const columns = [
     {
@@ -69,8 +67,8 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       items.push(
         { key: TransferMenuItemKey.IdlePool, label: '空闲机池' },
         { key: TransferMenuItemKey.Business, label: '业务模块' },
-        { key: TransferMenuItemKey.HostPool, label: '主机池', disabled: selectedNode === 'idle' },
-        { key: TransferMenuItemKey.Other, label: '其他业务', disabled: selectedNode === 'idle' }
+        { key: TransferMenuItemKey.HostPool, label: '主机池', disabled: selectedNode?.type === TopoTreeNodeType.Idle },
+        { key: TransferMenuItemKey.Other, label: '其他业务', disabled: selectedNode?.type === TopoTreeNodeType.Idle }
       );
     } else if (type === DropdownMenuType.Append) {
       items.push(
@@ -101,19 +99,13 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
 
   const handleAddHost = () => {
     setAddModalVisible(true);
-  };
-
-  const handleAddHostConfirm = (hosts: any[]) => {
-    console.log('添加主机:', hosts);
-    message.success(`成功添加 ${hosts.length} 台主机`);
-    // 这里可以添加实际的添加主机逻辑
-  };
+  };  
 
   return (
     <div className='list-wrapper'>
       {/* The operation botton bar */}
       <div className='operation-bar'>
-      <Button type="primary" onClick={handleAddHost}>新增</Button>
+        <Button type="primary" onClick={handleAddHost}>新增</Button>
         {/* {isModuleSelected ? (
           <Button type="primary" onClick={handleAddHost}>新增</Button>
         ) : (
@@ -231,7 +223,6 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       <AddHostModal
         visible={addModalVisible}
         onClose={() => setAddModalVisible(false)}
-        onConfirm={handleAddHostConfirm}
       />
     </div>
   );

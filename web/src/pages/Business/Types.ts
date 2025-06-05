@@ -1,8 +1,4 @@
 // business topology
-export enum CreateType {
-    Set = "set",
-    Module = "module"
-}
 export enum CreateMode {
     Template = "template",
     Direct = "direct"
@@ -47,4 +43,21 @@ export enum TailEleType {
     All = "all",
     Count = "count",
     None = "none"
+}
+export interface TreeData {
+    title: React.ReactNode;
+    key: string;
+    type: string;
+    objName?: string;
+    children?: TreeData[];
+}
+export enum TopoTreeNodeType {
+    Biz = "biz",
+    Set = "set",
+    Module = "module",
+    Idle = "idle"
+}
+export interface AddHostItem {
+    id: React.Key;
+    ip: string;
 }

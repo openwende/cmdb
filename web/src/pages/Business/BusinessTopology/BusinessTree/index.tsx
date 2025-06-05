@@ -5,18 +5,19 @@ import TopologyTree from "../components/TopologyTree";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import "./style.css";
 import { useTranslation } from "react-i18next";
+import { TreeData } from "../../Types";
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
 
 interface Props {
-    selectedKey: string | null;
-    onSelect: (key: string | null) => void;
+    selectedNode: TreeData | null;
+    onSelectNode: (node: TreeData) => void;
 }
 
-const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
+const BusinessTree: React.FC<Props> = ({ selectedNode, onSelectNode }) => {
     const { t } = useTranslation();
-    const [search, setSearch] = useState<string>("");
+    const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(320);
@@ -33,7 +34,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
 
     // Handle clear search
     const handleClearSearch = () => {
-        setSearch('');
+        setSearchValue('');
     };
 
     // The dragger event
@@ -80,17 +81,17 @@ const BusinessTree: React.FC<Props> = ({ selectedKey, onSelect }) => {
                         <Input.Search
                             placeholder={t("business.topology.tree.search")}
                             allowClear
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
+                            value={searchValue}
+                            onChange={e => setSearchValue(e.target.value)}
                         />
                     </div>
-                    {!hasSearchResults && search ? (
+                    {!hasSearchResults && searchValue ? (
                         <EmptySearchResult onClearFilter={handleClearSearch} />
                     ) : (
                         <TopologyTree
-                            selectedKey={selectedKey}
-                            onSelect={onSelect}
-                            searchValue={search}
+                            selectedNode={selectedNode}
+                            onSelectNode={onSelectNode}
+                            searchValue={searchValue}
                             onSearchDataChange={handleSearchDataChange}
                         />
                     )}

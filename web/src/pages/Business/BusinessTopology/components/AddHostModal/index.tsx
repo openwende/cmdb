@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover, Tree } from 'antd';
+import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
-import { TailEleType } from '@/pages/Business/Types';
+import { AddHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
@@ -13,8 +13,9 @@ const MAX_WIDTH = 420;
 
 interface Props {
     visible: boolean;
+    initialSelectedHosts?: any[];
     onClose: () => void;
-    onConfirm: (hosts: any[]) => void;
+    onConfirm?: (hosts: AddHostItem[]) => void;
 }
 
 interface HostData {
@@ -34,11 +35,11 @@ enum TabItemKey {
     CustomInput = 'customInput'
 }
 
-const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
+const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts }) => {
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
-    const [selectedTreeKey, setSelectedTreeKey] = useState<string | null>(null);
-    const [page, setPage] = useState(1);
+    const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
+    const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(320);
@@ -56,12 +57,30 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
     const [searchTreeData, setSearchTreeData] = useState<any[]>([]);
     // Result preview list items - independent of tab switching
-    const [resultPreviewItems, setResultPreviewItems] = useState<Array<{ id: React.Key, ip: string }>>([]);
+    const [resultPreviewItems, setResultPreviewItems] = useState<AddHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
     // Global host mapping - stores all hosts info to avoid dependency on current tab
-    const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, { id: React.Key, ip: string }>>(new Map());
+    const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, AddHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const treeWrapperRef = useRef<HTMLDivElement>(null);
+
+    // Initialize with initial selected hosts
+    React.useEffect(() => {
+        if (initialSelectedHosts && initialSelectedHosts.length > 0) {
+            const hostIds = initialSelectedHosts.map(host => host.bk_host_id);
+            const hostMapping = new Map(initialSelectedHosts.map(host => [
+                host.bk_host_id,
+                { id: host.bk_host_id, ip: host.bk_host_innerip }
+            ]));
+            
+            setSelectedHosts(hostIds);
+            setAllHostsMapping(hostMapping);
+            setResultPreviewItems(initialSelectedHosts.map(host => ({
+                id: host.bk_host_id,
+                ip: host.bk_host_innerip
+            })));
+        }
+    }, [initialSelectedHosts]);
 
     // Handle host selection changes - updates both selectedHosts and resultPreviewItems
     const handleHostSelectionChange = (newSelectedKeys: React.Key[]) => {
@@ -222,10 +241,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     };
 
     // Clear tree search
-    const handleClearTreeSearch = () => {
-        setTreeSearchValue('');
-        setShowSearchPopover(false);
-    };
+    // const handleClearTreeSearch = () => {
+    //     setTreeSearchValue('');
+    //     setShowSearchPopover(false);
+    // };
 
     // Clear host search
     const handleClearHostSearch = () => {
@@ -233,8 +252,8 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     };
 
     // Handle topology tree selection
-    const handleTreeSelect = (key: string | null) => {
-        setSelectedTreeKey(key);
+    const handleNodeSelect = (node: TreeData) => {
+        setSelectedNode(node);
         // Dismiss search panel by clearing search when item is clicked
         if (treeSearchValue) {
             setTreeSearchValue('');
@@ -243,11 +262,11 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     };
 
     // Handle search popover result item click
-    const handleSearchResultClick = (key: string) => {
-        setSelectedTreeKey(key);
-        setTreeSearchValue('');
-        setShowSearchPopover(false);
-    };
+    // const handleSearchResultClick = (key: string) => {
+    //     setSelectedTreeKey(key);
+    //     setTreeSearchValue('');
+    //     setShowSearchPopover(false);
+    // };
 
     // Handle tree search input change
     const handleTreeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -264,20 +283,14 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
         setShowSearchPopover(isSearching && data.length > 0);
     };
 
-    const handleConfirm = () => {
-        const currentHosts = getCurrentHosts();
-        const selectedHostData = selectedHosts.map(hostId =>
-            currentHosts.find(h => h.key === hostId)
-        ).filter(Boolean);
-
-        onConfirm(selectedHostData);
+    const handleNextStep = () => {
+        // onConfirm(selectedNode, resultPreviewItems);
         handleCancel();
     };
 
     const handleCancel = () => {
         // Reset all states to initial values
         setActiveTab(TabItemKey.StaticTopo);
-        setSelectedTreeKey(null);
         setSelectedHosts([]);
         setCustomInput('');
         setCustomHosts([]);
@@ -329,24 +342,26 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
 
     // Render search popover content
     const renderSearchPopoverContent = () => {
-        if (!hasTreeSearchResults) {
-            return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
-        }
+        // TODO: how to show
+        return null;
+        // if (!hasTreeSearchResults) {
+        //     return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
+        // }
         
-        return (
-            <div className="search-popover-content">
-                <Tree
-                    treeData={searchTreeData}
-                    blockNode={true}
-                    onSelect={(keys) => {
-                        if (keys.length > 0) {
-                            handleSearchResultClick(keys[0] as string);
-                        }
-                    }}
-                    className="topology-tree"
-                />
-            </div>
-        );
+        // return (
+        //     <div className="search-popover-content">
+        //         <Tree
+        //             treeData={searchTreeData}
+        //             blockNode={true}
+        //             onSelect={(keys) => {
+        //                 if (keys.length > 0) {
+        //                     handleSearchResultClick(keys[0] as string);
+        //                 }
+        //             }}
+        //             className="topology-tree"
+        //         />
+        //     </div>
+        // );
     };
 
     const renderHostList = () => {
@@ -431,8 +446,8 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                     />
                 </Popover>
                 <TopologyTree
-                    selectedKey={selectedTreeKey}
-                    onSelect={handleTreeSelect}
+                    selectedNode={selectedNode}
+                    onSelectNode={handleNodeSelect}
                     tailEleType={TailEleType.Count}
                     searchValue={treeSearchValue}
                     onSearchDataChange={handleSearchDataChange}
@@ -518,7 +533,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
                 locale={{ emptyText: '暂无主机选中' }}
             />
         </>
-    )
+    );
 
     const inputTabItems: TabsProps['items'] = [
         {
@@ -578,33 +593,35 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm }) => {
     ]
 
     return (
-        <Modal
-            title="新增主机到模块"
-            open={visible}
-            onCancel={handleCancel}
-            width={1200}
-            footer={[
-                <Button key="cancel" onClick={handleCancel}>
-                    取消
-                </Button>,
-                <Button key="confirm" type="primary" disabled={!selectedHosts.length} onClick={handleConfirm}>
-                    下一步
-                </Button>
-            ]}
-            className='add-modal'
-        >
-            <div className='modal-content'>
-                {/* Left side - Tabs for mode selection */}
-                <div className='left-content'>
-                    <Tabs items={inputTabItems} activeKey={activeTab} onChange={setActiveTab} />
-                </div>
+        <>
+            <Modal
+                title="新增主机到模块"
+                open={visible}
+                onCancel={handleCancel}
+                width={1200}
+                footer={[
+                    <Button key="cancel" onClick={handleCancel}>
+                        取消
+                    </Button>,
+                    <Button key="confirm" type="primary" disabled={!selectedHosts.length} onClick={handleNextStep}>
+                        下一步
+                    </Button>
+                ]}
+                className='add-modal'
+            >
+                <div className='modal-content'>
+                    {/* Left side - Tabs for mode selection */}
+                    <div className='left-content'>
+                        <Tabs items={inputTabItems} activeKey={activeTab} onChange={setActiveTab} />
+                    </div>
 
-                {/* Right side - Results and table */}
-                <div className='right-content'>
-                    <Tabs items={resultTabItems} />
+                    {/* Right side - Results and table */}
+                    <div className='right-content'>
+                        <Tabs items={resultTabItems} />
+                    </div>
                 </div>
-            </div>
-        </Modal>
+            </Modal>
+        </>
     );
 };
 

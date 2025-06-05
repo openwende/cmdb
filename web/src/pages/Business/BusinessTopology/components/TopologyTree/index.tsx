@@ -2,42 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { Button, Tree } from 'antd';
 import { businessData2, idleCluster2 } from '@/mock/business';
 import CreateModal from '../CreateModal';
-import { CreateType, TailEleType } from '@/pages/Business/Types';
+import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 
 interface Props {
-    selectedKey?: string | null;
-    onSelect?: (key: string | null, node?: any) => void;
+    selectedNode: TreeData | null;
+    onSelectNode: (node: TreeData) => void;
     tailEleType?: TailEleType;
     searchValue?: string;
     onSearchDataChange?: (data: TreeData[]) => void;
 }
 
-interface TreeData {
-    title: React.ReactNode;
-    key: string;
-    type: string;
-    children?: TreeData[];
-    bk_obj_id?: string;
-    bk_inst_name?: string;
-}
-
 function buildTreeData(searchValue?: string): TreeData[] {
     // Helper function to check if a node matches the search term
     const nodeMatches = (node: any, searchTerm: string): boolean => {
-        return node.bk_inst_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-               node.bk_set_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-               node.bk_module_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        return node.bk_inst_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            node.bk_set_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            node.bk_module_name?.toLowerCase().includes(searchTerm.toLowerCase());
     };
 
     // Helper function to build all children (when parent matches or we need full subtree)
     const buildAllChildren = (children: any[], bizId: number): TreeData[] => {
         return children.map(child => ({
             title: child.bk_inst_name,
-            key: `${child.bk_obj_id}-${child.bk_inst_id}-${bizId}`,
+            key: `${child.bk_obj_id}-${child.bk_inst_id}`,
             type: getNodeType(child.bk_obj_id),
-            bk_obj_id: child.bk_obj_id,
-            bk_inst_name: child.bk_inst_name,
+            objName: child.bk_obj_name,
             children: child.child && child.child.length > 0
                 ? buildAllChildren(child.child, bizId)
                 : undefined
@@ -57,17 +47,16 @@ function buildTreeData(searchValue?: string): TreeData[] {
     const filterTreeWithHierarchy = (nodes: any[], searchTerm: string, bizId: number): TreeData[] => {
         return nodes.map(node => {
             const nodeMatch = nodeMatches(node, searchTerm);
-            const hasMatchingChild = node.child && node.child.length > 0 && 
+            const hasMatchingChild = node.child && node.child.length > 0 &&
                 node.child.some((child: any) => hasMatchingDescendant(child, searchTerm));
 
             if (nodeMatch || hasMatchingChild) {
                 return {
                     title: node.bk_inst_name,
-                    key: `${node.bk_obj_id}-${node.bk_inst_id}-${bizId}`,
+                    key: `${node.bk_obj_id}-${node.bk_inst_id}`,
                     type: getNodeType(node.bk_obj_id),
-                    bk_obj_id: node.bk_obj_id,
-                    bk_inst_name: node.bk_inst_name,
-                    children: nodeMatch 
+                    objName: node.bk_obj_name,
+                    children: nodeMatch
                         ? buildAllChildren(node.child || [], bizId) // If node matches, include all children
                         : filterTreeWithHierarchy(node.child || [], searchTerm, bizId) // Otherwise filter children
                 };
@@ -91,24 +80,24 @@ function buildTreeData(searchValue?: string): TreeData[] {
             const idleHasMatchingModules = idleCluster2.module.some(mod => nodeMatches(mod, searchTerm));
 
             if (idleMatches || idleHasMatchingModules) {
-                const idleModules = idleMatches 
+                const idleModules = idleMatches
                     ? idleCluster2.module.map(mod => ({ // If idle cluster matches, include all modules
                         title: mod.bk_module_name,
-                        key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                        type: 'idle'
+                        key: `${TopoTreeNodeType.Module}-${mod.bk_module_id}`,
+                        type: TopoTreeNodeType.Idle
                     }))
                     : idleCluster2.module // Otherwise only include matching modules
                         .filter(mod => nodeMatches(mod, searchTerm))
                         .map(mod => ({
                             title: mod.bk_module_name,
-                            key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                            type: 'idle'
+                            key: `${TopoTreeNodeType.Module}-${mod.bk_module_id}`,
+                            type: TopoTreeNodeType.Idle
                         }));
 
                 bizChildren.push({
                     title: idleCluster2.bk_set_name,
-                    key: `idle-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                    type: 'idle',
+                    key: `${TopoTreeNodeType.Set}-${idleCluster2.bk_set_id}`,
+                    type: TopoTreeNodeType.Idle,
                     children: idleModules
                 });
             }
@@ -126,7 +115,7 @@ function buildTreeData(searchValue?: string): TreeData[] {
             }
 
             // If business matches or has matching children, include it
-            const hasRegularMatches = biz.child && biz.child.length > 0 && 
+            const hasRegularMatches = biz.child && biz.child.length > 0 &&
                 biz.child.some((child: any) => hasMatchingDescendant(child, searchTerm));
 
             if (bizMatches || idleMatches || idleHasMatchingModules || hasRegularMatches) {
@@ -134,12 +123,12 @@ function buildTreeData(searchValue?: string): TreeData[] {
                 if (bizMatches && !idleMatches && !idleHasMatchingModules) {
                     bizChildren.unshift({ // Add to beginning
                         title: idleCluster2.bk_set_name,
-                        key: `idle-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                        type: 'idle',
+                        key: `${TopoTreeNodeType.Set}-${idleCluster2.bk_set_id}`,
+                        type: TopoTreeNodeType.Idle,
                         children: idleCluster2.module.map(mod => ({
                             title: mod.bk_module_name,
-                            key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                            type: 'idle'
+                            key: `${TopoTreeNodeType.Module}-${mod.bk_module_id}`,
+                            type: TopoTreeNodeType.Idle
                         }))
                     });
                 }
@@ -148,8 +137,7 @@ function buildTreeData(searchValue?: string): TreeData[] {
                     title: biz.bk_inst_name,
                     key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
                     type: getNodeType(biz.bk_obj_id),
-                    bk_obj_id: biz.bk_obj_id,
-                    bk_inst_name: biz.bk_inst_name,
+                    objName: biz.bk_obj_name,
                     children: bizChildren
                 });
             }
@@ -163,17 +151,16 @@ function buildTreeData(searchValue?: string): TreeData[] {
         title: biz.bk_inst_name,
         key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
         type: getNodeType(biz.bk_obj_id),
-        bk_obj_id: biz.bk_obj_id,
-        bk_inst_name: biz.bk_inst_name,
+        objName: biz.bk_obj_name,
         children: [
             {
                 title: idleCluster2.bk_set_name,
-                key: `idle-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                type: 'idle',
+                key: `${TopoTreeNodeType.Set}-${idleCluster2.bk_set_id}`,
+                type: TopoTreeNodeType.Idle,
                 children: idleCluster2.module.map(mod => ({
                     title: mod.bk_module_name,
-                    key: `idle-module-${mod.bk_module_id}-${idleCluster2.bk_set_id}-${biz.bk_inst_id}`,
-                    type: 'idle',
+                    key: `${TopoTreeNodeType.Module}-${mod.bk_module_id}`,
+                    type: TopoTreeNodeType.Idle,
                 })),
             },
             ...buildChildrenFromData(biz.child || [], biz.bk_inst_id)
@@ -184,45 +171,47 @@ function buildTreeData(searchValue?: string): TreeData[] {
 function buildChildrenFromData(children: any[], bizId: number): TreeData[] {
     return children.map(child => ({
         title: child.bk_inst_name,
-        key: `${child.bk_obj_id}-${child.bk_inst_id}-${bizId}`,
+        key: `${child.bk_obj_id}-${child.bk_inst_id}`,
         type: getNodeType(child.bk_obj_id),
-        bk_obj_id: child.bk_obj_id,
-        bk_inst_name: child.bk_inst_name,
+        objName: child.bk_obj_name,
         children: child.child && child.child.length > 0
             ? buildChildrenFromData(child.child, bizId)
             : undefined
     }));
 }
 
-function getNodeType(bkObjId?: string): string {
-    if (bkObjId) return bkObjId;
-    return 'idle';
+function getNodeType(bkObjId?: string): TopoTreeNodeType {
+    let nodeType: TopoTreeNodeType | null = null;
+    switch (bkObjId) {
+        case 'biz':
+            nodeType = TopoTreeNodeType.Biz;
+            break;
+        case 'set':
+            nodeType = TopoTreeNodeType.Set;
+            break;
+        case 'module':
+            nodeType = TopoTreeNodeType.Module;
+            break;
+        default:
+            nodeType = TopoTreeNodeType.Idle;
+    }
+    return nodeType;
 }
 
 const TopologyTree: React.FC<Props> = ({
-    selectedKey,
-    onSelect,
+    selectedNode,
+    onSelectNode,
     tailEleType = TailEleType.All,
     searchValue,
     onSearchDataChange
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+    const [selectedKey, setSelectedKey] = useState<string>();
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     // State for creating set and module
     const [modalVisible, setModalVisible] = useState(false);
-    const [createType, setCreateType] = useState<CreateType>(CreateType.Set);
-    const [parentNode, setParentNode] = useState<any>();
-
-    const handleCreate = (node: any) => {
-        if (node.type === "biz") {
-            setCreateType(CreateType.Set);
-        } else if (node.type === "set") {
-            setCreateType(CreateType.Module);
-        }
-        setParentNode(node);
-        setModalVisible(true);
-    };
+    const [createType, setCreateType] = useState<TopoTreeNodeType>(TopoTreeNodeType.Set);
 
     useEffect(() => {
         const newIsSearching = !!(searchValue && searchValue.trim());
@@ -236,22 +225,30 @@ const TopologyTree: React.FC<Props> = ({
         }
 
         if (!newIsSearching) {
-            // Normal tree mode - set default selection and expansion
-            if (!selectedKey && onSelect && newTreeData.length > 0) {
-                onSelect(newTreeData[0].key);
-            }
+            // Normal tree mode - set default expansion
             setExpandedKeys([newTreeData[0]?.key].filter(Boolean));
         } else {
             // Search mode - expand all results for better visibility
             const allKeys = newTreeData.map(node => node.key);
             setExpandedKeys(allKeys);
         }
-    }, [searchValue, businessData2]);
+    }, [searchValue]);
 
-    const handleSelect = (keys: React.Key[], info: any) => {
-        if (keys.length && onSelect) {
-            onSelect(keys[0] as string, info.node);
+    const handleSelect = (keys: React.Key[], node: TreeData) => {
+        if (keys.length) {
+            setSelectedKey(keys[0] as string);
+            onSelectNode(node);
         }
+    };
+
+    const handleCreate = (node: TreeData) => {
+        if (node.type === TopoTreeNodeType.Biz) {
+            setCreateType(TopoTreeNodeType.Set);
+        } else if (node.type === TopoTreeNodeType.Set) {
+            setCreateType(TopoTreeNodeType.Module);
+        }
+        onSelectNode(node);
+        setModalVisible(true);
     };
 
     const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
@@ -269,7 +266,7 @@ const TopologyTree: React.FC<Props> = ({
             const isHovered = hoveredKey === node.key;
             return (
                 <span className="right-wrapper">
-                    {isHovered && node.type !== 'idle' && node.type !== 'module'
+                    {isHovered && node.type !== TopoTreeNodeType.Idle && node.type !== TopoTreeNodeType.Module
                         ? <Button type="primary" size="small" onClick={() => handleCreate(node)}>新建</Button>
                         : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
                     }
@@ -291,7 +288,7 @@ const TopologyTree: React.FC<Props> = ({
                 onMouseLeave={() => setHoveredKey(null)}
             >
                 <span className="left-wrapper">
-                    {renderNodeTypePrefix(node.type, isSelected)}
+                    {renderNodeTypePrefix(isSelected, node.objName)}
                     {node.title}
                 </span>
                 {renderTailElement(node, hoveredKey!, isSelected)}
@@ -299,17 +296,13 @@ const TopologyTree: React.FC<Props> = ({
         );
     };
 
-    const renderNodeTypePrefix = (type: string, isSelected: boolean) => {
-        switch (type) {
-            case 'biz':
-                return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>业</span>;
-            case 'set':
-                return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>集</span>;
-            case 'module':
-                return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>模</span>;
-            default:
-                return null;
+    const renderNodeTypePrefix = (isSelected: boolean, objName?: string) => {
+        if (objName) {
+            return <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>
+                {objName.charAt(0)}
+            </span>;
         }
+        return null;
     };
 
     return (
@@ -319,7 +312,7 @@ const TopologyTree: React.FC<Props> = ({
                 blockNode={true}
                 titleRender={renderTitle}
                 selectedKeys={selectedKey ? [selectedKey] : []}
-                onSelect={handleSelect}
+                onSelect={(selectedKeys, { node }) => handleSelect(selectedKeys, node)}
                 expandedKeys={expandedKeys}
                 onExpand={keys => setExpandedKeys(keys as string[])}
                 className="topology-tree"
@@ -328,7 +321,7 @@ const TopologyTree: React.FC<Props> = ({
             <CreateModal
                 visible={modalVisible}
                 type={createType}
-                parentNode={parentNode}
+                selectedNode={selectedNode}
                 onClose={() => setModalVisible(false)}
             />
         </>

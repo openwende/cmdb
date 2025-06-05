@@ -622,3 +622,56 @@ export const instLabels = {
 
 // 从serviceCategoryMock中提取serviceCategory数据
 export const serviceCategory = serviceCategoryMock.map(item => item.category);
+// 添加主机到模块preview时的“转移到”的拓扑结构
+export const transferTarget = {
+  "nodes": [
+      {
+          "bk_biz_id": 3,
+          "topo_node": {
+              "bk_obj_id": "module",
+              "bk_inst_id": 10
+          },
+          "topo_path": [
+              {
+                  "bk_obj_id": "module",
+                  "bk_inst_id": 10,
+                  "bk_inst_name": "module2"
+              },
+              {
+                  "bk_obj_id": "set",
+                  "bk_inst_id": 4,
+                  "bk_inst_name": "set2"
+              },
+              {
+                  "bk_obj_id": "biz",
+                  "bk_inst_id": 3,
+                  "bk_inst_name": "business2"
+              }
+          ]
+      },
+      {
+          "bk_biz_id": 3,
+          "topo_node": {
+              "bk_obj_id": "module",
+              "bk_inst_id": 7
+          },
+          "topo_path": [
+              {
+                  "bk_obj_id": "module",
+                  "bk_inst_id": 7,
+                  "bk_inst_name": "空闲机"
+              },
+              {
+                  "bk_obj_id": "set",
+                  "bk_inst_id": 3,
+                  "bk_inst_name": "空闲机池"
+              },
+              {
+                  "bk_obj_id": "biz",
+                  "bk_inst_id": 3,
+                  "bk_inst_name": "business2"
+              }
+          ]
+      }
+  ]
+};
