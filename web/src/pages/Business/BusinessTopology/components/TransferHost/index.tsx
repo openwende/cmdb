@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Collapse, Tooltip } from 'antd';
-import { EditOutlined, PlusOutlined, LeftOutlined } from '@ant-design/icons';
+import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import AddHostModal from '../AddHostModal';
 import AddProcessModal from '../AddProcessModal';
 import { transferTarget } from '@/mock/business';
@@ -52,37 +52,22 @@ const HostTransferPage: React.FC<Props> = ({ onBack, selectedHosts, targetModule
 
     return (
         <div className="host-transfer-page">
-            <div className="page-header">
-                <div className="breadcrumb-navigation">
-                    <Button type="link" icon={<LeftOutlined />} onClick={onBack}>
-                        业务拓扑
-                    </Button>
-                    <span className="separator">/</span>
-                    <span className="current-page">添加主机</span>
-                </div>
-                <div className="page-info">
-                    <span>已选主机: {currentHosts.length} 台</span>
-                    <span className="separator">•</span>
-                    <span>转移目标: {targetModuleId ? `module${targetModuleId}` : '未选择'}</span>
-                </div>
-            </div>
-
             <div className="page-content">
                 {/* Selected hosts section */}
                 <div className="hosts-section">
                     <div className="hosts-header">
-                        <span>已选择 {currentHosts.length} 台主机</span>
+                        <span>已选择 {currentHosts} 台主机</span>
                         <EditOutlined 
                             className="edit-icon" 
                             onClick={handleEditHosts}
                         />
                     </div>
                     <div className="hosts-list">
-                        {currentHosts.map((host, index) => (
+                        {/* {currentHosts.map((host, index) => (
                             <span key={index} className="host-item">
                                 {host.bk_host_innerip}
                             </span>
-                        ))}
+                        ))} */}
                     </div>
                 </div>
 

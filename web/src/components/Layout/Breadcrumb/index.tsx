@@ -1,30 +1,55 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Breadcrumb as AntBreadcrumb } from 'antd';
-import './style.css';
+import type { ItemType as AntdBreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
+import { useLocation, useNavigate, useMatches, Link, UIMatch } from 'react-router-dom';
 import { NavigationItem } from '../../../routes/Types';
+import './style.css';
 
-interface BreadcrumbProps {
-    currentSection: NavigationItem | undefined;
-}
+const Breadcrumb: React.FC = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const matches = useMatches();
 
-const Breadcrumb: React.FC<BreadcrumbProps> = ({ currentSection }) => {
-    const sidebarItems = currentSection?.children || [];
+    const [breadcrumbItems, setBreadcrumbItems] = useState<AntdBreadcrumbItemType[]>([]);
 
-    // Get the currently selected sidebar item
-    const getSelectedName = () => {
-        const path = location.pathname;
-        if (sidebarItems.length > 0) {
-            const selectedItem = sidebarItems.find(item => path.endsWith(item.path));
-            return selectedItem ? selectedItem.name : '';
-        }
-        return '';
-    };
+    useEffect(() => {
+        let items: AntdBreadcrumbItemType[] = [];
 
-    const selectedName = getSelectedName();
+        matches.forEach((match: UIMatch<unknown, unknown>, index: number) => {
+            const routeConfig = (match.handle as { navigationItem: NavigationItem })?.navigationItem;
 
-    return <Fragment>
-        {selectedName ? <AntBreadcrumb className="app-breadcrumb" items={[{ title: selectedName }]} /> : null}
-    </Fragment>
-}
+            if (!routeConfig) {
+                return;
+            }
+
+            // Filter out the root route
+            if (index === 0) {
+                return;
+            }
+
+            // Handle routes at the second level and below
+            if (index >= 2) {
+                const isLastItem = index === matches.length - 1;
+                const title = routeConfig.name;
+                const linkPath = match.pathname + location.search;
+
+                items.push({
+                    key: `breadcrumb-${routeConfig.key}-${index}`,
+                    title: isLastItem ? title : <Link to={linkPath}>{title}</Link>,
+                });
+            }
+        });
+
+        setBreadcrumbItems(items);
+    }, [location, matches, navigate]);
+
+    return (
+        <Fragment>
+            {breadcrumbItems.length > 0 ? (
+                <AntBreadcrumb className="app-breadcrumb" items={breadcrumbItems} />
+            ) : null}
+        </Fragment>
+    );
+};
 
 export default Breadcrumb;

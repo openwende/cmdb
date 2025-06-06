@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
@@ -6,6 +7,7 @@ import { allHosts2 } from '@/mock/business';
 import { AddHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import { transferHostPath } from '../../index';
 import './style.css';
 
 const MIN_WIDTH = 280;
@@ -36,6 +38,7 @@ enum TabItemKey {
 }
 
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts }) => {
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
@@ -284,7 +287,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     const handleNextStep = () => {
-        // onConfirm(selectedNode, resultPreviewItems);
+        navigate(transferHostPath);
         handleCancel();
     };
 

@@ -1,28 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs } from 'antd';
-import { useSearchParams } from 'react-router-dom';
+import { Outlet, useMatch, useSearchParams } from 'react-router-dom';
 import BusinessTree from './BusinessTree';
 import HostList from './HostList';
 import ServiceInstance from './ServiceInstance';
 import NodeInfo from './NodeInfo';
-import HostTransferPage from './components/HostTransferPage';
 import './style.css';
 import { TreeData } from '../Types';
 
-enum PageView {
-    Topology = 'topology',
-    HostTransfer = 'hostTransfer'
-}
+export const transferHostPath = '/business/topology/transferHost';
 
 const BusinessTopology: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'hostList');
     const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
-    const [currentView, setCurrentView] = useState<PageView>(PageView.Topology);
-    const [transferData, setTransferData] = useState<{
-        selectedHosts: any[];
-        targetModuleId?: string;
-    }>({ selectedHosts: [] });
+
+    const isTransferHostRoute = useMatch(transferHostPath);
 
     // Initialize from URL params
     useEffect(() => {
@@ -60,33 +53,11 @@ const BusinessTopology: React.FC = () => {
         updateURL(activeTab, node.key || undefined, 1);
     };
 
-    // Handle navigation to host transfer page
-    const handleGoToHostTransfer = (selectedHosts: any[], targetModuleId?: string) => {
-        setTransferData({ selectedHosts, targetModuleId });
-        setCurrentView(PageView.HostTransfer);
-    };
-
-    // Handle back to topology
-    const handleBackToTopology = () => {
-        setCurrentView(PageView.Topology);
-        setTransferData({ selectedHosts: [] });
-    };
-
-    if (currentView === PageView.HostTransfer) {
-        return (
-            <HostTransferPage
-                onBack={handleBackToTopology}
-                selectedHosts={transferData.selectedHosts}
-                targetModuleId={transferData.targetModuleId}
-            />
-        );
-    }
-
     const items = [
         {
             key: 'hostList',
             label: '主机列表',
-            children: <HostList selectedNode={selectedNode} onGoToHostTransfer={handleGoToHostTransfer} />
+            children: <HostList selectedNode={selectedNode} />
         },
         {
             key: 'serviceInstance',
@@ -102,13 +73,19 @@ const BusinessTopology: React.FC = () => {
 
     return (
         <div className='topology-wrapper'>
-            <BusinessTree selectedNode={selectedNode} onSelectNode={handleNodeSelect} />
-            <Tabs
-                activeKey={activeTab}
-                onChange={handleTabChange}
-                items={items}
-                className='topology-tabs'
-            />
+            {
+                isTransferHostRoute ? <Outlet /> : (
+                    <>
+                        <BusinessTree selectedNode={selectedNode} onSelectNode={handleNodeSelect} />
+                        <Tabs
+                            activeKey={activeTab}
+                            onChange={handleTabChange}
+                            items={items}
+                            className='topology-tabs'
+                        />
+                    </>
+                )
+            }
         </div>
     );
 };

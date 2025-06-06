@@ -6,6 +6,7 @@ import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOut
 const HomePage = lazy(() => import('../pages/Home'));
 const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
+const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/components/TransferHost'));
 const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
 const ResourcePage = lazy(() => import('../pages/Resource'));
 const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
@@ -42,7 +43,16 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
-        icon: <UnorderedListOutlined />
+        icon: <UnorderedListOutlined />,
+        children: [
+          {
+            name: '添加主机',
+            key: BusinessNavKey.TransferHost,
+            path: 'transferHost',
+            element: withSuspense(TransferHost),
+            hideInMenu: true
+          },
+        ]
       },
       {
         name: '服务模板',

@@ -191,19 +191,19 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                     {/* Selected hosts section */}
                     <div className="hosts-section">
                         <div className="hosts-header">
-                            <span>已选择 {currentHosts.length} 台主机</span>
+                            <span>已选择 {currentHosts} 台主机</span>
                             <EditOutlined 
                                 className="edit-icon" 
                                 onClick={handleEditHosts}
                             />
                         </div>
-                        <div className="hosts-list">
+                        {/* <div className="hosts-list">
                             {currentHosts.map((host, index) => (
                                 <span key={index} className="host-item">
                                     {host.bk_host_innerip}
                                 </span>
                             ))}
-                        </div>
+                        </div> */}
                     </div>
 
                     {/* Transfer target section */}

@@ -9,10 +9,9 @@ import './style.css';
 
 interface Props {
   selectedNode: TreeData | null;
-  onGoToHostTransfer?: (selectedHosts: any[], targetModuleId?: string) => void;
 }
 
-const HostList: React.FC<Props> = ({ selectedNode, onGoToHostTransfer }) => {
+const HostList: React.FC<Props> = ({ selectedNode }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);

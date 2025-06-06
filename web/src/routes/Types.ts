@@ -17,7 +17,8 @@ export enum PrimaryNavKey {
 
 export enum BusinessNavKey {
     Topology = 'topology',
-    Template = 'template'
+    Template = 'template',
+    TransferHost = 'transferHost'
 }
 
 export enum ResourceKey {
