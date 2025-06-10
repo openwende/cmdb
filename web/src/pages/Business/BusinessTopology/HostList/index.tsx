@@ -1,21 +1,49 @@
 import React, { useState } from 'react';
-import { Table, Button, Dropdown, Input, message } from 'antd';
+import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
-import { AppendMenuItemKey, DropdownMenuType, MoreMenuItemKey, RemoveMenuItemKey, TopoTreeNodeType, TransferMenuItemKey, TreeData } from '../../Types';
+import {
+  AddHostItem,
+  AppendMenuItemKey,
+  DropdownMenuType,
+  MoreMenuItemKey,
+  RemoveMenuItemKey,
+  TopoTreeNodeType,
+  TransferMenuItemKey,
+  TreeData
+} from '../../Types';
 import AddHostModal from '../components/AddHostModal';
+import { useTransferHostStore } from '@/store/TransferHostStore';
+import { transferHostPath } from '../index';
 import './style.css';
+import { useNavigate } from 'react-router-dom';
 
 interface Props {
   selectedNode: TreeData | null;
 }
 
 const HostList: React.FC<Props> = ({ selectedNode }) => {
+  const navigate = useNavigate();
+  const { setTransferData } = useTransferHostStore();
+
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
+
+  const handleMenuClick = (key: string) => {
+    message.info(`${key}`);
+  };
+
+  const handleAddHost = () => {
+    setAddModalVisible(true);
+  };
+
+  const handleTransferHost = (hosts: AddHostItem[]) => {
+    setTransferData(hosts, selectedNode);
+    navigate(transferHostPath);
+  }
 
   const columns = [
     {
@@ -92,26 +120,17 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
     return { items };
   };
 
-  const handleMenuClick = (key: string) => {
-    message.info(`${key}`);
-  };
-
-  const handleAddHost = () => {
-    setAddModalVisible(true);
-  };  
-
   return (
     <div className='list-wrapper'>
       {/* The operation botton bar */}
       <div className='operation-bar'>
-        <Button type="primary" onClick={handleAddHost}>新增</Button>
-        {/* {isModuleSelected ? (
+        {selectedNode?.type === TopoTreeNodeType.Module ? (
           <Button type="primary" onClick={handleAddHost}>新增</Button>
         ) : (
           <Tooltip title="仅能在业务模块下新增">
             <Button type="primary" disabled>新增</Button>
           </Tooltip>
-        )} */}
+        )}
 
         <Button
           disabled={selectedRowKeys.length === 0}
@@ -222,6 +241,7 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       <AddHostModal
         visible={addModalVisible}
         onClose={() => setAddModalVisible(false)}
+        onConfirm={handleTransferHost}
       />
     </div>
   );

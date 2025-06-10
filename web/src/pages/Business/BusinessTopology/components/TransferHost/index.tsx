@@ -1,122 +1,178 @@
 import React, { useState } from 'react';
-import { Button, Collapse, Tooltip } from 'antd';
-import { EditOutlined, PlusOutlined } from '@ant-design/icons';
+import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip } from 'antd';
+import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useTransferHostStore } from '@/store/TransferHostStore';
 import AddHostModal from '../AddHostModal';
 import AddProcessModal from '../AddProcessModal';
-import { transferTarget } from '@/mock/business';
 import './style.css';
+import { transferTarget } from '@/mock/business';
+import { getFormattedTopoPath } from '@/pages/Business/utils';
 
 const { Panel } = Collapse;
 
 interface Props {
-    onBack: () => void;
-    selectedHosts: any[];
-    targetModuleId?: string;
+    onBack?: () => void;
 }
 
-const HostTransferPage: React.FC<Props> = ({ onBack, selectedHosts, targetModuleId }) => {
+const TransferHost: React.FC<Props> = ({ onBack }) => {
+    const { selectedHosts, selectedNode } = useTransferHostStore();
     const [showEditHostModal, setShowEditHostModal] = useState(false);
     const [showAddProcessModal, setShowAddProcessModal] = useState(false);
-    const [currentHosts, setCurrentHosts] = useState(selectedHosts);
 
-    // Get tooltip content for transfer target
-    const getTransferTargetTooltip = () => {
-        if (!targetModuleId) return '';
-        
-        const target = transferTarget.nodes.find(node => 
-            node.topo_node.bk_inst_id.toString() === targetModuleId
-        );
-        
-        if (!target) return '';
-        
-        // Build topology path string
-        const pathReversed = [...target.topo_path].reverse();
-        return pathReversed.map(item => item.bk_inst_name).join(' > ');
+    const selectedTopoPath = getFormattedTopoPath(selectedNode, transferTarget);
+
+    const columns = [
+        {
+            title: '进程名称',
+            dataIndex: 'processName',
+            key: 'processName',
+        },
+        {
+            title: '进程端口',
+            dataIndex: 'port',
+            key: 'port',
+        },
+        {
+            title: '监听协议端口',
+            dataIndex: 'protocol',
+            key: 'protocol',
+        },
+        {
+            title: '绑定配置模板',
+            dataIndex: 'bindConfig',
+            key: 'bindConfig',
+        },
+        {
+            title: '操作',
+            key: 'action',
+            render: () => (
+                <Button type="link" size="small">
+                    编辑
+                </Button>
+            ),
+        },
+    ];
+
+    const handleConfirm = () => {
+
     };
 
-    // Handle edit hosts
+    const handleCancel = () => {
+        onBack?.();
+    };
+
     const handleEditHosts = () => {
         setShowEditHostModal(true);
     };
 
-    // Handle confirm edit hosts
-    const handleConfirmEditHosts = (hosts: any[]) => {
-        setCurrentHosts(hosts);
+    const handleConfirmEditHosts = () => {
         setShowEditHostModal(false);
     };
 
-    // Handle add process
     const handleAddProcess = () => {
         setShowAddProcessModal(true);
     };
 
-    return (
-        <div className="host-transfer-page">
-            <div className="page-content">
-                {/* Selected hosts section */}
-                <div className="hosts-section">
-                    <div className="hosts-header">
-                        <span>已选择 {currentHosts} 台主机</span>
-                        <EditOutlined 
-                            className="edit-icon" 
-                            onClick={handleEditHosts}
-                        />
-                    </div>
-                    <div className="hosts-list">
-                        {/* {currentHosts.map((host, index) => (
-                            <span key={index} className="host-item">
-                                {host.bk_host_innerip}
-                            </span>
-                        ))} */}
-                    </div>
-                </div>
+    const handleConfirmAddProcess = () => {
+        
+    }
 
-                {/* Transfer target section */}
-                <div className="transfer-section">
-                    <span>转移到</span>
-                    <Tooltip title={getTransferTargetTooltip()}>
-                        <span className="transfer-target">
-                            {targetModuleId ? `模块 ${targetModuleId}` : '未选择目标模块'}
-                        </span>
-                    </Tooltip>
-                </div>
-
-                {/* Process management section */}
-                <div className="process-section">
-                    <h3>进程管理</h3>
-                    <Collapse defaultActiveKey={['1']} className="process-collapse">
-                        <Panel header="10.0.0.4 (未识别到进程)" key="1">
-                            <div className="process-content">
-                                <p>当前主机未检测到进程，您可以点击下方按钮添加进程</p>
-                            </div>
-                        </Panel>
-                        <Panel header="10.0.0.6 (未识别到进程)" key="2">
-                            <div className="process-content">
-                                <p>当前主机未检测到进程，您可以点击下方按钮添加进程</p>
-                            </div>
-                        </Panel>
-                    </Collapse>
-
-                    {/* Add process button */}
-                    <div className="add-process-btn-section">
-                        <Button 
-                            type="primary" 
-                            icon={<PlusOutlined />}
-                            onClick={handleAddProcess}
+    const renderAddInst = () => {
+        return (
+            <div className="add-inst-wrapper">
+                <Space className='tip-text'>
+                    <InfoCircleOutlined />
+                    主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例
+                </Space>
+                <Collapse>
+                    {selectedHosts.length > 0 ? selectedHosts.map((host) => (
+                        <Panel
+                            header={
+                                <div className="host-header">
+                                    <span>{host.ip}</span>
+                                    <span className="status-text">（未添加进程）</span>
+                                </div>
+                            }
+                            extra={selectedTopoPath}
+                            key={host.id.toString()}
                         >
-                            添加进程
+                            <div className="host-content">
+                                <Table
+                                    columns={columns}
+                                    dataSource={[]}
+                                    pagination={false}
+                                    size="small"
+                                />
+                                <div className="add-button">
+                                    <Button
+                                        type="link"
+                                        onClick={handleAddProcess}
+                                    >
+                                        + 添加进程
+                                    </Button>
+                                </div>
+                            </div>
+                        </Panel>
+                    )) : null}
+                </Collapse>
+            </div>
+        );
+    }
+
+    const tabItems: TabsProps['items'] = [
+        {
+            key: 'addInst',
+            label: '新增服务实例',
+            children: renderAddInst(),
+        }
+    ]
+
+    return (
+        <div className="transfer-container">
+            <div className='info-item'>
+                <label className='info-label'>
+                    已选主机：
+                </label>
+                <div className='info-content'>
+                    <span className='info-number'>{selectedHosts.length}</span> 台
+                    <EditOutlined
+                        className="edit-icon"
+                        onClick={handleEditHosts}
+                    />
+                </div>
+            </div>
+
+            <div className='info-item'>
+                <label className='info-label'>
+                    转移到：
+                </label>
+                <div className='info-content'>
+                    <Tooltip title={selectedTopoPath}>
+                        <Button color="default" variant="outlined" className='info-button'>
+                            {selectedNode?.title}
+                        </Button>
+                    </Tooltip>
+                    <div className='module-grep' />
+                </div>
+            </div>
+
+            <div className='info-item'>
+                <label className='info-label'>
+                    变更确认：
+                </label>
+                <div className='info-content'>
+                    <Tabs defaultActiveKey="1" items={tabItems} />
+                    <div className="options">
+                        <Button
+                            type="primary"
+                            onClick={handleConfirm}
+                        >
+                            确认添加
+                        </Button>
+                        <Button onClick={handleCancel}>
+                            取消
                         </Button>
                     </div>
-                </div>
-
-                {/* Action buttons */}
-                <div className="action-buttons">
-                    <Button onClick={onBack}>
-                        取消
-                    </Button>
-                    <Button type="primary">
-                        确认转移
-                    </Button>
                 </div>
             </div>
 
@@ -125,19 +181,17 @@ const HostTransferPage: React.FC<Props> = ({ onBack, selectedHosts, targetModule
                 visible={showEditHostModal}
                 onClose={() => setShowEditHostModal(false)}
                 onConfirm={handleConfirmEditHosts}
-                initialSelectedHosts={currentHosts}
+                initialSelectedHosts={selectedHosts}
             />
 
             {/* Add process modal */}
             <AddProcessModal
                 visible={showAddProcessModal}
                 onClose={() => setShowAddProcessModal(false)}
-                onBack={() => setShowAddProcessModal(false)}
-                selectedHosts={currentHosts}
-                targetModuleId={targetModuleId}
+                onSubmit={handleConfirmAddProcess}
             />
         </div>
     );
 };
 
-export default HostTransferPage; 
+export default TransferHost; 

@@ -35,7 +35,7 @@ const Breadcrumb: React.FC = () => {
 
                 items.push({
                     key: `breadcrumb-${routeConfig.key}-${index}`,
-                    title: isLastItem ? title : <Link to={linkPath}>{title}</Link>,
+                    title: isLastItem ? title : <Link to={linkPath} className='item-link'>{title}</Link>,
                 });
             }
         });

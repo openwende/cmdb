@@ -72,10 +72,10 @@ const BusinessTopology: React.FC = () => {
     ];
 
     return (
-        <div className='topology-wrapper'>
+        <>
             {
                 isTransferHostRoute ? <Outlet /> : (
-                    <>
+                    <div className='topology-wrapper'>
                         <BusinessTree selectedNode={selectedNode} onSelectNode={handleNodeSelect} />
                         <Tabs
                             activeKey={activeTab}
@@ -83,10 +83,10 @@ const BusinessTopology: React.FC = () => {
                             items={items}
                             className='topology-tabs'
                         />
-                    </>
+                    </div>
                 )
             }
-        </div>
+        </>
     );
 };
 

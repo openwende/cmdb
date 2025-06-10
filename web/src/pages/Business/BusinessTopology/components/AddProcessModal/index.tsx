@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Modal, Button, Collapse, Form, Input, Select, Switch, Tooltip, Table, Space } from 'antd';
-import { EditOutlined, LeftOutlined } from '@ant-design/icons';
-import AddHostModal from '../AddHostModal';
-import { transferTarget } from '@/mock/business';
+import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Divider } from 'antd';
+import { LeftOutlined } from '@ant-design/icons';
 import './style.css';
 
 const { Panel } = Collapse;
@@ -10,9 +8,7 @@ const { Panel } = Collapse;
 interface Props {
     visible: boolean;
     onClose: () => void;
-    onBack?: () => void;
-    selectedHosts: any[];
-    targetModuleId?: string;
+    onSubmit: () => void;
 }
 
 interface ListenInfo {
@@ -23,41 +19,11 @@ interface ListenInfo {
     enable: boolean;
 }
 
-const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHosts, targetModuleId }) => {
-    const [showEditHostModal, setShowEditHostModal] = useState(false);
-    const [currentHosts, setCurrentHosts] = useState(selectedHosts);
+const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
     const [form] = Form.useForm();
-    
+
     // Listen info state for the form
-    const [listenInfoList, setListenInfoList] = useState<ListenInfo[]>([
-        { id: '1', ip: '', port: '', protocol: 'TCP', enable: true }
-    ]);
-
-    // Get tooltip content for transfer target
-    const getTransferTargetTooltip = () => {
-        if (!targetModuleId) return '';
-        
-        const target = transferTarget.nodes.find(node => 
-            node.topo_node.bk_inst_id.toString() === targetModuleId
-        );
-        
-        if (!target) return '';
-        
-        // Build topology path string
-        const pathReversed = [...target.topo_path].reverse();
-        return pathReversed.map(item => item.bk_inst_name).join(' > ');
-    };
-
-    // Handle edit hosts
-    const handleEditHosts = () => {
-        setShowEditHostModal(true);
-    };
-
-    // Handle confirm edit hosts
-    const handleConfirmEditHosts = (hosts: any[]) => {
-        setCurrentHosts(hosts);
-        setShowEditHostModal(false);
-    };
+    const [listenInfoList, setListenInfoList] = useState<ListenInfo[]>([]);
 
     // Handle add listen info row
     const handleAddListenInfo = () => {
@@ -66,8 +32,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
             id: newId,
             ip: '',
             port: '',
-            protocol: 'TCP',
-            enable: true
+            protocol: '',
+            enable: false
         }]);
     };
 
@@ -78,7 +44,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
 
     // Update listen info
     const handleUpdateListenInfo = (id: string, field: string, value: any) => {
-        setListenInfoList(listenInfoList.map(item => 
+        setListenInfoList(listenInfoList.map(item =>
             item.id === id ? { ...item, [field]: value } : item
         ));
     };
@@ -146,11 +112,10 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                     <Button type="link" onClick={handleAddListenInfo}>
                         添加
                     </Button>
-                    <Button 
-                        type="link" 
-                        danger 
+                    <Button
+                        type="link"
+                        danger
                         onClick={() => handleDeleteListenInfo(record.id)}
-                        disabled={listenInfoList.length === 1}
                     >
                         删除
                     </Button>
@@ -169,58 +134,27 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
 
     return (
         <>
-            <Modal
-                title={<div className="modal-header">
-                    <LeftOutlined className="back-icon" onClick={onBack} />
-                    <span>添加进程</span>
-                </div>}
+            <Drawer
+                title={'添加进程'}
                 open={visible}
-                onCancel={onClose}
+                onClose={onClose}
                 width={1000}
-                footer={[
-                    <Button key="cancel" onClick={onClose}>
-                        取消
-                    </Button>,
-                    <Button key="confirm" type="primary" onClick={handleSubmitProcess}>
-                        提交
-                    </Button>
-                ]}
-                className="add-process-modal"
+                footer={
+                    <div className='footer-wrapper'>
+                        <Button key="confirm" type="primary" onClick={handleSubmitProcess}>
+                            提交
+                        </Button>
+                        <Button key="cancel" onClick={onClose}>
+                            取消
+                        </Button>
+                    </div>
+                }
+                className="process-drawer"
             >
-                <div className="add-process-content">
-                    {/* Selected hosts section */}
-                    <div className="hosts-section">
-                        <div className="hosts-header">
-                            <span>已选择 {currentHosts} 台主机</span>
-                            <EditOutlined 
-                                className="edit-icon" 
-                                onClick={handleEditHosts}
-                            />
-                        </div>
-                        {/* <div className="hosts-list">
-                            {currentHosts.map((host, index) => (
-                                <span key={index} className="host-item">
-                                    {host.bk_host_innerip}
-                                </span>
-                            ))}
-                        </div> */}
-                    </div>
-
-                    {/* Transfer target section */}
-                    <div className="transfer-section">
-                        <span>转移到</span>
-                        <Tooltip title={getTransferTargetTooltip()}>
-                            <span className="transfer-target">
-                                {targetModuleId ? `模块 ${targetModuleId}` : '未选择目标模块'}
-                            </span>
-                        </Tooltip>
-                    </div>
-
-                    {/* Process configuration form */}
+                <div className="process-content">
                     <Form
                         form={form}
                         layout="vertical"
-                        className="process-form"
                     >
                         {/* Basic Info */}
                         <Collapse defaultActiveKey={['basic']} ghost>
@@ -248,8 +182,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                                         label="进程启动参数"
                                         style={{ flex: 1 }}
                                     >
-                                        <Input.TextArea 
-                                            placeholder="请输入进程启动参数" 
+                                        <Input.TextArea
+                                            placeholder="请输入进程启动参数"
                                             rows={3}
                                         />
                                     </Form.Item>
@@ -258,8 +192,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                                         label="备注"
                                         style={{ flex: 1 }}
                                     >
-                                        <Input.TextArea 
-                                            placeholder="请输入备注" 
+                                        <Input.TextArea
+                                            placeholder="请输入备注"
                                             rows={3}
                                         />
                                     </Form.Item>
@@ -270,16 +204,27 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                         {/* Listen Info */}
                         <Collapse defaultActiveKey={['listen']} ghost>
                             <Panel header="监听信息" key="listen">
-                                <div style={{ color: 'red', marginBottom: '16px', fontSize: '14px' }}>
-                                    有未正确配置的监听信息
+                                <div className="listen-content">
+                                    <Table
+                                        dataSource={listenInfoList}
+                                        columns={listenInfoColumns}
+                                        pagination={false}
+                                        rowKey="id"
+                                        size="small"
+                                    />
+                                    {
+                                        listenInfoList.length === 0 && (
+                                            <div className="add-button">
+                                                <Button
+                                                    type="link"
+                                                    onClick={handleAddListenInfo}
+                                                >
+                                                    + 立即添加
+                                                </Button>
+                                            </div>
+                                        )
+                                    }
                                 </div>
-                                <Table
-                                    dataSource={listenInfoList}
-                                    columns={listenInfoColumns}
-                                    pagination={false}
-                                    rowKey="id"
-                                    size="small"
-                                />
                             </Panel>
                         </Collapse>
 
@@ -352,18 +297,18 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                                 </div>
                                 <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
                                     <Form.Item
-                                        name="reloadCommand"
-                                        label="重载命令"
-                                        style={{ flex: 1 }}
-                                    >
-                                        <Input placeholder="请输入重载命令" />
-                                    </Form.Item>
-                                    <Form.Item
                                         name="forceStopCommand"
                                         label="强制停止命令"
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder="请输入强制停止命令" />
+                                    </Form.Item>
+                                    <Form.Item
+                                        name="reloadCommand"
+                                        label="进程重载命令"
+                                        style={{ flex: 1 }}
+                                    >
+                                        <Input placeholder="请输入进程重载命令" />
                                     </Form.Item>
                                 </div>
                                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -372,8 +317,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                                         label="启动等待时长"
                                         style={{ flex: 1 }}
                                     >
-                                        <Input 
-                                            placeholder="请输入启动等待时长" 
+                                        <Input
+                                            placeholder="请输入启动等待时长"
                                             suffix="s"
                                         />
                                     </Form.Item>
@@ -382,8 +327,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                                         label="操作超时时长"
                                         style={{ flex: 1 }}
                                     >
-                                        <Input 
-                                            placeholder="请输入操作超时时长" 
+                                        <Input
+                                            placeholder="请输入操作超时时长"
                                             suffix="s"
                                         />
                                     </Form.Item>
@@ -392,15 +337,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onBack, selectedHo
                         </Collapse>
                     </Form>
                 </div>
-            </Modal>
-
-            {/* Edit hosts modal */}
-            <AddHostModal
-                visible={showEditHostModal}
-                onClose={() => setShowEditHostModal(false)}
-                onConfirm={handleConfirmEditHosts}
-                initialSelectedHosts={currentHosts}
-            />
+            </Drawer>
         </>
     );
 };

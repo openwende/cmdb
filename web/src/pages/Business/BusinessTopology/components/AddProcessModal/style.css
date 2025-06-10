@@ -1,103 +1,27 @@
-.add-process-modal .add-process-content {
-    padding: 24px 0;
-}
+.process-drawer {
+    .footer-wrapper {
+        display: flex;
+        gap: 8px;
+    }
 
-.add-process-modal .hosts-section {
-    margin-bottom: 24px;
-    padding: 16px;
-    background: #f5f5f5;
-    border-radius: 6px;
-}
+    .process-content {
+        .ant-collapse-header {
+            font-weight: 700;
+        }
 
-.add-process-modal .hosts-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    font-weight: 500;
-}
+        .ant-collapse-arrow {
+            font-weight: 700;
+        }
 
-.add-process-modal .edit-icon {
-    color: #1890ff;
-    cursor: pointer;
-    font-size: 16px;
-}
+        .listen-content {
+            border: 1px solid #dfe0e5;
+            border-radius: 2px;
 
-.add-process-modal .edit-icon:hover {
-    color: #40a9ff;
+            .add-button {
+                font-size: 12px;
+                line-height: 42px;
+                text-align: center;
+            }
+        }
+    }
 }
-
-.add-process-modal .hosts-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.add-process-modal .host-item {
-    padding: 4px 8px;
-    background: #fff;
-    border: 1px solid #d9d9d9;
-    border-radius: 4px;
-    font-size: 12px;
-}
-
-.add-process-modal .transfer-section {
-    margin-bottom: 24px;
-    font-size: 14px;
-}
-
-.add-process-modal .transfer-target {
-    margin-left: 8px;
-    color: #1890ff;
-    cursor: pointer;
-    border-bottom: 1px dashed #1890ff;
-}
-
-.add-process-modal .process-collapse {
-    margin-bottom: 24px;
-}
-
-.add-process-modal .process-content {
-    padding: 16px;
-    color: #666;
-    text-align: center;
-}
-
-.add-process-modal .add-process-btn-section {
-    text-align: center;
-}
-
-/* Process form styles */
-.process-form .ant-collapse-header {
-    background: #fafafa;
-    border-radius: 6px !important;
-    margin-bottom: 16px;
-}
-
-.process-form .ant-collapse-content-box {
-    padding-top: 0;
-}
-
-.process-form .ant-form-item {
-    margin-bottom: 16px;
-}
-
-.add-process-modal .modal-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.add-process-modal .back-icon {
-    color: #1890ff;
-    cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
-    border-radius: 4px;
-    transition: all 0.2s;
-}
-
-.add-process-modal .back-icon:hover {
-    color: #40a9ff;
-    background: #f0f0f0;
-} 

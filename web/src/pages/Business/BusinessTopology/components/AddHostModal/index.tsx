@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
@@ -7,7 +6,6 @@ import { allHosts2 } from '@/mock/business';
 import { AddHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
-import { transferHostPath } from '../../index';
 import './style.css';
 
 const MIN_WIDTH = 280;
@@ -17,7 +15,7 @@ interface Props {
     visible: boolean;
     initialSelectedHosts?: any[];
     onClose: () => void;
-    onConfirm?: (hosts: AddHostItem[]) => void;
+    onConfirm: (hosts: AddHostItem[]) => void;
 }
 
 interface HostData {
@@ -38,7 +36,6 @@ enum TabItemKey {
 }
 
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts }) => {
-    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
@@ -75,7 +72,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                 host.bk_host_id,
                 { id: host.bk_host_id, ip: host.bk_host_innerip }
             ]));
-            
+
             setSelectedHosts(hostIds);
             setAllHostsMapping(hostMapping);
             setResultPreviewItems(initialSelectedHosts.map(host => ({
@@ -278,6 +275,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setShowSearchPopover(!!value.trim());
     };
 
+
     // Handle search data changes from TopologyTree
     const handleSearchDataChange = (data: any[]) => {
         setSearchTreeData(data);
@@ -287,7 +285,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     const handleNextStep = () => {
-        navigate(transferHostPath);
+        onConfirm(resultPreviewItems);
         handleCancel();
     };
 
@@ -350,7 +348,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         // if (!hasTreeSearchResults) {
         //     return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
         // }
-        
+
         // return (
         //     <div className="search-popover-content">
         //         <Tree
@@ -610,6 +608,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         下一步
                     </Button>
                 ]}
+                maskClosable={false}
                 className='add-modal'
             >
                 <div className='modal-content'>
