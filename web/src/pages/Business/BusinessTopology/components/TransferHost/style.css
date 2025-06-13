@@ -76,6 +76,22 @@
                     line-height: 42px;
                     text-align: center;
                 }
+
+                .bind-number {
+                    background-color: #f0f1f5;
+                    color: #888;
+                    border-radius: 8px;
+                    padding: 0 6px;
+                    margin-left: 6;
+                    font-size: 12;
+                    display: inline-block;
+                    min-width: 18;
+                    text-align: center;
+                }
+            }
+
+            .inst-panel {
+                margin-top: 15px;
             }
         }
     }

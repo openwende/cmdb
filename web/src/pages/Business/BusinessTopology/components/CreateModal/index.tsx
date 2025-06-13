@@ -23,7 +23,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
     const [serviceCategory, setServiceCategory] = useState<number[]>([]);
     const formItemRules = [{
         required: true,
-        message: t("business.topology.tree.create.form.rules_message")
+        message: t("common.form.rules_message")
     }];
 
     const onOk = async () => {

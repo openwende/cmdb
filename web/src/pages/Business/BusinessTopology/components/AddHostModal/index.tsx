@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
@@ -6,6 +6,7 @@ import { allHosts2 } from '@/mock/business';
 import { AddHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import { useTransferHostStore } from '@/store/TransferHostStore';
 import './style.css';
 
 const MIN_WIDTH = 280;
@@ -13,7 +14,7 @@ const MAX_WIDTH = 420;
 
 interface Props {
     visible: boolean;
-    initialSelectedHosts?: any[];
+    initialSelectedHosts?: AddHostItem[];
     onClose: () => void;
     onConfirm: (hosts: AddHostItem[]) => void;
 }
@@ -63,24 +64,24 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, AddHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const treeWrapperRef = useRef<HTMLDivElement>(null);
+    const globalSelectedNode = useTransferHostStore(state => state.selectedNode);
+    const isCurrentNodeDisabled = selectedNode?.key === globalSelectedNode?.key;
 
     // Initialize with initial selected hosts
-    React.useEffect(() => {
-        if (initialSelectedHosts && initialSelectedHosts.length > 0) {
-            const hostIds = initialSelectedHosts.map(host => host.bk_host_id);
+    useEffect(() => {
+        if (visible && initialSelectedHosts && initialSelectedHosts.length > 0) {
             const hostMapping = new Map(initialSelectedHosts.map(host => [
-                host.bk_host_id,
-                { id: host.bk_host_id, ip: host.bk_host_innerip }
+                host.id,
+                { id: host.id, ip: host.ip }
             ]));
 
-            setSelectedHosts(hostIds);
             setAllHostsMapping(hostMapping);
             setResultPreviewItems(initialSelectedHosts.map(host => ({
-                id: host.bk_host_id,
-                ip: host.bk_host_innerip
+                id: host.id,
+                ip: host.ip
             })));
         }
-    }, [initialSelectedHosts]);
+    }, [visible, initialSelectedHosts]);
 
     // Handle host selection changes - updates both selectedHosts and resultPreviewItems
     const handleHostSelectionChange = (newSelectedKeys: React.Key[]) => {
@@ -220,8 +221,8 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     // Handle copy IPs
     const handleCopyIPs = async () => {
         const currentHosts = getCurrentHosts();
-        const selectedIPs = selectedHosts.map(hostId => {
-            const host = currentHosts.find(h => h.key === hostId);
+        const selectedIPs = resultPreviewItems.map(resItem => {
+            const host = currentHosts.find(h => h.key === resItem.id);
             return host?.bk_host_innerip;
         }).filter(Boolean).join('\n');
 
@@ -274,7 +275,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setTreeSearchValue(value);
         setShowSearchPopover(!!value.trim());
     };
-
 
     // Handle search data changes from TopologyTree
     const handleSearchDataChange = (data: any[]) => {
@@ -386,7 +386,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         <Table
                             rowSelection={{
                                 selectedRowKeys: selectedHosts,
-                                onChange: handleHostSelectionChange
+                                onChange: handleHostSelectionChange,
+                                getCheckboxProps: () => ({
+                                    disabled: isCurrentNodeDisabled
+                                })
                             }}
                             columns={columns}
                             dataSource={hosts}
@@ -452,6 +455,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                     tailEleType={TailEleType.Count}
                     searchValue={treeSearchValue}
                     onSearchDataChange={handleSearchDataChange}
+                    onlyLeafSelectable={true}
                 />
                 {/* The dragger */}
                 <div
@@ -553,19 +557,19 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         {
             key: MenuItemKey.CopyIP,
             label: '复制IP',
-            disabled: selectedHosts.length === 0
+            disabled: resultPreviewItems.length === 0
         },
         {
             key: MenuItemKey.RemoveAll,
             label: '移除所有',
-            disabled: selectedHosts.length === 0
+            disabled: resultPreviewItems.length === 0
         }
     ]
 
     const collapseItems: CollapseProps['items'] = [
         {
             key: 'result',
-            label: <span>已选择 <span className="selected-count">{selectedHosts.length}</span> 台主机</span>,
+            label: <span>已选择 <span className="selected-count">{resultPreviewItems.length}</span> 台主机</span>,
             children: renderResultPreview(),
             extra: <Dropdown menu={{
                 items: menuItems,
@@ -596,7 +600,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     return (
         <>
             <Modal
-                title="新增主机到模块"
+                title={initialSelectedHosts ? '选择主机' : '新增主机到模块'}
                 open={visible}
                 onCancel={handleCancel}
                 width={1200}
@@ -604,8 +608,8 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                     <Button key="cancel" onClick={handleCancel}>
                         取消
                     </Button>,
-                    <Button key="confirm" type="primary" disabled={!selectedHosts.length} onClick={handleNextStep}>
-                        下一步
+                    <Button key="confirm" type="primary" disabled={!resultPreviewItems.length} onClick={handleNextStep}>
+                        {initialSelectedHosts ? '确定' : '下一步'}
                     </Button>
                 ]}
                 maskClosable={false}

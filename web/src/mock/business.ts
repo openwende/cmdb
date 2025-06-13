@@ -145,6 +145,61 @@ export const allHosts2 = [
         "topo_module_name": "project2##2"
       }
     ]
+  },
+  {
+    "biz": [
+      {
+        "bk_biz_developer": "",
+        "bk_biz_id": 4,
+        "bk_biz_maintainer": "bk-cmdb",
+        "bk_biz_name": "project2",
+        "bk_biz_productor": "",
+        "bk_biz_tester": "",
+        "bk_created_at": "2025-05-18T13:00:01.276Z",
+        "bk_created_by": "bk-cmdb",
+        "bk_supplier_account": "0",
+        "bk_updated_at": "2025-05-18T13:00:01.276Z",
+        "bk_updated_by": "",
+        "create_time": "2025-05-18T13:00:01.276Z",
+        "default": 0,
+        "language": "1",
+        "last_time": "2025-05-18T13:00:01.276Z",
+        "life_cycle": "2",
+        "operator": "",
+        "time_zone": "Asia/Shanghai"
+      }
+    ],
+    "host": {
+      "bk_cloud_id": [
+        {
+          "id": "90000001",
+          "bk_obj_id": "plat",
+          "bk_obj_icon": "",
+          "bk_inst_id": 90000001,
+          "bk_obj_name": "",
+          "bk_inst_name": "未分配"
+        }
+      ],
+      "bk_host_id": 2,
+      "bk_host_innerip": "10.0.0.2",
+      "bk_host_innerip_v6": ""
+    },
+    "module": [
+      {
+        "bk_module_id": 15,
+        "bk_module_name": "game",
+        "default": 0,
+        "topo_module_name": "project2##2##game"
+      }
+    ],
+    "set": [
+      {
+        "bk_set_id": 6,
+        "bk_set_name": "2",
+        "default": 0,
+        "topo_module_name": "project2##2"
+      }
+    ]
   }
 ]
 
@@ -673,5 +728,15 @@ export const transferTarget = {
               }
           ]
       }
+  ]
+};
+// 添加主机->添加进程->监听信息->ip
+export const listenIPOptions = {
+  "options": [
+      "127.0.0.1",
+      "0.0.0.0",
+      "10.0.0.4",
+      "::1",
+      "::"
   ]
 };

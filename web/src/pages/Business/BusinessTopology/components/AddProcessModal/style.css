@@ -1,4 +1,6 @@
 .process-drawer {
+    width: 900px;
+
     .footer-wrapper {
         display: flex;
         gap: 8px;
@@ -22,6 +24,33 @@
                 line-height: 42px;
                 text-align: center;
             }
+
+            .ant-btn {
+                padding-left: 0;
+            }
         }
+
+        .label-tip {
+            margin-left: 4px;
+            color: #c3cdd7;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 54px;
+        }
+    }
+}
+
+.confirm-modal {
+    text-align: center;
+
+    .confirm-title {
+        font-size: 20px;
+        margin-bottom: 14px;
+    }
+
+    .confirm-desc {
+     margin-bottom: 20px;
     }
 }

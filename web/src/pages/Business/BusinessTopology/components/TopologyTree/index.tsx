@@ -11,6 +11,7 @@ interface Props {
     tailEleType?: TailEleType;
     searchValue?: string;
     onSearchDataChange?: (data: TreeData[]) => void;
+    onlyLeafSelectable?: boolean;
 }
 
 function buildTreeData(searchValue?: string): TreeData[] {
@@ -203,7 +204,8 @@ const TopologyTree: React.FC<Props> = ({
     onSelectNode,
     tailEleType = TailEleType.All,
     searchValue,
-    onSearchDataChange
+    onSearchDataChange,
+    onlyLeafSelectable = false
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -236,6 +238,9 @@ const TopologyTree: React.FC<Props> = ({
 
     const handleSelect = (keys: React.Key[], node: TreeData) => {
         if (keys.length) {
+            if (onlyLeafSelectable && node.children && node.children.length > 0) {
+                return;
+            }
             setSelectedKey(keys[0] as string);
             onSelectNode(node);
         }

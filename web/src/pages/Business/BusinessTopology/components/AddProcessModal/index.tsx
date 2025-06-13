@@ -1,38 +1,87 @@
-import React, { useState } from 'react';
-import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Divider } from 'antd';
-import { LeftOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Tooltip, Modal } from 'antd';
 import './style.css';
+import { InfoCircleOutlined } from '@ant-design/icons';
+import { listenIPOptions } from '@/mock/business';
+import { ProcessItem } from '../TransferHost';
 
 const { Panel } = Collapse;
+
+const protocolOptions = [
+    'TCP',
+    'UDP',
+    'TCP6',
+    'UDP6'
+]
 
 interface Props {
     visible: boolean;
     onClose: () => void;
-    onSubmit: () => void;
+    onSubmit: (info: any) => void;
+    mode: 'add' | 'edit';
+    initialValues?: ProcessItem | null;
 }
 
-interface ListenInfo {
+export interface ListenInfo {
     id: string;
-    ip: string;
-    port: string;
-    protocol: string;
+    ip: string | null;
+    port: string | null;
+    protocol: string | null;
     enable: boolean;
 }
 
-const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
+const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, initialValues }) => {
+    const { t } = useTranslation();
     const [form] = Form.useForm();
 
-    // Listen info state for the form
     const [listenInfoList, setListenInfoList] = useState<ListenInfo[]>([]);
+    const [showModal, setShowModal] = useState(false);
+    const [isChanged, setIsChanged] = useState(false);
+
+    useEffect(() => {
+        if (visible) {
+            if (mode === 'edit' && initialValues) {
+                form.setFieldsValue(initialValues);
+                setListenInfoList(initialValues.bindInfo || []);
+            } else if (mode === 'add') {
+                form.resetFields();
+                setListenInfoList([]);
+            }
+        }
+    }, [visible, mode, initialValues, form]);
+
+    useEffect(() => {
+        if (mode !== 'edit' || !initialValues) {
+            setIsChanged(true);
+            return;
+        }
+        const formValues = form.getFieldsValue();
+        const isFormChanged = Object.keys(formValues).some(key => formValues[key] !== initialValues[key]);
+        const isListenChanged = JSON.stringify(listenInfoList) !== JSON.stringify(initialValues.bindInfo || []);
+        setIsChanged(isFormChanged || isListenChanged);
+    }, [listenInfoList, initialValues, mode]);
+
+    // Listen to form changes
+    const handleFormChange = () => {
+        if (mode !== 'edit' || !initialValues) {
+            setIsChanged(true);
+            return;
+        }
+        const formValues = form.getFieldsValue();
+        const isFormChanged = Object.keys(formValues).some(key => formValues[key] !== initialValues[key]);
+        const isListenChanged = JSON.stringify(listenInfoList) !== JSON.stringify(initialValues.bindInfo || []);
+        setIsChanged(isFormChanged || isListenChanged);
+    };
 
     // Handle add listen info row
     const handleAddListenInfo = () => {
         const newId = Date.now().toString();
         setListenInfoList([...listenInfoList, {
             id: newId,
-            ip: '',
-            port: '',
-            protocol: '',
+            ip: null,
+            port: null,
+            protocol: null,
             enable: false
         }]);
     };
@@ -55,18 +104,27 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
             title: 'IP',
             dataIndex: 'ip',
             key: 'ip',
+            width: 180,
             render: (value: string, record: ListenInfo) => (
-                <Input
-                    placeholder="请选择或输入IP"
+                <Select
                     value={value}
-                    onChange={e => handleUpdateListenInfo(record.id, 'ip', e.target.value)}
-                />
+                    style={{ width: '100%' }}
+                    placeholder="请选择或输入IP"
+                    onChange={val => handleUpdateListenInfo(record.id, 'ip', val)}
+                >
+                    {
+                        listenIPOptions.options.map(item => (
+                            <Select.Option value={item} key={item}>{item}</Select.Option>
+                        ))
+                    }
+                </Select>
             )
         },
         {
             title: 'Port',
             dataIndex: 'port',
             key: 'port',
+            width: 180,
             render: (value: string, record: ListenInfo) => (
                 <Input
                     placeholder="请输入Port"
@@ -79,6 +137,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
             title: 'Protocol',
             dataIndex: 'protocol',
             key: 'protocol',
+            width: 180,
             render: (value: string, record: ListenInfo) => (
                 <Select
                     value={value}
@@ -86,10 +145,11 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                     placeholder="请选择Protocol"
                     onChange={val => handleUpdateListenInfo(record.id, 'protocol', val)}
                 >
-                    <Select.Option value="TCP">TCP</Select.Option>
-                    <Select.Option value="UDP">UDP</Select.Option>
-                    <Select.Option value="TCP6">TCP6</Select.Option>
-                    <Select.Option value="UDP6">UDP6</Select.Option>
+                    {
+                        protocolOptions.map(item => (
+                            <Select.Option value={item} key={item}>{item}</Select.Option>
+                        ))
+                    }
                 </Select>
             )
         },
@@ -97,6 +157,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
             title: 'Enable',
             dataIndex: 'enable',
             key: 'enable',
+            width: 150,
             render: (value: boolean, record: ListenInfo) => (
                 <Switch
                     checked={value}
@@ -127,24 +188,43 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
     // Handle submit process form
     const handleSubmitProcess = () => {
         form.validateFields().then(values => {
-            console.log('Process form values:', values);
-            console.log('Listen info:', listenInfoList);
+            // TODO: verify through api
+            onSubmit({ ...values, bindInfo: listenInfoList });
         });
     };
+
+    const handleClose = () => {
+        if (mode === 'edit') {
+            if (isChanged) {
+                setShowModal(true);
+            } else {
+                onClose();
+            }
+        } else {
+            setShowModal(true);
+        }
+    }
+
+    const handleConfirmClose = () => {
+        form.resetFields();
+        setListenInfoList([]);
+        setShowModal(false);
+        onClose();
+    }
 
     return (
         <>
             <Drawer
-                title={'添加进程'}
+                title={mode === 'edit' ? '编辑进程' : '添加进程'}
                 open={visible}
-                onClose={onClose}
+                onClose={handleClose}
                 width={1000}
                 footer={
                     <div className='footer-wrapper'>
-                        <Button key="confirm" type="primary" onClick={handleSubmitProcess}>
+                        <Button key="confirm" type="primary" onClick={handleSubmitProcess} disabled={mode === 'edit' && !isChanged}>
                             提交
                         </Button>
-                        <Button key="cancel" onClick={onClose}>
+                        <Button key="cancel" onClick={handleClose}>
                             取消
                         </Button>
                     </div>
@@ -155,31 +235,63 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                     <Form
                         form={form}
                         layout="vertical"
+                        onValuesChange={handleFormChange}
                     >
                         {/* Basic Info */}
                         <Collapse defaultActiveKey={['basic']} ghost>
                             <Panel header="基础信息" key="basic">
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="processName"
-                                        label="进程名称"
-                                        rules={[{ required: true, message: '请输入进程名称' }]}
+                                        label={<span>进程名称
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    程序的二进制名称（比如zookeeper的二进制名称是java，则填java）
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
+                                        rules={[{ required: true, message: t("common.form.rules_message") }]}
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder="请输入进程名称" />
                                     </Form.Item>
                                     <Form.Item
                                         name="processAlias"
-                                        label="进程别名"
+                                        label={<span>进程别名
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    对外显示的服务名（比如程序的二进制名称为java的服务zookeeper，则填zookeeper）
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
+                                        rules={[{ required: true, message: t("common.form.rules_message") }]}
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder="请输入进程别名" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="startupParams"
-                                        label="进程启动参数"
+                                        label={<span>进程启动参数
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    程序启动参数，用于唯一识别一个进程（例如 -cp zookeeper）
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
                                         style={{ flex: 1 }}
                                     >
                                         <Input.TextArea
@@ -231,10 +343,21 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                         {/* Process Management Info */}
                         <Collapse ghost>
                             <Panel header="进程管理信息" key="management">
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="workPath"
-                                        label="工作路径"
+                                        label={<span>工作路径
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    执行进程启停等操作的工作路径
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>
+                                        }
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder="请输入工作路径" />
@@ -247,7 +370,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                                         <Input placeholder="请输入PID文件路径" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="startUser"
                                         label="启动用户"
@@ -256,17 +379,27 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                                         <Input placeholder="请输入启动用户" />
                                     </Form.Item>
                                     <Form.Item
-                                        name="processCount"
+                                        name="startCount"
                                         label="启动数量"
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入启动数量" />
+                                        <Input type='number' placeholder="请输入启动数量" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="priority"
-                                        label="启动优先级"
+                                        label={<span>启动优先级
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    批量启动进程依据优先级从小到大排序操作，停止进程按反序操作。优先级数值范围支持输入 [ -100 ~ 10000 ]
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder="请输入启动优先级" />
@@ -279,7 +412,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                                         <Input placeholder="请输入启动命令" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="stopCommand"
                                         label="停止命令"
@@ -295,7 +428,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                                         <Input placeholder="请输入重启命令" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="forceStopCommand"
                                         label="强制停止命令"
@@ -311,23 +444,45 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                                         <Input placeholder="请输入进程重载命令" />
                                     </Form.Item>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px' }}>
+                                <div className='form-row'>
                                     <Form.Item
                                         name="startWaitTime"
-                                        label="启动等待时长"
+                                        label={<span>启动等待时长
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    在执行启动命令后，等待多久检查PID存活的状态
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
                                         style={{ flex: 1 }}
                                     >
                                         <Input
+                                            type='number'
                                             placeholder="请输入启动等待时长"
                                             suffix="s"
                                         />
                                     </Form.Item>
                                     <Form.Item
                                         name="operationTimeout"
-                                        label="操作超时时长"
+                                        label={<span>操作超时时长
+                                            <Tooltip
+                                                title={<span style={{ whiteSpace: 'nowrap' }}>
+                                                    执行命令的超时时长
+                                                </span>}
+                                                styles={{ root: { maxWidth: 'none' } }}
+                                                className='label-tip'
+                                            >
+                                                <InfoCircleOutlined />
+                                            </Tooltip>
+                                        </span>}
                                         style={{ flex: 1 }}
                                     >
                                         <Input
+                                            type='number'
                                             placeholder="请输入操作超时时长"
                                             suffix="s"
                                         />
@@ -338,6 +493,20 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit }) => {
                     </Form>
                 </div>
             </Drawer>
+            <Modal
+                title={null}
+                width={400}
+                open={showModal}
+                okText='离开'
+                cancelText='取消'
+                maskClosable={false}
+                onOk={handleConfirmClose}
+                onCancel={() => setShowModal(false)}
+                className='confirm-modal'
+            >
+                <p className='confirm-title'>确认离开当前页？</p>
+                <p className='confirm-desc'>离开将会导致未保存信息丢失</p>
+            </Modal>
         </>
     );
 };

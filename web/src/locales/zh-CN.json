@@ -3,7 +3,10 @@
     "rename": "重命名",
     "delete": "删除",
     "confirm": "确定",
-    "cancel": "取消"
+    "cancel": "取消",
+    "form": {
+      "rules_message": "该字段是必填项"
+    }
   },
   "business": {
     "topology": {
@@ -24,8 +27,7 @@
             "tooltip4": "模块名称需同服务模板名称保持一致",
             "placeholder4": "请输入模块名称",
             "label5": "所属服务分类",
-            "placeholder5": "请选择服务分类",
-            "rules_message": "该字段是必填项"
+            "placeholder5": "请选择服务分类"
           },
           "set_title": "新建集群",
           "module_title": "新建模块",
