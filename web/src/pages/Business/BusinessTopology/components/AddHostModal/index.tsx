@@ -66,6 +66,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const treeWrapperRef = useRef<HTMLDivElement>(null);
     const globalSelectedNode = useTransferHostStore(state => state.selectedNode);
     const isCurrentNodeDisabled = selectedNode?.key === globalSelectedNode?.key;
+    // A key used to forcefully reset the TopologyTree
+    const [treeKey, setTreeKey] = useState(0);
+
+    useEffect(() => {
+        if (visible) setTreeKey(Date.now());
+    }, [visible]);
 
     // Initialize with initial selected hosts
     useEffect(() => {
@@ -449,14 +455,17 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         }}
                     />
                 </Popover>
-                <TopologyTree
-                    selectedNode={selectedNode}
-                    onSelectNode={handleNodeSelect}
-                    tailEleType={TailEleType.Count}
-                    searchValue={treeSearchValue}
-                    onSearchDataChange={handleSearchDataChange}
-                    onlyLeafSelectable={true}
-                />
+                {visible && (
+                    <TopologyTree
+                        key={treeKey}
+                        selectedNode={selectedNode}
+                        onSelectNode={handleNodeSelect}
+                        tailEleType={TailEleType.Count}
+                        searchValue={treeSearchValue}
+                        onSearchDataChange={handleSearchDataChange}
+                        onlyLeafSelectable={true}
+                    />
+                )}
                 {/* The dragger */}
                 <div
                     style={{

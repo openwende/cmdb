@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
@@ -17,7 +18,7 @@ import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
 import { transferHostPath } from '../index';
 import './style.css';
-import { useNavigate } from 'react-router-dom';
+
 
 interface Props {
   selectedNode: TreeData | null;
@@ -26,6 +27,7 @@ interface Props {
 const HostList: React.FC<Props> = ({ selectedNode }) => {
   const navigate = useNavigate();
   const { setTransferData } = useTransferHostStore();
+  const [searchParams] = useSearchParams();
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
@@ -42,7 +44,7 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
 
   const handleTransferHost = (hosts: AddHostItem[]) => {
     setTransferData(hosts, selectedNode);
-    navigate(transferHostPath);
+    navigate(transferHostPath + '?' + searchParams.toString());
   }
 
   const columns = [

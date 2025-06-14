@@ -13,9 +13,13 @@ const MAX_WIDTH = 480;
 interface Props {
     selectedNode: TreeData | null;
     onSelectNode: (node: TreeData) => void;
+    selectedKey?: string;
+    expandedKeys?: string[];
+    onExpand?: (keys: string[]) => void;
+    onSearchDataChange?: (data: TreeData[]) => void;
 }
 
-const BusinessTree: React.FC<Props> = ({ selectedNode, onSelectNode }) => {
+const BusinessTree: React.FC<Props> = ({ selectedNode, onSelectNode, selectedKey, expandedKeys, onExpand, onSearchDataChange }) => {
     const { t } = useTranslation();
     const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
@@ -92,7 +96,10 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, onSelectNode }) => {
                             selectedNode={selectedNode}
                             onSelectNode={onSelectNode}
                             searchValue={searchValue}
-                            onSearchDataChange={handleSearchDataChange}
+                            onSearchDataChange={onSearchDataChange}
+                            selectedKey={selectedKey}
+                            expandedKeys={expandedKeys}
+                            onExpand={onExpand}
                         />
                     )}
                     {/* The dragger */}

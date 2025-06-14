@@ -1,6 +1,11 @@
 import { TreeData } from "./Types";
 
-// Transter the input data into the format which Cascader need
+/**
+ * Transter the input data into the format which Cascader need
+ * 
+ * @param serviceCategory 
+ * @returns 
+ */
 export function buildCascaderOptions(serviceCategory: any[]) {
     return serviceCategory
         .filter(c => c.category.bk_parent_id === 0)
@@ -18,6 +23,7 @@ export function buildCascaderOptions(serviceCategory: any[]) {
 
 /**
  * Get the formatted topo_path for the selected node
+ * 
  * @param selectedNode The selected node object
  * @param transferTargetData The JSON data containing topology node information
  * @returns The formatted topo_path_string
@@ -47,4 +53,32 @@ export function getFormattedTopoPath(
     } else {
         return "";
     }
+}
+
+/**
+ * Traverses a tree structure to locate a node by its key and returns both the node
+ * and an array of keys representing its parent path
+ * 
+ * @param tree 
+ * @param key 
+ * @returns 
+ */
+export function findNodeAndParents(tree: TreeData[], key: string): { node: TreeData | null, parentKeys: string[] } {
+    let found: TreeData | null = null;
+    let parents: string[] = [];
+    function dfs(nodes: TreeData[], path: string[]) {
+        for (const node of nodes) {
+            if (node.key === key) {
+                found = node;
+                parents = path;
+                return true;
+            }
+            if (node.children && dfs(node.children, [...path, node.key])) {
+                return true;
+            }
+        }
+        return false;
+    }
+    dfs(tree, []);
+    return { node: found, parentKeys: parents };
 }

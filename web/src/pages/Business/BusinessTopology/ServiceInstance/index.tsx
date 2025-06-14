@@ -7,14 +7,14 @@ import { DownOutlined } from '@ant-design/icons';
 
 interface Props {
     selectedNode?: any;
+    view?: 'instance' | 'process';
+    setView?: (v: 'instance' | 'process') => void;
 }
 
-const ServiceInstance: React.FC<Props> = ({ selectedNode }) => {
-    const [viewType, setViewType] = useState<'instance' | 'process'>('instance');
+const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', setView }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [expandAll, setExpandAll] = useState(false);
 
-    // 实例操作菜单
     const getInstanceMenu = () => ({
         items: [
             { key: InstanceMenuItemKey.BatchDelete, label: '批量删除', disabled: selectedRowKeys.length === 0 },
@@ -39,15 +39,14 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode }) => {
 
     const handleExpandAllChange = (checked: boolean) => {
         setExpandAll(checked);
-        // 这里可以通过props传递给子组件或使用context
     };
 
     return (
         <div style={{ background: '#fff', padding: 16 }}>
-            {/* 顶部操作栏 */}
+            {/* Top action bar */}
             <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
 
-                {viewType === 'instance' ? (
+                {view === 'instance' ? (
                     <div style={{ display: 'flex', gap: 8 }}>
                         <Button type="primary">新增</Button>
                         <Dropdown
@@ -80,15 +79,15 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode }) => {
                         style={{ width: 200 }}
                         onSearch={(value) => message.info(`搜索: ${value}`)}
                     />
-                    <Radio.Group value={viewType} onChange={(e) => setViewType(e.target.value)}>
+                    <Radio.Group value={view} onChange={(e) => setView && setView(e.target.value)}>
                         <Radio.Button value="instance">实例</Radio.Button>
                         <Radio.Button value="process">进程</Radio.Button>
                     </Radio.Group>
                 </div>
             </div>
 
-            {/* 根据视图类型渲染对应组件 */}
-            {viewType === 'instance' ? (
+            {/* Render the corresponding component based on the view type */}
+            {view === 'instance' ? (
                 <Instance
                     selectedNode={selectedNode}
                     selectedRowKeys={selectedRowKeys}

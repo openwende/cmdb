@@ -12,6 +12,9 @@ interface Props {
     searchValue?: string;
     onSearchDataChange?: (data: TreeData[]) => void;
     onlyLeafSelectable?: boolean;
+    selectedKey?: string;
+    expandedKeys?: string[];
+    onExpand?: (keys: string[]) => void;
 }
 
 function buildTreeData(searchValue?: string): TreeData[] {
@@ -205,7 +208,10 @@ const TopologyTree: React.FC<Props> = ({
     tailEleType = TailEleType.All,
     searchValue,
     onSearchDataChange,
-    onlyLeafSelectable = false
+    onlyLeafSelectable = false,
+    selectedKey: controlledSelectedKey,
+    expandedKeys: controlledExpandedKeys,
+    onExpand
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -246,7 +252,8 @@ const TopologyTree: React.FC<Props> = ({
         }
     };
 
-    const handleCreate = (node: TreeData) => {
+    const handleCreate = (e: React.MouseEvent<HTMLElement, MouseEvent>, node: TreeData) => {
+        e.stopPropagation();
         if (node.type === TopoTreeNodeType.Biz) {
             setCreateType(TopoTreeNodeType.Set);
         } else if (node.type === TopoTreeNodeType.Set) {
@@ -263,7 +270,7 @@ const TopologyTree: React.FC<Props> = ({
 
         if (tailEleType === TailEleType.Count) {
             return <span className="right-wrapper">
-                <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
+                <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>0</span>
             </span>
         }
 
@@ -272,7 +279,7 @@ const TopologyTree: React.FC<Props> = ({
             return (
                 <span className="right-wrapper">
                     {isHovered && node.type !== TopoTreeNodeType.Idle && node.type !== TopoTreeNodeType.Module
-                        ? <Button type="primary" size="small" onClick={() => handleCreate(node)}>新建</Button>
+                        ? <Button type="primary" size="small" onClick={e => handleCreate(e, node)}>新建</Button>
                         : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
                     }
                 </span>
@@ -282,15 +289,58 @@ const TopologyTree: React.FC<Props> = ({
         return null;
     };
 
-    const renderTitle = (node: TreeData) => {
-        const isSelected = selectedKey === node.key;
+    const handleNodeTitleClick = (node: TreeData) => {
+        const key = node.key;
+        const isSelected = (controlledSelectedKey ? controlledSelectedKey : selectedKey) === key;
+        const isParent = node.children && node.children.length > 0;
+        if (!isParent) {
+            // Child nodes are selectable only
+            setSelectedKey(key);
+            onSelectNode(node);
+            return;
+        }
+        if (onlyLeafSelectable) {
+            // Parent nodes are not selectable but can be expanded or collapsed
+            const currentExpanded = controlledExpandedKeys || expandedKeys;
+            const idx = currentExpanded.indexOf(key);
+            let newExpanded;
+            if (idx > -1) {
+                newExpanded = currentExpanded.filter(k => k !== key);
+            } else {
+                newExpanded = [...currentExpanded, key];
+            }
+            if (onExpand) onExpand(newExpanded);
+            if (!controlledExpandedKeys) setExpandedKeys(newExpanded);
+            return;
+        }
+        if (!isSelected) {
+            setSelectedKey(key);
+            onSelectNode(node);
+        } else {
+            // Toggle expand/collapse when the node is already selected
+            const currentExpanded = controlledExpandedKeys || expandedKeys;
+            const idx = currentExpanded.indexOf(key);
+            let newExpanded;
+            if (idx > -1) {
+                newExpanded = currentExpanded.filter(k => k !== key);
+            } else {
+                newExpanded = [...currentExpanded, key];
+            }
+            if (onExpand) onExpand(newExpanded);
+            if (!controlledExpandedKeys) setExpandedKeys(newExpanded);
+        }
+    };
 
-        // Normal tree display (same for both search and normal mode)
+    const renderTitle = (node: TreeData) => {
+        const isSelected = (controlledSelectedKey ? controlledSelectedKey : selectedKey) === node.key;
+        const isParent = node.children && node.children.length > 0;
         return (
             <span
-                className="title-wrapper"
+                className={`title-wrapper ${isSelected ? ' selected' : ''}`}
                 onMouseEnter={() => setHoveredKey(node.key)}
                 onMouseLeave={() => setHoveredKey(null)}
+                onClick={isParent ? (e) => { e.stopPropagation(); handleNodeTitleClick(node); } : undefined}
+                style={isParent ? { cursor: 'pointer' } : undefined}
             >
                 <span className="left-wrapper">
                     {renderNodeTypePrefix(isSelected, node.objName)}
@@ -316,10 +366,13 @@ const TopologyTree: React.FC<Props> = ({
                 treeData={treeData}
                 blockNode={true}
                 titleRender={renderTitle}
-                selectedKeys={selectedKey ? [selectedKey] : []}
+                selectedKeys={controlledSelectedKey ? [controlledSelectedKey] : (selectedKey ? [selectedKey] : [])}
                 onSelect={(selectedKeys, { node }) => handleSelect(selectedKeys, node)}
-                expandedKeys={expandedKeys}
-                onExpand={keys => setExpandedKeys(keys as string[])}
+                expandedKeys={controlledExpandedKeys || expandedKeys}
+                onExpand={keys => {
+                    if (onExpand) onExpand(keys as string[]);
+                    if (!controlledExpandedKeys) setExpandedKeys(keys as string[]);
+                }}
                 className="topology-tree"
             />
             {/* Modal for creating set and module*/}
