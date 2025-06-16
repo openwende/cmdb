@@ -4,22 +4,22 @@ import { AddHostItem, TreeData } from '@/pages/Business/Types';
 
 interface TransferHostState {
   selectedHosts: AddHostItem[];
-  selectedNode: TreeData | null;
-  setTransferData: (hosts: AddHostItem[], node: TreeData | null) => void;
+  targetModules: TreeData[];
+  setTransferHostData: (hosts: AddHostItem[], node: TreeData[]) => void;
 }
 
 export const useTransferHostStore = create<TransferHostState>()(
   persist(
     (set) => ({
       selectedHosts: [],
-      selectedNode: null,
+      targetModules: [],
 
-      setTransferData: (hosts: AddHostItem[], node: TreeData | null) => {
+      setTransferHostData: (hosts: AddHostItem[], modules: TreeData[]) => {
         set({
           selectedHosts: hosts,
-          selectedNode: node,
+          targetModules: modules,
         });
-      },
+      }
     }),
     {
       name: 'transfer-host',

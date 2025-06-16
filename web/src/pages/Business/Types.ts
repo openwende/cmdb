@@ -1,4 +1,4 @@
-// business topology
+// Business topology
 export enum CreateMode {
     Template = "template",
     Direct = "direct"
@@ -8,6 +8,12 @@ export interface CascaderOption {
     label: string;
     children?: CascaderOption[];
 }
+
+/**
+ * TypeScript definitions for the Host List tab
+ */
+
+// Dropdown menu type
 export enum DropdownMenuType {
     Transfer = "transfer",
     Append = "append",
@@ -16,11 +22,12 @@ export enum DropdownMenuType {
     More = "more",
     Instance = "instance"
 }
-export enum TransferMenuItemKey {
-    IdlePool = "idlePool",
-    Business = "business",
-    HostPool = "hostPool",
-    Other = "other"
+// "Transfer To" dropdown menu item type
+export enum TransferMenuItemType {
+    idlePool = "idlePool",
+    businessModule = "businessModule",
+    hostPool = "hostPool",
+    otherBusiness = "otherBusiness"
 }
 export enum AppendMenuItemKey {
     Business = "business"
@@ -50,6 +57,7 @@ export interface TreeData {
     type: string;
     objName?: string;
     children?: TreeData[];
+    parentPath?: string[];
 }
 export enum TopoTreeNodeType {
     Biz = "biz",

@@ -11,12 +11,13 @@ import {
   MoreMenuItemKey,
   RemoveMenuItemKey,
   TopoTreeNodeType,
-  TransferMenuItemKey,
+  TransferMenuItemType,
   TreeData
 } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
 import { transferHostPath } from '../index';
+import TransferHostModal from '../components/TransferHostModal';
 import './style.css';
 
 
@@ -26,25 +27,36 @@ interface Props {
 
 const HostList: React.FC<Props> = ({ selectedNode }) => {
   const navigate = useNavigate();
-  const { setTransferData } = useTransferHostStore();
+  const { setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
+  const [transferModalVisible, setTransferModalVisible] = useState(false);
+  const [transferModalType, setTransferModalType] = useState<TransferMenuItemType | null>(null);
 
   const handleMenuClick = (key: string) => {
-    message.info(`${key}`);
+    if (key === TransferMenuItemType.idlePool) {
+      setTransferModalVisible(true);
+      setTransferModalType(TransferMenuItemType.idlePool);
+    } else {
+      message.info(`${key}`);
+    }
   };
 
-  const handleAddHost = () => {
+  const handleAddHosts = () => {
     setAddModalVisible(true);
   };
 
-  const handleTransferHost = (hosts: AddHostItem[]) => {
-    setTransferData(hosts, selectedNode);
+  const handleConfirmAddHosts = (hosts: AddHostItem[]) => {
+    if (selectedNode !== null) setTransferHostData(hosts, [selectedNode]);
     navigate(transferHostPath + '?' + searchParams.toString());
+  }
+
+  const handleTransferHosts = (targetModules: TreeData[]) => {
+    // setTransferHostData()
   }
 
   const columns = [
@@ -94,10 +106,10 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
 
     if (type === DropdownMenuType.Transfer) {
       items.push(
-        { key: TransferMenuItemKey.IdlePool, label: '空闲机池' },
-        { key: TransferMenuItemKey.Business, label: '业务模块' },
-        { key: TransferMenuItemKey.HostPool, label: '主机池', disabled: selectedNode?.type === TopoTreeNodeType.Idle },
-        { key: TransferMenuItemKey.Other, label: '其他业务', disabled: selectedNode?.type === TopoTreeNodeType.Idle }
+        { key: TransferMenuItemType.idlePool, label: '空闲机池' },
+        { key: TransferMenuItemType.businessModule, label: '业务模块' },
+        { key: TransferMenuItemType.hostPool, label: '主机池' },
+        { key: TransferMenuItemType.otherBusiness, label: '其他业务' }
       );
     } else if (type === DropdownMenuType.Append) {
       items.push(
@@ -127,7 +139,7 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       {/* The operation botton bar */}
       <div className='operation-bar'>
         {selectedNode?.type === TopoTreeNodeType.Module ? (
-          <Button type="primary" onClick={handleAddHost}>新增</Button>
+          <Button type="primary" onClick={handleAddHosts}>新增</Button>
         ) : (
           <Tooltip title="仅能在业务模块下新增">
             <Button type="primary" disabled>新增</Button>
@@ -243,7 +255,15 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       <AddHostModal
         visible={addModalVisible}
         onClose={() => setAddModalVisible(false)}
-        onConfirm={handleTransferHost}
+        onConfirm={handleConfirmAddHosts}
+      />
+
+      {/* Transfer host modal */}
+      <TransferHostModal
+        vivible={transferModalVisible}
+        transferType={transferModalType}
+        onClose={() => setTransferModalVisible(false)}
+        onConfirm={handleTransferHosts}
       />
     </div>
   );

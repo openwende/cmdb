@@ -13,7 +13,7 @@ const Breadcrumb: React.FC = () => {
     const [breadcrumbItems, setBreadcrumbItems] = useState<AntdBreadcrumbItemType[]>([]);
 
     useEffect(() => {
-        let items: AntdBreadcrumbItemType[] = [];
+        const items: AntdBreadcrumbItemType[] = [];
 
         matches.forEach((match: UIMatch<unknown, unknown>, index: number) => {
             const routeConfig = (match.handle as { navigationItem: NavigationItem })?.navigationItem;

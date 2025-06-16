@@ -1,0 +1,119 @@
+.transfer-host-modal {
+  .ant-modal-header {
+    margin-bottom: 24px;
+  }
+
+  .transfer-host-modal-body {
+    display: flex;
+    height: 500px;
+  }
+
+  .transfer-host-modal-left {
+    width: 280px;
+    min-width: 220px;
+    border-right: 1px solid #eee;
+    padding-right: 16px;
+    height: 100%;
+    position: relative;
+
+    .ant-tree {
+      height: 100%;
+      padding: 8px;
+    }
+
+    .ant-input-search {
+      margin-bottom: 12px;
+    }
+
+    .custom-title-prefix {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background-color: #c4c6cc;
+      color: #fff;
+      margin-right: 10px;
+    }
+  }
+
+  .transfer-host-modal-right {
+    flex: 1;
+    padding-left: 24px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .preview-title {
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #222;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+
+      .preview-count {
+        color: #1677ff;
+        font-weight: 700;
+      }
+    }
+
+    .ant-list {
+      background: none;
+      border: none;
+    }
+
+    .preview-item-bg {
+      background: #f5f7fa !important;
+      margin-bottom: 2px !important;
+      border-radius: 4px;
+      padding: 10px !important;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-item-wrapper {
+      display: flex;
+      flex-direction: column;
+
+      .preview-item-content {
+        display: flex;
+
+        .preview-prefix {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: #c4c6cc;
+          color: #fff;
+          font-size: 12px;
+        }
+
+        .preview-name {
+          font-size: 12px;
+          margin-left: 10px;
+        }
+      }
+    }
+
+    .preview-path {
+      color: #aaa;
+      font-size: 12px;
+      margin-left: 30px;
+    }
+
+    .preview-remove {
+      color: #1677ff;
+      cursor: pointer;
+    }
+  }
+}
