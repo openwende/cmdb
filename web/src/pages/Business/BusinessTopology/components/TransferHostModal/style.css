@@ -115,6 +115,11 @@
     .preview-remove {
       color: #1677ff;
       cursor: pointer;
+      font-size: 12px;
+    }
+
+    .ant-list-empty-text {
+      margin-top: 35%;
     }
   }
 }

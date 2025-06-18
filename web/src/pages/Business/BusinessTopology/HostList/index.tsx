@@ -38,14 +38,11 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   const [transferModalType, setTransferModalType] = useState<TransferMenuItemType | null>(null);
 
   const handleMenuClick = (key: string) => {
-    if (key === TransferMenuItemType.idlePool) {
-      setTransferModalVisible(true);
-      setTransferModalType(TransferMenuItemType.idlePool);
-    } else if (key === TransferMenuItemType.businessModule) {
-      setTransferModalVisible(true);
-      setTransferModalType(TransferMenuItemType.businessModule);
-    } else {
+    if (key === TransferMenuItemType.hostPool) {
       message.info(`${key}`);
+    } else {
+      setTransferModalVisible(true);
+      setTransferModalType(key as TransferMenuItemType);
     }
   };
 

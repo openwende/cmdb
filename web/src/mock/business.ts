@@ -18,19 +18,6 @@ export const bizInfo = {
     }
   ]
 };
-export const bizInfo2 = {
-  "info": [
-    {
-      "bk_biz_set_id": 9991001,
-      "bk_biz_set_name": "BlueKing"
-    },
-    {
-      "bk_biz_set_id": 9992001,
-      "bk_biz_set_name": "全业务-蓝盾测试部署专用"
-    }
-  ],
-  "count": 0
-};
 // 树状结构数据
 export const businessData2 = [
   {

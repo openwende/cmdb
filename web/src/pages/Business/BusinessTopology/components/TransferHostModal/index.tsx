@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Modal, Input, List, Button, Checkbox, Radio } from 'antd';
+import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty } from 'antd';
 import TopologyTree from '../TopologyTree';
-import { businessData2, idleCluster2 } from '@/mock/business';
+import { businessData2, idleCluster2, bizInfo } from '@/mock/business';
 import { TailEleType, TopoTreeNodeType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
@@ -13,6 +13,7 @@ export type TransferType = keyof typeof TransferMenuItemType;
 export const typeTitleMap: Partial<Record<TransferType, string>> = {
   idlePool: '转移主机到空闲机池',
   businessModule: '转移主机到业务模块',
+  otherBusiness: '转移主机到其他业务',
 };
 
 interface TransferHostModalProps {
@@ -23,43 +24,43 @@ interface TransferHostModalProps {
 }
 
 const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transferType, onClose, onConfirm }) => {
-  // Only maintain selectedKeys in state
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
-  // The sidebar state
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isDraggerHover, setIsDraggerHover] = useState<boolean>(false);
   const dragging = useRef<boolean>(false);
-  
-  // Build tree data for each transfer type
+  const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
+
+  // Helper to build idlePool/otherBusiness tree structure
+  const buildIdlePoolTree = (bizName: string) => ([{
+    title: bizName,
+    key: bizName,
+    type: TopoTreeNodeType.Biz,
+    objName: '业务',
+    children: [
+      {
+        title: idleCluster2.bk_set_name,
+        key: `set-${idleCluster2.bk_set_id}`,
+        type: TopoTreeNodeType.Set,
+        objName: '集群',
+        children: idleCluster2.module.map(mod => ({
+          title: mod.bk_module_name,
+          key: `module-${mod.bk_module_id}`,
+          type: TopoTreeNodeType.Module,
+          objName: '模块',
+          parentPath: [bizName, idleCluster2.bk_set_name],
+        }))
+      }
+    ]
+  }]);
+
   const customTreeData: TreeData[] = useMemo(() => {
     if (transferType === TransferMenuItemType.idlePool) {
-      // Only business root, idle pool, and its modules
-      return businessData2.map(biz => ({
-        title: biz.bk_inst_name,
-        key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
-        type: TopoTreeNodeType.Biz,
-        objName: biz.bk_obj_name,
-        children: [
-          {
-            title: idleCluster2.bk_set_name,
-            key: `set-${idleCluster2.bk_set_id}`,
-            type: TopoTreeNodeType.Set,
-            objName: '集群',
-            children: idleCluster2.module.map(mod => ({
-              title: mod.bk_module_name,
-              key: `module-${mod.bk_module_id}`,
-              type: TopoTreeNodeType.Module,
-              objName: '模块',
-              parentPath: [biz.bk_inst_name, idleCluster2.bk_set_name],
-            }))
-          }
-        ]
-      }));
+      // idlePool: for each business, build idlePool tree
+      return businessData2.map(biz => buildIdlePoolTree(biz.bk_inst_name)[0]);
     } else if (transferType === TransferMenuItemType.businessModule) {
-      // Business root, set, and modules
       return businessData2.map(biz => ({
         title: biz.bk_inst_name,
         key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
@@ -79,12 +80,14 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
           }))
         }))
       }));
+    } else if (transferType === TransferMenuItemType.otherBusiness && selectedBizId) {
+      const biz = bizInfo.info.find((b: { bk_biz_id: number }) => String(b.bk_biz_id) === selectedBizId);
+      if (!biz) return [];
+      return buildIdlePoolTree(biz.bk_biz_name);
     }
-    // Default: return empty or extend for other types
     return [];
-  }, [transferType]);
+  }, [transferType, selectedBizId]);
 
-  // Recursively find all selected module nodes
   const getSelectedNodes = (keys: string[], tree: TreeData[]): TreeData[] => {
     const result: TreeData[] = [];
     const traverse = (nodes: TreeData[]) => {
@@ -101,7 +104,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
 
   const selectedNodes = useMemo(() => getSelectedNodes(selectedKeys, customTreeData), [selectedKeys, customTreeData]);
   const previewList = useMemo(() => (
-    transferType === TransferMenuItemType.idlePool ? selectedNodes.slice(0, 1) : selectedNodes
+    (transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness)
+      ? selectedNodes.slice(0, 1)
+      : selectedNodes
   ), [selectedNodes, transferType]);
 
   // Handle drag sidebar
@@ -110,7 +115,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
     setIsDragging(true);
     const startX = e.clientX;
     const startWidth = sidebarWidth;
-    
+
     const onMouseMove = (moveEvent: MouseEvent) => {
       if (!dragging.current) return;
       const delta = moveEvent.clientX - startX;
@@ -119,7 +124,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
       if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
       setSidebarWidth(newWidth);
     };
-    
+
     const onMouseUp = () => {
       dragging.current = false;
       setIsDragging(false);
@@ -133,7 +138,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
   // Handle node selection (single or multi based on transferType)
   const handleSelectNode = (node: TreeData) => {
     if (node.type === TopoTreeNodeType.Module) {
-      if (transferType === TransferMenuItemType.idlePool) {
+      if (
+        transferType === TransferMenuItemType.idlePool ||
+        transferType === TransferMenuItemType.otherBusiness
+      ) {
         setSelectedKeys([node.key]);
       } else if (transferType === TransferMenuItemType.businessModule) {
         setSelectedKeys(prev =>
@@ -143,30 +151,31 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
     }
   };
 
-  // Remove single item from preview
   const handleRemove = (key: string) => {
     setSelectedKeys(selectedKeys.filter(k => k !== key));
   };
 
-  // Clear all
   const handleClear = () => {
     setSelectedKeys([]);
   };
 
-  // Confirm selection
   const handleNextStep = () => {
-    if (selectedNodes.length > 0) onConfirm(selectedNodes);
+    if (previewList.length > 0) onConfirm(previewList);
     onClose();
   };
 
   const handleClose = () => {
     setSelectedKeys([]);
     setSearchValue('');
+    setSelectedBizId(undefined);
     onClose();
-  }
+  };
 
   const renderCustomTitlePrefix = (node: TreeData) => {
-    if (transferType === TransferMenuItemType.idlePool && node.type === TopoTreeNodeType.Module) {
+    if (
+      (transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness)
+      && node.type === TopoTreeNodeType.Module
+    ) {
       return (
         <Radio
           checked={selectedKeys[0] === node.key}
@@ -193,6 +202,13 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
     return null;
   };
 
+  const bizOptions = bizInfo.info.map((biz: { bk_biz_id: number; bk_biz_name: string }) => ({
+    label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
+    value: String(biz.bk_biz_id),
+  }));
+
+  const isShowTreeCom = transferType === TransferMenuItemType.otherBusiness ? !!selectedBizId : true;
+
   return (
     <Modal
       open={vivible}
@@ -209,23 +225,48 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
       destroyOnHidden={true}
     >
       <div className="transfer-host-modal-body">
+        {/* Left side */}
         <div className="transfer-host-modal-left" style={{ width: sidebarWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}>
-          <Input.Search
-            placeholder="请输入关键字"
-            style={{ marginBottom: 4 }}
-            value={searchValue}
-            onChange={e => setSearchValue(e.target.value)}
-          />
-          <TopologyTree
-            customTreeData={customTreeData}
-            customTitlePrefix={renderCustomTitlePrefix}
-            onlyLeafSelectable={true}
-            tailEleType={TailEleType.None}
-            searchValue={searchValue}
-            selectedNodes={selectedNodes}
-            selectedKeys={selectedKeys}
-            onSelectNode={handleSelectNode}
-          />
+          {transferType === TransferMenuItemType.otherBusiness ? (
+            <>
+              <Select
+                showSearch
+                allowClear
+                placeholder="请选择业务"
+                style={{ width: '100%', marginBottom: 12 }}
+                value={selectedBizId}
+                onChange={v => setSelectedBizId(v)}
+                options={bizOptions}
+                filterOption={(input, option) =>
+                  (option?.label as string).toLowerCase().includes(input.toLowerCase())
+                }
+              />
+              {!selectedBizId && (
+                <Empty description="请先选择业务" style={{ marginTop: '40%' }} />
+              )}
+            </>
+          ) : (
+            <>
+              <Input.Search
+                placeholder="请输入关键字"
+                style={{ marginBottom: 4 }}
+                value={searchValue}
+                onChange={e => setSearchValue(e.target.value)}
+              />
+            </>
+          )}
+          {
+            isShowTreeCom && <TopologyTree
+              customTreeData={customTreeData}
+              customTitlePrefix={renderCustomTitlePrefix}
+              onlyLeafSelectable={true}
+              tailEleType={TailEleType.None}
+              searchValue={searchValue}
+              selectedNodes={selectedNodes}
+              selectedKeys={selectedKeys}
+              onSelectNode={handleSelectNode}
+            />
+          }
           {/* The dragger */}
           <div
             style={{
@@ -245,6 +286,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
             onMouseLeave={() => setIsDraggerHover(false)}
           />
         </div>
+        {/* Right side */}
         <div className="transfer-host-modal-right">
           <div className="preview-title">结果预览</div>
           <div className="preview-header">
