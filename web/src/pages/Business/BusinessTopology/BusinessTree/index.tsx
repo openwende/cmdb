@@ -93,11 +93,11 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, onSelectNode, selectedKey
                         <EmptySearchResult onClearFilter={handleClearSearch} />
                     ) : (
                         <TopologyTree
-                            selectedNode={selectedNode}
+                            selectedNodes={[selectedNode!]}
                             onSelectNode={onSelectNode}
                             searchValue={searchValue}
                             onSearchDataChange={onSearchDataChange}
-                            selectedKey={selectedKey}
+                            selectedKeys={[selectedKey!]}
                             expandedKeys={expandedKeys}
                             onExpand={onExpand}
                         />

@@ -454,10 +454,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         }}
                     />
                 </Popover>
-                {visible && (
+                {selectedNode && (
                     <TopologyTree
                         key={treeKey}
-                        selectedNode={selectedNode}
+                        selectedNodes={[selectedNode]}
                         onSelectNode={handleNodeSelect}
                         tailEleType={TailEleType.Count}
                         searchValue={treeSearchValue}

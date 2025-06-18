@@ -41,6 +41,9 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
     if (key === TransferMenuItemType.idlePool) {
       setTransferModalVisible(true);
       setTransferModalType(TransferMenuItemType.idlePool);
+    } else if (key === TransferMenuItemType.businessModule) {
+      setTransferModalVisible(true);
+      setTransferModalType(TransferMenuItemType.businessModule);
     } else {
       message.info(`${key}`);
     }

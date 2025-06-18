@@ -21,7 +21,7 @@ export interface ProcessItem {
 
 const TransferHost: React.FC = () => {
     const navigate = useNavigate();
-    const { selectedHosts, selectedNode } = useTransferHostStore();
+    const { selectedHosts, targetModules } = useTransferHostStore();
     const [showEditHostModal, setShowEditHostModal] = useState(false);
     const [showAddProcessModal, setShowAddProcessModal] = useState(false);
     const [hostProcessMap, setHostProcessMap] = useState<Record<string, ProcessItem[]>>({});
@@ -29,6 +29,7 @@ const TransferHost: React.FC = () => {
     const [editingProcess, setEditingProcess] = useState<ProcessItem | null>(null);
     const [processModalMode, setProcessModalMode] = useState<'add' | 'edit'>('add');
 
+    const selectedNode = targetModules[0];
     const selectedTopoPath = getFormattedTopoPath(selectedNode, transferTarget);
 
     const formatBindInfoText = (bindInfo: ListenInfo[]) =>

@@ -6,13 +6,13 @@ import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types'
 import './style.css';
 
 interface Props {
-    selectedNode: TreeData | null;
+    selectedNodes: TreeData[];
     onSelectNode: (node: TreeData) => void;
     tailEleType?: TailEleType;
     searchValue?: string;
     onSearchDataChange?: (data: TreeData[]) => void;
     onlyLeafSelectable?: boolean;
-    selectedKey?: string;
+    selectedKeys?: string[];
     expandedKeys?: string[];
     onExpand?: (keys: string[]) => void;
     customTreeData?: TreeData[];
@@ -222,13 +222,13 @@ function filterTree(tree: TreeData[], keyword: string): TreeData[] {
 }
 
 const TopologyTree: React.FC<Props> = ({
-    selectedNode,
+    selectedNodes,
     onSelectNode,
     tailEleType = TailEleType.All,
     searchValue,
     onSearchDataChange,
     onlyLeafSelectable = false,
-    selectedKey: controlledSelectedKey,
+    selectedKeys: controlledSelectedKeys,
     expandedKeys: controlledExpandedKeys,
     onExpand,
     customTreeData,
@@ -236,7 +236,7 @@ const TopologyTree: React.FC<Props> = ({
 }) => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    const [selectedKey, setSelectedKey] = useState<string>();
+    const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     const [modalVisible, setModalVisible] = useState(false);
     const [createType, setCreateType] = useState<TopoTreeNodeType>(TopoTreeNodeType.Set);
@@ -257,13 +257,13 @@ const TopologyTree: React.FC<Props> = ({
     }, [customTreeData, searchValue, onSearchDataChange]);
 
     useEffect(() => {
-        if (controlledSelectedKey === undefined) {
-          setSelectedKey(undefined);
+        if (controlledSelectedKeys && controlledSelectedKeys.length > 0) {
+          setSelectedKeys(controlledSelectedKeys);
         }
-      }, [controlledSelectedKey]);
+      }, [controlledSelectedKeys]);
 
     const isNodeSelected = (key: string) => {
-        return (controlledSelectedKey ?? selectedKey) === key;
+        return (controlledSelectedKeys ?? selectedKeys).some(Item => Item === key);
     }
 
     const handleSelect = (keys: React.Key[], node: TreeData) => {
@@ -271,7 +271,7 @@ const TopologyTree: React.FC<Props> = ({
             if (onlyLeafSelectable && node.children && node.children.length > 0) {
                 return;
             }
-            setSelectedKey(keys[0] as string);
+            setSelectedKeys(keys);
             onSelectNode(node);
         }
     };
@@ -319,7 +319,7 @@ const TopologyTree: React.FC<Props> = ({
         const isParent = node.children && node.children.length > 0;
         if (!isParent) {
             // Child nodes are selectable only
-            setSelectedKey(key);
+            setSelectedKeys([key]);
             onSelectNode(node);
             return;
         }
@@ -338,7 +338,7 @@ const TopologyTree: React.FC<Props> = ({
             return;
         }
         if (!isSelected) {
-            setSelectedKey(key);
+            setSelectedKeys([key]);
             onSelectNode(node);
         } else {
             // Toggle expand/collapse when the node is already selected
@@ -391,7 +391,7 @@ const TopologyTree: React.FC<Props> = ({
                 treeData={treeData}
                 blockNode={true}
                 titleRender={renderTitle}
-                selectedKeys={controlledSelectedKey ? [controlledSelectedKey] : (selectedKey ? [selectedKey] : [])}
+                selectedKeys={controlledSelectedKeys ?? selectedKeys}
                 onSelect={(selectedKeys, { node }) => handleSelect(selectedKeys, node)}
                 expandedKeys={controlledExpandedKeys || expandedKeys}
                 onExpand={keys => {
@@ -404,7 +404,7 @@ const TopologyTree: React.FC<Props> = ({
             <CreateModal
                 visible={modalVisible}
                 type={createType}
-                selectedNode={selectedNode}
+                selectedNode={selectedNodes[0]}
                 onClose={() => setModalVisible(false)}
             />
         </>

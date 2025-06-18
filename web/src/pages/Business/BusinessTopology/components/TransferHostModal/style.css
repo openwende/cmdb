@@ -73,10 +73,11 @@
       background: #f5f7fa !important;
       margin-bottom: 2px !important;
       border-radius: 4px;
-      padding: 10px !important;
+      padding: 4px 10px !important;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: '#f5f7fa';
     }
 
     .preview-item-wrapper {

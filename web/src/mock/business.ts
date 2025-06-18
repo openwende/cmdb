@@ -56,6 +56,16 @@ export const businessData2 = [
             "host_apply_enabled": false,
             "host_apply_rule_count": 0,
             "child": []
+          },
+          {
+            "bk_inst_id": 16,
+            "bk_inst_name": "game2",
+            "bk_obj_id": "module",
+            "bk_obj_name": "模块",
+            "default": 0,
+            "host_apply_enabled": false,
+            "host_apply_rule_count": 0,
+            "child": []
           }
         ]
       }
