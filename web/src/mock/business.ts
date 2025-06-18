@@ -671,7 +671,18 @@ export const instLabels = {
     "test"
   ]
 };
-
+// 业务拓扑->主机列表->转移至（主机池）
+export const resourceDir = {
+  "count": 1,
+  "info": [
+      {
+          "bk_module_id": 1,
+          "bk_module_name": "空闲机",
+          "default": 1,
+          "host_count": 1
+      }
+  ]
+};
 // 从serviceCategoryMock中提取serviceCategory数据
 export const serviceCategory = serviceCategoryMock.map(item => item.category);
 // 添加主机到模块preview时的“转移到”的拓扑结构

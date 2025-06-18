@@ -18,6 +18,7 @@ import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
 import { transferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
+import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
 
 
@@ -36,10 +37,11 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [transferModalType, setTransferModalType] = useState<TransferMenuItemType | null>(null);
+  const [releaseModalVisible, setReleaseModalVisible] = useState(false);
 
   const handleMenuClick = (key: string) => {
     if (key === TransferMenuItemType.hostPool) {
-      message.info(`${key}`);
+      setReleaseModalVisible(true);
     } else {
       setTransferModalVisible(true);
       setTransferModalType(key as TransferMenuItemType);
@@ -58,6 +60,12 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   const handleTransferHosts = (targetModules: TreeData[]) => {
     // setTransferHostData()
   }
+
+  const handleReleaseHosts = (dirId: number) => {
+    // TODO: api
+    // params: selectedRowKeys, dirId
+    setReleaseModalVisible(false);
+  };
 
   const columns = [
     {
@@ -264,6 +272,14 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
         transferType={transferModalType}
         onClose={() => setTransferModalVisible(false)}
         onConfirm={handleTransferHosts}
+      />
+
+      {/* Release host modal */}
+      <ReleaseHostModal
+        visible={releaseModalVisible}
+        selectedCount={selectedRowKeys.length}
+        onClose={() => setReleaseModalVisible(false)}
+        onConfirm={handleReleaseHosts}
       />
     </div>
   );
