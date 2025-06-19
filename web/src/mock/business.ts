@@ -191,7 +191,7 @@ export const allHosts2 = [
     ],
     "set": [
       {
-        "bk_set_id": 6,
+        "bk_set_id": 5,
         "bk_set_name": "2",
         "default": 0,
         "topo_module_name": "project2##2"

@@ -82,3 +82,24 @@ export function findNodeAndParents(tree: TreeData[], key: string): { node: TreeD
     dfs(tree, []);
     return { node: found, parentKeys: parents };
 }
+
+/**
+ * Check whether the selected host(s) are in the idle pool
+ * 
+ * @param selectedRowKeys Array of selected host keys (host IDs)
+ * @param allHostsData Host data
+ * @param idleSetID Idle pool set ID
+ * @returns Array<{ hostId: number, inIdlePool: boolean }>
+ */
+export function checkHostsInIdlePool(
+    selectedRowKeys: React.Key[],
+    allHostsData: any[],
+    idleSetID: number | null
+): { hostId: number, inIdlePool: boolean }[] {
+    if (idleSetID == null) return selectedRowKeys.map(key => ({ hostId: Number(key), inIdlePool: false }));
+    return selectedRowKeys.map(key => {
+        const host = allHostsData.find(h => h.host.bk_host_id === key);
+        const inIdlePool = host?.set?.some((s: any) => s.bk_set_id === idleSetID) ?? false;
+        return { hostId: Number(key), inIdlePool };
+    });
+}

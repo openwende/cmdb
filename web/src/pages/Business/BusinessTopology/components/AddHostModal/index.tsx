@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
@@ -282,12 +282,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     // Handle search data changes from TopologyTree
-    const handleSearchDataChange = (data: any[]) => {
+    const handleSearchDataChange = useCallback((data: any[]) => {
         setSearchTreeData(data);
         setHasTreeSearchResults(data.length > 0);
         const isSearching = !!(treeSearchValue && treeSearchValue.trim());
         setShowSearchPopover(isSearching && data.length > 0);
-    };
+    }, [treeSearchValue])
 
     const handleNextStep = () => {
         onConfirm(resultPreviewItems);
@@ -454,17 +454,15 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         }}
                     />
                 </Popover>
-                {selectedNode && (
-                    <TopologyTree
-                        key={treeKey}
-                        selectedNodes={[selectedNode]}
-                        onSelectNode={handleNodeSelect}
-                        tailEleType={TailEleType.Count}
-                        searchValue={treeSearchValue}
-                        onSearchDataChange={handleSearchDataChange}
-                        onlyLeafSelectable={true}
-                    />
-                )}
+                <TopologyTree
+                    key={treeKey}
+                    selectedNodes={selectedNode ? [selectedNode] : []}
+                    onSelectNode={handleNodeSelect}
+                    tailEleType={TailEleType.Count}
+                    searchValue={treeSearchValue}
+                    onSearchDataChange={handleSearchDataChange}
+                    onlyLeafSelectable={true}
+                />
                 {/* The dragger */}
                 <div
                     style={{

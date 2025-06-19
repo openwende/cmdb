@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs } from 'antd';
 import { Outlet, useMatch, useSearchParams } from 'react-router-dom';
 import BusinessTree from './BusinessTree';
@@ -35,7 +35,7 @@ const BusinessTopology: React.FC = () => {
         }
     }, [searchParams]);
 
-    const handleTreeData = (data: TreeData[]) => {
+    const handleTreeData = useCallback((data: TreeData[]) => {
         setTreeData(data);
         const nodeKey = searchParams.get('node');
         if (nodeKey) {
@@ -53,7 +53,7 @@ const BusinessTopology: React.FC = () => {
             params.set('node', data[0].key);
             setSearchParams(params);
         }
-    };
+    }, [searchParams, treeExpandedKeys])
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);

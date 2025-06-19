@@ -4,9 +4,10 @@ import { businessData2, idleCluster2 } from '@/mock/business';
 import CreateModal from '../CreateModal';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import './style.css';
+import { useTransferHostStore } from '@/store/TransferHostStore';
 
 interface Props {
-    selectedNodes: TreeData[];
+    selectedNodes?: TreeData[];
     onSelectNode: (node: TreeData) => void;
     tailEleType?: TailEleType;
     searchValue?: string;
@@ -234,6 +235,7 @@ const TopologyTree: React.FC<Props> = ({
     customTreeData,
     customTitlePrefix
 }) => {
+    const { setIdleSetID } = useTransferHostStore();
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
@@ -242,6 +244,9 @@ const TopologyTree: React.FC<Props> = ({
     const [createType, setCreateType] = useState<TopoTreeNodeType>(TopoTreeNodeType.Set);
 
     useEffect(() => {
+        // api: get real data
+        const idleSetID = idleCluster2.bk_set_id;
+        setIdleSetID(idleSetID);
         const baseTree = customTreeData || buildTreeData();
         const filtered = filterTree(baseTree, searchValue || '');
         setTreeData(filtered);
@@ -254,13 +259,13 @@ const TopologyTree: React.FC<Props> = ({
             const allKeys = filtered.map(node => node.key);
             setExpandedKeys(allKeys);
         }
-    }, [customTreeData, searchValue, onSearchDataChange]);
+    }, [customTreeData, searchValue, idleCluster2, onSearchDataChange]);
 
     useEffect(() => {
         if (controlledSelectedKeys && controlledSelectedKeys.length > 0) {
-          setSelectedKeys(controlledSelectedKeys);
+            setSelectedKeys(controlledSelectedKeys);
         }
-      }, [controlledSelectedKeys]);
+    }, [controlledSelectedKeys]);
 
     const isNodeSelected = (key: string) => {
         return (controlledSelectedKeys ?? selectedKeys).some(Item => Item === key);
@@ -401,12 +406,15 @@ const TopologyTree: React.FC<Props> = ({
                 className="topology-tree"
             />
             {/* Modal for creating set and module*/}
-            <CreateModal
-                visible={modalVisible}
-                type={createType}
-                selectedNode={selectedNodes[0]}
-                onClose={() => setModalVisible(false)}
-            />
+            {
+                selectedNodes && selectedNodes.length > 0 && <CreateModal
+                    visible={modalVisible}
+                    type={createType}
+                    selectedNode={selectedNodes[0]}
+                    onClose={() => setModalVisible(false)}
+                />
+            }
+
         </>
     );
 };

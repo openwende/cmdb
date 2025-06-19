@@ -20,7 +20,7 @@ import { transferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
-
+import { checkHostsInIdlePool } from '../../utils';
 
 interface Props {
   selectedNode: TreeData | null;
@@ -28,7 +28,7 @@ interface Props {
 
 const HostList: React.FC<Props> = ({ selectedNode }) => {
   const navigate = useNavigate();
-  const { setTransferHostData } = useTransferHostStore();
+  const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
@@ -38,6 +38,9 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [transferModalType, setTransferModalType] = useState<TransferMenuItemType | null>(null);
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
+
+  const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, allHosts2, idleSetID);
+  const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
 
   const handleMenuClick = (key: string) => {
     if (key === TransferMenuItemType.hostPool) {
@@ -116,21 +119,27 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
       items.push(
         { key: TransferMenuItemType.idlePool, label: '空闲机池' },
         { key: TransferMenuItemType.businessModule, label: '业务模块' },
-        { key: TransferMenuItemType.hostPool, label: '主机池' },
-        { key: TransferMenuItemType.otherBusiness, label: '其他业务' }
+        {
+          key: TransferMenuItemType.hostPool,
+          label: hostsNotInIdlePool
+            ? <Tooltip title='主机需在“空闲机池”下才允许转移至主机池' styles={{ root: { maxWidth: 'none' } }}>主机池</Tooltip>
+            : '主机池',
+          disabled: hostsNotInIdlePool,
+        },
+        {
+          key: TransferMenuItemType.otherBusiness,
+          label: hostsNotInIdlePool
+            ? <Tooltip title='主机需在“空闲机池”下才允许转移至其他业务' styles={{ root: { maxWidth: 'none' } }}>其他业务</Tooltip>
+            : '其他业务',
+          disabled: hostsNotInIdlePool
+        }
       );
     } else if (type === DropdownMenuType.Append) {
-      items.push(
-        { key: AppendMenuItemKey.Business, label: '业务模块' },
-      );
+      items.push({ key: AppendMenuItemKey.Business, label: '业务模块' });
     } else if (type === DropdownMenuType.Remove) {
-      items.push(
-        { key: RemoveMenuItemKey.Current, label: '当前模块' },
-      );
+      items.push({ key: RemoveMenuItemKey.Current, label: '当前模块' });
     } else if (type === DropdownMenuType.Copy) {
-      items.push(
-        { key: 'id', label: 'ID' },
-      );
+      items.push({ key: 'id', label: 'ID' });
     } else if (type === DropdownMenuType.More) {
       items.push(
         { key: MoreMenuItemKey.ExportSelected, label: '导出选中', disabled: selectedRowKeys.length === 0 },
@@ -154,11 +163,7 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
           </Tooltip>
         )}
 
-        <Button
-          disabled={selectedRowKeys.length === 0}
-        >
-          编辑
-        </Button>
+        <Button disabled={selectedRowKeys.length === 0}>编辑</Button>
 
         <Dropdown
           menu={{
