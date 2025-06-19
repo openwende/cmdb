@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -23,10 +23,10 @@ import './style.css';
 import { checkHostsInIdlePool } from '../../utils';
 
 interface Props {
-  selectedNode: TreeData | null;
+  selectedNodes: TreeData[];
 }
 
-const HostList: React.FC<Props> = ({ selectedNode }) => {
+const HostList: React.FC<Props> = ({ selectedNodes }) => {
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
@@ -56,7 +56,7 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
   };
 
   const handleConfirmAddHosts = (hosts: AddHostItem[]) => {
-    if (selectedNode !== null) setTransferHostData(hosts, [selectedNode]);
+    if (selectedNodes.length > 0) setTransferHostData(hosts, selectedNodes);
     navigate(transferHostPath + '?' + searchParams.toString());
   }
 
@@ -151,11 +151,16 @@ const HostList: React.FC<Props> = ({ selectedNode }) => {
     return { items };
   };
 
+  const isAddAvailable = useMemo(
+    () => selectedNodes.length > 0 ? selectedNodes[0].type === TopoTreeNodeType.Module : false,
+    [selectedNodes]
+  );
+
   return (
     <div className='list-wrapper'>
       {/* The operation botton bar */}
       <div className='operation-bar'>
-        {selectedNode?.type === TopoTreeNodeType.Module ? (
+        {isAddAvailable ? (
           <Button type="primary" onClick={handleAddHosts}>新增</Button>
         ) : (
           <Tooltip title="仅能在业务模块下新增">

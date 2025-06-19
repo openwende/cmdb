@@ -14,9 +14,10 @@ export const transferHostPath = '/business/topology/transferHost';
 const BusinessTopology: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'hostList');
-    const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
-    const [treeSelectedKey, setTreeSelectedKey] = useState<string | undefined>(searchParams.get('node') || undefined);
-    const [treeExpandedKeys, setTreeExpandedKeys] = useState<string[]>([]);
+    const [selectedNodes, setSelectedNodes] = useState<TreeData[]>([]);
+    const nodeKey = searchParams.get('node');
+    const [selectedKeys, setSelectedKeys] = useState<string[]>(nodeKey ? [nodeKey] : []);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [view, setView] = useState<'instance' | 'process'>(searchParams.get('view') === 'process' ? 'process' : 'instance');
     const isTransferHostRoute = useMatch(transferHostPath);
@@ -35,25 +36,31 @@ const BusinessTopology: React.FC = () => {
         }
     }, [searchParams]);
 
-    const handleTreeData = useCallback((data: TreeData[]) => {
-        setTreeData(data);
+    useEffect(() => {
+        if (treeData.length === 0) return;
         const nodeKey = searchParams.get('node');
         if (nodeKey) {
-            const { node, parentKeys } = findNodeAndParents(data, nodeKey);
+            const { node } = findNodeAndParents(treeData, nodeKey);
             if (node) {
-                setSelectedNode(node);
-                setTreeSelectedKey(nodeKey);
-                setTreeExpandedKeys([...parentKeys, nodeKey]);
+                setSelectedKeys([nodeKey]);
+                setSelectedNodes([node]);
             }
-        } else if (data.length && treeExpandedKeys.length === 0) {
-            setTreeExpandedKeys([data[0].key]);
-            setSelectedNode(data[0]);
-            setTreeSelectedKey(data[0].key);
-            const params = new URLSearchParams(searchParams);
-            params.set('node', data[0].key);
-            setSearchParams(params);
+        } else {
+            const firstNode = treeData[0];
+            if (firstNode) {
+                const params = new URLSearchParams(searchParams);
+                params.set('node', firstNode.key);
+                setSearchParams(params, { replace: true });
+                setSelectedKeys([firstNode.key]);
+                setSelectedNodes([firstNode]);
+                setExpandedKeys([firstNode.key]);
+            }
         }
-    }, [searchParams, treeExpandedKeys])
+    }, [searchParams, treeData]);
+
+    const handleTreeData = useCallback((data: TreeData[]) => {
+        setTreeData(data);
+    }, []);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
@@ -66,19 +73,34 @@ const BusinessTopology: React.FC = () => {
     };
 
     const handleNodeSelect = (node: TreeData) => {
-        setSelectedNode(node);
-        setTreeSelectedKey(node.key);
-        // Only append parentKeys and nodeKey to expandedKeys without removing existing entries
-        const { parentKeys } = findNodeAndParents(treeData, node.key);
-        const newExpanded = Array.from(new Set([...treeExpandedKeys, ...parentKeys, node.key]));
-        setTreeExpandedKeys(newExpanded);
+        const isAlreadySelected = selectedKeys.includes(node.key);
+        const isCurrentlyExpanded = expandedKeys.includes(node.key);
+
         const params = new URLSearchParams(searchParams);
         params.set('node', node.key);
         setSearchParams(params);
+
+        if (!node.children || node.children.length === 0) {
+            return;
+        }
+
+        if (isAlreadySelected) {
+            // Node is selected, toggle expand/collapse
+            if (isCurrentlyExpanded) {
+                setExpandedKeys(expandedKeys.filter(k => k !== node.key));
+            } else {
+                setExpandedKeys([...expandedKeys, node.key]);
+            }
+        } else {
+            // Node is not selected, select and expand
+            const { parentKeys } = findNodeAndParents(treeData, node.key);
+            const newExpanded = Array.from(new Set([...expandedKeys, ...parentKeys, node.key]));
+            setExpandedKeys(newExpanded);
+        }
     };
 
     const handleTreeExpand = (keys: string[]) => {
-        setTreeExpandedKeys(keys);
+        setExpandedKeys(keys);
     };
 
     const handleViewChange = (v: 'instance' | 'process') => {
@@ -92,17 +114,17 @@ const BusinessTopology: React.FC = () => {
         {
             key: 'hostList',
             label: '主机列表',
-            children: <HostList selectedNode={selectedNode} />
+            children: <HostList selectedNodes={selectedNodes} />
         },
         {
             key: 'serviceInstance',
             label: '服务实例',
-            children: <ServiceInstance selectedNode={selectedNode} view={view} setView={handleViewChange} />
+            children: <ServiceInstance selectedNode={selectedNodes} view={view} setView={handleViewChange} />
         },
         {
             key: 'nodeInfo',
             label: '节点信息',
-            children: <NodeInfo selectedNode={selectedNode} />
+            children: <NodeInfo selectedNode={selectedNodes} />
         }
     ];
 
@@ -112,10 +134,10 @@ const BusinessTopology: React.FC = () => {
                 isTransferHostRoute ? <Outlet /> : (
                     <div className='topology-wrapper'>
                         <BusinessTree
-                            selectedNode={selectedNode}
+                            selectedNodes={selectedNodes}
                             onSelectNode={handleNodeSelect}
-                            selectedKey={treeSelectedKey}
-                            expandedKeys={treeExpandedKeys}
+                            selectedKeys={selectedKeys}
+                            expandedKeys={expandedKeys}
                             onExpand={handleTreeExpand}
                             onSearchDataChange={handleTreeData}
                         />

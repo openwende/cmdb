@@ -8,6 +8,19 @@ export interface CascaderOption {
     label: string;
     children?: CascaderOption[];
 }
+// Data type from api for tree
+export interface RawNodeData {
+    bk_inst_name?: string;
+    bk_set_name?: string;
+    bk_module_name?: string;
+    bk_obj_id?: string;
+    bk_inst_id?: number;
+    bk_set_id?: number;
+    bk_module_id?: number;
+    bk_obj_name?: string;
+    child?: RawNodeData[];
+    module?: RawNodeData[];
+}
 
 /**
  * TypeScript definitions for the Host List tab
@@ -69,3 +82,4 @@ export interface AddHostItem {
     id: React.Key;
     ip: string;
 }
+
