@@ -9,7 +9,8 @@ import './style.css';
 import { TreeData } from '../Types';
 import { findNodeAndParents } from '../utils';
 
-export const transferHostPath = '/business/topology/transferHost';
+export const businessTopoPath = '/business/topology';
+export const transferHostPath = businessTopoPath + '/transferHost';
 
 const BusinessTopology: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -21,42 +22,52 @@ const BusinessTopology: React.FC = () => {
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [view, setView] = useState<'instance' | 'process'>(searchParams.get('view') === 'process' ? 'process' : 'instance');
     const isTransferHostRoute = useMatch(transferHostPath);
+    const prevPathnameRef = React.useRef(window.location.pathname);
 
     useEffect(() => {
-        const tabParam = searchParams.get('tab');
-        if (tabParam) setActiveTab(tabParam);
-        const viewParam = searchParams.get('view');
-        if (tabParam === 'serviceInstance' && (viewParam === 'process' || viewParam === 'instance')) {
+        const tabParam = searchParams.get('tab') || 'hostList';
+        const viewParam = searchParams.get('view') as 'instance' | 'process' | null;
+
+        const isJustSwitchedToCurPath = (
+            location.pathname === businessTopoPath &&
+            prevPathnameRef.current !== businessTopoPath
+        );
+
+        setActiveTab(tabParam);
+        if (tabParam === 'serviceInstance' && viewParam) {
             setView(viewParam);
-        } else if (tabParam !== 'serviceInstance') {
+        } else {
             setView('instance');
-            const params = new URLSearchParams(searchParams);
-            params.delete('view');
-            setSearchParams(params);
         }
-    }, [searchParams]);
 
-    useEffect(() => {
         if (treeData.length === 0) return;
         const nodeKey = searchParams.get('node');
         if (nodeKey) {
-            const { node } = findNodeAndParents(treeData, nodeKey);
+            const { node, parentKeys } = findNodeAndParents(treeData, nodeKey);
             if (node) {
                 setSelectedKeys([nodeKey]);
                 setSelectedNodes([node]);
+                if (isJustSwitchedToCurPath) {
+                    // On initial load, expand the selected node and its parents
+                    setExpandedKeys([...parentKeys, nodeKey]);
+                } else {
+                    // Not the initial load, so expand the node triggered by the user
+                    setExpandedKeys(prevExpandedKeys =>
+                        Array.from(new Set([...prevExpandedKeys, ...parentKeys, nodeKey]))
+                    );
+                }
             }
         } else {
             const firstNode = treeData[0];
             if (firstNode) {
-                const params = new URLSearchParams(searchParams);
-                params.set('node', firstNode.key);
-                setSearchParams(params, { replace: true });
                 setSelectedKeys([firstNode.key]);
                 setSelectedNodes([firstNode]);
                 setExpandedKeys([firstNode.key]);
             }
         }
-    }, [searchParams, treeData]);
+
+        prevPathnameRef.current = location.pathname;
+    }, [searchParams, treeData, location.pathname]);
 
     const handleTreeData = useCallback((data: TreeData[]) => {
         setTreeData(data);

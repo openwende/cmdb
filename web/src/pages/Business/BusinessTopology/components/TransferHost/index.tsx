@@ -9,6 +9,7 @@ import { transferTarget } from '@/mock/business';
 import { getFormattedTopoPath } from '@/pages/Business/utils';
 import { AddHostItem } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
+import { businessTopoPath } from '../..';
 
 export interface ProcessItem {
     id: string;
@@ -47,7 +48,7 @@ const TransferHost: React.FC = () => {
     };
 
     const backToPrePage = () => {
-        navigate('/business/topology' + window.location.search, { replace: true });
+        navigate(businessTopoPath + window.location.search, { replace: true });
     }
 
     const handleEditHosts = () => {
