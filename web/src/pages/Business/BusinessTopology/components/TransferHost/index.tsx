@@ -5,11 +5,12 @@ import { useTransferHostStore } from '@/store/TransferHostStore';
 import AddHostModal from '../AddHostModal';
 import AddProcessModal, { ListenInfo } from '../AddProcessModal';
 import './style.css';
-import { transferTarget } from '@/mock/business';
+import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
 import { getFormattedTopoPath } from '@/pages/Business/utils';
-import { AddHostItem } from '@/pages/Business/Types';
+import { TransferHostItem, TransferMenuItemType } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
 import { businessTopoPath } from '../..';
+import TransferHostModal from '../TransferHostModal';
 
 export interface ProcessItem {
     id: string;
@@ -22,13 +23,15 @@ export interface ProcessItem {
 
 const TransferHost: React.FC = () => {
     const navigate = useNavigate();
-    const { selectedHosts, targetModules } = useTransferHostStore();
+    const { selectedHosts, targetModules, transferHostType } = useTransferHostStore();
     const [showEditHostModal, setShowEditHostModal] = useState(false);
     const [showAddProcessModal, setShowAddProcessModal] = useState(false);
     const [hostProcessMap, setHostProcessMap] = useState<Record<string, ProcessItem[]>>({});
     const [editingHostId, setEditingHostId] = useState<string | null>(null);
     const [editingProcess, setEditingProcess] = useState<ProcessItem | null>(null);
     const [processModalMode, setProcessModalMode] = useState<'add' | 'edit'>('add');
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [isTransferBtnHover, setIsTransferBtnHover] = useState(false);
 
     const selectedNode = targetModules[0];
     const selectedTopoPath = getFormattedTopoPath(selectedNode, transferTarget);
@@ -38,7 +41,7 @@ const TransferHost: React.FC = () => {
             .filter(i => i.protocol && i.ip && i.port)
             .map(i => `${i.protocol} ${i.ip}:${i.port}`);
 
-    const handleConfirmAdd = () => {
+    const handleConfirm = () => {
         // TODO: api
         backToPrePage();
     };
@@ -95,6 +98,16 @@ const TransferHost: React.FC = () => {
         setShowAddProcessModal(false);
     };
 
+    const handleTransferNode = () => {
+
+    }
+
+    const handleServiceInstances = () => {
+        const serviceInstances = transferWithClearServiceInstance
+            .flatMap(item => item.to_remove_from_modules.flatMap(mod => mod.service_instances));
+        return serviceInstances || [];
+    }
+
     const columns = [
         {
             title: '进程名称',
@@ -150,7 +163,7 @@ const TransferHost: React.FC = () => {
                     <InfoCircleOutlined />
                     主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例
                 </Space>
-                {selectedHosts.length > 0 ? selectedHosts.map((host: AddHostItem, index: number) => (
+                {selectedHosts.length > 0 ? selectedHosts.map((host: TransferHostItem, index: number) => (
                     <Collapse className={index !== 0 ? 'inst-panel' : undefined} key={String(host.id)} items={[{
                         key: String(host.id),
                         label: <div className="host-header">
@@ -208,13 +221,60 @@ const TransferHost: React.FC = () => {
         );
     }
 
-    const tabItems: TabsProps['items'] = [
+    const renderDelInst = () => {
+        const serviceInstances = handleServiceInstances();
+        const tableData = serviceInstances.map(inst => {
+            // Find owning module 
+            let topoPath = '';
+            if (inst.bk_module_id) {
+                const node = transferTarget.nodes.find(n => n.topo_node.bk_inst_id === inst.bk_module_id);
+                if (node && node.topo_path) {
+                    topoPath = node.topo_path.slice().reverse().map(p => p.bk_inst_name).join(' / ');
+                }
+            }
+            return {
+                id: inst.id,
+                name: inst.name,
+                module: topoPath,
+            };
+        });
+        return (
+            <>
+                <Space className='tip-text'>
+                    <InfoCircleOutlined />
+                    移出当前模块，主机的服务实例信息也一同被删除
+                </Space>
+                <Table
+                    columns={[
+                        { title: '操作', dataIndex: 'action', render: () => <Button type='link' danger>删除</Button> },
+                        { title: '服务实例', dataIndex: 'name' },
+                        { title: '所属模块', dataIndex: 'module' },
+                    ]}
+                    dataSource={tableData}
+                    rowKey="id"
+                    pagination={false}
+                />
+            </>
+        );
+    };
+
+    const addTabItems: TabsProps['items'] = [
         {
             key: 'addInst',
             label: '新增服务实例',
             children: renderAddInst(),
         }
     ]
+
+    const delTabItems: TabsProps['items'] = [
+        {
+            key: 'delInst',
+            label: <span className='del-label'>删除服务实例<span className='inst-count'>{handleServiceInstances().length}</span></span>,
+            children: renderDelInst(),
+        }
+    ]
+
+    const tabItems = transferHostType === TransferMenuItemType.idlePool ? delTabItems : addTabItems;
 
     return (
         <div className="transfer-container">
@@ -237,9 +297,24 @@ const TransferHost: React.FC = () => {
                 </label>
                 <div className='info-content'>
                     <Tooltip title={selectedTopoPath}>
-                        <Button color="default" variant="outlined" className='info-button'>
-                            {selectedNode?.title}
-                        </Button>
+                        {
+                            transferHostType === TransferMenuItemType.idlePool ? <Button
+                                color="default"
+                                variant="outlined"
+                                className={`info-button${isTransferBtnHover ? ' info-button-hover' : ''}`}
+                                onMouseEnter={() => setIsTransferBtnHover(true)}
+                                onMouseLeave={() => setIsTransferBtnHover(false)}
+                                onClick={() => { setShowTransferModal(true) }}
+                            >
+                                {isTransferBtnHover ? <span className="info-button-tip">点击修改</span> : selectedNode?.title}
+                            </Button> : <Button
+                                color="default"
+                                variant="outlined"
+                                className='info-button'
+                            >
+                                {selectedNode?.title}
+                            </Button>
+                        }
                     </Tooltip>
                     <div className='module-grep' />
                 </div>
@@ -254,9 +329,9 @@ const TransferHost: React.FC = () => {
                     <div className="options">
                         <Button
                             type="primary"
-                            onClick={handleConfirmAdd}
+                            onClick={handleConfirm}
                         >
-                            确认添加
+                            {transferHostType ? '确认转移' : '确认添加'}
                         </Button>
                         <Button onClick={handleCancel}>
                             取消
@@ -280,6 +355,14 @@ const TransferHost: React.FC = () => {
                 onSubmit={handleConfirmAddProcess}
                 mode={processModalMode}
                 initialValues={editingProcess}
+            />
+
+            <TransferHostModal
+                visible={showTransferModal}
+                transferType={transferHostType as TransferMenuItemType}
+                onClose={() => setShowTransferModal(false)}
+                onConfirm={handleTransferNode}
+                initialSelectedKeys={[selectedNode.key]}
             />
         </div>
     );

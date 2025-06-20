@@ -122,7 +122,7 @@ export const allHosts2 = [
           "bk_inst_name": "未分配"
         }
       ],
-      "bk_host_id": 1,
+      "bk_host_id": 2,
       "bk_host_innerip": "192.168.0.2",
       "bk_host_innerip_v6": ""
     },
@@ -177,7 +177,7 @@ export const allHosts2 = [
           "bk_inst_name": "未分配"
         }
       ],
-      "bk_host_id": 2,
+      "bk_host_id": 3,
       "bk_host_innerip": "10.0.0.2",
       "bk_host_innerip_v6": ""
     },
@@ -596,46 +596,46 @@ export const processInfo = [
 // 业务拓扑->服务实例->进程->进程别名表格->所属实例
 export const processInstanceDetail = [
   {
-      "process_id": 1,
-      "service_instance_name": "192.168.0.2_devTest",
-      "property": {
-          "auto_start": false,
-          "bind_info": [],
-          "bk_biz_id": 4,
-          "bk_created_at": "2025-05-27T06:52:15.757Z",
-          "bk_created_by": "bk-cmdb",
-          "bk_func_name": "devTest",
-          "bk_process_id": 1,
-          "bk_process_name": "devTest",
-          "bk_start_check_secs": null,
-          "bk_start_param_regex": "",
-          "bk_supplier_account": "0",
-          "bk_updated_at": "2025-05-27T06:52:15.757Z",
-          "bk_updated_by": "",
-          "create_time": "2025-05-27T06:52:15.757Z",
-          "description": "",
-          "face_stop_cmd": "",
-          "last_time": "2025-05-27T06:52:15.757Z",
-          "pid_file": "",
-          "priority": null,
-          "proc_num": null,
-          "reload_cmd": "",
-          "restart_cmd": "",
-          "service_instance_id": 1,
-          "start_cmd": "",
-          "stop_cmd": "",
-          "timeout": null,
-          "user": "",
-          "work_path": ""
-      },
-      "relation": {
-          "bk_biz_id": 4,
-          "bk_process_id": 1,
-          "service_instance_id": 1,
-          "process_template_id": 0,
-          "bk_host_id": 1,
-          "bk_supplier_account": "0"
-      }
+    "process_id": 1,
+    "service_instance_name": "192.168.0.2_devTest",
+    "property": {
+      "auto_start": false,
+      "bind_info": [],
+      "bk_biz_id": 4,
+      "bk_created_at": "2025-05-27T06:52:15.757Z",
+      "bk_created_by": "bk-cmdb",
+      "bk_func_name": "devTest",
+      "bk_process_id": 1,
+      "bk_process_name": "devTest",
+      "bk_start_check_secs": null,
+      "bk_start_param_regex": "",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-05-27T06:52:15.757Z",
+      "bk_updated_by": "",
+      "create_time": "2025-05-27T06:52:15.757Z",
+      "description": "",
+      "face_stop_cmd": "",
+      "last_time": "2025-05-27T06:52:15.757Z",
+      "pid_file": "",
+      "priority": null,
+      "proc_num": null,
+      "reload_cmd": "",
+      "restart_cmd": "",
+      "service_instance_id": 1,
+      "start_cmd": "",
+      "stop_cmd": "",
+      "timeout": null,
+      "user": "",
+      "work_path": ""
+    },
+    "relation": {
+      "bk_biz_id": 4,
+      "bk_process_id": 1,
+      "service_instance_id": 1,
+      "process_template_id": 0,
+      "bk_host_id": 1,
+      "bk_supplier_account": "0"
+    }
   }
 ];
 // 业务拓扑：节点信息
@@ -675,12 +675,12 @@ export const instLabels = {
 export const resourceDir = {
   "count": 1,
   "info": [
-      {
-          "bk_module_id": 1,
-          "bk_module_name": "空闲机",
-          "default": 1,
-          "host_count": 1
-      }
+    {
+      "bk_module_id": 1,
+      "bk_module_name": "空闲机",
+      "default": 1,
+      "host_count": 1
+    }
   ]
 };
 // 从serviceCategoryMock中提取serviceCategory数据
@@ -688,63 +688,159 @@ export const serviceCategory = serviceCategoryMock.map(item => item.category);
 // 添加主机到模块preview时的“转移到”的拓扑结构
 export const transferTarget = {
   "nodes": [
-      {
-          "bk_biz_id": 3,
-          "topo_node": {
-              "bk_obj_id": "module",
-              "bk_inst_id": 15
-          },
-          "topo_path": [
-              {
-                  "bk_obj_id": "module",
-                  "bk_inst_id": 10,
-                  "bk_inst_name": "module2"
-              },
-              {
-                  "bk_obj_id": "set",
-                  "bk_inst_id": 4,
-                  "bk_inst_name": "set2"
-              },
-              {
-                  "bk_obj_id": "biz",
-                  "bk_inst_id": 3,
-                  "bk_inst_name": "business2"
-              }
-          ]
+    {
+      "bk_biz_id": 3,
+      "topo_node": {
+        "bk_obj_id": "module",
+        "bk_inst_id": 14
       },
-      {
-          "bk_biz_id": 3,
-          "topo_node": {
-              "bk_obj_id": "module",
-              "bk_inst_id": 7
-          },
-          "topo_path": [
-              {
-                  "bk_obj_id": "module",
-                  "bk_inst_id": 7,
-                  "bk_inst_name": "空闲机"
-              },
-              {
-                  "bk_obj_id": "set",
-                  "bk_inst_id": 3,
-                  "bk_inst_name": "空闲机池"
-              },
-              {
-                  "bk_obj_id": "biz",
-                  "bk_inst_id": 3,
-                  "bk_inst_name": "business2"
-              }
-          ]
-      }
+      "topo_path": [
+        {
+          "bk_obj_id": "module",
+          "bk_inst_id": 14,
+          "bk_inst_name": "待回收"
+        },
+        {
+          "bk_obj_id": "set",
+          "bk_inst_id": 5,
+          "bk_inst_name": "空闲机池"
+        },
+        {
+          "bk_obj_id": "biz",
+          "bk_inst_id": 3,
+          "bk_inst_name": "business2"
+        }
+      ]
+    },
+    {
+      "bk_biz_id": 3,
+      "topo_node": {
+        "bk_obj_id": "module",
+        "bk_inst_id": 10
+      },
+      "topo_path": [
+        {
+          "bk_obj_id": "module",
+          "bk_inst_id": 10,
+          "bk_inst_name": "module2"
+        },
+        {
+          "bk_obj_id": "set",
+          "bk_inst_id": 4,
+          "bk_inst_name": "set2"
+        },
+        {
+          "bk_obj_id": "biz",
+          "bk_inst_id": 3,
+          "bk_inst_name": "business2"
+        }
+      ]
+    },
+    {
+      "bk_biz_id": 3,
+      "topo_node": {
+        "bk_obj_id": "module",
+        "bk_inst_id": 12
+      },
+      "topo_path": [
+        {
+          "bk_obj_id": "module",
+          "bk_inst_id": 12,
+          "bk_inst_name": "空闲机"
+        },
+        {
+          "bk_obj_id": "set",
+          "bk_inst_id": 5,
+          "bk_inst_name": "空闲机池"
+        },
+        {
+          "bk_obj_id": "biz",
+          "bk_inst_id": 3,
+          "bk_inst_name": "business2"
+        }
+      ]
+    }
   ]
 };
+// 转移主机到空闲机池要删除的服务实例
+export const transferWithClearServiceInstance = [
+  {
+    "bk_host_id": 2,
+    "final_modules": [
+      9
+    ],
+    "to_remove_from_modules": [
+      {
+        "bk_module_id": 10,
+        "service_instances": [
+          {
+            "bk_biz_id": 3,
+            "id": 1,
+            "name": "10.0.0.4_process2",
+            "labels": null,
+            "service_template_id": 0,
+            "bk_host_id": 2,
+            "bk_module_id": 10,
+            "creator": "bk-cmdb",
+            "modifier": "bk-cmdb",
+            "create_time": "2025-06-19T08:08:45.772Z",
+            "last_time": "2025-06-19T08:08:45.772Z",
+            "bk_supplier_account": "0"
+          }
+        ]
+      }
+    ],
+    "to_add_to_modules": [],
+    "host_apply_plan": {
+      "error_code": 0,
+      "error_message": "",
+      "bk_host_id": 0,
+      "cloud_area": {
+        "bk_cloud_id": 0,
+        "bk_cloud_name": ""
+      },
+      "bk_module_ids": null,
+      "expect_host": null,
+      "update_fields": null,
+      "conflicts": null,
+      "unresolved_conflict_count": 0
+    }
+  },
+  {
+    "bk_host_id": 3,
+    "final_modules": [
+      9
+    ],
+    "to_remove_from_modules": [
+      {
+        "bk_module_id": 7,
+        "service_instances": []
+      }
+    ],
+    "to_add_to_modules": [],
+    "host_apply_plan": {
+      "error_code": 0,
+      "error_message": "",
+      "bk_host_id": 0,
+      "cloud_area": {
+        "bk_cloud_id": 0,
+        "bk_cloud_name": ""
+      },
+      "bk_module_ids": null,
+      "expect_host": null,
+      "update_fields": null,
+      "conflicts": null,
+      "unresolved_conflict_count": 0
+    }
+  }
+];
 // 添加主机->添加进程->监听信息->ip
 export const listenIPOptions = {
   "options": [
-      "127.0.0.1",
-      "0.0.0.0",
-      "10.0.0.4",
-      "::1",
-      "::"
+    "127.0.0.1",
+    "0.0.0.0",
+    "10.0.0.4",
+    "::1",
+    "::"
   ]
 };

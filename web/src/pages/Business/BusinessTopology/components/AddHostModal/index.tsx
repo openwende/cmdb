@@ -3,7 +3,7 @@ import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, 
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
-import { AddHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
+import { TransferHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -14,9 +14,9 @@ const MAX_WIDTH = 420;
 
 interface Props {
     visible: boolean;
-    initialSelectedHosts?: AddHostItem[];
+    initialSelectedHosts?: TransferHostItem[];
     onClose: () => void;
-    onConfirm: (hosts: AddHostItem[]) => void;
+    onConfirm: (hosts: TransferHostItem[]) => void;
 }
 
 interface HostData {
@@ -58,10 +58,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
     const [searchTreeData, setSearchTreeData] = useState<any[]>([]);
     // Result preview list items - independent of tab switching
-    const [resultPreviewItems, setResultPreviewItems] = useState<AddHostItem[]>([]);
+    const [resultPreviewItems, setResultPreviewItems] = useState<TransferHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
     // Global host mapping - stores all hosts info to avoid dependency on current tab
-    const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, AddHostItem>>(new Map());
+    const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const treeWrapperRef = useRef<HTMLDivElement>(null);
     const globalSelectedNode = useTransferHostStore(state => state.targetModules[0]);
@@ -86,6 +86,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                 id: host.id,
                 ip: host.ip
             })));
+            setSelectedHosts(initialSelectedHosts.map(host => host.id));
         }
     }, [visible, initialSelectedHosts]);
 

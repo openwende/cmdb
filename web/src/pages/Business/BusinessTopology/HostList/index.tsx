@@ -5,7 +5,7 @@ import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons'
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import {
-  AddHostItem,
+  TransferHostItem,
   AppendMenuItemKey,
   DropdownMenuType,
   MoreMenuItemKey,
@@ -36,7 +36,7 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
-  const [transferModalType, setTransferModalType] = useState<TransferMenuItemType | null>(null);
+  const [transferModalType, setTransferModalType] = useState<TransferMenuItemType>();
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
 
   const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, allHosts2, idleSetID);
@@ -55,13 +55,27 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
     setAddModalVisible(true);
   };
 
-  const handleConfirmAddHosts = (hosts: AddHostItem[]) => {
-    if (selectedNodes.length > 0) setTransferHostData(hosts, selectedNodes);
+  const handleNavToTransferPage = () => {
     navigate(transferHostPath + '?' + searchParams.toString());
   }
 
+  const handleConfirmAddHosts = (hosts: TransferHostItem[]) => {
+    if (selectedNodes.length > 0) setTransferHostData(hosts, selectedNodes);
+    handleNavToTransferPage();
+  }
+
   const handleTransferHosts = (targetModules: TreeData[]) => {
-    // setTransferHostData()
+    if (transferModalType === TransferMenuItemType.idlePool) {
+      if (hostsNotInIdlePool) {
+        setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
+        handleNavToTransferPage();
+      } else {
+        // TODO: api
+      }
+    } else {
+
+    }
+
   }
 
   const handleReleaseHosts = (dirId: number) => {
@@ -278,7 +292,7 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
 
       {/* Transfer host modal */}
       <TransferHostModal
-        vivible={transferModalVisible}
+        visible={transferModalVisible}
         transferType={transferModalType}
         onClose={() => setTransferModalVisible(false)}
         onConfirm={handleTransferHosts}

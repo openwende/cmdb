@@ -42,6 +42,7 @@ export enum TransferMenuItemType {
     hostPool = "hostPool",
     otherBusiness = "otherBusiness"
 }
+export type TransferHostType = keyof typeof TransferMenuItemType | 'addHost';
 export enum AppendMenuItemKey {
     Business = "business"
 }
@@ -78,8 +79,8 @@ export enum TopoTreeNodeType {
     Module = "module",
     Idle = "idle"
 }
-export interface AddHostItem {
+export interface TransferHostItem {
     id: React.Key;
     ip: string;
+    inIdlePool?: boolean;
 }
-

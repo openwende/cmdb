@@ -1,4 +1,4 @@
-import { RawNodeData, TopoTreeNodeType, TreeData } from "./Types";
+import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData } from "./Types";
 
 /**
  * Transter the input data into the format which Cascader need
@@ -61,18 +61,18 @@ export function getFormattedTopoPath(
  * @param selectedRowKeys Array of selected host keys (host IDs)
  * @param allHostsData Host data
  * @param idleSetID Idle pool set ID
- * @returns Array<{ hostId: number, inIdlePool: boolean }>
+ * @returns Array<HostIdleStatus>
  */
 export function checkHostsInIdlePool(
     selectedRowKeys: React.Key[],
     allHostsData: any[],
     idleSetID: number | null
-): { hostId: number, inIdlePool: boolean }[] {
-    if (idleSetID == null) return selectedRowKeys.map(key => ({ hostId: Number(key), inIdlePool: false }));
+): TransferHostItem[] {
+    if (idleSetID == null) return [];
     return selectedRowKeys.map(key => {
-        const host = allHostsData.find(h => h.host.bk_host_id === key);
-        const inIdlePool = host?.set?.some((s: any) => s.bk_set_id === idleSetID) ?? false;
-        return { hostId: Number(key), inIdlePool };
+        const hostItem = allHostsData.find(h => h.host.bk_host_id === key);
+        const inIdlePool = hostItem?.set?.some((s: any) => s.bk_set_id === idleSetID) ?? false;
+        return { id: Number(key), ip: hostItem.host.bk_host_innerip, inIdlePool };
     });
 }
 

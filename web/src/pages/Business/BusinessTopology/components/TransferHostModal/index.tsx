@@ -1,30 +1,30 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty } from 'antd';
 import TopologyTree from '../TopologyTree';
 import { businessData2, idleCluster2, bizInfo } from '@/mock/business';
-import { TailEleType, TopoTreeNodeType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
+import { TailEleType, TopoTreeNodeType, TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
 
-export type TransferType = keyof typeof TransferMenuItemType;
-export const typeTitleMap: Partial<Record<TransferType, string>> = {
+export const typeTitleMap: Partial<Record<TransferHostType, string>> = {
   idlePool: '转移主机到空闲机池',
   businessModule: '转移主机到业务模块',
   otherBusiness: '转移主机到其他业务',
 };
 
 interface TransferHostModalProps {
-  vivible: boolean;
-  transferType: TransferMenuItemType | null;
+  visible: boolean;
+  transferType?: TransferMenuItemType;
   onClose: () => void;
   onConfirm: (selectedNodes: TreeData[]) => void;
+  initialSelectedKeys?: string[];
 }
 
-const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transferType, onClose, onConfirm }) => {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys }) => {
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(initialSelectedKeys || []);
   const [searchValue, setSearchValue] = useState('');
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
@@ -32,6 +32,12 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
   const [isDraggerHover, setIsDraggerHover] = useState<boolean>(false);
   const dragging = useRef<boolean>(false);
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
+
+  useEffect(() => {
+    if (initialSelectedKeys && initialSelectedKeys.length > 0) {
+      setSelectedKeys(initialSelectedKeys);
+    }
+  }, [initialSelectedKeys]);
 
   // Helper to build idlePool/otherBusiness tree structure
   const buildIdlePoolTree = (bizName: string) => ([{
@@ -211,7 +217,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ vivible, transfer
 
   return (
     <Modal
-      open={vivible}
+      open={visible}
       title={typeTitleMap[transferType!] || ''}
       onCancel={handleClose}
       footer={[

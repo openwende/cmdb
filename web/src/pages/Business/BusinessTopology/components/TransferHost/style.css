@@ -37,10 +37,29 @@
                 font-weight: 700;
             }
 
+            .del-label {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+
+                .inst-count {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 50%;
+                    background-color: #c4c6cc;
+                    color: #fff;
+                    font-size: 12px;
+                }
+            }
+
             .info-button {
                 height: 26px;
                 line-height: 26px;
                 border-radius: 50px;
+                width: 70px;
                 cursor: default;
             }
 
@@ -53,6 +72,17 @@
                 display: flex;
                 gap: 8px;
             }
+
+            .info-button-hover {
+                cursor: pointer;
+                background: #e5e6eb !important;
+            }
+
+            .info-button-tip {
+                margin-left: 8px;
+                color: #666;
+                font-size: 12px;
+            }
         }
 
         .module-grep {
@@ -62,10 +92,6 @@
         }
 
         .add-inst-wrapper {
-            .tip-text {
-                margin-bottom: 10px;
-            }
-
             .ant-collapse-content-box {
                 padding: 0;
             }
@@ -93,6 +119,10 @@
             .inst-panel {
                 margin-top: 15px;
             }
+        }
+
+        .tip-text {
+            margin-bottom: 10px;
         }
     }
 }

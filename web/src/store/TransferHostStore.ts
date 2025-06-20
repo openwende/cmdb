@@ -1,13 +1,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { AddHostItem, TreeData } from '@/pages/Business/Types';
+import { TransferHostItem, TransferHostType, TreeData } from '@/pages/Business/Types';
 
 interface TransferHostState {
-  selectedHosts: AddHostItem[];
+  selectedHosts: TransferHostItem[];
   targetModules: TreeData[];
   idleSetID: number | null;
+  transferHostType?: TransferHostType;
   setIdleSetID: (id: number) => void;
-  setTransferHostData: (hosts: AddHostItem[], node: TreeData[]) => void;
+  setTransferHostData: (hosts: TransferHostItem[], node: TreeData[], transferType?: TransferHostType) => void;
 }
 
 export const useTransferHostStore = create<TransferHostState>()(
@@ -17,10 +18,11 @@ export const useTransferHostStore = create<TransferHostState>()(
       targetModules: [],
       idleSetID: null,
 
-      setTransferHostData: (hosts: AddHostItem[], modules: TreeData[]) => {
+      setTransferHostData: (hosts: TransferHostItem[], modules: TreeData[], transferType?: TransferHostType) => {
         set({
           selectedHosts: hosts,
           targetModules: modules,
+          transferHostType: transferType
         });
       },
 
