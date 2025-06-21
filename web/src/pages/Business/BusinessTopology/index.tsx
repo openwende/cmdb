@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tabs } from 'antd';
-import { Outlet, useMatch, useSearchParams } from 'react-router-dom';
+import { Outlet, useMatch, useSearchParams, useLocation } from 'react-router-dom';
 import BusinessTree from './BusinessTree';
 import HostList from './HostList';
 import ServiceInstance from './ServiceInstance';
@@ -21,17 +21,22 @@ const BusinessTopology: React.FC = () => {
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [view, setView] = useState<'instance' | 'process'>(searchParams.get('view') === 'process' ? 'process' : 'instance');
+    const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
+    const location = useLocation();
     const isTransferHostRoute = useMatch(transferHostPath);
-    const prevPathnameRef = React.useRef(window.location.pathname);
+    const prevPathnameRef = useRef<string>('');
 
     useEffect(() => {
+        const isJustSwitchedToCurPath = (
+            location.pathname === businessTopoPath && prevPathnameRef.current !== businessTopoPath
+        );
+        if (!isJustSwitchedToCurPath) {
+            prevPathnameRef.current = location.pathname;
+            return;
+        }
+
         const tabParam = searchParams.get('tab') || 'hostList';
         const viewParam = searchParams.get('view') as 'instance' | 'process' | null;
-
-        const isJustSwitchedToCurPath = (
-            location.pathname === businessTopoPath &&
-            prevPathnameRef.current !== businessTopoPath
-        );
 
         setActiveTab(tabParam);
         if (tabParam === 'serviceInstance' && viewParam) {
@@ -47,15 +52,8 @@ const BusinessTopology: React.FC = () => {
             if (node) {
                 setSelectedKeys([nodeKey]);
                 setSelectedNodes([node]);
-                if (isJustSwitchedToCurPath) {
-                    // On initial load, expand the selected node and its parents
-                    setExpandedKeys([...parentKeys, nodeKey]);
-                } else {
-                    // Not the initial load, so expand the node triggered by the user
-                    setExpandedKeys(prevExpandedKeys =>
-                        Array.from(new Set([...prevExpandedKeys, ...parentKeys, nodeKey]))
-                    );
-                }
+                // On initial load, expand the selected node and its parents
+                setExpandedKeys([...parentKeys, nodeKey]);
             }
         } else {
             const firstNode = treeData[0];
@@ -66,8 +64,9 @@ const BusinessTopology: React.FC = () => {
             }
         }
 
+        // Update previous pathname after initialization
         prevPathnameRef.current = location.pathname;
-    }, [searchParams, treeData, location.pathname]);
+    }, [treeData, searchParams, location.pathname]);
 
     const handleTreeData = useCallback((data: TreeData[]) => {
         setTreeData(data);
@@ -83,36 +82,12 @@ const BusinessTopology: React.FC = () => {
         setSearchParams(params);
     };
 
-    const handleNodeSelect = (node: TreeData) => {
-        const isAlreadySelected = selectedKeys.includes(node.key);
-        const isCurrentlyExpanded = expandedKeys.includes(node.key);
-
+    const handleNodeSelect = useCallback((node: TreeData) => {
+        setShouldInitializeKeys(false);
         const params = new URLSearchParams(searchParams);
         params.set('node', node.key);
         setSearchParams(params);
-
-        if (!node.children || node.children.length === 0) {
-            return;
-        }
-
-        if (isAlreadySelected) {
-            // Node is selected, toggle expand/collapse
-            if (isCurrentlyExpanded) {
-                setExpandedKeys(expandedKeys.filter(k => k !== node.key));
-            } else {
-                setExpandedKeys([...expandedKeys, node.key]);
-            }
-        } else {
-            // Node is not selected, select and expand
-            const { parentKeys } = findNodeAndParents(treeData, node.key);
-            const newExpanded = Array.from(new Set([...expandedKeys, ...parentKeys, node.key]));
-            setExpandedKeys(newExpanded);
-        }
-    };
-
-    const handleTreeExpand = (keys: string[]) => {
-        setExpandedKeys(keys);
-    };
+    }, [selectedKeys, expandedKeys, searchParams])
 
     const handleViewChange = (v: 'instance' | 'process') => {
         setView(v);
@@ -145,11 +120,10 @@ const BusinessTopology: React.FC = () => {
                 isTransferHostRoute ? <Outlet /> : (
                     <div className='topology-wrapper'>
                         <BusinessTree
-                            selectedNodes={selectedNodes}
+                            selectedNodes={shouldInitializeKeys ? selectedNodes : undefined}
+                            selectedKeys={shouldInitializeKeys ? selectedKeys : undefined}
+                            expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
                             onSelectNode={handleNodeSelect}
-                            selectedKeys={selectedKeys}
-                            expandedKeys={expandedKeys}
-                            onExpand={handleTreeExpand}
                             onSearchDataChange={handleTreeData}
                         />
                         <Tabs

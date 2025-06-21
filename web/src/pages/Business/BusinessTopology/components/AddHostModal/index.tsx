@@ -64,8 +64,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const treeWrapperRef = useRef<HTMLDivElement>(null);
-    const globalSelectedNode = useTransferHostStore(state => state.targetModules[0]);
-    const isCurrentNodeDisabled = selectedNode?.key === globalSelectedNode?.key;
     // A key used to forcefully reset the TopologyTree
     const [treeKey, setTreeKey] = useState(0);
 
@@ -393,9 +391,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                             rowSelection={{
                                 selectedRowKeys: selectedHosts,
                                 onChange: handleHostSelectionChange,
-                                getCheckboxProps: () => ({
-                                    disabled: isCurrentNodeDisabled
-                                })
                             }}
                             columns={columns}
                             dataSource={hosts}

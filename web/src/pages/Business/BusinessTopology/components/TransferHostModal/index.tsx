@@ -5,6 +5,7 @@ import { businessData2, idleCluster2, bizInfo } from '@/mock/business';
 import { TailEleType, TopoTreeNodeType, TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
+import { findNodeAndParents } from '@/pages/Business/utils';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
@@ -21,10 +22,22 @@ interface TransferHostModalProps {
   onClose: () => void;
   onConfirm: (selectedNodes: TreeData[]) => void;
   initialSelectedKeys?: string[];
+  initialExpandedKeys?: string[];
 }
 
-const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys }) => {
+const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys, initialExpandedKeys }) => {
+  const getInitialExpandedKeys = () => {
+    let expandedKeys: string[] = [];
+    if (initialExpandedKeys && initialExpandedKeys.length > 0) {
+      const curKey = initialExpandedKeys[0];
+      const { parentKeys } = findNodeAndParents(customTreeData, curKey);
+      expandedKeys = Array.from(new Set([...parentKeys, curKey]));
+    }
+    return expandedKeys;
+  }
+
   const [selectedKeys, setSelectedKeys] = useState<string[]>(initialSelectedKeys || []);
+  const [expandedKeys] = useState<string[]>(getInitialExpandedKeys());
   const [searchValue, setSearchValue] = useState('');
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
@@ -271,6 +284,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
               selectedNodes={selectedNodes}
               selectedKeys={selectedKeys}
               onSelectNode={handleSelectNode}
+              expandedKeys={expandedKeys}
             />
           }
           {/* The dragger */}

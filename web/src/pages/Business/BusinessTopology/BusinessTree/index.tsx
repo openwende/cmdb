@@ -15,11 +15,10 @@ interface Props {
     onSelectNode: (node: TreeData) => void;
     selectedKeys?: string[];
     expandedKeys?: string[];
-    onExpand?: (keys: string[]) => void;
     onSearchDataChange?: (data: TreeData[]) => void;
 }
 
-const BusinessTree: React.FC<Props> = ({ selectedNodes, onSelectNode, selectedKeys, expandedKeys, onExpand, onSearchDataChange }) => {
+const BusinessTree: React.FC<Props> = ({ selectedNodes, onSelectNode, selectedKeys, expandedKeys, onSearchDataChange }) => {
     const { t } = useTranslation();
     const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
@@ -99,7 +98,6 @@ const BusinessTree: React.FC<Props> = ({ selectedNodes, onSelectNode, selectedKe
                             onSearchDataChange={onSearchDataChange}
                             selectedKeys={selectedKeys}
                             expandedKeys={expandedKeys}
-                            onExpand={onExpand}
                         />
                     )}
                     {/* The dragger */}

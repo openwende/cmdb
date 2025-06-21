@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip, Popconfirm } from 'antd';
 import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -7,7 +7,7 @@ import AddProcessModal, { ListenInfo } from '../AddProcessModal';
 import './style.css';
 import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
 import { getFormattedTopoPath } from '@/pages/Business/utils';
-import { TransferHostItem, TransferMenuItemType } from '@/pages/Business/Types';
+import { TransferHostItem, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
 import { businessTopoPath } from '../..';
 import TransferHostModal from '../TransferHostModal';
@@ -23,7 +23,7 @@ export interface ProcessItem {
 
 const TransferHost: React.FC = () => {
     const navigate = useNavigate();
-    const { selectedHosts, targetModules, transferHostType } = useTransferHostStore();
+    const { selectedHosts, targetModules, transferHostType, setTransferHostData } = useTransferHostStore();
     const [showEditHostModal, setShowEditHostModal] = useState(false);
     const [showAddProcessModal, setShowAddProcessModal] = useState(false);
     const [hostProcessMap, setHostProcessMap] = useState<Record<string, ProcessItem[]>>({});
@@ -31,7 +31,6 @@ const TransferHost: React.FC = () => {
     const [editingProcess, setEditingProcess] = useState<ProcessItem | null>(null);
     const [processModalMode, setProcessModalMode] = useState<'add' | 'edit'>('add');
     const [showTransferModal, setShowTransferModal] = useState(false);
-    const [isTransferBtnHover, setIsTransferBtnHover] = useState(false);
 
     const selectedNode = targetModules[0];
     const selectedTopoPath = getFormattedTopoPath(selectedNode, transferTarget);
@@ -58,9 +57,10 @@ const TransferHost: React.FC = () => {
         setShowEditHostModal(true);
     };
 
-    const handleConfirmEditHosts = () => {
+    const handleConfirmEditHosts = useCallback((hosts: TransferHostItem[]) => {
+        setTransferHostData(hosts, targetModules, transferHostType);
         setShowEditHostModal(false);
-    };
+    }, [targetModules, transferHostType])
 
     const handleAddProcess = (hostId: string) => {
         setEditingHostId(hostId);
@@ -83,7 +83,7 @@ const TransferHost: React.FC = () => {
         });
     };
 
-    const handleConfirmAddProcess = (process: ProcessItem) => {
+    const handleConfirmAddProcess = useCallback((process: ProcessItem) => {
         setHostProcessMap(prev => {
             const list = prev[editingHostId!] || [];
             if (processModalMode === 'add') {
@@ -96,11 +96,11 @@ const TransferHost: React.FC = () => {
             }
         });
         setShowAddProcessModal(false);
-    };
+    }, [])
 
-    const handleTransferNode = () => {
-
-    }
+    const handleTransferNode = useCallback((selectedNodes: TreeData[]) => {
+        setTransferHostData(selectedHosts, selectedNodes, transferHostType);
+    }, [selectedHosts, transferHostType])
 
     const handleServiceInstances = () => {
         const serviceInstances = transferWithClearServiceInstance
@@ -297,25 +297,20 @@ const TransferHost: React.FC = () => {
                 </label>
                 <div className='info-content'>
                     <Tooltip title={selectedTopoPath}>
-                        {
-                            transferHostType === TransferMenuItemType.idlePool ? <Button
-                                color="default"
-                                variant="outlined"
-                                className={`info-button${isTransferBtnHover ? ' info-button-hover' : ''}`}
-                                onMouseEnter={() => setIsTransferBtnHover(true)}
-                                onMouseLeave={() => setIsTransferBtnHover(false)}
-                                onClick={() => { setShowTransferModal(true) }}
-                            >
-                                {isTransferBtnHover ? <span className="info-button-tip">点击修改</span> : selectedNode?.title}
-                            </Button> : <Button
-                                color="default"
-                                variant="outlined"
-                                className='info-button'
-                            >
-                                {selectedNode?.title}
-                            </Button>
-                        }
+                        <Button
+                            color="default"
+                            variant="outlined"
+                            className='info-button'
+                        >
+                            {selectedNode?.title}
+                        </Button>
                     </Tooltip>
+                    {
+                        transferHostType === TransferMenuItemType.idlePool && <EditOutlined
+                            className="edit-icon"
+                            onClick={() => setShowTransferModal(true)}
+                        />
+                    }
                     <div className='module-grep' />
                 </div>
             </div>
@@ -357,6 +352,7 @@ const TransferHost: React.FC = () => {
                 initialValues={editingProcess}
             />
 
+            {/* Transfer host modal */}
             <TransferHostModal
                 visible={showTransferModal}
                 transferType={transferHostType as TransferMenuItemType}

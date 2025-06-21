@@ -16,7 +16,6 @@ interface Props {
     onlyLeafSelectable?: boolean;
     selectedKeys?: string[];
     expandedKeys?: string[];
-    onExpand?: (keys: string[]) => void;
     customTreeData?: TreeData[];
     customTitlePrefix?: (node: TreeData, isSelected: boolean) => React.ReactNode;
 }
@@ -30,7 +29,6 @@ const TopologyTree: React.FC<Props> = ({
     onlyLeafSelectable = false,
     selectedKeys: controlledSelectedKeys,
     expandedKeys: controlledExpandedKeys,
-    onExpand,
     customTreeData,
     customTitlePrefix
 }) => {
@@ -52,13 +50,18 @@ const TopologyTree: React.FC<Props> = ({
         if (onSearchDataChange) {
             onSearchDataChange(filtered);
         }
-        if (!searchValue) {
-            setExpandedKeys([filtered[0]?.key].filter(Boolean));
+
+        if (controlledExpandedKeys && controlledExpandedKeys.length > 0) {
+            setExpandedKeys(controlledExpandedKeys);
         } else {
-            const allKeys = filtered.map(node => node.key);
-            setExpandedKeys(allKeys);
+            if (!searchValue) {
+                setExpandedKeys([filtered[0]?.key].filter(Boolean));
+            } else {
+                const allKeys = filtered.map(node => node.key);
+                setExpandedKeys(allKeys);
+            }
         }
-    }, [customTreeData, searchValue, idleCluster2, onSearchDataChange]);
+    }, [customTreeData, searchValue, idleCluster2, controlledExpandedKeys, onSearchDataChange]);
 
     useEffect(() => {
         if (controlledSelectedKeys && controlledSelectedKeys.length > 0) {
@@ -72,29 +75,61 @@ const TopologyTree: React.FC<Props> = ({
 
     const handleNodeSelect = (node: TreeData) => {
         const key = node.key;
-        if (onlyLeafSelectable && node.children && node.children.length > 0) {
+
+        const hasChildren = !!(node.children && node.children.length > 0);
+
+        if (onlyLeafSelectable && hasChildren) {
+            // 弹框场景：仅叶子可选，点击父节点只切换展开
             toggleExpand(key);
             return;
         }
+
+        const isExpanded = expandedKeys.includes(key);
+        const isAlreadySelected = selectedKeys.includes(key);
+
+        if (!hasChildren) {
+            // 叶子节点：直接选中
+            setSelectedKeys([key]);
+            onSelectNode(node);
+            return;
+        }
+
+        // 业务场景：带子节点的点击规则
+        if (!isExpanded) {
+            // 先选中
+            setSelectedKeys([key]);
+            onSelectNode(node);
+
+            // 下一 tick 再展开，保证 DOM 已根据选中渲染完成
+            setTimeout(() => toggleExpand(key), 0);
+            return;              // 避免重复 setState
+        } else if (isAlreadySelected) {
+            // 当前已展开且已选中 → 折叠后返回
+            toggleExpand(key);
+            // 折叠后不需要额外设置选中，保持原状态
+            return;
+        }
+
+        // 最后设置选中（确保展开状态已更新）
         setSelectedKeys([key]);
         onSelectNode(node);
     };
 
     const toggleExpand = (key: string) => {
-        const currentExpanded = controlledExpandedKeys || expandedKeys;
-        const idx = currentExpanded.indexOf(key);
+        const idx = expandedKeys.indexOf(key);
         let newExpanded;
         if (idx > -1) {
-            newExpanded = currentExpanded.filter(k => k !== key);
+            newExpanded = expandedKeys.filter(k => k !== key);
         } else {
-            newExpanded = [...currentExpanded, key];
+            newExpanded = [...expandedKeys, key];
         }
-        if (onExpand) onExpand(newExpanded);
-        if (!controlledExpandedKeys) setExpandedKeys(newExpanded);
+        setExpandedKeys(newExpanded);
     };
 
     const handleNodeTitleClick = (e: React.MouseEvent, node: TreeData) => {
         e.stopPropagation();
+
+        // 直接委托给 handleNodeSelect，内部已包含完整逻辑
         handleNodeSelect(node);
     };
 
@@ -170,13 +205,10 @@ const TopologyTree: React.FC<Props> = ({
                 treeData={treeData}
                 blockNode={true}
                 titleRender={renderTitle}
-                selectedKeys={controlledSelectedKeys ?? selectedKeys}
+                selectedKeys={selectedKeys}
+                expandedKeys={expandedKeys}
                 onSelect={(_, { node }) => handleNodeSelect(node)}
-                expandedKeys={controlledExpandedKeys || expandedKeys}
-                onExpand={keys => {
-                    if (onExpand) onExpand(keys as string[]);
-                    if (!controlledExpandedKeys) setExpandedKeys(keys as string[]);
-                }}
+                onExpand={keys => {setExpandedKeys(keys as string[])}}
                 className="topology-tree"
             />
             {/* Modal for creating set and module*/}
