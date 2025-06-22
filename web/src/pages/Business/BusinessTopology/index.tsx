@@ -31,6 +31,7 @@ const BusinessTopology: React.FC = () => {
             location.pathname === businessTopoPath && prevPathnameRef.current !== businessTopoPath
         );
         if (!isJustSwitchedToCurPath) {
+            setShouldInitializeKeys(false);
             prevPathnameRef.current = location.pathname;
             return;
         }
@@ -48,7 +49,8 @@ const BusinessTopology: React.FC = () => {
         if (treeData.length === 0) return;
         const nodeKey = searchParams.get('node');
         if (nodeKey) {
-            const { node, parentKeys } = findNodeAndParents(treeData, nodeKey);
+            const { node, parents } = findNodeAndParents(treeData, nodeKey);
+            const parentKeys = parents.map(p => p.key);
             if (node) {
                 setSelectedKeys([nodeKey]);
                 setSelectedNodes([node]);
@@ -83,11 +85,10 @@ const BusinessTopology: React.FC = () => {
     };
 
     const handleNodeSelect = useCallback((node: TreeData) => {
-        setShouldInitializeKeys(false);
         const params = new URLSearchParams(searchParams);
         params.set('node', node.key);
         setSearchParams(params);
-    }, [selectedKeys, expandedKeys, searchParams])
+    }, [searchParams])
 
     const handleViewChange = (v: 'instance' | 'process') => {
         setView(v);
@@ -120,7 +121,6 @@ const BusinessTopology: React.FC = () => {
                 isTransferHostRoute ? <Outlet /> : (
                     <div className='topology-wrapper'>
                         <BusinessTree
-                            selectedNodes={shouldInitializeKeys ? selectedNodes : undefined}
                             selectedKeys={shouldInitializeKeys ? selectedKeys : undefined}
                             expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
                             onSelectNode={handleNodeSelect}

@@ -30,7 +30,8 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
     let expandedKeys: string[] = [];
     if (initialExpandedKeys && initialExpandedKeys.length > 0) {
       const curKey = initialExpandedKeys[0];
-      const { parentKeys } = findNodeAndParents(customTreeData, curKey);
+      const { parents } = findNodeAndParents(customTreeData, curKey);
+      const parentKeys = parents.map(p => p.key);
       expandedKeys = Array.from(new Set([...parentKeys, curKey]));
     }
     return expandedKeys;
@@ -281,7 +282,6 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
               onlyLeafSelectable={true}
               tailEleType={TailEleType.None}
               searchValue={searchValue}
-              selectedNodes={selectedNodes}
               selectedKeys={selectedKeys}
               onSelectNode={handleSelectNode}
               expandedKeys={expandedKeys}

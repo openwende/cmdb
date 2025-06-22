@@ -1,14 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
 import { businessData2, idleCluster2 } from '@/mock/business';
-import CreateModal from '../CreateModal';
+import CreateNodeModal from '../CreateNodeModal';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 import { useTransferHostStore } from '@/store/TransferHostStore';
-import { buildTreeData, filterTree } from '@/pages/Business/utils';
+import { buildTreeData, filterTree, findNodeAndParents } from '@/pages/Business/utils';
 
 interface Props {
-    selectedNodes?: TreeData[];
     onSelectNode: (node: TreeData) => void;
     tailEleType?: TailEleType;
     searchValue?: string;
@@ -21,7 +20,6 @@ interface Props {
 }
 
 const TopologyTree: React.FC<Props> = ({
-    selectedNodes,
     onSelectNode,
     tailEleType = TailEleType.All,
     searchValue,
@@ -75,11 +73,11 @@ const TopologyTree: React.FC<Props> = ({
 
     const handleNodeSelect = (node: TreeData) => {
         const key = node.key;
-
         const hasChildren = !!(node.children && node.children.length > 0);
 
         if (onlyLeafSelectable && hasChildren) {
-            // 弹框场景：仅叶子可选，点击父节点只切换展开
+            // Only leaf nodes are selectable
+            // clicking parent nodes only toggles their expansion
             toggleExpand(key);
             return;
         }
@@ -88,29 +86,23 @@ const TopologyTree: React.FC<Props> = ({
         const isAlreadySelected = selectedKeys.includes(key);
 
         if (!hasChildren) {
-            // 叶子节点：直接选中
+            // Leaf nodes: Select directly
             setSelectedKeys([key]);
             onSelectNode(node);
             return;
         }
-
-        // 业务场景：带子节点的点击规则
         if (!isExpanded) {
-            // 先选中
+            // Select first
             setSelectedKeys([key]);
             onSelectNode(node);
-
-            // 下一 tick 再展开，保证 DOM 已根据选中渲染完成
+            // Expand on the next tick to ensure the DOM has rendered the selection changes
             setTimeout(() => toggleExpand(key), 0);
-            return;              // 避免重复 setState
+            return;
         } else if (isAlreadySelected) {
-            // 当前已展开且已选中 → 折叠后返回
             toggleExpand(key);
-            // 折叠后不需要额外设置选中，保持原状态
             return;
         }
 
-        // 最后设置选中（确保展开状态已更新）
         setSelectedKeys([key]);
         onSelectNode(node);
     };
@@ -128,18 +120,19 @@ const TopologyTree: React.FC<Props> = ({
 
     const handleNodeTitleClick = (e: React.MouseEvent, node: TreeData) => {
         e.stopPropagation();
-
-        // 直接委托给 handleNodeSelect，内部已包含完整逻辑
         handleNodeSelect(node);
     };
 
     const handleCreate = (e: React.MouseEvent<HTMLElement, MouseEvent>, node: TreeData) => {
         e.stopPropagation();
+
         if (node.type === TopoTreeNodeType.Biz) {
             setCreateType(TopoTreeNodeType.Set);
         } else if (node.type === TopoTreeNodeType.Set) {
             setCreateType(TopoTreeNodeType.Module);
         }
+
+        setSelectedKeys([node.key]);
         onSelectNode(node);
         setModalVisible(true);
     };
@@ -199,6 +192,12 @@ const TopologyTree: React.FC<Props> = ({
         return null;
     };
 
+    const { node: selectedNode, parents: parentNodes } = useMemo(() => {
+        if (selectedKeys.length === 0) return { node: null, parents: [] };
+        const nodeKey = String(selectedKeys[0]);
+        return findNodeAndParents(treeData, nodeKey);
+    }, [selectedKeys, treeData]);
+
     return (
         <>
             <Tree
@@ -208,15 +207,16 @@ const TopologyTree: React.FC<Props> = ({
                 selectedKeys={selectedKeys}
                 expandedKeys={expandedKeys}
                 onSelect={(_, { node }) => handleNodeSelect(node)}
-                onExpand={keys => {setExpandedKeys(keys as string[])}}
+                onExpand={keys => { setExpandedKeys(keys as string[]) }}
                 className="topology-tree"
             />
             {/* Modal for creating set and module*/}
-            {selectedNodes && selectedNodes.length > 0 && (
-                <CreateModal
+            {selectedNode && (
+                <CreateNodeModal
                     visible={modalVisible}
                     type={createType}
-                    selectedNode={selectedNodes[0]}
+                    selectedNode={selectedNode}
+                    parentNodes={parentNodes}
                     onClose={() => setModalVisible(false)}
                 />
             )}

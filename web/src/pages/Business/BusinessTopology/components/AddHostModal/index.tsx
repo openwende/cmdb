@@ -38,7 +38,6 @@ enum TabItemKey {
 
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts }) => {
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
-    const [selectedNode, setSelectedNode] = useState<TreeData | null>(null);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
@@ -257,8 +256,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     // Handle topology tree selection
-    const handleNodeSelect = (node: TreeData) => {
-        setSelectedNode(node);
+    const handleNodeSelect = () => {
         // Dismiss search panel by clearing search when item is clicked
         if (treeSearchValue) {
             setTreeSearchValue('');
@@ -452,7 +450,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                 </Popover>
                 <TopologyTree
                     key={treeKey}
-                    selectedNodes={selectedNode ? [selectedNode] : []}
                     onSelectNode={handleNodeSelect}
                     tailEleType={TailEleType.Count}
                     searchValue={treeSearchValue}

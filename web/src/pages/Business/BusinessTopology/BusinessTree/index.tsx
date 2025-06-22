@@ -11,14 +11,13 @@ const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
 
 interface Props {
-    selectedNodes?: TreeData[];
-    onSelectNode: (node: TreeData) => void;
     selectedKeys?: string[];
     expandedKeys?: string[];
+    onSelectNode: (node: TreeData) => void;
     onSearchDataChange?: (data: TreeData[]) => void;
 }
 
-const BusinessTree: React.FC<Props> = ({ selectedNodes, onSelectNode, selectedKeys, expandedKeys, onSearchDataChange }) => {
+const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNode, onSearchDataChange }) => {
     const { t } = useTranslation();
     const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
@@ -92,7 +91,6 @@ const BusinessTree: React.FC<Props> = ({ selectedNodes, onSelectNode, selectedKe
                         <EmptySearchResult onClearFilter={handleClearSearch} />
                     ) : (
                         <TopologyTree
-                            selectedNodes={selectedNodes}
                             onSelectNode={onSelectNode}
                             searchValue={searchValue}
                             onSearchDataChange={onSearchDataChange}

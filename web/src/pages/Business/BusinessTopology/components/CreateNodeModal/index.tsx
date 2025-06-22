@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Modal, Radio, Select, Input, Form, Button, Tooltip } from "antd";
 import { PlusOutlined, InfoCircleOutlined } from "@ant-design/icons";
@@ -13,10 +13,11 @@ interface CreateModalProps {
     visible: boolean;
     type: TopoTreeNodeType;
     selectedNode: TreeData | null;
+    parentNodes: TreeData[];
     onClose: () => void;
 }
 
-const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, onClose }) => {
+const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, parentNodes, onClose }) => {
     const { t } = useTranslation();
     const [form] = Form.useForm();
     const [mode, setMode] = useState<CreateMode>(CreateMode.Template);
@@ -197,6 +198,12 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
         </>
     }
 
+    const topoPath = useMemo(() => {
+        return parentNodes.length > 0
+            ? parentNodes.map(p => p.title).join(' / ') + ' / ' + selectedNode?.title
+            : selectedNode?.title;
+    }, [parentNodes, selectedNode])
+
     return (
         <Modal
             open={visible}
@@ -215,7 +222,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
         >
             <div className="selected-tip">
                 {/* TODO: When selected module, where should show the bizName together */}
-                {t("business.topology.tree.create.selected")}: {selectedNode?.title || "--"}
+                {t("business.topology.tree.create.selected")}: {topoPath}
             </div>
             <Form form={form} layout="vertical">
                 {/* Create mode, like template mode and direct mode */}

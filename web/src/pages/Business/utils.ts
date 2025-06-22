@@ -143,12 +143,12 @@ export function filterTree(tree: TreeData[], keyword: string): TreeData[] {
  * @param {TreeData[]} nodes
  * @param {string} key
  * @param {TreeData[]} [parents=[]]
- * @return {*}  {({ node: TreeData | null, parentKeys: string[] })}
+ * @return {*}  {({ node: TreeData | null, parents: TreeData[] })}
  */
-export function findNodeAndParents(nodes: TreeData[], key: string, parents: TreeData[] = []): { node: TreeData | null, parentKeys: string[] } {
+export function findNodeAndParents(nodes: TreeData[], key: string, parents: TreeData[] = []): { node: TreeData | null, parents: TreeData[] } {
     for (const node of nodes) {
         if (node.key === key) {
-            return { node, parentKeys: parents.map(p => p.key) };
+            return { node, parents};
         }
         if (node.children) {
             const found = findNodeAndParents(node.children, key, [...parents, node]);
@@ -157,7 +157,7 @@ export function findNodeAndParents(nodes: TreeData[], key: string, parents: Tree
             }
         }
     }
-    return { node: null, parentKeys: [] };
+    return { node: null, parents: [] };
 }
 
 /**
