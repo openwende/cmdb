@@ -88,6 +88,7 @@ const BusinessTopology: React.FC = () => {
         const params = new URLSearchParams(searchParams);
         params.set('node', node.key);
         setSearchParams(params);
+        setSelectedNodes([node]);
     }, [searchParams])
 
     const handleViewChange = (v: 'instance' | 'process') => {
