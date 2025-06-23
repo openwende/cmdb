@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip, Popconfirm } from 'antd';
 import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -27,13 +27,33 @@ const TransferHost: React.FC = () => {
     const [showEditHostModal, setShowEditHostModal] = useState(false);
     const [showAddProcessModal, setShowAddProcessModal] = useState(false);
     const [hostProcessMap, setHostProcessMap] = useState<Record<string, ProcessItem[]>>({});
-    const [editingHostId, setEditingHostId] = useState<string | null>(null);
+    const [editingKey, setEditingKey] = useState<string | null>(null);
     const [editingProcess, setEditingProcess] = useState<ProcessItem | null>(null);
     const [processModalMode, setProcessModalMode] = useState<'add' | 'edit'>('add');
     const [showTransferModal, setShowTransferModal] = useState(false);
+    const [optionsSticky, setOptionsSticky] = useState(false);
+    const optionsRef = useRef<HTMLDivElement>(null);
+    const sentinelRef = useRef<HTMLDivElement>(null);
 
-    const selectedNode = targetModules[0];
-    const selectedTopoPath = getFormattedTopoPath(selectedNode, transferTarget);
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+        // Track if the sentinelRef element enters/leaves the viewport
+        // Determine whether the bottom button is in a sticky/pinned state based on this
+        const observer = new IntersectionObserver(
+            entries => {
+                const entry = entries[0];
+                setOptionsSticky(!entry.isIntersecting);
+            }
+        );
+        observer.observe(sentinel);
+        // Disconnect the observer on component unmount to avoid memory leaks
+        return () => observer.disconnect();
+    }, []);
+
+    const selectedTopoPaths = useMemo(() => {
+        return targetModules.map(module => getFormattedTopoPath(module, transferTarget));
+    }, [targetModules]);
 
     const formatBindInfoText = (bindInfo: ListenInfo[]) =>
         bindInfo
@@ -42,6 +62,10 @@ const TransferHost: React.FC = () => {
 
     const handleConfirm = () => {
         // TODO: api
+        // bk_host_ids:[1, 2]
+        // default_internal_module:9
+        // is_remove_from_all:true
+        console.log(selectedHosts, targetModules, hostProcessMap);
         backToPrePage();
     };
 
@@ -62,41 +86,46 @@ const TransferHost: React.FC = () => {
         setShowEditHostModal(false);
     }, [targetModules, transferHostType])
 
-    const handleAddProcess = (hostId: string) => {
-        setEditingHostId(hostId);
+    const getProcessKey = useCallback((moduleKey: React.Key, hostId: string) => `${moduleKey}-${hostId}`, []);
+
+    const handleAddProcess = (moduleKey: React.Key, hostId: string) => {
+        setEditingKey(getProcessKey(moduleKey, hostId));
         setEditingProcess(null);
         setProcessModalMode('add');
         setShowAddProcessModal(true);
     };
 
-    const handleEditProcess = (hostId: string, process: ProcessItem) => {
-        setEditingHostId(hostId);
+    const handleEditProcess = (moduleKey: React.Key, hostId: string, process: ProcessItem) => {
+        setEditingKey(getProcessKey(moduleKey, hostId));
         setEditingProcess(process);
         setProcessModalMode('edit');
         setShowAddProcessModal(true);
     };
 
-    const handleDeleteProcess = (hostId: string, process: ProcessItem) => {
+    const handleDeleteProcess = (moduleKey: React.Key, hostId: string, process: ProcessItem) => {
         setHostProcessMap(prev => {
-            const list = prev[hostId] || [];
-            return { ...prev, [hostId]: list.filter(item => item.id !== process.id) };
+            const key = getProcessKey(moduleKey, hostId);
+            const list = prev[key] || [];
+            return { ...prev, [key]: list.filter(item => item.id !== process.id) };
         });
     };
 
     const handleConfirmAddProcess = useCallback((process: ProcessItem) => {
+        if (!editingKey) return;
+        const mapKey = editingKey;
         setHostProcessMap(prev => {
-            const list = prev[editingHostId!] || [];
+            const list = prev[mapKey] || [];
             if (processModalMode === 'add') {
-                return { ...prev, [editingHostId!]: [...list, { ...process, id: Date.now().toString() }] };
-            } else {
-                return {
-                    ...prev,
-                    [editingHostId!]: list.map(item => item.id === process.id ? process : item)
-                };
+                return { ...prev, [mapKey]: [...list, { ...process, id: Date.now().toString() }] };
             }
+            // edit mode
+            return {
+                ...prev,
+                [mapKey]: list.map(item => (item.id === process.id ? process : item))
+            };
         });
         setShowAddProcessModal(false);
-    }, [])
+    }, [editingKey, processModalMode]);
 
     const handleTransferNode = useCallback((selectedNodes: TreeData[]) => {
         setTransferHostData(selectedHosts, selectedNodes, transferHostType);
@@ -163,60 +192,77 @@ const TransferHost: React.FC = () => {
                     <InfoCircleOutlined />
                     主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例
                 </Space>
-                {selectedHosts.length > 0 ? selectedHosts.map((host: TransferHostItem, index: number) => (
-                    <Collapse className={index !== 0 ? 'inst-panel' : undefined} key={String(host.id)} items={[{
-                        key: String(host.id),
-                        label: <div className="host-header">
-                            <span>{host.ip}</span>
-                            <span className="status-text">
-                                {(hostProcessMap[String(host.id)]?.length || 0) === 0 ? '（未添加进程）' : null}
-                            </span>
-                        </div>,
-                        extra: selectedTopoPath,
-                        children: <div className="host-content">
-                            <Table
-                                columns={columns.map(col =>
-                                    col.key === 'action'
-                                        ? {
-                                            ...col, render: (_: any, record: ProcessItem) => (
-                                                <>
-                                                    <Button
-                                                        type="link"
+                {
+                    targetModules.map((module, moduleIdx) => {
+                        const topoPath = getFormattedTopoPath(module, transferTarget);
+                        return (
+                            <div key={module.key} className={moduleIdx === 0 ? 'module-section' : undefined}>
+                                {selectedHosts.map((host: TransferHostItem, index: number) => (
+                                    <Collapse
+                                        className={index !== 0 ? 'inst-panel' : undefined}
+                                        key={`${module.key}-${host.id}`}
+                                        items={[{
+                                            key: `${module.key}-${host.id}`,
+                                            label: (
+                                                <div className="host-header">
+                                                    <span>{host.ip}</span>
+                                                    <span className="status-text">
+                                                        {(hostProcessMap[getProcessKey(module.key, String(host.id))]?.length || 0) === 0 ? '（未添加进程）' : null}
+                                                    </span>
+                                                </div>
+                                            ),
+                                            extra: topoPath,
+                                            children: (
+                                                <div className="host-content">
+                                                    <Table
+                                                        columns={columns.map(col =>
+                                                            col.key === 'action'
+                                                                ? {
+                                                                    ...col,
+                                                                    render: (_: any, record: ProcessItem) => (
+                                                                        <>
+                                                                            <Button
+                                                                                type="link"
+                                                                                size="small"
+                                                                                onClick={() => handleEditProcess(module.key, String(host.id), record)}
+                                                                            >
+                                                                                编辑
+                                                                            </Button>
+                                                                            <Popconfirm
+                                                                                title="确定删除该进程?"
+                                                                                onConfirm={() => handleDeleteProcess(module.key, String(host.id), record)}
+                                                                                okText="确定"
+                                                                                cancelText="取消"
+                                                                            >
+                                                                                <Button type="link" danger size="small">删除</Button>
+                                                                            </Popconfirm>
+                                                                        </>
+                                                                    )
+                                                                }
+                                                                : col
+                                                        )}
+                                                        dataSource={hostProcessMap[getProcessKey(module.key, String(host.id))] || []}
+                                                        pagination={false}
                                                         size="small"
-                                                        onClick={() => handleEditProcess(String(host.id), record)}
-                                                    >
-                                                        编辑
-                                                    </Button>
-                                                    <Popconfirm
-                                                        title="确定删除该进程?"
-                                                        onConfirm={() => handleDeleteProcess(String(host.id), record)}
-                                                        okText="确定"
-                                                        cancelText="取消"
-                                                    >
-                                                        <Button type="link" danger size="small">删除</Button>
-                                                    </Popconfirm>
-                                                </>
+                                                        rowKey="id"
+                                                    />
+                                                    <div className="add-button">
+                                                        <Button
+                                                            type="link"
+                                                            onClick={() => handleAddProcess(module.key, String(host.id))}
+                                                        >
+                                                            + 添加进程
+                                                        </Button>
+                                                    </div>
+                                                </div>
                                             )
-                                        }
-                                        : col
-                                )}
-                                dataSource={hostProcessMap[String(host.id)] || []}
-                                pagination={false}
-                                size="small"
-                                rowKey="id"
-                            />
-                            <div className="add-button">
-                                <Button
-                                    type="link"
-                                    onClick={() => handleAddProcess(String(host.id))}
-                                >
-                                    + 添加进程
-                                </Button>
+                                        }]}
+                                    />
+                                ))}
                             </div>
-                        </div>
-                    }]}>
-                    </Collapse>
-                )) : null}
+                        );
+                    })
+                }
             </div>
         );
     }
@@ -246,7 +292,7 @@ const TransferHost: React.FC = () => {
                 </Space>
                 <Table
                     columns={[
-                        { title: '操作', dataIndex: 'action', render: () => <Button type='link' danger>删除</Button> },
+                        { title: '操作', dataIndex: 'action', render: () => <span className='del-action'>删除</span> },
                         { title: '服务实例', dataIndex: 'name' },
                         { title: '所属模块', dataIndex: 'module' },
                     ]}
@@ -269,12 +315,23 @@ const TransferHost: React.FC = () => {
     const delTabItems: TabsProps['items'] = [
         {
             key: 'delInst',
-            label: <span className='del-label'>删除服务实例<span className='inst-count'>{handleServiceInstances().length}</span></span>,
+            label: <span className='del-label'>
+                删除服务实例
+                <span className='inst-count'>
+                    {handleServiceInstances().length}
+                </span>
+            </span>,
             children: renderDelInst(),
         }
     ]
 
-    const tabItems = transferHostType === TransferMenuItemType.idlePool ? delTabItems : addTabItems;
+    const tabItems = transferHostType === TransferMenuItemType.idlePool
+        ? delTabItems
+        : addTabItems;
+
+    const initialSelectedKeys = useMemo(() => {
+        return targetModules.map(module => module.key);
+    }, [targetModules])
 
     return (
         <div className="transfer-container">
@@ -296,22 +353,23 @@ const TransferHost: React.FC = () => {
                     转移到：
                 </label>
                 <div className='info-content'>
-                    <Tooltip title={selectedTopoPath}>
-                        <Button
-                            color="default"
-                            variant="outlined"
-                            className='info-button'
-                        >
-                            {selectedNode?.title}
-                        </Button>
-                    </Tooltip>
+                    {targetModules.map((module, idx) => (
+                        <Tooltip title={selectedTopoPaths[idx]} key={module.key}>
+                            <Button
+                                color="default"
+                                variant="outlined"
+                                className={`info-button ${idx !== 0 ? 'info-button-right' : ''}`}
+                            >
+                                {module.title}
+                            </Button>
+                        </Tooltip>
+                    ))}
                     {
-                        transferHostType === TransferMenuItemType.idlePool && <EditOutlined
+                        transferHostType && <EditOutlined
                             className="edit-icon"
                             onClick={() => setShowTransferModal(true)}
                         />
                     }
-                    <div className='module-grep' />
                 </div>
             </div>
 
@@ -321,7 +379,10 @@ const TransferHost: React.FC = () => {
                 </label>
                 <div className='info-content'>
                     <Tabs defaultActiveKey="1" items={tabItems} />
-                    <div className="options">
+                    <div
+                        className={`options${optionsSticky ? ' sticky-active' : ''}`}
+                        ref={optionsRef}
+                    >
                         <Button
                             type="primary"
                             onClick={handleConfirm}
@@ -332,6 +393,7 @@ const TransferHost: React.FC = () => {
                             取消
                         </Button>
                     </div>
+                    <div ref={sentinelRef} style={{ height: 1 }} />
                 </div>
             </div>
 
@@ -358,7 +420,7 @@ const TransferHost: React.FC = () => {
                 transferType={transferHostType as TransferMenuItemType}
                 onClose={() => setShowTransferModal(false)}
                 onConfirm={handleTransferNode}
-                initialSelectedKeys={[selectedNode.key]}
+                initialSelectedKeys={initialSelectedKeys}
             />
         </div>
     );

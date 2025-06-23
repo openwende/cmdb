@@ -122,7 +122,7 @@ export const allHosts2 = [
           "bk_inst_name": "未分配"
         }
       ],
-      "bk_host_id": 2,
+      "bk_host_id": 1,
       "bk_host_innerip": "192.168.0.2",
       "bk_host_innerip_v6": ""
     },
@@ -137,6 +137,61 @@ export const allHosts2 = [
     "set": [
       {
         "bk_set_id": 6,
+        "bk_set_name": "2",
+        "default": 0,
+        "topo_module_name": "project2##2"
+      }
+    ]
+  },
+  {
+    "biz": [
+      {
+        "bk_biz_developer": "",
+        "bk_biz_id": 4,
+        "bk_biz_maintainer": "bk-cmdb",
+        "bk_biz_name": "project2",
+        "bk_biz_productor": "",
+        "bk_biz_tester": "",
+        "bk_created_at": "2025-05-18T13:00:01.276Z",
+        "bk_created_by": "bk-cmdb",
+        "bk_supplier_account": "0",
+        "bk_updated_at": "2025-05-18T13:00:01.276Z",
+        "bk_updated_by": "",
+        "create_time": "2025-05-18T13:00:01.276Z",
+        "default": 0,
+        "language": "1",
+        "last_time": "2025-05-18T13:00:01.276Z",
+        "life_cycle": "2",
+        "operator": "",
+        "time_zone": "Asia/Shanghai"
+      }
+    ],
+    "host": {
+      "bk_cloud_id": [
+        {
+          "id": "90000001",
+          "bk_obj_id": "plat",
+          "bk_obj_icon": "",
+          "bk_inst_id": 90000001,
+          "bk_obj_name": "",
+          "bk_inst_name": "未分配"
+        }
+      ],
+      "bk_host_id": 2,
+      "bk_host_innerip": "192.0.0.1",
+      "bk_host_innerip_v6": ""
+    },
+    "module": [
+      {
+        "bk_module_id": 15,
+        "bk_module_name": "game",
+        "default": 0,
+        "topo_module_name": "project2##2##game"
+      }
+    ],
+    "set": [
+      {
+        "bk_set_id": 5,
         "bk_set_name": "2",
         "default": 0,
         "topo_module_name": "project2##2"
@@ -716,13 +771,37 @@ export const transferTarget = {
       "bk_biz_id": 3,
       "topo_node": {
         "bk_obj_id": "module",
-        "bk_inst_id": 10
+        "bk_inst_id": 15
       },
       "topo_path": [
         {
           "bk_obj_id": "module",
-          "bk_inst_id": 10,
-          "bk_inst_name": "module2"
+          "bk_inst_id": 15,
+          "bk_inst_name": "game"
+        },
+        {
+          "bk_obj_id": "set",
+          "bk_inst_id": 4,
+          "bk_inst_name": "set2"
+        },
+        {
+          "bk_obj_id": "biz",
+          "bk_inst_id": 3,
+          "bk_inst_name": "business2"
+        }
+      ]
+    },
+    {
+      "bk_biz_id": 3,
+      "topo_node": {
+        "bk_obj_id": "module",
+        "bk_inst_id": 16
+      },
+      "topo_path": [
+        {
+          "bk_obj_id": "module",
+          "bk_inst_id": 16,
+          "bk_inst_name": "game2"
         },
         {
           "bk_obj_id": "set",
@@ -767,7 +846,7 @@ export const transferWithClearServiceInstance = [
   {
     "bk_host_id": 2,
     "final_modules": [
-      9
+      15, 16
     ],
     "to_remove_from_modules": [
       {
@@ -809,7 +888,7 @@ export const transferWithClearServiceInstance = [
   {
     "bk_host_id": 3,
     "final_modules": [
-      9
+      15, 16
     ],
     "to_remove_from_modules": [
       {

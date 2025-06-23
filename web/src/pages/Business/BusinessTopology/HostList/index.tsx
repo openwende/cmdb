@@ -65,17 +65,16 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
   }
 
   const handleTransferHosts = (targetModules: TreeData[]) => {
-    if (transferModalType === TransferMenuItemType.idlePool) {
-      if (hostsNotInIdlePool) {
-        setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
-        handleNavToTransferPage();
-      } else {
-        // TODO: api
-      }
-    } else {
-
+    if (
+      transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool
+      || transferModalType === TransferMenuItemType.otherBusiness
+    ) {
+      // TODO: api
+      return;
     }
 
+    setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
+    handleNavToTransferPage();
   }
 
   const handleReleaseHosts = (dirId: number) => {

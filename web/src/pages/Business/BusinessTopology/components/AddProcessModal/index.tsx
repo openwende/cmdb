@@ -188,8 +188,11 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
     // Handle submit process form
     const handleSubmitProcess = () => {
         form.validateFields().then(values => {
-            // TODO: verify through api
-            onSubmit({ ...values, bindInfo: listenInfoList });
+            // Keep the original ID（edit mode）
+            const payload = mode === 'edit' && initialValues ? { id: initialValues.id, ...values } : {
+                ...values,
+            };
+            onSubmit({ ...payload, bindInfo: listenInfoList });
         });
     };
 
