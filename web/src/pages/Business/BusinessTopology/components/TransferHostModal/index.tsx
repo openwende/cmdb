@@ -26,19 +26,8 @@ interface TransferHostModalProps {
 }
 
 const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys, initialExpandedKeys }) => {
-  const getInitialExpandedKeys = () => {
-    let expandedKeys: string[] = [];
-    if (initialExpandedKeys && initialExpandedKeys.length > 0) {
-      const curKey = initialExpandedKeys[0];
-      const { parents } = findNodeAndParents(customTreeData, curKey);
-      const parentKeys = parents.map(p => p.key);
-      expandedKeys = Array.from(new Set([...parentKeys, curKey]));
-    }
-    return expandedKeys;
-  }
-
   const [selectedKeys, setSelectedKeys] = useState<string[]>(initialSelectedKeys || []);
-  const [expandedKeys] = useState<string[]>(getInitialExpandedKeys());
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
@@ -47,14 +36,8 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
   const dragging = useRef<boolean>(false);
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
 
-  useEffect(() => {
-    if (initialSelectedKeys && initialSelectedKeys.length > 0) {
-      setSelectedKeys(initialSelectedKeys);
-    }
-  }, [initialSelectedKeys]);
-
-  // Helper to build idlePool/otherBusiness tree structure
-  const buildIdlePoolTree = (bizName: string) => ([{
+  // Helper to build idlePool/otherBusiness tree structure (biz idle pool)
+  const buildIdlePoolTree = (bizName: string): TreeData[] => ([{
     title: bizName,
     key: bizName,
     type: TopoTreeNodeType.Biz,
@@ -107,6 +90,28 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
     }
     return [];
   }, [transferType, selectedBizId]);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (!customTreeData || customTreeData.length === 0) return;
+    if (!initialExpandedKeys || initialExpandedKeys.length === 0) return;
+
+    const expandedSet = new Set<string>();
+    initialExpandedKeys.forEach(key => {
+      const { parents } = findNodeAndParents(customTreeData, key);
+      parents.forEach(p => expandedSet.add(p.key));
+      expandedSet.add(key);
+    });
+
+    setExpandedKeys(Array.from(expandedSet));
+  }, [visible, customTreeData, initialExpandedKeys]);
+
+  useEffect(() => {
+    if (!visible) return;
+    if (initialSelectedKeys && initialSelectedKeys.length > 0) {
+      setSelectedKeys(initialSelectedKeys);
+    }
+  }, [visible, initialSelectedKeys]);
 
   const getSelectedNodes = (keys: string[], tree: TreeData[]): TreeData[] => {
     const result: TreeData[] = [];
@@ -236,7 +241,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
       onCancel={handleClose}
       footer={[
         <Button key="cancel" onClick={handleClose}>取消</Button>,
-        <Button key="next" type="primary" disabled={previewList.length === 0} onClick={handleNextStep}>下一步</Button>
+        <Button key="next" type="primary" disabled={previewList.length === 0} onClick={handleNextStep}>
+          {initialSelectedKeys ? '确定' : '下一步'}
+        </Button>
       ]}
       maskClosable={false}
       width={830}

@@ -329,9 +329,7 @@ const TransferHost: React.FC = () => {
         ? delTabItems
         : addTabItems;
 
-    const initialSelectedKeys = useMemo(() => {
-        return targetModules.map(module => module.key);
-    }, [targetModules])
+    const initialKeys = useMemo(() => targetModules.map(m => m.key), [targetModules]);
 
     return (
         <div className="transfer-container">
@@ -420,7 +418,8 @@ const TransferHost: React.FC = () => {
                 transferType={transferHostType as TransferMenuItemType}
                 onClose={() => setShowTransferModal(false)}
                 onConfirm={handleTransferNode}
-                initialSelectedKeys={initialSelectedKeys}
+                initialSelectedKeys={initialKeys}
+                initialExpandedKeys={initialKeys}
             />
         </div>
     );
