@@ -353,3 +353,30 @@ function getNodeType(bkObjId?: string): TopoTreeNodeType {
     }
     return nodeType;
 }
+
+/**
+ * Check if the host is already in the target module, set, or biz
+ *
+ * @param {*} HostList
+ * @param {React.Key} hostId
+ * @param {TreeData} moduleNode
+ * @return {*} 
+ */
+export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNode: TreeData) => {
+    const keyParts = moduleNode.key.split('-');
+    if (keyParts.length !== 2) return false;
+    const type = keyParts[0];
+    const id = Number(keyParts[1]);
+    const hostInfo = HostList.find((h: any) => h.host.bk_host_id === Number(hostId));
+    if (!hostInfo) return false;
+    if (type === TopoTreeNodeType.Module) {
+        return hostInfo.module.some((m: any) => m.bk_module_id === id);
+    }
+    if (type === TopoTreeNodeType.Set) {
+        return hostInfo.set.some((s: any) => s.bk_set_id === id);
+    }
+    if (type === TopoTreeNodeType.Biz) {
+        return hostInfo.biz.some((b: any) => b.bk_biz_id === id);
+    }
+    return false;
+};

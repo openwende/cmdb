@@ -183,7 +183,7 @@ export const allHosts2 = [
     },
     "module": [
       {
-        "bk_module_id": 15,
+        "bk_module_id": 16,
         "bk_module_name": "game",
         "default": 0,
         "topo_module_name": "project2##2##game"
@@ -238,7 +238,7 @@ export const allHosts2 = [
     },
     "module": [
       {
-        "bk_module_id": 15,
+        "bk_module_id": 16,
         "bk_module_name": "game",
         "default": 0,
         "topo_module_name": "project2##2##game"

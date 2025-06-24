@@ -92,6 +92,14 @@
                 color: #666;
                 font-size: 12px;
             }
+
+            .empty-wrapper {
+                background-color: #fafafa;
+                color: #63656e;
+                height: 60px;
+                line-height: 60px;
+                padding: 0 28px;
+            }
         }
 
         .add-inst-wrapper {

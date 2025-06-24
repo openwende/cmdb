@@ -6,11 +6,12 @@ import AddHostModal from '../AddHostModal';
 import AddProcessModal, { ListenInfo } from '../AddProcessModal';
 import './style.css';
 import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
-import { getFormattedTopoPath } from '@/pages/Business/utils';
+import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
 import { TransferHostItem, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
 import { businessTopoPath } from '../..';
 import TransferHostModal from '../TransferHostModal';
+import { allHosts2 } from '@/mock/business';
 
 export interface ProcessItem {
     id: string;
@@ -137,6 +138,27 @@ const TransferHost: React.FC = () => {
         return serviceInstances || [];
     }
 
+    // Calculate the list of hosts to be added for each target module
+    const hostsToAddByModule = useMemo(() => {
+        const map: Record<string, TransferHostItem[]> = {};
+        targetModules.forEach(mod => {
+            const needAdd: TransferHostItem[] = [];
+            selectedHosts.forEach(h => {
+                if (!isHostAlreadyInTarget(allHosts2, h.id, mod)) {
+                    needAdd.push(h);
+                }
+            });
+            map[mod.key] = needAdd;
+        });
+        return map;
+    }, [targetModules, selectedHosts, isHostAlreadyInTarget]);
+
+    const hasChanges = useMemo(() => {
+        return Object.values(hostsToAddByModule).some(list => list.length > 0);
+    }, [hostsToAddByModule]);
+
+    const isConfirmBtnAvailable = transferHostType === TransferMenuItemType.idlePool ? true : hasChanges;
+
     const columns = [
         {
             title: '进程名称',
@@ -188,80 +210,86 @@ const TransferHost: React.FC = () => {
     const renderAddInst = () => {
         return (
             <div className="add-inst-wrapper">
-                <Space className='tip-text'>
+                <Space className="tip-text">
                     <InfoCircleOutlined />
                     主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例
                 </Space>
                 {
-                    targetModules.map((module, moduleIdx) => {
-                        const topoPath = getFormattedTopoPath(module, transferTarget);
-                        return (
-                            <div key={module.key} className={moduleIdx === 0 ? 'module-section' : undefined}>
-                                {selectedHosts.map((host: TransferHostItem, index: number) => (
-                                    <Collapse
-                                        className={index !== 0 ? 'inst-panel' : undefined}
-                                        key={`${module.key}-${host.id}`}
-                                        items={[{
-                                            key: `${module.key}-${host.id}`,
-                                            label: (
-                                                <div className="host-header">
-                                                    <span>{host.ip}</span>
-                                                    <span className="status-text">
-                                                        {(hostProcessMap[getProcessKey(module.key, String(host.id))]?.length || 0) === 0 ? '（未添加进程）' : null}
-                                                    </span>
-                                                </div>
-                                            ),
-                                            extra: topoPath,
-                                            children: (
-                                                <div className="host-content">
-                                                    <Table
-                                                        columns={columns.map(col =>
-                                                            col.key === 'action'
-                                                                ? {
-                                                                    ...col,
-                                                                    render: (_: any, record: ProcessItem) => (
-                                                                        <>
-                                                                            <Button
-                                                                                type="link"
-                                                                                size="small"
-                                                                                onClick={() => handleEditProcess(module.key, String(host.id), record)}
-                                                                            >
-                                                                                编辑
-                                                                            </Button>
-                                                                            <Popconfirm
-                                                                                title="确定删除该进程?"
-                                                                                onConfirm={() => handleDeleteProcess(module.key, String(host.id), record)}
-                                                                                okText="确定"
-                                                                                cancelText="取消"
-                                                                            >
-                                                                                <Button type="link" danger size="small">删除</Button>
-                                                                            </Popconfirm>
-                                                                        </>
-                                                                    )
-                                                                }
-                                                                : col
-                                                        )}
-                                                        dataSource={hostProcessMap[getProcessKey(module.key, String(host.id))] || []}
-                                                        pagination={false}
-                                                        size="small"
-                                                        rowKey="id"
-                                                    />
-                                                    <div className="add-button">
-                                                        <Button
-                                                            type="link"
-                                                            onClick={() => handleAddProcess(module.key, String(host.id))}
-                                                        >
-                                                            + 添加进程
-                                                        </Button>
+                    targetModules
+                        .slice()
+                        .sort((a, b) => String(a.title).localeCompare(String(b.title)))
+                        .map((module) => {
+                            const hostsForModule = hostsToAddByModule[module.key] || [];
+                            if (hostsForModule.length === 0) return null;
+                            const topoPath = getFormattedTopoPath(module, transferTarget);
+                            return (
+                                <div key={module.key} className="module-section">
+                                    {hostsForModule.map((host: TransferHostItem, index: number) => (
+                                        <Collapse
+                                            className={index !== 0 ? 'inst-panel' : undefined}
+                                            key={`${module.key}-${host.id}`}
+                                            items={[{
+                                                key: `${module.key}-${host.id}`,
+                                                label: (
+                                                    <div className="host-header">
+                                                        <span>{host.ip}</span>
+                                                        <span className="status-text">
+                                                            {(hostProcessMap[getProcessKey(module.key, String(host.id))]?.length || 0) === 0 ? '（未添加进程）' : null}
+                                                        </span>
                                                     </div>
-                                                </div>
-                                            )
-                                        }]}
-                                    />
-                                ))}
-                            </div>
-                        );
-                    })
+                                                ),
+                                                extra: topoPath,
+                                                children: (
+                                                    <div className="host-content">
+                                                        <Table
+                                                            columns={columns.map(col =>
+                                                                col.key === 'action'
+                                                                    ? {
+                                                                        ...col,
+                                                                        render: (_: any, record: ProcessItem) => (
+                                                                            <>
+                                                                                <Button
+                                                                                    type="link"
+                                                                                    size="small"
+                                                                                    onClick={() => handleEditProcess(module.key, String(host.id), record)}
+                                                                                >
+                                                                                    编辑
+                                                                                </Button>
+                                                                                <Popconfirm
+                                                                                    title="确定删除该进程?"
+                                                                                    onConfirm={() => handleDeleteProcess(module.key, String(host.id), record)}
+                                                                                    okText="确定"
+                                                                                    cancelText="取消"
+                                                                                >
+                                                                                    <Button type="link" danger size="small">删除</Button>
+                                                                                </Popconfirm>
+                                                                            </>
+                                                                        )
+                                                                    }
+                                                                    : col
+                                                            )}
+                                                            dataSource={hostProcessMap[getProcessKey(module.key, String(host.id))] || []}
+                                                            pagination={false}
+                                                            size="small"
+                                                            rowKey="id"
+                                                        />
+                                                        <div className="add-button">
+                                                            <Button
+                                                                type="link"
+                                                                onClick={() => handleAddProcess(module.key, String(host.id))}
+                                                            >
+                                                                + 添加进程
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            }]}
+                                        />
+                                    ))}
+                                </div>
+                            );
+                        }
+                        )
                 }
             </div>
         );
@@ -304,11 +332,19 @@ const TransferHost: React.FC = () => {
         );
     };
 
+    const renderEmpty = () => {
+        return <div className="empty-wrapper">
+            <Space className='tip-text'>
+                <InfoCircleOutlined /> 目标模块为源模块，无变更信息
+            </Space>
+        </div>
+    }
+
     const addTabItems: TabsProps['items'] = [
         {
             key: 'addInst',
             label: '新增服务实例',
-            children: renderAddInst(),
+            children: hasChanges ? renderAddInst() : renderEmpty(),
         }
     ]
 
@@ -384,8 +420,9 @@ const TransferHost: React.FC = () => {
                         <Button
                             type="primary"
                             onClick={handleConfirm}
+                            disabled={!isConfirmBtnAvailable}
                         >
-                            {transferHostType ? '确认转移' : '确认添加'}
+                            确认变更
                         </Button>
                         <Button onClick={handleCancel}>
                             取消
