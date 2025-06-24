@@ -6,7 +6,6 @@ import { allHosts2 } from '@/mock/business';
 import { TransferHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
-import { useTransferHostStore } from '@/store/TransferHostStore';
 import './style.css';
 
 const MIN_WIDTH = 280;
@@ -55,22 +54,36 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const [hostSearchValue, setHostSearchValue] = useState<string>('');
     const [hasTreeSearchResults, setHasTreeSearchResults] = useState<boolean>(true);
     const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
-    const [searchTreeData, setSearchTreeData] = useState<any[]>([]);
+    const [searchTreeData, setSearchTreeData] = useState<TreeData[]>([]);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>();
     // Result preview list items - independent of tab switching
     const [resultPreviewItems, setResultPreviewItems] = useState<TransferHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
-    // Global host mapping - stores all hosts info to avoid dependency on current tab
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const treeWrapperRef = useRef<HTMLDivElement>(null);
-    // A key used to forcefully reset the TopologyTree
     const [treeKey, setTreeKey] = useState(0);
+    // Track the previous visibility state of the modal
+    const prevVisibleRef = useRef<boolean>();
+    const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
 
     useEffect(() => {
         if (visible) setTreeKey(Date.now());
     }, [visible]);
 
-    // Initialize with initial selected hosts
+    useEffect(() => {
+        const prevVisible = prevVisibleRef.current;
+        if (visible && !prevVisible) {
+            if (!searchTreeData || searchTreeData.length === 0) return;
+            setShouldInitializeKeys(true);
+            setExpandedKeys([searchTreeData[0].key]);
+        } else {
+            setShouldInitializeKeys(false);
+        }
+        // Update previous visible status after initialization
+        prevVisibleRef.current = visible;
+    }, [visible, searchTreeData]);
+
     useEffect(() => {
         if (visible && initialSelectedHosts && initialSelectedHosts.length > 0) {
             const hostMapping = new Map(initialSelectedHosts.map(host => [
@@ -87,7 +100,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     }, [visible, initialSelectedHosts]);
 
-    // Handle host selection changes - updates both selectedHosts and resultPreviewItems
     const handleHostSelectionChange = (newSelectedKeys: React.Key[]) => {
         setSelectedHosts(newSelectedKeys);
 
@@ -115,7 +127,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setResultPreviewItems(newResultItems);
     };
 
-    // Table columns definition
     const columns = [
         {
             title: '内网IP',
@@ -140,7 +151,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     ];
 
-    // Get current hosts data based on active tab with search filtering
     const getCurrentHosts = () => {
         let hosts: any[] = [];
 
@@ -168,7 +178,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         return hosts;
     };
 
-    // Handle custom input add hosts
     const handleAddCustomHosts = () => {
         if (!customInput.trim()) {
             message.warning('请输入IP');
@@ -214,14 +223,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     };
 
-    // Handle remove host
     const handleRemoveHost = (hostId: React.Key) => {
         setSelectedHosts(prev => prev.filter(id => id !== hostId));
         // Also remove from result preview items
         setResultPreviewItems(prev => prev.filter(item => item.id !== hostId));
     };
 
-    // Handle copy IPs
     const handleCopyIPs = async () => {
         const currentHosts = getCurrentHosts();
         const selectedIPs = resultPreviewItems.map(resItem => {
@@ -237,7 +244,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     };
 
-    // Handle remove all selected hosts
     const handleRemoveAll = () => {
         setSelectedHosts([]);
         // Also clear result preview items
@@ -250,12 +256,10 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     //     setShowSearchPopover(false);
     // };
 
-    // Clear host search
     const handleClearHostSearch = () => {
         setHostSearchValue('');
     };
 
-    // Handle topology tree selection
     const handleNodeSelect = () => {
         // Dismiss search panel by clearing search when item is clicked
         if (treeSearchValue) {
@@ -271,14 +275,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     //     setShowSearchPopover(false);
     // };
 
-    // Handle tree search input change
     const handleTreeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setTreeSearchValue(value);
         setShowSearchPopover(!!value.trim());
     };
 
-    // Handle search data changes from TopologyTree
     const handleSearchDataChange = useCallback((data: any[]) => {
         setSearchTreeData(data);
         setHasTreeSearchResults(data.length > 0);
@@ -316,7 +318,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     }
 
-    // The dragger event
     const onMouseDown = (e: React.MouseEvent) => {
         dragging.current = true;
         setIsDragging(true);
@@ -343,7 +344,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         document.addEventListener("mouseup", onMouseUp);
     };
 
-    // Render search popover content
     const renderSearchPopoverContent = () => {
         // TODO: how to show
         return null;
@@ -415,7 +415,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         )
     }
 
-    // Render static topology tab content
     const renderStaticTopology = () => (
         <div className='topology-wrapper'>
             <div className='tree-wrapper'
@@ -450,11 +449,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                 </Popover>
                 <TopologyTree
                     key={treeKey}
-                    onSelectNode={handleNodeSelect}
+                    onlyLeafSelectable={true}
+                    expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
                     tailEleType={TailEleType.Count}
                     searchValue={treeSearchValue}
+                    onSelectNode={handleNodeSelect}
                     onSearchDataChange={handleSearchDataChange}
-                    onlyLeafSelectable={true}
                 />
                 {/* The dragger */}
                 <div
@@ -479,7 +479,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         </div>
     );
 
-    // Render custom input tab content
     const renderCustomInput = () => (
         <div className='custom-input-wrapper'>
             <div className='input-area'>
@@ -511,7 +510,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         </div>
     );
 
-    // Render result preview - This should persist across tab changes
     const renderResultPreview = () => (
         <>
             <List
