@@ -35,8 +35,10 @@ const TopologyTree: React.FC<Props> = ({
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
+    // State for creating node
     const [modalVisible, setModalVisible] = useState(false);
     const [createType, setCreateType] = useState<TopoTreeNodeType>(TopoTreeNodeType.Set);
+    const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null);
 
     useEffect(() => {
         // TODO: get real data from service
@@ -45,19 +47,15 @@ const TopologyTree: React.FC<Props> = ({
         const baseTree = customTreeData || buildTreeData(businessData2, idleCluster2, searchValue);
         const filtered = filterTree(baseTree, searchValue || '');
         setTreeData(filtered);
-        if (onSearchDataChange) {
+        if (searchValue && onSearchDataChange) {
             onSearchDataChange(filtered);
         }
 
         if (controlledExpandedKeys && controlledExpandedKeys.length > 0) {
             setExpandedKeys(controlledExpandedKeys);
-        } else {
-            if (!searchValue) {
-                setExpandedKeys([filtered[0]?.key].filter(Boolean));
-            } else {
-                const allKeys = filtered.map(node => node.key);
-                setExpandedKeys(allKeys);
-            }
+        } else if (searchValue) {
+            const allKeys = filtered.map(node => node.key);
+            setExpandedKeys(allKeys);
         }
     }, [customTreeData, searchValue, idleCluster2, controlledExpandedKeys, onSearchDataChange]);
 
@@ -66,10 +64,6 @@ const TopologyTree: React.FC<Props> = ({
             setSelectedKeys(controlledSelectedKeys);
         }
     }, [controlledSelectedKeys]);
-
-    const isNodeSelected = (key: string) => {
-        return (controlledSelectedKeys ?? selectedKeys).some(Item => Item === key);
-    }
 
     const handleNodeSelect = (node: TreeData) => {
         const key = node.key;
@@ -83,7 +77,7 @@ const TopologyTree: React.FC<Props> = ({
         }
 
         const isExpanded = expandedKeys.includes(key);
-        const isAlreadySelected = selectedKeys.includes(key);
+        const isSelected = selectedKeys.includes(key);
 
         if (!hasChildren) {
             // Leaf nodes: Select directly
@@ -98,7 +92,7 @@ const TopologyTree: React.FC<Props> = ({
             // Expand on the next tick to ensure the DOM has rendered the selection changes
             setTimeout(() => toggleExpand(key), 0);
             return;
-        } else if (isAlreadySelected) {
+        } else if (isSelected) {
             toggleExpand(key);
             return;
         }
@@ -132,8 +126,7 @@ const TopologyTree: React.FC<Props> = ({
             setCreateType(TopoTreeNodeType.Module);
         }
 
-        setSelectedKeys([node.key]);
-        onSelectNode(node);
+        setTargetNodeKey(node.key);
         setModalVisible(true);
     };
 
@@ -164,7 +157,7 @@ const TopologyTree: React.FC<Props> = ({
     };
 
     const renderTitle = (node: TreeData) => {
-        const isSelected = isNodeSelected(node.key);
+        const isSelected = selectedKeys.some(Item => Item === node.key);
 
         return (
             <span
@@ -192,11 +185,10 @@ const TopologyTree: React.FC<Props> = ({
         return null;
     };
 
-    const { node: selectedNode, parents: parentNodes } = useMemo(() => {
-        if (selectedKeys.length === 0) return { node: null, parents: [] };
-        const nodeKey = String(selectedKeys[0]);
-        return findNodeAndParents(treeData, nodeKey);
-    }, [selectedKeys, treeData]);
+    const { node: targetNode, parents: parentNodes } = useMemo(() => {
+        if (targetNodeKey === null) return { node: null, parents: [] };
+        return findNodeAndParents(treeData, targetNodeKey);
+    }, [targetNodeKey, treeData]);
 
     return (
         <>
@@ -206,16 +198,15 @@ const TopologyTree: React.FC<Props> = ({
                 titleRender={renderTitle}
                 selectedKeys={selectedKeys}
                 expandedKeys={expandedKeys}
-                onSelect={(_, { node }) => handleNodeSelect(node)}
-                onExpand={keys => { setExpandedKeys(keys as string[]) }}
+                onExpand={keys => setExpandedKeys(keys as string[])}
                 className="topology-tree"
             />
             {/* Modal for creating set and module*/}
-            {selectedNode && (
+            {targetNode && (
                 <CreateNodeModal
                     visible={modalVisible}
                     type={createType}
-                    selectedNode={selectedNode}
+                    selectedNode={targetNode}
                     parentNodes={parentNodes}
                     onClose={() => setModalVisible(false)}
                 />
