@@ -68,6 +68,8 @@ const BusinessTopology: React.FC = () => {
                 setExpandedKeys([firstNode.key]);
             }
         }
+        // Update previous pathname after initialization
+        prevPathnameRef.current = location.pathname;
     }, [treeData, searchParams, location.pathname]);
 
     const handleTreeData = useCallback((data: TreeData[]) => {

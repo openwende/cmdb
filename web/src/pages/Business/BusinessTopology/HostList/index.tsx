@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -59,29 +59,30 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
     navigate(transferHostPath + '?' + searchParams.toString());
   }
 
-  const handleConfirmAddHosts = (hosts: TransferHostItem[]) => {
+  const handleConfirmAddHosts = useCallback((hosts: TransferHostItem[]) => {
     if (selectedNodes.length > 0) setTransferHostData(hosts, selectedNodes);
     handleNavToTransferPage();
-  }
+  }, [selectedNodes])
 
-  const handleTransferHosts = (targetModules: TreeData[]) => {
+  const handleTransferHosts = useCallback((targetModules: TreeData[]) => {
     if (
       transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool
       || transferModalType === TransferMenuItemType.otherBusiness
     ) {
       // TODO: api
+      setTransferModalVisible(false);
       return;
     }
 
     setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
     handleNavToTransferPage();
-  }
+  }, [transferModalType, hostsNotInIdlePool, hostIdleStatuses])
 
-  const handleReleaseHosts = (dirId: number) => {
+  const handleReleaseHosts = useCallback((dirId: number) => {
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);
-  };
+  }, [])
 
   const columns = [
     {

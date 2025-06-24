@@ -26,15 +26,17 @@ interface TransferHostModalProps {
 }
 
 const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys, initialExpandedKeys }) => {
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(initialSelectedKeys || []);
-  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [searchValue, setSearchValue] = useState('');
+  const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
+  const [previewList, setPreviewList] = useState<TreeData[]>([]);
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
+  // State for sidebar
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isDraggerHover, setIsDraggerHover] = useState<boolean>(false);
   const dragging = useRef<boolean>(false);
-  const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
 
   // Helper to build idlePool/otherBusiness tree structure (biz idle pool)
   const buildIdlePoolTree = (bizName: string): TreeData[] => ([{
@@ -127,12 +129,14 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
     return result;
   };
 
-  const selectedNodes = useMemo(() => getSelectedNodes(selectedKeys, customTreeData), [selectedKeys, customTreeData]);
-  const previewList = useMemo(() => (
-    (transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness)
-      ? selectedNodes.slice(0, 1)
-      : selectedNodes
-  ), [selectedNodes, transferType]);
+  useEffect(() => {
+    const selectedNodes = getSelectedNodes(selectedKeys, customTreeData);
+    const list = (
+      transferType === TransferMenuItemType.idlePool
+      || transferType === TransferMenuItemType.otherBusiness
+    ) ? selectedNodes.slice(0, 1) : selectedNodes;
+    setPreviewList(list);
+  }, [selectedKeys, customTreeData, transferType]);
 
   // Handle drag sidebar
   const onMouseDown = (e: React.MouseEvent) => {
@@ -185,12 +189,13 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
   };
 
   const handleNextStep = () => {
-    if (previewList.length > 0) onConfirm(previewList);
-    onClose();
+    onConfirm(previewList);
+    handleClose();
   };
 
   const handleClose = () => {
     setSelectedKeys([]);
+    setPreviewList([]);
     setSearchValue('');
     setSelectedBizId(undefined);
     onClose();
