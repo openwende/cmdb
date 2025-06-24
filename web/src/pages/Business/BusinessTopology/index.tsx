@@ -28,14 +28,17 @@ const BusinessTopology: React.FC = () => {
 
     useEffect(() => {
         const isJustSwitchedToCurPath = (
-            location.pathname === businessTopoPath && prevPathnameRef.current !== businessTopoPath
+            location.pathname === businessTopoPath
+            && prevPathnameRef.current !== businessTopoPath
         );
         if (!isJustSwitchedToCurPath) {
-            setShouldInitializeKeys(false);
+            // Update previous pathname after initialization
             prevPathnameRef.current = location.pathname;
+            setShouldInitializeKeys(false);
             return;
         }
 
+        setShouldInitializeKeys(true);
         const tabParam = searchParams.get('tab') || 'hostList';
         const viewParam = searchParams.get('view') as 'instance' | 'process' | null;
 
@@ -65,9 +68,6 @@ const BusinessTopology: React.FC = () => {
                 setExpandedKeys([firstNode.key]);
             }
         }
-
-        // Update previous pathname after initialization
-        prevPathnameRef.current = location.pathname;
     }, [treeData, searchParams, location.pathname]);
 
     const handleTreeData = useCallback((data: TreeData[]) => {

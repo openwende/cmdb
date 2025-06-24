@@ -47,7 +47,7 @@ const TopologyTree: React.FC<Props> = ({
         const baseTree = customTreeData || buildTreeData(businessData2, idleCluster2, searchValue);
         const filtered = filterTree(baseTree, searchValue || '');
         setTreeData(filtered);
-        if (searchValue && onSearchDataChange) {
+        if (onSearchDataChange) {
             onSearchDataChange(filtered);
         }
 
