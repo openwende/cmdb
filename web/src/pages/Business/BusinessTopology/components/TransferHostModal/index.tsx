@@ -96,16 +96,21 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
   useEffect(() => {
     if (!visible) return;
     if (!customTreeData || customTreeData.length === 0) return;
-    if (!initialExpandedKeys || initialExpandedKeys.length === 0) return;
 
-    const expandedSet = new Set<string>();
-    initialExpandedKeys.forEach(key => {
-      const { parents } = findNodeAndParents(customTreeData, key);
-      parents.forEach(p => expandedSet.add(p.key));
-      expandedSet.add(key);
-    });
+    let expandedKeys: string[] = [];
+    if (initialExpandedKeys && initialExpandedKeys.length > 0) {
+      const expandedSet = new Set<string>();
+      initialExpandedKeys.forEach(key => {
+        const { parents } = findNodeAndParents(customTreeData, key);
+        parents.forEach(p => expandedSet.add(p.key));
+        expandedSet.add(key);
+      });
+      expandedKeys = Array.from(expandedSet);
+    } else {
+      expandedKeys = [customTreeData[0].key];
+    }
 
-    setExpandedKeys(Array.from(expandedSet));
+    setExpandedKeys(expandedKeys);
   }, [visible, customTreeData, initialExpandedKeys]);
 
   useEffect(() => {
