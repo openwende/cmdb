@@ -46,7 +46,7 @@ export const routes: NavigationItem[] = [
         icon: <UnorderedListOutlined />,
         children: [
           {
-            name: '添加主机',
+            name: '转移主机',
             key: BusinessNavKey.TransferHost,
             path: 'transferHost',
             element: withSuspense(TransferHost),

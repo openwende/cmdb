@@ -60,7 +60,7 @@ const TopologyTree: React.FC<Props> = ({
     }, [customTreeData, searchValue, idleCluster2, controlledExpandedKeys, onSearchDataChange]);
 
     useEffect(() => {
-        if (controlledSelectedKeys && controlledSelectedKeys.length > 0) {
+        if (controlledSelectedKeys) {
             setSelectedKeys(controlledSelectedKeys);
         }
     }, [controlledSelectedKeys]);
@@ -161,7 +161,7 @@ const TopologyTree: React.FC<Props> = ({
 
         return (
             <span
-                className={`title-wrapper ${isSelected ? ' selected' : ''}`}
+                className="title-wrapper"
                 onMouseEnter={() => setHoveredKey(node.key)}
                 onMouseLeave={() => setHoveredKey(null)}
                 onClick={(e) => handleNodeTitleClick(e, node)}
@@ -195,6 +195,7 @@ const TopologyTree: React.FC<Props> = ({
             <Tree
                 treeData={treeData}
                 blockNode={true}
+                multiple={true}
                 titleRender={renderTitle}
                 selectedKeys={selectedKeys}
                 expandedKeys={expandedKeys}
