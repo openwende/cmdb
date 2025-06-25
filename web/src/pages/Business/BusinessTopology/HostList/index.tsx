@@ -168,29 +168,37 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     return { items };
   };
 
-  const isAddAvailable = useMemo(() => {
+  const selectedNodeStatus = useMemo(() => {
     if (!selectedNodes || selectedNodes.length === 0) {
-      return false;
+      return {
+        isModule: false,
+        isIdle: false,
+      };
     }
-    return selectedNodes[0].type === TopoTreeNodeType.Module;
-}, [selectedNodes]);
+    const node = selectedNodes[0];
+
+    return {
+      isModule: node.type === TopoTreeNodeType.Module,
+      isIdle: node.type === TopoTreeNodeType.Idle,
+    };
+  }, [selectedNodes]);
 
   const isEmptySet = useMemo(() => {
     if (!selectedNodes || selectedNodes.length === 0) {
-        return false;
+      return false;
     }
 
     const node = selectedNodes[0];
     // The key is formatted as "<type>-<id>" (e.g., "set-1")
     const keyParts = node.key.split('-');
     if (keyParts.length !== 2) {
-        return false;
+      return false;
     }
 
     const isSetType = keyParts[0] === TopoTreeNodeType.Set;
     const hasNoChildren = !node.children || node.children.length === 0;
     return isSetType && hasNoChildren;
-}, [selectedNodes]);
+  }, [selectedNodes]);
 
   const { node: targetNode, parents: parentNodes } = useMemo(() => {
     if (!selectedNodes || selectedNodes.length === 0) {
@@ -210,7 +218,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
         </Empty> : <div className='list-wrapper'>
           {/* The operation botton bar */}
           <div className='operation-bar'>
-            {isAddAvailable ? (
+            {selectedNodeStatus.isModule ? (
               <Button type="primary" onClick={handleAddHosts}>新增</Button>
             ) : (
               <Tooltip title="仅能在业务模块下新增">
@@ -232,29 +240,34 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
               </Button>
             </Dropdown>
 
-            <Dropdown
-              menu={{
-                ...getDropdownMenu(DropdownMenuType.Append),
-                onClick: ({ key }) => handleMenuClick(key)
-              }}
-              trigger={['click']}
-            >
-              <Button disabled={selectedRowKeys.length === 0}>
-                追加至 <DownOutlined />
-              </Button>
-            </Dropdown>
+            {
+              !selectedNodeStatus.isIdle && <Dropdown
+                menu={{
+                  ...getDropdownMenu(DropdownMenuType.Append),
+                  onClick: ({ key }) => handleMenuClick(key)
+                }}
+                trigger={['click']}
+              >
+                <Button disabled={selectedRowKeys.length === 0}>
+                  追加至 <DownOutlined />
+                </Button>
+              </Dropdown>
+            }
 
-            <Dropdown
-              menu={{
-                ...getDropdownMenu(DropdownMenuType.Remove),
-                onClick: ({ key }) => handleMenuClick(key)
-              }}
-              trigger={['click']}
-            >
-              <Button disabled={selectedRowKeys.length === 0}>
-                移出 <DownOutlined />
-              </Button>
-            </Dropdown>
+
+            {
+              selectedNodeStatus.isModule && <Dropdown
+                menu={{
+                  ...getDropdownMenu(DropdownMenuType.Remove),
+                  onClick: ({ key }) => handleMenuClick(key)
+                }}
+                trigger={['click']}
+              >
+                <Button disabled={selectedRowKeys.length === 0}>
+                  移出 <DownOutlined />
+                </Button>
+              </Dropdown>
+            }
 
             <Dropdown
               menu={{
