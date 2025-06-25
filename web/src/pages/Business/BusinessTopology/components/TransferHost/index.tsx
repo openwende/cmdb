@@ -216,8 +216,6 @@ const TransferHost: React.FC = () => {
                 </Space>
                 {
                     targetModules
-                        .slice()
-                        .sort((a, b) => String(a.title).localeCompare(String(b.title)))
                         .map((module) => {
                             const hostsForModule = hostsToAddByModule[module.key] || [];
                             if (hostsForModule.length === 0) return null;
@@ -340,14 +338,6 @@ const TransferHost: React.FC = () => {
         </div>
     }
 
-    const addTabItems: TabsProps['items'] = [
-        {
-            key: 'addInst',
-            label: '新增服务实例',
-            children: hasChanges ? renderAddInst() : renderEmpty(),
-        }
-    ]
-
     const delTabItems: TabsProps['items'] = [
         {
             key: 'delInst',
@@ -359,6 +349,15 @@ const TransferHost: React.FC = () => {
             </span>,
             children: renderDelInst(),
         }
+    ]
+
+    const addTabItems: TabsProps['items'] = [
+        {
+            key: 'addInst',
+            label: '新增服务实例',
+            children: hasChanges ? renderAddInst() : renderEmpty(),
+        },
+        ...(handleServiceInstances().length > 0 ? delTabItems : [])
     ]
 
     const tabItems = transferHostType === TransferMenuItemType.idlePool
@@ -453,6 +452,7 @@ const TransferHost: React.FC = () => {
             <TransferHostModal
                 visible={showTransferModal}
                 transferType={transferHostType as TransferMenuItemType}
+                selectedHosts={selectedHosts}
                 onClose={() => setShowTransferModal(false)}
                 onConfirm={handleTransferNode}
                 initialSelectedKeys={initialKeys}

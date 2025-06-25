@@ -345,6 +345,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
       <TransferHostModal
         visible={transferModalVisible}
         transferType={transferModalType}
+        selectedHosts={hostIdleStatuses}
         onClose={() => setTransferModalVisible(false)}
         onConfirm={handleTransferHosts}
       />

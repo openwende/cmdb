@@ -122,4 +122,8 @@
       margin-top: 35%;
     }
   }
+
+  .next-btn-wrapper {
+    margin-left: 8px;
+  }
 }

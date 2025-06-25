@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty } from 'antd';
+import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty, Tooltip } from 'antd';
 import TopologyTree from '../TopologyTree';
-import { businessData2, idleCluster2, bizInfo } from '@/mock/business';
-import { TailEleType, TopoTreeNodeType, TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
+import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
+import { TailEleType, TopoTreeNodeType, TransferHostItem, TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
-import { findNodeAndParents } from '@/pages/Business/utils';
+import { findNodeAndParents, isHostAlreadyInTarget } from '@/pages/Business/utils';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
@@ -19,13 +19,22 @@ export const typeTitleMap: Partial<Record<TransferHostType, string>> = {
 interface TransferHostModalProps {
   visible: boolean;
   transferType?: TransferMenuItemType;
-  onClose: () => void;
-  onConfirm: (selectedNodes: TreeData[]) => void;
+  selectedHosts: TransferHostItem[];
   initialSelectedKeys?: string[];
   initialExpandedKeys?: string[];
+  onClose: () => void;
+  onConfirm: (selectedNodes: TreeData[]) => void;
 }
 
-const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transferType, onClose, onConfirm, initialSelectedKeys, initialExpandedKeys }) => {
+const TransferHostModal: React.FC<TransferHostModalProps> = ({
+  visible,
+  transferType,
+  selectedHosts,
+  onClose,
+  onConfirm,
+  initialSelectedKeys,
+  initialExpandedKeys
+}) => {
   const [searchValue, setSearchValue] = useState('');
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -244,6 +253,24 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
 
   const isShowTreeCom = transferType === TransferMenuItemType.otherBusiness ? !!selectedBizId : true;
 
+  const confirmDisabled = useMemo(() => {
+    if (previewList.length === 0) return true;
+    if (selectedHosts.length === 0) return true;
+    // Disable if all hosts are already in all target modules
+    return selectedHosts.every(host =>
+      previewList.every(moduleNode => isHostAlreadyInTarget(allHosts2, host.id, moduleNode))
+    );
+  }, [previewList, selectedHosts]);
+
+  const confirmTooltip = useMemo(() => {
+    if (previewList.length === 0) {
+      return '请先选择业务模块';
+    } else if (confirmDisabled) {
+      return '主机所属模块未发生改变';
+    }
+    return '';
+  }, [previewList, confirmDisabled]);
+
   return (
     <Modal
       open={visible}
@@ -251,9 +278,13 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({ visible, transfer
       onCancel={handleClose}
       footer={[
         <Button key="cancel" onClick={handleClose}>取消</Button>,
-        <Button key="next" type="primary" disabled={previewList.length === 0} onClick={handleNextStep}>
-          {initialSelectedKeys ? '确定' : '下一步'}
-        </Button>
+        <Tooltip title={confirmTooltip}>
+          <span key="next" className='next-btn-wrapper'>
+            <Button type="primary" disabled={confirmDisabled} onClick={handleNextStep}>
+              {initialSelectedKeys ? '确定' : '下一步'}
+            </Button>
+          </span>
+        </Tooltip>
       ]}
       maskClosable={false}
       width={830}
