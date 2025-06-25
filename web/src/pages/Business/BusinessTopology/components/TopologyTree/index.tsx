@@ -186,7 +186,9 @@ const TopologyTree: React.FC<Props> = ({
     };
 
     const { node: targetNode, parents: parentNodes } = useMemo(() => {
-        if (targetNodeKey === null) return { node: null, parents: [] };
+        if (targetNodeKey === null) {
+            return { node: null, parents: [] };
+        }
         return findNodeAndParents(treeData, targetNodeKey);
     }, [targetNodeKey, treeData]);
 

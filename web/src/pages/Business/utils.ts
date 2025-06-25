@@ -363,12 +363,16 @@ function getNodeType(bkObjId?: string): TopoTreeNodeType {
  * @return {*} 
  */
 export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNode: TreeData) => {
+    // The key is formatted as "<type>-<id>" (e.g., "set-1")
     const keyParts = moduleNode.key.split('-');
     if (keyParts.length !== 2) return false;
+
     const type = keyParts[0];
     const id = Number(keyParts[1]);
     const hostInfo = HostList.find((h: any) => h.host.bk_host_id === Number(hostId));
+
     if (!hostInfo) return false;
+
     if (type === TopoTreeNodeType.Module) {
         return hostInfo.module.some((m: any) => m.bk_module_id === id);
     }
@@ -378,5 +382,6 @@ export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNo
     if (type === TopoTreeNodeType.Biz) {
         return hostInfo.biz.some((b: any) => b.bk_biz_id === id);
     }
+
     return false;
 };

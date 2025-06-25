@@ -29,7 +29,7 @@ export const businessData2 = [
     "child": [
       {
         "bk_inst_id": 6,
-        "bk_inst_name": "2",
+        "bk_inst_name": "set2",
         "bk_obj_id": "set",
         "bk_obj_name": "集群",
         "default": 0,
@@ -55,6 +55,14 @@ export const businessData2 = [
             "child": []
           }
         ]
+      },
+      {
+        "bk_inst_id": 7,
+        "bk_inst_name": "set4",
+        "bk_obj_id": "set",
+        "bk_obj_name": "集群",
+        "default": 0,
+        "child": []
       }
     ]
   }

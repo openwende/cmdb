@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Button, Dropdown, Input, message, Tooltip } from 'antd';
+import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
 import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
@@ -20,13 +20,15 @@ import { transferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
-import { checkHostsInIdlePool } from '../../utils';
+import { checkHostsInIdlePool, findNodeAndParents } from '../../utils';
+import CreateNodeModal from '../components/CreateNodeModal';
 
 interface Props {
   selectedNodes: TreeData[];
+  treeData: TreeData[];
 }
 
-const HostList: React.FC<Props> = ({ selectedNodes }) => {
+const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
@@ -38,6 +40,7 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [transferModalType, setTransferModalType] = useState<TransferMenuItemType>();
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, allHosts2, idleSetID);
   const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
@@ -165,123 +168,158 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
     return { items };
   };
 
-  const isAddAvailable = useMemo(
-    () => selectedNodes.length > 0 ? selectedNodes[0].type === TopoTreeNodeType.Module : false,
-    [selectedNodes]
-  );
+  const isAddAvailable = useMemo(() => {
+    if (!selectedNodes || selectedNodes.length === 0) {
+      return false;
+    }
+    return selectedNodes[0].type === TopoTreeNodeType.Module;
+}, [selectedNodes]);
+
+  const isEmptySet = useMemo(() => {
+    if (!selectedNodes || selectedNodes.length === 0) {
+        return false;
+    }
+
+    const node = selectedNodes[0];
+    // The key is formatted as "<type>-<id>" (e.g., "set-1")
+    const keyParts = node.key.split('-');
+    if (keyParts.length !== 2) {
+        return false;
+    }
+
+    const isSetType = keyParts[0] === TopoTreeNodeType.Set;
+    const hasNoChildren = !node.children || node.children.length === 0;
+    return isSetType && hasNoChildren;
+}, [selectedNodes]);
+
+  const { node: targetNode, parents: parentNodes } = useMemo(() => {
+    if (!selectedNodes || selectedNodes.length === 0) {
+      return { node: null, parents: [] };
+    }
+    return findNodeAndParents(treeData, selectedNodes[0].key);
+  }, [selectedNodes, treeData]);
 
   return (
-    <div className='list-wrapper'>
-      {/* The operation botton bar */}
-      <div className='operation-bar'>
-        {isAddAvailable ? (
-          <Button type="primary" onClick={handleAddHosts}>新增</Button>
-        ) : (
-          <Tooltip title="仅能在业务模块下新增">
-            <Button type="primary" disabled>新增</Button>
-          </Tooltip>
-        )}
-
-        <Button disabled={selectedRowKeys.length === 0}>编辑</Button>
-
-        <Dropdown
-          menu={{
-            ...getDropdownMenu(DropdownMenuType.Transfer),
-            onClick: ({ key }) => handleMenuClick(key)
-          }}
-          trigger={['click']}
+    <>
+      {
+        isEmptySet ? <Empty
+          className='empty-wrapper'
+          description={<Typography.Text>该集群尚未创建模块</Typography.Text>}
         >
-          <Button disabled={selectedRowKeys.length === 0}>
-            转移至 <DownOutlined />
-          </Button>
-        </Dropdown>
+          <Button type="primary" onClick={() => setCreateModalVisible(true)}>立即创建</Button>
+        </Empty> : <div className='list-wrapper'>
+          {/* The operation botton bar */}
+          <div className='operation-bar'>
+            {isAddAvailable ? (
+              <Button type="primary" onClick={handleAddHosts}>新增</Button>
+            ) : (
+              <Tooltip title="仅能在业务模块下新增">
+                <Button type="primary" disabled>新增</Button>
+              </Tooltip>
+            )}
 
-        <Dropdown
-          menu={{
-            ...getDropdownMenu(DropdownMenuType.Append),
-            onClick: ({ key }) => handleMenuClick(key)
-          }}
-          trigger={['click']}
-        >
-          <Button disabled={selectedRowKeys.length === 0}>
-            追加至 <DownOutlined />
-          </Button>
-        </Dropdown>
+            <Button disabled={selectedRowKeys.length === 0}>编辑</Button>
 
-        <Dropdown
-          menu={{
-            ...getDropdownMenu(DropdownMenuType.Remove),
-            onClick: ({ key }) => handleMenuClick(key)
-          }}
-          trigger={['click']}
-        >
-          <Button disabled={selectedRowKeys.length === 0}>
-            移出 <DownOutlined />
-          </Button>
-        </Dropdown>
+            <Dropdown
+              menu={{
+                ...getDropdownMenu(DropdownMenuType.Transfer),
+                onClick: ({ key }) => handleMenuClick(key)
+              }}
+              trigger={['click']}
+            >
+              <Button disabled={selectedRowKeys.length === 0}>
+                转移至 <DownOutlined />
+              </Button>
+            </Dropdown>
 
-        <Dropdown
-          menu={{
-            ...getDropdownMenu(DropdownMenuType.Copy),
-            onClick: ({ key }) => handleMenuClick(key)
-          }}
-          trigger={['click']}
-        >
-          <Button disabled={selectedRowKeys.length === 0}>
-            复制 <DownOutlined />
-          </Button>
-        </Dropdown>
+            <Dropdown
+              menu={{
+                ...getDropdownMenu(DropdownMenuType.Append),
+                onClick: ({ key }) => handleMenuClick(key)
+              }}
+              trigger={['click']}
+            >
+              <Button disabled={selectedRowKeys.length === 0}>
+                追加至 <DownOutlined />
+              </Button>
+            </Dropdown>
 
-        <Dropdown
-          menu={{
-            ...getDropdownMenu(DropdownMenuType.More),
-            onClick: ({ key }) => handleMenuClick(key)
-          }}
-          trigger={['click']}
-        >
-          <Button>
-            更多 <DownOutlined />
-          </Button>
-        </Dropdown>
+            <Dropdown
+              menu={{
+                ...getDropdownMenu(DropdownMenuType.Remove),
+                onClick: ({ key }) => handleMenuClick(key)
+              }}
+              trigger={['click']}
+            >
+              <Button disabled={selectedRowKeys.length === 0}>
+                移出 <DownOutlined />
+              </Button>
+            </Dropdown>
 
-        <div className='search-bar'>
-          <Input.Search
-            placeholder="请输入IP或资源编号"
-            style={{ width: 220 }}
-            onSearch={(value) => message.info(`搜索: ${value}`)}
+            <Dropdown
+              menu={{
+                ...getDropdownMenu(DropdownMenuType.Copy),
+                onClick: ({ key }) => handleMenuClick(key)
+              }}
+              trigger={['click']}
+            >
+              <Button disabled={selectedRowKeys.length === 0}>
+                复制 <DownOutlined />
+              </Button>
+            </Dropdown>
+
+            <Dropdown
+              menu={{
+                ...getDropdownMenu(DropdownMenuType.More),
+                onClick: ({ key }) => handleMenuClick(key)
+              }}
+              trigger={['click']}
+            >
+              <Button>
+                更多 <DownOutlined />
+              </Button>
+            </Dropdown>
+
+            <div className='search-bar'>
+              <Input.Search
+                placeholder="请输入IP或资源编号"
+                style={{ width: 220 }}
+                onSearch={(value) => message.info(`搜索: ${value}`)}
+              />
+              <Button icon={<FilterOutlined />} />
+              <Button icon={<ReloadOutlined />} />
+            </div>
+          </div>
+
+          <Table
+            rowSelection={{
+              selectedRowKeys,
+              onChange: setSelectedRowKeys
+            }}
+            columns={columns}
+            dataSource={allHosts2}
+            rowKey={(record) => record.host.bk_host_id}
+            pagination={false}
           />
-          <Button icon={<FilterOutlined />} />
-          <Button icon={<ReloadOutlined />} />
+
+          <div className='pagination-wrapper'>
+            <span>已选择 <span className='selected-count'>{selectedRowKeys.length}</span> 条</span>
+            <Pagination
+              total={allHosts2.length}
+              pageSize={pageSize}
+              current={current}
+              onChange={(page, size) => {
+                setCurrent(page);
+                setPageSize(size);
+              }}
+              onSizeChange={(_, size) => {
+                setPageSize(size);
+                setCurrent(1);
+              }}
+            />
+          </div>
         </div>
-      </div>
-
-      <Table
-        rowSelection={{
-          selectedRowKeys,
-          onChange: setSelectedRowKeys
-        }}
-        columns={columns}
-        dataSource={allHosts2}
-        rowKey={(record) => record.host.bk_host_id}
-        pagination={false}
-      />
-
-      <div className='pagination-wrapper'>
-        <span>已选择 <span className='selected-count'>{selectedRowKeys.length}</span> 条</span>
-        <Pagination
-          total={allHosts2.length}
-          pageSize={pageSize}
-          current={current}
-          onChange={(page, size) => {
-            setCurrent(page);
-            setPageSize(size);
-          }}
-          onSizeChange={(_, size) => {
-            setPageSize(size);
-            setCurrent(1);
-          }}
-        />
-      </div>
+      }
 
       {/* Add host modal */}
       <AddHostModal
@@ -305,7 +343,18 @@ const HostList: React.FC<Props> = ({ selectedNodes }) => {
         onClose={() => setReleaseModalVisible(false)}
         onConfirm={handleReleaseHosts}
       />
-    </div>
+
+      {/* Creating set and module modal*/}
+      {targetNode && (
+        <CreateNodeModal
+          visible={createModalVisible}
+          type={TopoTreeNodeType.Module}
+          selectedNode={targetNode}
+          parentNodes={parentNodes}
+          onClose={() => setCreateModalVisible(false)}
+        />
+      )}
+    </>
   );
 };
 

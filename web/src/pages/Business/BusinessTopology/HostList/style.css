@@ -26,3 +26,7 @@
 .selected-count {
     font-weight: 700;
 }
+
+.empty-wrapper {
+    margin-top: 15%;
+}

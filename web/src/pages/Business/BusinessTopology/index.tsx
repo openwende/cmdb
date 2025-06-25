@@ -104,7 +104,7 @@ const BusinessTopology: React.FC = () => {
         {
             key: 'hostList',
             label: '主机列表',
-            children: <HostList selectedNodes={selectedNodes} />
+            children: <HostList selectedNodes={selectedNodes} treeData={treeData} />
         },
         {
             key: 'serviceInstance',
