@@ -1,4 +1,5 @@
 import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData } from "./Types";
+import { CopyMenuItemKey as HostCopyKey } from './Types';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -385,3 +386,69 @@ export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNo
 
     return false;
 };
+
+/**
+ * Get the text of the host record based on the copied key.
+ *
+ * @param record Single host record
+ * @param copyKey Copy menu option key
+ * @returns Return the text to be copied; return an empty string if no corresponding data exists
+ */
+export function getHostCopyValue(record: any, copyKey: HostCopyKey): string {
+    switch (copyKey) {
+        case HostCopyKey.Id:
+            return String(record.host.bk_host_id);
+        case HostCopyKey.IPv4:
+            return record.host.bk_host_innerip || '';
+        case HostCopyKey.IPv6:
+            return record.host.bk_host_innerip_v6 || '--';
+        case HostCopyKey.CloudRegion: {
+            const cloud = record.host.bk_cloud_id?.[0];
+            return cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
+        }
+        case HostCopyKey.ModuleName: {
+            const mod = record.module?.[0];
+            return mod ? mod.bk_module_name : '';
+        }
+        case HostCopyKey.SetName: {
+            const set = record.set?.[0];
+            return set ? set.bk_set_name : '';
+        }
+        case HostCopyKey.CloudIdIPv4: {
+            const cloud = record.host.bk_cloud_id?.[0];
+            return cloud ? `${cloud.bk_inst_id}:${record.host.bk_host_innerip || ''}` : '';
+        }
+        case HostCopyKey.CloudIdIPv6: {
+            const cloud = record.host.bk_cloud_id?.[0];
+            return cloud ? `${cloud.bk_inst_id}:[${record.host.bk_host_innerip_v6 || '--'}]` : '';
+        }
+        case HostCopyKey.CloudIdIpIPv4First: {
+            const cloud = record.host.bk_cloud_id?.[0];
+            if (!cloud) return '';
+            const ipv4 = record.host.bk_host_innerip;
+            const ipv6 = record.host.bk_host_innerip_v6;
+            if (ipv4) {
+                return `${cloud.bk_inst_id}:${ipv4}`;
+            }
+            if (ipv6) {
+                return `${cloud.bk_inst_id}:[${ipv6}]`;
+            }
+            return '';
+        }
+        case HostCopyKey.CloudIdIpIPv6First: {
+            const cloud = record.host.bk_cloud_id?.[0];
+            if (!cloud) return '';
+            const ipv4 = record.host.bk_host_innerip;
+            const ipv6 = record.host.bk_host_innerip_v6;
+            if (ipv6) {
+                return `${cloud.bk_inst_id}:[${ipv6}]`;
+            }
+            if (ipv4) {
+                return `${cloud.bk_inst_id}:${ipv4}`;
+            }
+            return '';
+        }
+        default:
+            return '';
+    }
+}

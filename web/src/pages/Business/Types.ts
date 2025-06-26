@@ -49,6 +49,19 @@ export enum AppendMenuItemKey {
 export enum RemoveMenuItemKey {
     Current = "current"
 }
+// "Copy" dropdown menu item type
+export enum CopyMenuItemKey {
+    Id = 'id',
+    IPv4 = 'ipv4',
+    IPv6 = 'ipv6',
+    CloudIdIPv4 = 'cloud_id_ipv4',
+    CloudIdIPv6 = 'cloud_id_ipv6',
+    CloudIdIpIPv4First = 'cloud_id_ip_ipv4_first',
+    CloudIdIpIPv6First = 'cloud_id_ip_ipv6_first',
+    CloudRegion = 'cloud_region',
+    ModuleName = 'module_name',
+    SetName = 'set_name'
+}
 export enum MoreMenuItemKey {
     ExportSelected = "exportSelected",
     ExportAll = "exportAll",

@@ -132,7 +132,7 @@ export const allHosts2 = [
       ],
       "bk_host_id": 1,
       "bk_host_innerip": "192.168.0.2",
-      "bk_host_innerip_v6": ""
+      "bk_host_innerip_v6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
     },
     "module": [
       {
@@ -187,7 +187,7 @@ export const allHosts2 = [
       ],
       "bk_host_id": 2,
       "bk_host_innerip": "192.0.0.1",
-      "bk_host_innerip_v6": ""
+      "bk_host_innerip_v6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
     },
     "module": [
       {

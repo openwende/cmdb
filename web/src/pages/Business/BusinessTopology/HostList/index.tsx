@@ -12,7 +12,8 @@ import {
   RemoveMenuItemKey,
   TopoTreeNodeType,
   TransferMenuItemType,
-  TreeData
+  TreeData,
+  CopyMenuItemKey as HostCopyKey
 } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -20,8 +21,9 @@ import { transferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
-import { checkHostsInIdlePool, findNodeAndParents } from '../../utils';
+import { checkHostsInIdlePool, findNodeAndParents, getHostCopyValue } from '../../utils';
 import CreateNodeModal from '../components/CreateNodeModal';
+import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
 
 interface Props {
   selectedNodes: TreeData[];
@@ -45,7 +47,30 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, allHosts2, idleSetID);
   const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
 
+  const copyHostData = useCallback((copyKey: HostCopyKey) => {
+    if (!selectedRowKeys.length) return;
+    const selectedHosts = allHosts2.filter(h => selectedRowKeys.includes(h.host.bk_host_id));
+
+    const text = selectedHosts.map(rec => getHostCopyValue(rec, copyKey)).join('\n');
+    if (!text) {
+      message.warning('无可复制内容');
+      return;
+    }
+    navigator.clipboard?.writeText(text).then(() => {
+      message.success('复制成功');
+    }).catch(() => {
+      message.error('复制失败');
+    });
+  }, [selectedRowKeys]);
+
   const handleMenuClick = (key: string) => {
+    // Copy menu iem
+    if ((hostCopyKeys as string[]).includes(key)) {
+      copyHostData(key as HostCopyKey);
+      return;
+    }
+
+    // Other menu item
     if (key === TransferMenuItemType.hostPool) {
       setReleaseModalVisible(true);
     } else {
@@ -133,30 +158,29 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     const items = [];
 
     if (type === DropdownMenuType.Transfer) {
-      items.push(
-        { key: TransferMenuItemType.idlePool, label: '空闲机池' },
-        { key: TransferMenuItemType.businessModule, label: '业务模块' },
-        {
-          key: TransferMenuItemType.hostPool,
-          label: hostsNotInIdlePool
-            ? <Tooltip title='主机需在“空闲机池”下才允许转移至主机池' styles={{ root: { maxWidth: 'none' } }}>主机池</Tooltip>
-            : '主机池',
-          disabled: hostsNotInIdlePool,
-        },
-        {
-          key: TransferMenuItemType.otherBusiness,
-          label: hostsNotInIdlePool
-            ? <Tooltip title='主机需在“空闲机池”下才允许转移至其他业务' styles={{ root: { maxWidth: 'none' } }}>其他业务</Tooltip>
-            : '其他业务',
-          disabled: hostsNotInIdlePool
+      transferBaseMenuItems.forEach(base => {
+        if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
+          const disabled = hostsNotInIdlePool;
+          const tip = base.key === TransferMenuItemType.hostPool
+            ? '主机需在"空闲机池"下才允许转移至主机池'
+            : '主机需在"空闲机池"下才允许转移至其他业务';
+          items.push({
+            ...base,
+            label: disabled
+              ? <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>{base.label}</Tooltip>
+              : base.label,
+            disabled
+          });
+        } else {
+          items.push(base as any);
         }
-      );
+      });
     } else if (type === DropdownMenuType.Append) {
       items.push({ key: AppendMenuItemKey.Business, label: '业务模块' });
     } else if (type === DropdownMenuType.Remove) {
       items.push({ key: RemoveMenuItemKey.Current, label: '当前模块' });
     } else if (type === DropdownMenuType.Copy) {
-      items.push({ key: 'id', label: 'ID' });
+      items.push(...hostCopyMenuItems);
     } else if (type === DropdownMenuType.More) {
       items.push(
         { key: MoreMenuItemKey.ExportSelected, label: '导出选中', disabled: selectedRowKeys.length === 0 },
@@ -272,8 +296,9 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
             <Dropdown
               menu={{
                 ...getDropdownMenu(DropdownMenuType.Copy),
-                onClick: ({ key }) => handleMenuClick(key)
+                onClick: ({ key }) => handleMenuClick(key as HostCopyKey)
               }}
+              overlayStyle={{ width: 190 }}
               trigger={['click']}
             >
               <Button disabled={selectedRowKeys.length === 0}>
