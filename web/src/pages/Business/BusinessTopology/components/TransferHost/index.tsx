@@ -7,7 +7,7 @@ import AddProcessModal, { ListenInfo } from '../AddProcessModal';
 import './style.css';
 import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
 import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
-import { AppendMenuItemKey, TransferHostItem, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
+import { AppendMenuItemKey, TransferHostItem, TransferMenuItemType, TreeData, RemoveMenuItemKey } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
 import { businessTopoPath } from '../..';
 import TransferHostModal from '../TransferHostModal';
@@ -35,6 +35,8 @@ const TransferHost: React.FC = () => {
     const [optionsSticky, setOptionsSticky] = useState(false);
     const optionsRef = useRef<HTMLDivElement>(null);
     const sentinelRef = useRef<HTMLDivElement>(null);
+
+    const isRemoveFromCurrent = transferHostType === RemoveMenuItemKey.CurrentModule;
 
     useEffect(() => {
         const sentinel = sentinelRef.current;
@@ -157,14 +159,31 @@ const TransferHost: React.FC = () => {
         return Object.values(hostsToAddByModule).some(list => list.length > 0);
     }, [hostsToAddByModule]);
 
-    const isConfirmBtnAvailable = useMemo(() => {
-        return transferHostType === TransferMenuItemType.idlePool ? true : hasChanges;
-    }, [transferHostType, hasChanges]);
-
     const shouldShowDelTab = useMemo(() => {
         return transferHostType !== AppendMenuItemKey.AppendToBusinessModule
             && handleServiceInstances().length > 0;
     }, [transferHostType, handleServiceInstances]);
+
+    // Hosts that will be moved to idle (only exist in current module)
+    const hostsCanMoveToIdle = useMemo(() => {
+        if (!isRemoveFromCurrent || targetModules.length === 0) return [] as TransferHostItem[];
+        const currentModule = targetModules[0];
+        const moduleId = Number(currentModule.key.split('-')[1]);
+
+        return selectedHosts.filter(h => {
+            const hostInfo = allHosts2.find(x => x.host.bk_host_id === h.id);
+            if (!hostInfo) return false;
+            const hostModuleIds = (hostInfo.module || []).map((m: any) => m.bk_module_id);
+            // Return only if the host belongs to a single module and that module is the current module
+            return hostModuleIds.length === 1 && hostModuleIds[0] === moduleId;
+        });
+    }, [isRemoveFromCurrent, targetModules, selectedHosts]);
+
+    const shouldShowMoveIdleTab = isRemoveFromCurrent && hostsCanMoveToIdle.length > 0;
+    const isConfirmBtnAvailable = (
+        transferHostType === TransferMenuItemType.idlePool
+        || transferHostType === RemoveMenuItemKey.CurrentModule
+    ) ? true : hasChanges;
 
     const columns = [
         {
@@ -337,6 +356,33 @@ const TransferHost: React.FC = () => {
         );
     };
 
+    const renderMoveIdleHosts = () => {
+        const tableData = hostsCanMoveToIdle.map(h => ({
+            id: h.id,
+            ip: h.ip,
+            region: h.cloudInfo || '',
+        }));
+        return (
+            <>
+                <Space className='tip-text'>
+                    <InfoCircleOutlined />
+                    当主机仅属于当前模块时，移除后将主机会默认放置于空闲机中
+                </Space>
+                <Table
+                    columns={[
+                        { title: '操作', dataIndex: 'action', render: () => <span>转移到空闲机的主机</span> },
+                        { title: 'IP', dataIndex: 'ip' },
+                        { title: '管控区域', dataIndex: 'region' },
+                    ]}
+                    dataSource={tableData}
+                    rowKey="id"
+                    pagination={false}
+                />
+            </>
+
+        );
+    };
+
     const renderEmpty = () => {
         return <div className="empty-wrapper">
             <Space className='tip-text'>
@@ -355,7 +401,19 @@ const TransferHost: React.FC = () => {
                 </span>
             </span>,
             children: renderDelInst(),
-        }
+        },
+        ...(shouldShowMoveIdleTab ? [
+            {
+                key: 'moveIdle',
+                label: <span className='del-label'>
+                    移动到空闲机的主机
+                    <span className={`inst-count red-count`}>
+                        {hostsCanMoveToIdle.length}
+                    </span>
+                </span>,
+                children: renderMoveIdleHosts()
+            }
+        ] : [])
     ]
 
     const addTabItems: TabsProps['items'] = [
@@ -367,7 +425,10 @@ const TransferHost: React.FC = () => {
         ...(shouldShowDelTab ? delTabItems : [])
     ]
 
-    const tabItems = transferHostType === TransferMenuItemType.idlePool
+    const tabItems = (
+        transferHostType === TransferMenuItemType.idlePool
+        || transferHostType === RemoveMenuItemKey.CurrentModule
+    )
         ? delTabItems
         : addTabItems;
 
@@ -388,30 +449,32 @@ const TransferHost: React.FC = () => {
                 </div>
             </div>
 
-            <div className='info-item'>
-                <label className='info-label'>
-                    转移到：
-                </label>
-                <div className='info-content'>
-                    {targetModules.map((module, idx) => (
-                        <Tooltip title={selectedTopoPaths[idx]} key={module.key}>
-                            <Button
-                                color="default"
-                                variant="outlined"
-                                className={`info-button ${idx !== 0 ? 'info-button-right' : ''}`}
-                            >
-                                {module.title}
-                            </Button>
-                        </Tooltip>
-                    ))}
-                    {
-                        transferHostType && <EditOutlined
-                            className="edit-icon"
-                            onClick={() => setShowTransferModal(true)}
-                        />
-                    }
+            {
+                !isRemoveFromCurrent && <div className='info-item'>
+                    <label className='info-label'>
+                        转移到：
+                    </label>
+                    <div className='info-content'>
+                        {targetModules.map((module, idx) => (
+                            <Tooltip title={selectedTopoPaths[idx]} key={module.key}>
+                                <Button
+                                    color="default"
+                                    variant="outlined"
+                                    className={`info-button ${idx !== 0 ? 'info-button-right' : ''}`}
+                                >
+                                    {module.title}
+                                </Button>
+                            </Tooltip>
+                        ))}
+                        {
+                            transferHostType && <EditOutlined
+                                className="edit-icon"
+                                onClick={() => setShowTransferModal(true)}
+                            />
+                        }
+                    </div>
                 </div>
-            </div>
+            }
 
             <div className='info-item'>
                 <label className='info-label'>
@@ -444,6 +507,7 @@ const TransferHost: React.FC = () => {
                 onClose={() => setShowEditHostModal(false)}
                 onConfirm={handleConfirmEditHosts}
                 initialSelectedHosts={selectedHosts}
+                transferHostType={transferHostType}
             />
 
             {/* Add process modal */}

@@ -42,12 +42,12 @@ export enum TransferMenuItemType {
     hostPool = "hostPool",
     otherBusiness = "otherBusiness"
 }
-export type TransferHostType = keyof typeof TransferMenuItemType | AppendMenuItemKey | 'addHost';
+export type TransferHostType = keyof typeof TransferMenuItemType | AppendMenuItemKey | RemoveMenuItemKey | 'addHost';
 export enum AppendMenuItemKey {
     AppendToBusinessModule = "AppendToBusinessModule"
 }
 export enum RemoveMenuItemKey {
-    Current = "current"
+    CurrentModule = "currentModule"
 }
 // "Copy" dropdown menu item type
 export enum CopyMenuItemKey {
@@ -96,4 +96,5 @@ export interface TransferHostItem {
     id: React.Key;
     ip: string;
     inIdlePool?: boolean;
+    cloudInfo?: string;
 }

@@ -858,7 +858,7 @@ export const transferWithClearServiceInstance = [
     ],
     "to_remove_from_modules": [
       {
-        "bk_module_id": 10,
+        "bk_module_id": 15,
         "service_instances": [
           {
             "bk_biz_id": 3,
@@ -867,7 +867,7 @@ export const transferWithClearServiceInstance = [
             "labels": null,
             "service_template_id": 0,
             "bk_host_id": 2,
-            "bk_module_id": 10,
+            "bk_module_id": 15,
             "creator": "bk-cmdb",
             "modifier": "bk-cmdb",
             "create_time": "2025-06-19T08:08:45.772Z",

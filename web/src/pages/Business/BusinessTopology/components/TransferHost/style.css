@@ -52,6 +52,10 @@
                     background-color: #c4c6cc;
                     color: #fff;
                     font-size: 12px;
+
+                    &.red-count {
+                        background-color: #ff4d4f;
+                    }
                 }
             }
 

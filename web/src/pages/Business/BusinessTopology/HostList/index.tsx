@@ -81,6 +81,16 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
       // Transfer and append menu item
       setTransferModalVisible(true);
       setTransferModalType(key as TransferHostType);
+    } else if (key === RemoveMenuItemKey.CurrentModule) {
+      // Remove from current module
+      const enrichedHosts: TransferHostItem[] = selectedRowKeys.map(id => {
+        const hostInfo = allHosts2.find(h => h.host.bk_host_id === id);
+        const cloud = hostInfo?.host.bk_cloud_id?.[0];
+        const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
+        return { id, ip: hostInfo?.host.bk_host_innerip || '', cloudInfo: region } as TransferHostItem;
+      });
+      setTransferHostData(enrichedHosts, selectedNodes, RemoveMenuItemKey.CurrentModule);
+      handleNavToTransferPage();
     }
   };
 
@@ -183,7 +193,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     } else if (type === DropdownMenuType.Append) {
       items.push({ key: AppendMenuItemKey.AppendToBusinessModule, label: '业务模块' });
     } else if (type === DropdownMenuType.Remove) {
-      items.push({ key: RemoveMenuItemKey.Current, label: '当前模块' });
+      items.push({ key: RemoveMenuItemKey.CurrentModule, label: '当前模块' });
     } else if (type === DropdownMenuType.Copy) {
       items.push(...hostCopyMenuItems);
     } else if (type === DropdownMenuType.More) {

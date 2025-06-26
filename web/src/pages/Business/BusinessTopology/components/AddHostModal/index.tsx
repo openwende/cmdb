@@ -3,7 +3,7 @@ import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, 
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import { allHosts2 } from '@/mock/business';
-import { TransferHostItem, TailEleType, TreeData } from '@/pages/Business/Types';
+import { TransferHostItem, TailEleType, TreeData, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
@@ -14,6 +14,7 @@ const MAX_WIDTH = 420;
 interface Props {
     visible: boolean;
     initialSelectedHosts?: TransferHostItem[];
+    transferHostType?: TransferHostType;
     onClose: () => void;
     onConfirm: (hosts: TransferHostItem[]) => void;
 }
@@ -35,7 +36,7 @@ enum TabItemKey {
     CustomInput = 'customInput'
 }
 
-const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts }) => {
+const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts, transferHostType }) => {
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
@@ -289,7 +290,16 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     }, [treeSearchValue])
 
     const handleNextStep = () => {
-        onConfirm(resultPreviewItems);
+        let output = resultPreviewItems;
+        if (transferHostType === RemoveMenuItemKey.CurrentModule) {
+            output = resultPreviewItems.map(item => {
+                const hostInfo = allHosts2.find(h => h.host.bk_host_id === item.id);
+                const cloud = hostInfo?.host.bk_cloud_id?.[0];
+                const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
+                return { ...item, cloudInfo: region } as TransferHostItem;
+            });
+        }
+        onConfirm(output);
         handleCancel();
     };
 
