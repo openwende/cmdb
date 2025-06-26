@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty, Tooltip } from 'antd';
 import TopologyTree from '../TopologyTree';
 import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
-import { TailEleType, TopoTreeNodeType, TransferHostItem, TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
+import { TailEleType, TopoTreeNodeType, TransferHostItem, TransferHostType, TransferMenuItemType, TreeData, AppendMenuItemKey } from '@/pages/Business/Types';
 import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
 import { findNodeAndParents, isHostAlreadyInTarget } from '@/pages/Business/utils';
@@ -14,11 +14,12 @@ export const typeTitleMap: Partial<Record<TransferHostType, string>> = {
   idlePool: '转移主机到空闲机池',
   businessModule: '转移主机到业务模块',
   otherBusiness: '转移主机到其他业务',
+  [AppendMenuItemKey.AppendToBusinessModule]: '追加主机到业务模块',
 };
 
 interface TransferHostModalProps {
   visible: boolean;
-  transferType?: TransferMenuItemType;
+  transferType?: TransferHostType;
   selectedHosts: TransferHostItem[];
   initialSelectedKeys?: string[];
   initialExpandedKeys?: string[];
@@ -33,7 +34,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   onClose,
   onConfirm,
   initialSelectedKeys,
-  initialExpandedKeys
+  initialExpandedKeys,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
@@ -46,6 +47,16 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isDraggerHover, setIsDraggerHover] = useState<boolean>(false);
   const dragging = useRef<boolean>(false);
+
+  const transferStatus = useMemo(() => {
+    return {
+      isIdlePool: transferType === TransferMenuItemType.idlePool,
+      isBusinessModule: transferType === TransferMenuItemType.businessModule || transferType === AppendMenuItemKey.AppendToBusinessModule,
+      isOtherBusiness: transferType === TransferMenuItemType.otherBusiness,
+      isAppendBusinessModule: transferType === AppendMenuItemKey.AppendToBusinessModule,
+      isSingleSelect: transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness
+    };
+  }, [transferType]);
 
   // Helper to build idlePool/otherBusiness tree structure (biz idle pool)
   const buildIdlePoolTree = (bizName: string): TreeData[] => ([{
@@ -71,10 +82,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   }]);
 
   const customTreeData: TreeData[] = useMemo(() => {
-    if (transferType === TransferMenuItemType.idlePool) {
+    if (transferStatus.isIdlePool) {
       // idlePool: for each business, build idlePool tree
       return businessData2.map(biz => buildIdlePoolTree(biz.bk_inst_name)[0]);
-    } else if (transferType === TransferMenuItemType.businessModule) {
+    } else if (transferStatus.isBusinessModule) {
       return businessData2.map(biz => ({
         title: biz.bk_inst_name,
         key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
@@ -94,13 +105,13 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           }))
         }))
       }));
-    } else if (transferType === TransferMenuItemType.otherBusiness && selectedBizId) {
+    } else if (transferStatus.isOtherBusiness && selectedBizId) {
       const biz = bizInfo.info.find((b: { bk_biz_id: number }) => String(b.bk_biz_id) === selectedBizId);
       if (!biz) return [];
       return buildIdlePoolTree(biz.bk_biz_name);
     }
     return [];
-  }, [transferType, selectedBizId]);
+  }, [transferStatus, selectedBizId]);
 
   useEffect(() => {
     if (!visible) return;
@@ -145,12 +156,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   useEffect(() => {
     const selectedNodes = getSelectedNodes(selectedKeys, customTreeData);
-    const list = (
-      transferType === TransferMenuItemType.idlePool
-      || transferType === TransferMenuItemType.otherBusiness
-    ) ? selectedNodes.slice(0, 1) : selectedNodes;
+    const list = transferStatus.isSingleSelect ? selectedNodes.slice(0, 1) : selectedNodes;
     setPreviewList(list);
-  }, [selectedKeys, customTreeData, transferType]);
+  }, [selectedKeys, customTreeData, transferStatus]);
 
   // Handle drag sidebar
   const onMouseDown = (e: React.MouseEvent) => {
@@ -182,11 +190,11 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const handleSelectNode = (node: TreeData) => {
     if (node.type === TopoTreeNodeType.Module) {
       if (
-        transferType === TransferMenuItemType.idlePool ||
-        transferType === TransferMenuItemType.otherBusiness
+        transferStatus.isIdlePool ||
+        transferStatus.isOtherBusiness
       ) {
         setSelectedKeys([node.key]);
-      } else if (transferType === TransferMenuItemType.businessModule) {
+      } else if (transferStatus.isBusinessModule) {
         setSelectedKeys(prev =>
           prev.includes(node.key) ? prev.filter(k => k !== node.key) : [...prev, node.key]
         );
@@ -217,7 +225,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   const renderCustomTitlePrefix = (node: TreeData) => {
     if (
-      (transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness)
+      (transferStatus.isIdlePool || transferStatus.isOtherBusiness)
       && node.type === TopoTreeNodeType.Module
     ) {
       return (
@@ -228,7 +236,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           style={{ marginRight: 10 }}
         />
       );
-    } else if (transferType === TransferMenuItemType.businessModule && node.type === TopoTreeNodeType.Module) {
+    } else if (transferStatus.isBusinessModule && node.type === TopoTreeNodeType.Module) {
       return (
         <Checkbox
           checked={selectedKeys.includes(node.key)}
@@ -251,7 +259,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     value: String(biz.bk_biz_id),
   }));
 
-  const isShowTreeCom = transferType === TransferMenuItemType.otherBusiness ? !!selectedBizId : true;
+  const isShowTreeCom = transferStatus.isOtherBusiness ? !!selectedBizId : true;
 
   const confirmDisabled = useMemo(() => {
     if (previewList.length === 0) return true;
@@ -295,7 +303,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
       <div className="transfer-host-modal-body">
         {/* Left side */}
         <div className="transfer-host-modal-left" style={{ width: sidebarWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}>
-          {transferType === TransferMenuItemType.otherBusiness ? (
+          {transferStatus.isOtherBusiness ? (
             <>
               <Select
                 showSearch

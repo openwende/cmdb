@@ -42,9 +42,9 @@ export enum TransferMenuItemType {
     hostPool = "hostPool",
     otherBusiness = "otherBusiness"
 }
-export type TransferHostType = keyof typeof TransferMenuItemType | 'addHost';
+export type TransferHostType = keyof typeof TransferMenuItemType | AppendMenuItemKey | 'addHost';
 export enum AppendMenuItemKey {
-    Business = "business"
+    AppendToBusinessModule = "AppendToBusinessModule"
 }
 export enum RemoveMenuItemKey {
     Current = "current"

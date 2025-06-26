@@ -12,6 +12,7 @@ import {
   RemoveMenuItemKey,
   TopoTreeNodeType,
   TransferMenuItemType,
+  TransferHostType,
   TreeData,
   CopyMenuItemKey as HostCopyKey
 } from '../../Types';
@@ -40,7 +41,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
-  const [transferModalType, setTransferModalType] = useState<TransferMenuItemType>();
+  const [transferModalType, setTransferModalType] = useState<TransferHostType>();
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
@@ -70,12 +71,16 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
       return;
     }
 
-    // Other menu item
+    // Other menu item (transfer / release / append etc.)
     if (key === TransferMenuItemType.hostPool) {
       setReleaseModalVisible(true);
-    } else {
+    } else if (
+      Object.values(TransferMenuItemType).includes(key as TransferMenuItemType)
+      || key === AppendMenuItemKey.AppendToBusinessModule
+    ) {
+      // Transfer and append menu item
       setTransferModalVisible(true);
-      setTransferModalType(key as TransferMenuItemType);
+      setTransferModalType(key as TransferHostType);
     }
   };
 
@@ -176,7 +181,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
         }
       });
     } else if (type === DropdownMenuType.Append) {
-      items.push({ key: AppendMenuItemKey.Business, label: '业务模块' });
+      items.push({ key: AppendMenuItemKey.AppendToBusinessModule, label: '业务模块' });
     } else if (type === DropdownMenuType.Remove) {
       items.push({ key: RemoveMenuItemKey.Current, label: '当前模块' });
     } else if (type === DropdownMenuType.Copy) {

@@ -7,7 +7,7 @@ import AddProcessModal, { ListenInfo } from '../AddProcessModal';
 import './style.css';
 import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
 import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
-import { TransferHostItem, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
+import { AppendMenuItemKey, TransferHostItem, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
 import { businessTopoPath } from '../..';
 import TransferHostModal from '../TransferHostModal';
@@ -157,7 +157,14 @@ const TransferHost: React.FC = () => {
         return Object.values(hostsToAddByModule).some(list => list.length > 0);
     }, [hostsToAddByModule]);
 
-    const isConfirmBtnAvailable = transferHostType === TransferMenuItemType.idlePool ? true : hasChanges;
+    const isConfirmBtnAvailable = useMemo(() => {
+        return transferHostType === TransferMenuItemType.idlePool ? true : hasChanges;
+    }, [transferHostType, hasChanges]);
+
+    const shouldShowDelTab = useMemo(() => {
+        return transferHostType !== AppendMenuItemKey.AppendToBusinessModule
+            && handleServiceInstances().length > 0;
+    }, [transferHostType, handleServiceInstances]);
 
     const columns = [
         {
@@ -357,7 +364,7 @@ const TransferHost: React.FC = () => {
             label: '新增服务实例',
             children: hasChanges ? renderAddInst() : renderEmpty(),
         },
-        ...(handleServiceInstances().length > 0 ? delTabItems : [])
+        ...(shouldShowDelTab ? delTabItems : [])
     ]
 
     const tabItems = transferHostType === TransferMenuItemType.idlePool
