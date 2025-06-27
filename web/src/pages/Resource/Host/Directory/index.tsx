@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message, InputRef } from "antd";
 import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled, PushpinOutlined } from "@ant-design/icons";
@@ -28,7 +28,6 @@ const Directory: React.FC<{
     const [newDir, setNewDir] = useState<boolean>(false);
     const inputRef = useRef<InputRef>(null);
     const [inputValue, setInputValue] = useState<string>("");
-    const [messageStatus, setMessageStatus] = useState<{ type: "error" | "success"; content: string }>();
     // State for the pinned directory
     const [pinnedDirs, setPinnedDirs] = useState(hostDirectoryMock);
     const [hoverId, setHoverId] = useState<number | null>(null);
@@ -41,17 +40,6 @@ const Directory: React.FC<{
     // State for the collapsed
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
-    // Trigger the message inside an effect
-    // to avoid the uncertainty caused by React's concurrent rendering.
-    useEffect(() => {
-        if (messageStatus) {
-            message.open({
-                type: messageStatus.type,
-                content: messageStatus.content,
-            });
-        }
-    }, [messageStatus]);
-
     // Directory to be created
     const handleAdd = () => {
         setNewDir(true);
@@ -63,18 +51,12 @@ const Directory: React.FC<{
     const handleAddConfirm = () => {
         // Trigger the error message
         if (inputValue.trim() === "") {
-            setMessageStatus({
-                type: "error",
-                content: t("host.directory.message.correct_name"),
-            });
+            message.error(t("host.directory.message.correct_name"));
             return;
         }
 
         if (!isInputValueAvailable()) {
-            setMessageStatus({
-                type: "error",
-                content: t("host.directory.message.exist_name"),
-            });
+            message.error(t("host.directory.message.exist_name"));
             return;
         }
 
@@ -106,10 +88,7 @@ const Directory: React.FC<{
 
         setNewDir(false);
         setInputValue("");
-        setMessageStatus({
-            type: "success",
-            content: t("host.directory.message.add_success"),
-        });
+        message.success(t("host.directory.message.add_success"));
     };
 
     // Directory to be renamed
@@ -122,28 +101,19 @@ const Directory: React.FC<{
     // Confirm the renaming of a directory
     const handleRenameConfirm = (id: number) => {
         if (inputValue.trim() === "") {
-            setMessageStatus({
-                type: "error",
-                content: t("host.directory.message.correct_name")
-            });
+            message.error(t("host.directory.message.correct_name"));
             return;
         }
 
         if (!isInputValueAvailable()) {
-            setMessageStatus({
-                type: "error",
-                content: t("host.directory.message.exist_name"),
-            });
+            message.error(t("host.directory.message.exist_name"));
             return;
         }
 
         setDirs(dirs.map(d => d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d));
         setEditDirId(null);
         setInputValue("");
-        setMessageStatus({
-            type: "success",
-            content: t("host.directory.message.rename_success"),
-        });
+        message.success(t("host.directory.message.rename_success"));
     };
 
     // Check if the input value is available
@@ -186,10 +156,7 @@ const Directory: React.FC<{
                 setDirs(dirs.filter(d => d.bk_module_id !== id));
                 setPinnedDirs(pinnedDirs.filter(d => d.bk_module_id !== id));
                 if (selectedId === id) onSelect(unmodifiableDirIds[0]);
-                setMessageStatus({
-                    type: "success",
-                    content: t("host.directory.message.delete_success")
-                });
+                message.success(t("host.directory.message.delete_success"));
             },
             onCancel() { },
         });
@@ -210,10 +177,7 @@ const Directory: React.FC<{
                 return newDirs;
             });
             setPinnedOrder(prev => prev.filter(pinnedId => pinnedId !== id));
-            setMessageStatus({
-                type: "success",
-                content: t("host.directory.message.unpin_success")
-            });
+            message.success(t("host.directory.message.unpin_success"));
         } else {
             // Pin
             setDirs(prevDirs => {
@@ -224,10 +188,7 @@ const Directory: React.FC<{
                 return newDirs;
             });
             setPinnedOrder(prev => [id, ...prev]);
-            setMessageStatus({
-                type: "success",
-                content: t("host.directory.message.pin_success"),
-            });
+            message.success(t("host.directory.message.pin_success"));
         }
     };
 
