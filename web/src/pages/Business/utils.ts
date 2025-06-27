@@ -422,7 +422,7 @@ export function getHostCopyValue(record: any, copyKey: HostCopyKey): string {
             const cloud = record.host.bk_cloud_id?.[0];
             return cloud ? `${cloud.bk_inst_id}:[${record.host.bk_host_innerip_v6 || '--'}]` : '';
         }
-        case HostCopyKey.CloudIdIpIPv4First: {
+        case HostCopyKey.CloudIdIPIPv4First: {
             const cloud = record.host.bk_cloud_id?.[0];
             if (!cloud) return '';
             const ipv4 = record.host.bk_host_innerip;
@@ -435,7 +435,7 @@ export function getHostCopyValue(record: any, copyKey: HostCopyKey): string {
             }
             return '';
         }
-        case HostCopyKey.CloudIdIpIPv6First: {
+        case HostCopyKey.CloudIdIPIPv6First: {
             const cloud = record.host.bk_cloud_id?.[0];
             if (!cloud) return '';
             const ipv4 = record.host.bk_host_innerip;

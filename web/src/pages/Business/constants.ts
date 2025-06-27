@@ -13,8 +13,8 @@ export const hostCopyMenuItems = [
         children: [
             { key: CopyMenuItemKey.CloudIdIPv4, label: '管控区域ID:IPv4' },
             { key: CopyMenuItemKey.CloudIdIPv6, label: '管控区域ID:IPv6' },
-            { key: CopyMenuItemKey.CloudIdIpIPv4First, label: '管控区域ID:IP(IPv4优先)' },
-            { key: CopyMenuItemKey.CloudIdIpIPv6First, label: '管控区域ID:IP(IPv6优先)' },
+            { key: CopyMenuItemKey.CloudIdIPIPv4First, label: '管控区域ID:IP(IPv4优先)' },
+            { key: CopyMenuItemKey.CloudIdIPIPv6First, label: '管控区域ID:IP(IPv6优先)' },
         ]
     },
     { key: CopyMenuItemKey.CloudRegion, label: '管控区域' },
