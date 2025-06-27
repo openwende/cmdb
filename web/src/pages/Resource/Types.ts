@@ -38,3 +38,6 @@ export enum ResourceCopyKey {
     TopoPath = 'topoPath',
     CloudHostStatus = 'cloudHostStatus'
 }
+export enum ResourceMoreKey {
+    Delete = 'delete'
+}

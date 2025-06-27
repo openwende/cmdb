@@ -1,4 +1,4 @@
-import { AssignType, ResourceCopyKey } from './Types';
+import { AssignType, ResourceCopyKey, ResourceMoreKey } from './Types';
 
 /**
  * "Copy" dropdown menu items
@@ -48,7 +48,7 @@ export const resourceAssignMenuItems = [
  */
 export const resourceMoreMenuItems = [
     {
-        key: "delete",
+        key: ResourceMoreKey.Delete,
         label: "删除"
     }
 ];

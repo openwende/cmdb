@@ -144,9 +144,11 @@ const Directory: React.FC<{
     }
 
     // Directory to be deleted
-    const handleDelete = (id: number) => {
+    const handleDelete = (id: number, name: string) => {
         confirm({
-            title: t("host.directory.confirm.title"),
+            title: <span>{t("host.directory.confirm.title")}
+                <span style={{ color: "#ff4d4f" }}> [{name}]</span>
+            </span>,
             icon: <ExclamationCircleFilled />,
             content: t("host.directory.confirm.content"),
             okText: t("common.confirm"),
@@ -196,7 +198,7 @@ const Directory: React.FC<{
         if (key === DirMenuKey.Rename) {
             handleRename(id, name);
         } else if (key === DirMenuKey.Delete) {
-            handleDelete(id);
+            handleDelete(id, name);
         }
     }
 
@@ -276,7 +278,7 @@ const Directory: React.FC<{
                                     <Tooltip title={pinnedOrder.includes(dir.key) ? t("host.directory.unpin") : t("host.directory.pin")}>
                                         <span
                                             className="pin-to-top"
-                                            onClick={()=> { handlePin(dir.key) }}
+                                            onClick={() => { handlePin(dir.key) }}
                                         >
                                             {pinnedOrder.includes(dir.key) ? (
                                                 <PushpinOutlined style={{ fontSize: 14 }} />
@@ -288,11 +290,14 @@ const Directory: React.FC<{
                                     <Dropdown
                                         menu={{
                                             items: items,
-                                            onClick: (e) => handleMenuClick(e.key, dir.key, dir.title as string)
+                                            onClick: (e) => {
+                                                e.domEvent.stopPropagation();
+                                                handleMenuClick(e.key, dir.key, dir.title as string)
+                                            }
                                         }}
                                         trigger={['click']}
                                     >
-                                        <MoreOutlined className="more-operation" />
+                                        <MoreOutlined className="more-operation" onClick={(e) => e.stopPropagation()} />
                                     </Dropdown>
                                 </span>
                             )}
@@ -357,6 +362,8 @@ const Directory: React.FC<{
         ];
     };
 
+    const selectedKeys = selectedId !== undefined && selectedId !== null ? [selectedId] : [];
+
     return (
         <div className="directory-wrapper"
             style={{
@@ -382,7 +389,7 @@ const Directory: React.FC<{
                 defaultExpandAll={true}
                 showLine={true}
                 blockNode={true}
-                selectedKeys={selectedId ? [selectedId] : []}
+                selectedKeys={selectedKeys}
                 onSelect={keys => { keys.length && onSelect(keys[0] as number) }}
                 titleRender={renderTitle}
                 className="directory-tree"

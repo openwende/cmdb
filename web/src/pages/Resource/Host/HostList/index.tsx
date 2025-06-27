@@ -1,14 +1,15 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Table, Button, Input, Dropdown, Space, message } from "antd";
-import { DownOutlined } from "@ant-design/icons";
+import { Table, Button, Input, Dropdown, Space, message, Modal } from "antd";
+import { DownOutlined, ExclamationCircleFilled } from "@ant-design/icons";
 import { idleHostMock, dbaHostMock, devHostMock } from "@/mock/resource";
 import { resourceAssignMenuItems, resourceCopyMenuItems, resourceMoreMenuItems } from '../../constants';
-import { ResourceCopyKey } from '../../Types';
+import { ResourceCopyKey, ResourceMoreKey } from '../../Types';
 import Pagination from "@/components/common/Pagination";
 import { AssignType, TabsKey } from "../../Types";
 import "./style.css";
 import AssignModal from "../components/AssignModal";
 import { getHostCopyValue } from "../../utils";
+import { useTranslation } from "react-i18next";
 
 interface HostListProps {
     selectedId?: number;
@@ -18,6 +19,8 @@ interface HostListProps {
 const PAGE_SIZE = 20;
 
 const HostList: React.FC<HostListProps> = ({ selectedId }) => {
+    const { t } = useTranslation();
+    const { confirm } = Modal;
     const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
     const [hostsList, setHostsList] = useState<any>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
@@ -65,6 +68,22 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             message.error('复制失败');
         });
     }, [hostsList, selectedRowKeys]);
+
+    const handleMoreMenuClick = (key: ResourceMoreKey) => {
+        if (key === ResourceMoreKey.Delete) {
+            confirm({
+                title: '确定删除选中的主机？',
+                icon: <ExclamationCircleFilled />,
+                okText: t("common.confirm"),
+                cancelText: t("common.cancel"),
+                onOk() {
+                    // TODO: api
+                    message.success('删除成功');
+                },
+                onCancel() { },
+            });
+        }
+    }
 
     const columns = [
         {
@@ -166,6 +185,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                                 ...it,
                                 disabled: selectedRowKeys.length === 0
                             })),
+                            onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey)
                         }}
                         trigger={['click']}
                     >

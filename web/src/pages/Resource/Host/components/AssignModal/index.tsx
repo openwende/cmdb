@@ -88,7 +88,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
                                 {`[${biz.bk_biz_id}] ${biz.bk_biz_name}`}
                             </Option>
                         ))
-                        : hostDirectoryMock.map(dir => (
+                        : hostDirectoryMock.slice(1).map(dir => (
                             <Option key={dir.bk_module_id} value={dir.bk_module_id}>
                                 {dir.bk_module_name}
                             </Option>
