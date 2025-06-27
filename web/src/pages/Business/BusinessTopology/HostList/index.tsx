@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
-import { DownOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
+import { DownOutlined} from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import {
@@ -25,6 +25,7 @@ import './style.css';
 import { checkHostsInIdlePool, findNodeAndParents, getHostCopyValue } from '../../utils';
 import CreateNodeModal from '../components/CreateNodeModal';
 import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
 
 interface Props {
   selectedNodes: TreeData[];
@@ -36,8 +37,10 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
 
+  const [searchValue, setSearchValue] = useState<string>("");
+  const [hostsList, setHostsList] = useState<any[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-  const [current, setCurrent] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
@@ -45,12 +48,17 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
-  const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, allHosts2, idleSetID);
+  useEffect(() => {
+    // TODO: api
+    setHostsList(allHosts2);
+  }, [searchValue, currentPage, pageSize])
+
+  const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
   const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
 
   const copyHostData = useCallback((copyKey: HostCopyKey) => {
     if (!selectedRowKeys.length) return;
-    const selectedHosts = allHosts2.filter(h => selectedRowKeys.includes(h.host.bk_host_id));
+    const selectedHosts = hostsList.filter(h => selectedRowKeys.includes(h.host.bk_host_id));
 
     const text = selectedHosts.map(rec => getHostCopyValue(rec, copyKey)).join('\n');
     if (!text) {
@@ -84,7 +92,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     } else if (key === RemoveMenuItemKey.CurrentModule) {
       // Remove from current module
       const enrichedHosts: TransferHostItem[] = selectedRowKeys.map(id => {
-        const hostInfo = allHosts2.find(h => h.host.bk_host_id === id);
+        const hostInfo = hostsList.find(h => h.host.bk_host_id === id);
         const cloud = hostInfo?.host.bk_cloud_id?.[0];
         const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
         return { id, ip: hostInfo?.host.bk_host_innerip || '', cloudInfo: region } as TransferHostItem;
@@ -126,6 +134,14 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);
   }, [])
+
+  const handleSearch = (value: string) => {
+    setSearchValue(value);
+  }
+
+  const handleClearSearch = () => {
+    setSearchValue('');
+  };
 
   const columns = [
     {
@@ -335,12 +351,12 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
 
             <div className='search-bar'>
               <Input.Search
-                placeholder="请输入IP或资源编号"
-                style={{ width: 220 }}
-                onSearch={(value) => message.info(`搜索: ${value}`)}
+                placeholder="请输入IP或固资编号"
+                style={{ width: 300 }}
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onSearch={(value) => handleSearch(value)}
               />
-              <Button icon={<FilterOutlined />} />
-              <Button icon={<ReloadOutlined />} />
             </div>
           </div>
 
@@ -350,27 +366,35 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
               onChange: setSelectedRowKeys
             }}
             columns={columns}
-            dataSource={allHosts2}
+            dataSource={hostsList}
             rowKey={(record) => record.host.bk_host_id}
             pagination={false}
+            locale={{
+              emptyText: searchValue && hostsList.length === 0
+                ? <EmptySearchResult onClearFilter={handleClearSearch} />
+                : undefined
+            }
+            }
           />
 
-          <div className='pagination-wrapper'>
-            <span>已选择 <span className='selected-count'>{selectedRowKeys.length}</span> 条</span>
-            <Pagination
-              total={allHosts2.length}
-              pageSize={pageSize}
-              current={current}
-              onChange={(page, size) => {
-                setCurrent(page);
-                setPageSize(size);
-              }}
-              onSizeChange={(_, size) => {
-                setPageSize(size);
-                setCurrent(1);
-              }}
-            />
-          </div>
+          {
+            hostsList.length > 0 && <div className='pagination-wrapper'>
+              <span>已选择 <span className='selected-count'>{selectedRowKeys.length}</span> 条</span>
+              <Pagination
+                total={hostsList.length}
+                pageSize={pageSize}
+                current={currentPage}
+                onChange={(page, size) => {
+                  setCurrentPage(page);
+                  setPageSize(size);
+                }}
+                onSizeChange={(_, size) => {
+                  setPageSize(size);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          }
         </div>
       }
 
