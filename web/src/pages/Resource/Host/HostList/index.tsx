@@ -1,15 +1,24 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Table, Button, Input, Dropdown, Space, message, Modal } from "antd";
+import { Table, Button, Input, Dropdown, message, Modal, Tooltip } from "antd";
 import { DownOutlined, ExclamationCircleFilled } from "@ant-design/icons";
-import { idleHostMock, dbaHostMock, devHostMock } from "@/mock/resource";
+import { idleHostMock, dbaHostMock, devHostMock, assignedListMock, allListMock } from "@/mock/resource";
 import { resourceAssignMenuItems, resourceCopyMenuItems, resourceMoreMenuItems } from '../../constants';
-import { ResourceCopyKey, ResourceMoreKey } from '../../Types';
+import { MenuItemProps, ResourceCopyKey, ResourceMoreKey } from '../../Types';
 import Pagination from "@/components/common/Pagination";
 import { AssignType, TabsKey } from "../../Types";
-import "./style.css";
 import AssignModal from "../components/AssignModal";
-import { getHostCopyValue } from "../../utils";
+import { getHostCopyValue, checkHostsInHostPool } from "../../utils";
 import { useTranslation } from "react-i18next";
+import { transferBaseMenuItems } from "@/pages/Business/constants";
+import { TransferHostType, TransferMenuItemType, TreeData } from "@/pages/Business/Types";
+import { useTransferHostStore } from "@/store/TransferHostStore";
+import { checkHostsInIdlePool } from "@/pages/Business/utils";
+import TransferHostModal from "@/pages/Business/BusinessTopology/components/TransferHostModal";
+import ReleaseHostModal from "@/pages/Business/BusinessTopology/components/ReleaseHostModal";
+import { transferHostPath } from "@/pages/Business/BusinessTopology";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { hostDirectoryMock } from "@/mock/resource";
+import "./style.css";
 
 interface HostListProps {
     selectedId?: number;
@@ -18,10 +27,18 @@ interface HostListProps {
 
 const PAGE_SIZE = 20;
 
-const HostList: React.FC<HostListProps> = ({ selectedId }) => {
+const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { confirm } = Modal;
+    const { idleSetID, setTransferHostData } = useTransferHostStore();
+    // Assign and transfer host
     const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
+    const [transferModalVisible, setTransferModalVisible] = useState(false);
+    const [transferModalType, setTransferModalType] = useState<TransferHostType>();
+    const [releaseModalVisible, setReleaseModalVisible] = useState(false);
+    // Host list
     const [hostsList, setHostsList] = useState<any>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
     const [page, setPage] = useState(1);
@@ -29,31 +46,62 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
 
     useEffect(() => {
         let hostMock = [];
-        switch (selectedId) {
-            case 0:
-                hostMock = idleHostMock.concat(dbaHostMock).concat(devHostMock);
-                break;
-            case 1:
-                hostMock = idleHostMock;
-                break;
-            case 16:
-                hostMock = dbaHostMock;
-                break;
-            case 11:
-                hostMock = devHostMock;
-                break;
-            default:
-                hostMock = idleHostMock;
+        if (tabKey === TabsKey.Unassigned) {
+            switch (selectedId) {
+                case 0:
+                    hostMock = idleHostMock.concat(dbaHostMock).concat(devHostMock);
+                    break;
+                case 1:
+                    hostMock = idleHostMock;
+                    break;
+                case 16:
+                    hostMock = dbaHostMock;
+                    break;
+                case 11:
+                    hostMock = devHostMock;
+                    break;
+                default:
+                    hostMock = idleHostMock;
+            }
+        } else if (tabKey === TabsKey.Assigned) {
+            hostMock = assignedListMock;
+        } else {
+            hostMock = allListMock;
         }
+
         setHostsList(hostMock);
-    }, [selectedId])
+    }, [selectedId, tabKey])
+
+    // Check if all hosts are in the idle pool
+    const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
+    const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
+
+    // Check if all hosts are in the host pool (only used in "all" TAB)
+    const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, hostsList, hostDirectoryMock);
+    const hostsNotAllInHostPool = hostPoolStatuses.some(item => item.inHostPool === false);
+    const isHostPoolHost = tabKey === TabsKey.All && hostsNotAllInHostPool;
+
+    // Check if all are in the business host pool: 
+    // If even one host is in a host pool, then not all are in the business host pool
+    const hostsNotAllInBizPool = hostPoolStatuses.some(item => item.inHostPool === true);
 
     const handleSelectedRows = (rowKeys: any, rows: any) => {
         setSelectedRowKeys(rowKeys);
         console.log(rowKeys, rows);
     }
 
-    const handleCopyHostData = useCallback((copyKey: ResourceCopyKey) => {
+    const handleTransferMenuClick = (key: string) => {
+        // Release menu item
+        if (key === TransferMenuItemType.hostPool) {
+            setReleaseModalVisible(true);
+        } else if (Object.values(TransferMenuItemType).includes(key as TransferMenuItemType)) {
+            // Transfer menu item
+            setTransferModalVisible(true);
+            setTransferModalType(key as TransferHostType);
+        }
+    }
+
+    const handleCopyMenuClick = useCallback((copyKey: ResourceCopyKey) => {
         if (!selectedRowKeys.length) return;
         const selectedHosts = hostsList.filter((h: any) => selectedRowKeys.includes(h.host.bk_host_id));
 
@@ -84,6 +132,26 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             });
         }
     }
+
+    const handleTransferHosts = useCallback((targetModules: TreeData[]) => {
+        if (
+            transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool
+            || transferModalType === TransferMenuItemType.otherBusiness
+        ) {
+            // TODO: api
+            setTransferModalVisible(false);
+            return;
+        }
+
+        setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
+        navigate(transferHostPath + '?' + searchParams.toString());
+    }, [transferModalType, hostsNotInIdlePool, hostIdleStatuses])
+
+    const handleReleaseHosts = useCallback((dirId: number) => {
+        // TODO: api
+        // params: selectedRowKeys, dirId
+        setReleaseModalVisible(false);
+    }, [])
 
     const columns = [
         {
@@ -134,73 +202,121 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
         }
     ];
 
+    const getTransferDropdownMenu = () => {
+        const items: MenuItemProps[] = [];
+
+        transferBaseMenuItems.forEach(base => {
+            const disabled = hostsNotInIdlePool;
+            let tip: string | undefined;
+
+            if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
+                tip = base.key === TransferMenuItemType.hostPool
+                    ? '仅允许业务下空闲机转移至主机池'
+                    : '仅允许业务下空闲机跨业务转移';
+            }
+
+            if (disabled) {
+                items.push({
+                    ...base,
+                    label: <Tooltip
+                        title={disabled ? tip : undefined}
+                        styles={{ root: { maxWidth: 'none' } }}
+                    >
+                        {base.label}
+                    </Tooltip>,
+                    disabled
+                });
+            } else {
+                items.push(base);
+            }
+        });
+        return { items };
+    };
+
     return (
         <div className="host-list-wrapper">
             <div className="host-list-header">
                 <div className="header-left">
-                    <Button type="primary">导入主机</Button>
+                    {tabKey === TabsKey.Unassigned && <Button type="primary">导入主机</Button>}
+
+                    {
+                        tabKey !== TabsKey.Assigned && (
+                            <Dropdown
+                                menu={{
+                                    items: resourceAssignMenuItems,
+                                    onClick: (e) => setAssignType(e.key as AssignType)
+                                }}
+                                trigger={['click']}
+                            >
+                                <Tooltip
+                                    title={isHostPoolHost ? '仅主机池主机可进行此操作' : undefined}
+                                >
+                                    <Button
+                                        disabled={selectedRowKeys.length === 0 || isHostPoolHost}
+                                    >
+                                        分配到 <DownOutlined />
+                                    </Button>
+                                </Tooltip>
+                            </Dropdown>
+                        )
+                    }
+
+                    {
+                        tabKey !== TabsKey.Unassigned && (
+                            <Dropdown
+                                menu={{
+                                    ...getTransferDropdownMenu(),
+                                    onClick: (e) => handleTransferMenuClick(e.key)
+                                }}
+                                trigger={['click']}
+                            >
+                                <Tooltip
+                                    title={hostsNotAllInBizPool ? '仅业务下主机可进行此操作' : undefined}
+                                >
+                                    <Button disabled={selectedRowKeys.length === 0 || hostsNotAllInBizPool}>
+                                        转移到 <DownOutlined />
+                                    </Button>
+                                </Tooltip>
+                            </Dropdown>
+                        )
+                    }
 
                     <Dropdown
                         menu={{
-                            items: resourceAssignMenuItems.map(it => ({
-                                ...it,
-                                disabled: selectedRowKeys.length === 0
-                            })),
-                            onClick: (e) => {
-                                setAssignType(e.key as AssignType);
-                            }
-                        }}
-                        trigger={['click']}
-                    >
-                        <Button disabled={selectedRowKeys.length === 0}>
-                            <Space>
-                                分配到
-                                <DownOutlined />
-                            </Space>
-                        </Button>
-                    </Dropdown>
-
-                    <Dropdown
-                        menu={{
-                            items: resourceCopyMenuItems.map(it => ({
-                                ...it,
-                                disabled: selectedRowKeys.length === 0
-                            })),
-                            onClick: ({ key }) => handleCopyHostData(key as ResourceCopyKey)
+                            items: resourceCopyMenuItems.map(it => ({ ...it })),
+                            onClick: ({ key }) => handleCopyMenuClick(key as ResourceCopyKey)
                         }}
                         trigger={['click']}
                         overlayStyle={{ width: 190 }}
                     >
                         <Button disabled={selectedRowKeys.length === 0}>
-                            复制
-                            <Space>
-                                <DownOutlined />
-                            </Space>
+                            复制 <DownOutlined />
                         </Button>
                     </Dropdown>
 
-                    <Dropdown
-                        menu={{
-                            items: resourceMoreMenuItems.map(it => ({
-                                ...it,
-                                disabled: selectedRowKeys.length === 0
-                            })),
-                            onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey)
-                        }}
-                        trigger={['click']}
-                    >
-                        <Button>
-                            更多
-                            <Space>
-                                <DownOutlined />
-                            </Space>
-                        </Button>
-                    </Dropdown>
+                    {
+                        tabKey === TabsKey.Unassigned && (
+                            <Dropdown
+                                menu={{
+                                    items: resourceMoreMenuItems.map(it => ({
+                                        ...it,
+                                        disabled: selectedRowKeys.length === 0
+                                    })),
+                                    onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey)
+                                }}
+                                trigger={['click']}
+                            >
+                                <Button>
+                                    更多 <DownOutlined />
+                                </Button>
+                            </Dropdown>
+                        )
+                    }
                 </div>
 
                 <div className="header-right">
                     <Input.Search
-                        placeholder="请输入IP或资源编号"
+                        placeholder="请输入IP或固资编号"
                         style={{ width: 220, marginRight: 8 }}
                     />
                     <Button icon={<span className="iconfont icon-refresh" />}>已删除</Button>
@@ -234,7 +350,25 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             <AssignModal
                 assignType={assignType}
                 selectedRowKeys={selectedRowKeys}
+                hostPoolStatuses={hostPoolStatuses}
                 onClose={() => setAssignType(AssignType.None)}
+            />
+
+            {/* Transfer host modal */}
+            <TransferHostModal
+                visible={transferModalVisible}
+                transferType={transferModalType}
+                selectedHosts={hostIdleStatuses}
+                onClose={() => setTransferModalVisible(false)}
+                onConfirm={handleTransferHosts}
+            />
+
+            {/* Release host modal */}
+            <ReleaseHostModal
+                visible={releaseModalVisible}
+                selectedCount={selectedRowKeys.length}
+                onClose={() => setReleaseModalVisible(false)}
+                onConfirm={handleReleaseHosts}
             />
         </div>
     );

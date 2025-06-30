@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useTranslation } from 'react-i18next';
 import { Modal, Select, Typography } from "antd";
 import { AssignType } from "@/pages/Resource/Types";
+import { HostPoolStatus } from "@/pages/Resource/Types";
 import { bizListMock, hostDirectoryMock } from "@/mock/resource";
 import "./style.css";
 
@@ -10,10 +11,11 @@ const { Option } = Select;
 interface AssignModalProps {
     assignType: AssignType;
     selectedRowKeys: number[];
+    hostPoolStatuses?: HostPoolStatus[];
     onClose: () => void;
 }
 
-const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, onClose }) => {
+const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, hostPoolStatuses = [], onClose }) => {
     const { t } = useTranslation();
     const [selected, setSelected] = useState<number | null>(null);
 
@@ -39,6 +41,12 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
         setSelected(null)
         onClose();
     }
+
+    // Exclude a directory if and only if all hosts are already located in that same directory
+    const shouldDirExclude = (dirId: number) => {
+        // If at least one host is not in the directory, then that directory can be a target
+        return hostPoolStatuses.every(it => it.moduleId === dirId);
+    };
 
     return (
         <Modal
@@ -82,17 +90,23 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
                     }
                     filterOption={(input, option) => (option?.children as any).toLowerCase().includes(input.toLowerCase())}
                 >
-                    {assignType === AssignType.Biz
-                        ? bizListMock.map(biz => (
+                    {assignType === AssignType.Biz ? (
+                        bizListMock.map(biz => (
                             <Option key={biz.bk_biz_id} value={biz.bk_biz_id}>
                                 {`[${biz.bk_biz_id}] ${biz.bk_biz_name}`}
                             </Option>
                         ))
-                        : hostDirectoryMock.slice(1).map(dir => (
-                            <Option key={dir.bk_module_id} value={dir.bk_module_id}>
-                                {dir.bk_module_name}
-                            </Option>
-                        ))}
+                    ) : (
+                        (() => {
+                            return hostDirectoryMock
+                                .filter(dir => !shouldDirExclude(dir.bk_module_id))
+                                .map(dir => (
+                                    <Option key={dir.bk_module_id} value={dir.bk_module_id}>
+                                        {dir.bk_module_name}
+                                    </Option>
+                                ));
+                        })()
+                    )}
                 </Select>
             </div>
         </Modal>

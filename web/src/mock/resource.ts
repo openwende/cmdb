@@ -48,7 +48,7 @@ export const bizListMock = [
   }
 ]
 
-// 主机列表 mock
+// 资源->主机列表->未分配 mock
 export const idleHostMock = [
   {
     "biz": [
@@ -389,3 +389,613 @@ export const devHostMock = [
       ]
   }
 ]
+// 资源->主机列表->已分配
+export const assignedListMock =  [
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 3,
+              "bk_biz_maintainer": "bk-cmdb",
+              "bk_biz_name": "business2",
+              "bk_biz_productor": "",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:12:51.646Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.646Z",
+              "bk_updated_by": "",
+              "create_time": "2025-06-30T04:12:51.646Z",
+              "default": 0,
+              "language": "1",
+              "last_time": "2025-06-30T04:12:51.646Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 1,
+          "bk_host_innerip": "10.0.0.9",
+          "bk_host_innerip_v6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+      },
+      "module": [
+          {
+              "bk_bak_operator": null,
+              "bk_biz_id": 3,
+              "bk_created_at": "2025-06-30T07:30:11.341Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_module_id": 14,
+              "bk_module_name": "module2",
+              "bk_module_type": "1",
+              "bk_parent_id": 5,
+              "bk_set_id": 5,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T07:30:11.341Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T07:30:11.341Z",
+              "default": 0,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T07:30:11.341Z",
+              "operator": null,
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "business2##set2##module2"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 3,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T07:30:01.13Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_parent_id": 3,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 5,
+              "bk_set_name": "set2",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T07:30:01.13Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T07:30:01.13Z",
+              "default": 0,
+              "description": "",
+              "last_time": "2025-06-30T07:30:01.13Z",
+              "set_template_id": 0,
+              "set_template_version": null,
+              "topo_module_name": "business2##set2"
+          }
+      ]
+  },
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 3,
+              "bk_biz_maintainer": "bk-cmdb",
+              "bk_biz_name": "business2",
+              "bk_biz_productor": "",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:12:51.646Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.646Z",
+              "bk_updated_by": "",
+              "create_time": "2025-06-30T04:12:51.646Z",
+              "default": 0,
+              "language": "1",
+              "last_time": "2025-06-30T04:12:51.646Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 3,
+          "bk_host_innerip": "10.0.0.3",
+          "bk_host_innerip_v6": ""
+      },
+      "module": [
+          {
+              "bk_bak_operator": null,
+              "bk_biz_id": 3,
+              "bk_created_at": "2025-06-30T04:12:51.662Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_module_id": 8,
+              "bk_module_name": "空闲机",
+              "bk_module_type": "1",
+              "bk_parent_id": 3,
+              "bk_set_id": 3,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.662Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T04:12:51.662Z",
+              "default": 1,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T04:12:51.662Z",
+              "operator": null,
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "business2##空闲机池##空闲机"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 3,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T04:12:51.653Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_parent_id": 3,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 3,
+              "bk_set_name": "空闲机池",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.653Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T04:12:51.653Z",
+              "default": 1,
+              "description": "",
+              "last_time": "2025-06-30T04:12:51.653Z",
+              "set_template_id": 0,
+              "set_template_version": null,
+              "topo_module_name": "business2##空闲机池"
+          }
+      ]
+  }
+];
+// 资源->主机列表->全部
+export const allListMock =  [
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 3,
+              "bk_biz_maintainer": "bk-cmdb",
+              "bk_biz_name": "business2",
+              "bk_biz_productor": "",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:12:51.646Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.646Z",
+              "bk_updated_by": "",
+              "create_time": "2025-06-30T04:12:51.646Z",
+              "default": 0,
+              "language": "1",
+              "last_time": "2025-06-30T04:12:51.646Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 1,
+          "bk_host_innerip": "10.0.0.9",
+          "bk_host_innerip_v6": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+      },
+      "module": [
+          {
+              "bk_bak_operator": null,
+              "bk_biz_id": 3,
+              "bk_created_at": "2025-06-30T07:30:11.341Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_module_id": 14,
+              "bk_module_name": "module2",
+              "bk_module_type": "1",
+              "bk_parent_id": 5,
+              "bk_set_id": 5,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T07:30:11.341Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T07:30:11.341Z",
+              "default": 0,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T07:30:11.341Z",
+              "operator": null,
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "business2##set2##module2"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 3,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T07:30:01.13Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_parent_id": 3,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 3,
+              "bk_set_name": "set2",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T07:30:01.13Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T07:30:01.13Z",
+              "default": 0,
+              "description": "",
+              "last_time": "2025-06-30T07:30:01.13Z",
+              "set_template_id": 0,
+              "set_template_version": null,
+              "topo_module_name": "business2##set2"
+          }
+      ]
+  },
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 1,
+              "bk_biz_maintainer": "admin",
+              "bk_biz_name": "资源池",
+              "bk_biz_productor": "admin",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:09:10.217Z",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.217Z",
+              "create_time": "2025-06-30T04:09:10.217Z",
+              "default": 1,
+              "language": "1",
+              "last_time": "2025-06-30T04:09:10.217Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 2,
+          "bk_host_innerip": "10.0.0.1",
+          "bk_host_innerip_v6": ""
+      },
+      "module": [
+          {
+              "bk_bak_operator": "",
+              "bk_biz_id": 1,
+              "bk_created_at": "2025-06-30T04:09:10.219Z",
+              "bk_module_id": 1,
+              "bk_module_name": "空闲机",
+              "bk_module_type": "1",
+              "bk_parent_id": 1,
+              "bk_set_id": 1,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.219Z",
+              "create_time": "2025-06-30T04:09:10.219Z",
+              "default": 1,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T04:09:10.219Z",
+              "operator": "",
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池##空闲机"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 1,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T04:09:10.218Z",
+              "bk_parent_id": 1,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 1,
+              "bk_set_name": "空闲机池",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.218Z",
+              "create_time": "2025-06-30T04:09:10.218Z",
+              "default": 1,
+              "description": "",
+              "last_time": "2025-06-30T04:09:10.218Z",
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池"
+          }
+      ]
+  },
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 3,
+              "bk_biz_maintainer": "bk-cmdb",
+              "bk_biz_name": "business2",
+              "bk_biz_productor": "",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:12:51.646Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.646Z",
+              "bk_updated_by": "",
+              "create_time": "2025-06-30T04:12:51.646Z",
+              "default": 0,
+              "language": "1",
+              "last_time": "2025-06-30T04:12:51.646Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 3,
+          "bk_host_innerip": "10.0.0.3",
+          "bk_host_innerip_v6": ""
+      },
+      "module": [
+          {
+              "bk_bak_operator": null,
+              "bk_biz_id": 3,
+              "bk_created_at": "2025-06-30T04:12:51.662Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_module_id": 8,
+              "bk_module_name": "空闲机",
+              "bk_module_type": "1",
+              "bk_parent_id": 3,
+              "bk_set_id": 3,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.662Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T04:12:51.662Z",
+              "default": 1,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T04:12:51.662Z",
+              "operator": null,
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "business2##空闲机池##空闲机"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 3,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T04:12:51.653Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_parent_id": 3,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 5,
+              "bk_set_name": "空闲机池",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:51.653Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T04:12:51.653Z",
+              "default": 1,
+              "description": "",
+              "last_time": "2025-06-30T04:12:51.653Z",
+              "set_template_id": 0,
+              "set_template_version": null,
+              "topo_module_name": "business2##空闲机池"
+          }
+      ]
+  },
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 1,
+              "bk_biz_maintainer": "admin",
+              "bk_biz_name": "资源池",
+              "bk_biz_productor": "admin",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:09:10.217Z",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.217Z",
+              "create_time": "2025-06-30T04:09:10.217Z",
+              "default": 1,
+              "language": "1",
+              "last_time": "2025-06-30T04:09:10.217Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 4,
+          "bk_host_innerip": "10.0.0.5",
+          "bk_host_innerip_v6": ""
+      },
+      "module": [
+          {
+              "bk_bak_operator": "",
+              "bk_biz_id": 1,
+              "bk_created_at": "2025-06-30T04:09:10.219Z",
+              "bk_module_id": 11,
+              "bk_module_name": "Developer",
+              "bk_module_type": "1",
+              "bk_parent_id": 1,
+              "bk_set_id": 1,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.219Z",
+              "create_time": "2025-06-30T04:09:10.219Z",
+              "default": 1,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T04:09:10.219Z",
+              "operator": "",
+              "service_category_id": 2,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池##Developer"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 1,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T04:09:10.218Z",
+              "bk_parent_id": 1,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 1,
+              "bk_set_name": "空闲机池",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.218Z",
+              "create_time": "2025-06-30T04:09:10.218Z",
+              "default": 1,
+              "description": "",
+              "last_time": "2025-06-30T04:09:10.218Z",
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池"
+          }
+      ]
+  },
+  {
+      "biz": [
+          {
+              "bk_biz_developer": "",
+              "bk_biz_id": 1,
+              "bk_biz_maintainer": "admin",
+              "bk_biz_name": "资源池",
+              "bk_biz_productor": "admin",
+              "bk_biz_tester": "",
+              "bk_created_at": "2025-06-30T04:09:10.217Z",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.217Z",
+              "create_time": "2025-06-30T04:09:10.217Z",
+              "default": 1,
+              "language": "1",
+              "last_time": "2025-06-30T04:09:10.217Z",
+              "life_cycle": "2",
+              "operator": "",
+              "time_zone": "Asia/Shanghai"
+          }
+      ],
+      "host": {
+          "bk_cloud_host_status": null,
+          "bk_cloud_id": [
+              {
+                  "id": "90000001",
+                  "bk_obj_id": "plat",
+                  "bk_obj_icon": "",
+                  "bk_inst_id": 90000001,
+                  "bk_obj_name": "",
+                  "bk_inst_name": "未分配"
+              }
+          ],
+          "bk_host_id": 5,
+          "bk_host_innerip": "10.0.0.7",
+          "bk_host_innerip_v6": ""
+      },
+      "module": [
+          {
+              "bk_bak_operator": "",
+              "bk_biz_id": 1,
+              "bk_created_at": "2025-06-30T04:12:22.676Z",
+              "bk_created_by": "bk-cmdb",
+              "bk_module_id": 16,
+              "bk_module_name": "DBA",
+              "bk_module_type": "1",
+              "bk_parent_id": 1,
+              "bk_set_id": 1,
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:12:22.676Z",
+              "bk_updated_by": null,
+              "create_time": "2025-06-30T04:12:22.676Z",
+              "default": 4,
+              "host_apply_enabled": false,
+              "last_time": "2025-06-30T04:12:22.676Z",
+              "operator": "",
+              "service_category_id": 0,
+              "service_template_id": 0,
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池##DBA"
+          }
+      ],
+      "set": [
+          {
+              "bk_biz_id": 1,
+              "bk_capacity": null,
+              "bk_created_at": "2025-06-30T04:09:10.218Z",
+              "bk_parent_id": 1,
+              "bk_service_status": "1",
+              "bk_set_desc": "",
+              "bk_set_env": "3",
+              "bk_set_id": 1,
+              "bk_set_name": "空闲机池",
+              "bk_supplier_account": "0",
+              "bk_updated_at": "2025-06-30T04:09:10.218Z",
+              "create_time": "2025-06-30T04:09:10.218Z",
+              "default": 1,
+              "description": "",
+              "last_time": "2025-06-30T04:09:10.218Z",
+              "set_template_id": 0,
+              "topo_module_name": "资源池##空闲机池"
+          }
+      ]
+  }
+];

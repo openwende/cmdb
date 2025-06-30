@@ -1,4 +1,4 @@
-import { ResourceCopyKey } from "./Types";
+import { HostPoolStatus, ResourceCopyKey } from "./Types";
 
 /**
  * Get the text of the host record based on the copied key.
@@ -44,3 +44,40 @@ export const getHostCopyValue = (record: any, copyKey: ResourceCopyKey) => {
             return '';
     }
 };
+
+/**
+ * Check if the selected host is in the host pool
+ *
+ * Check rules:
+ * 1. The length of the host's module array must be 1;
+ * 2. module[0].bk_module_id must exist in the bk_module_id set of hostDirectory.
+ *
+ * @param selectedRowKeys Selected host row key list (host_id)
+ * @param allHostsData    All host data
+ * @param hostDirectory   Host pool directory data
+ * @returns HostPoolStatus[]   Return an array containing the host pool judgment result
+ */
+export function checkHostsInHostPool(
+    selectedRowKeys: React.Key[],
+    allHostsData: any[],
+    hostDirectory: { bk_module_id: number }[]
+): HostPoolStatus[] {
+    if (!selectedRowKeys?.length) return [];
+
+    const hostPoolModuleIds = hostDirectory.map(dir => dir.bk_module_id);
+
+    return selectedRowKeys.map(key => {
+        const hostItem = allHostsData.find(h => h.host.bk_host_id === key);
+        // Get module info
+        const modules = hostItem?.module ?? [];
+        const hasSingleModule = modules.length === 1;
+        const moduleId = hasSingleModule ? modules[0].bk_module_id : null;
+        const inHostPool = hasSingleModule && hostPoolModuleIds.includes(moduleId as number);
+        return {
+            id: Number(key),
+            ip: hostItem?.host?.bk_host_innerip ?? '',
+            moduleId,
+            inHostPool
+        } as HostPoolStatus;
+    });
+}

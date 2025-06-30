@@ -25,6 +25,11 @@ export enum AssignType {
     HostPool = "hostPool",
     None = "none"
 }
+export interface MenuItemProps {
+    key: string;
+    label: React.ReactNode;
+    disabled?: boolean;
+}
 // "Copy" dropdown menu item key
 export enum ResourceCopyKey {
     Id = 'id',
@@ -40,4 +45,11 @@ export enum ResourceCopyKey {
 }
 export enum ResourceMoreKey {
     Delete = 'delete'
+}
+// Host pool status
+export interface HostPoolStatus {
+    id: number;
+    ip: string;
+    moduleId: number | null;
+    inHostPool: boolean;
 }
