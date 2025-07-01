@@ -1111,3 +1111,13 @@ export const deleteDetailsMock = [
     "extend_resource_name": ""
   }
 ];
+export const hostImportStatus1 = {
+  "error": [
+      "7行静态寻址方式ipv4地址已存在，导入主机失败"
+  ],
+  "success": null
+};
+export const hostImportStatus2 = {
+  "error": [],
+  "success": true
+};

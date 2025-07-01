@@ -1,0 +1,125 @@
+.import-host-drawer {
+
+    /* steps */
+    .import-steps {
+        width: 350px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    /* alert */
+    .import-tip {
+        margin-bottom: 10px;
+    }
+
+    /* uploader */
+    .import-uploader {
+        height: 100px;
+        margin-bottom: 12px;
+
+        .ant-upload-drag-icon {
+            color: #1890ff;
+        }
+
+        .ant-upload-text {
+            color: #999;
+        }
+    }
+
+    .upload-item {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+    }
+
+    /* bottom hint */
+    .bottom-hint {
+        margin-top: 10px;
+    }
+
+    /* actions */
+    .drawer-actions {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+    }
+
+    .file-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border: 1px solid #d9d9d9;
+        border-radius: 4px;
+        padding: 10px 16px;
+        margin-bottom: 12px;
+        transition: background 0.2s;
+        height: 60px;
+
+        &:hover {
+            background: #f5f5f5;
+
+            .file-remove {
+                opacity: 1;
+            }
+        }
+
+        .file-name {
+            font-weight: 700;
+            color: #63656e;
+        }
+
+        .file-size {
+            margin-left: auto;
+            margin-right: 20px;
+            color: #666;
+        }
+
+        .file-remove {
+            color: #999;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+
+            &:hover {
+                opacity: 0.8;
+            }
+        }
+    }
+
+    .host-info-card {
+        border: 1px solid rgb(220, 222, 229);
+        border-radius: 3px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 44px;
+        margin: 13px 0px 10px;
+        padding: 0px 16px;
+
+        .host-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .host-label {
+            align-items: center;
+            background: rgb(240, 241, 245);
+            border-radius: 50%;
+            display: inline-flex;
+            height: 26px;
+            justify-content: center;
+            margin-right: 10px;
+            width: 26px;
+        }
+
+        .host-text {
+            .host-model-text {
+                color: #c4c6cc;
+            }
+        }
+    }
+
+    .empty-text {
+        margin: 50px 0;
+    }
+}

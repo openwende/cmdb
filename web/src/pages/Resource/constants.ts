@@ -99,3 +99,13 @@ export const hostDetailAttrs = [
     '录入方式',
     '主要维护人',
 ];
+/**
+ * Host unique options
+ */
+export const hostUniqueOptions = [
+    '管控区域 + 内网IPv4',
+    '外网IPv4',
+    '云主机实例ID + 云厂商',
+    '内网IPv6 + 管控区域',
+    'GSE Agent ID'
+];

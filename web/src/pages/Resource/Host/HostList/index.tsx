@@ -18,6 +18,7 @@ import ReleaseHostModal from "@/pages/Business/BusinessTopology/components/Relea
 import { transferHostPath } from "@/pages/Business/BusinessTopology";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { hostDirectoryMock } from "@/mock/resource";
+import ImportHost from "../components/ImportHost";
 import "./style.css";
 
 interface HostListProps {
@@ -35,7 +36,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
     const [searchParams] = useSearchParams();
     const { confirm } = Modal;
     const { idleSetID, setTransferHostData } = useTransferHostStore();
-    // Assign and transfer host
+    // import、assign、transfer host
+    const [importModalVisible, setImportModalVisible] = useState(false);
     const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
     const [transferModalVisible, setTransferModalVisible] = useState(false);
     const [transferModalType, setTransferModalType] = useState<TransferHostType>();
@@ -244,7 +246,16 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         <div className="host-list-wrapper">
             <div className="host-list-header">
                 <div className="header-left">
-                    {tabKey === TabsKey.Unassigned && <Button type="primary">导入主机</Button>}
+                    {
+                        tabKey === TabsKey.Unassigned && (
+                            <Button
+                                type="primary"
+                                onClick={() => setImportModalVisible(true)}
+                            >
+                                导入主机
+                            </Button>
+                        )
+                    }
 
                     {
                         tabKey !== TabsKey.Assigned && (
@@ -378,6 +389,12 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                 selectedCount={selectedRowKeys.length}
                 onClose={() => setReleaseModalVisible(false)}
                 onConfirm={handleReleaseHosts}
+            />
+
+            {/* Import Host Drawer */}
+            <ImportHost
+                visible={importModalVisible}
+                onClose={() => setImportModalVisible(false)}
             />
         </div>
     );
