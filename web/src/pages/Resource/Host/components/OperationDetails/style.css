@@ -1,0 +1,52 @@
+.operation-details-drawer {
+    .meta-info {
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 14px;
+        margin-bottom: 12px;
+
+        .info-item {
+            display: flex;
+            font-size: 14px;
+            line-height: 34px;
+            width: 50%;
+
+            .info-label {
+                color: rgb(99, 101, 110);
+                display: inline-block;
+                padding-right: 10px;
+                width: 100px;
+            }
+
+            .info-value {
+                color: rgb(49, 50, 55);
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                width: calc(100% - 100px);
+            }
+        }
+    }
+
+    .detail-table-wrapper {
+        position: relative;
+    }
+
+    .detail-table {
+        .ant-table-body {
+            max-height: 560px;
+        }
+
+        .ant-table-cell {
+            padding: 8px 12px;
+        }
+
+        /* sticky table header */
+        .ant-table-header {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+    }
+}

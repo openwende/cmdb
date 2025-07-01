@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Table, Button, Input, Dropdown, message, Modal, Tooltip } from "antd";
-import { DownOutlined, ExclamationCircleFilled } from "@ant-design/icons";
+import { DownOutlined, ExclamationCircleFilled, HistoryOutlined } from "@ant-design/icons";
 import { idleHostMock, dbaHostMock, devHostMock, assignedListMock, allListMock } from "@/mock/resource";
 import { resourceAssignMenuItems, resourceCopyMenuItems, resourceMoreMenuItems } from '../../constants';
 import { MenuItemProps, ResourceCopyKey, ResourceMoreKey } from '../../Types';
@@ -26,6 +26,8 @@ interface HostListProps {
 }
 
 const PAGE_SIZE = 20;
+export const hostResourcePath = '/resource/host';
+export const deleteHistoryPath = hostResourcePath + '/deleteHistory';
 
 const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
     const { t } = useTranslation();
@@ -153,6 +155,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         setReleaseModalVisible(false);
     }, [])
 
+    const handleDeleteHistory = () => {
+        navigate(deleteHistoryPath + '?' + searchParams.toString());
+    }
+
     const columns = [
         {
             title: "ID",
@@ -206,10 +212,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         const items: MenuItemProps[] = [];
 
         transferBaseMenuItems.forEach(base => {
-            const disabled = hostsNotInIdlePool;
+            let disabled = false;
             let tip: string | undefined;
 
             if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
+                disabled = hostsNotInIdlePool;
                 tip = base.key === TransferMenuItemType.hostPool
                     ? '仅允许业务下空闲机转移至主机池'
                     : '仅允许业务下空闲机跨业务转移';
@@ -317,9 +324,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                 <div className="header-right">
                     <Input.Search
                         placeholder="请输入IP或固资编号"
-                        style={{ width: 220, marginRight: 8 }}
+                        style={{ width: 300, marginRight: 8 }}
                     />
-                    <Button icon={<span className="iconfont icon-refresh" />}>已删除</Button>
+                    <Tooltip title="查看删除历史">
+                        <Button icon={<HistoryOutlined />} onClick={handleDeleteHistory} />
+                    </Tooltip>
                 </div>
             </div>
 

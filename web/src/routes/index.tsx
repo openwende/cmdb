@@ -13,6 +13,7 @@ const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
 const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
 const ResourceHost = lazy(() => import('../pages/Resource/Host'));
+const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/components/DeleteHistory'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Loading component for Suspense
@@ -95,7 +96,16 @@ export const routes: NavigationItem[] = [
         key: ResourceKey.Host,
         path: 'host',
         element: withSuspense(ResourceHost),
-        icon: <AppstoreOutlined />
+        icon: <AppstoreOutlined />,
+        children: [
+          {
+            name: '删除历史',
+            key: ResourceKey.DeleteHistory,
+            path: 'deleteHistory',
+            element: withSuspense(ResourceDelHistory),
+            hideInMenu: true
+          },
+        ]
       }
     ]
   },

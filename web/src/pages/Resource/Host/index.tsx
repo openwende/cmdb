@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { Outlet, useMatch } from "react-router-dom";
 import { Tabs } from "antd";
 import Directory, { unmodifiableDirIds } from "./Directory";
-import HostList from "./HostList";
+import HostList, { deleteHistoryPath } from "./HostList";
 import { TabsKey, TabsProps } from "../Types";
 import "./style.css";
 
 const HostPage: React.FC = () => {
+    const isDeleteHistoryRoute = useMatch(deleteHistoryPath);
     const [tab, setTab] = useState(TabsKey.Unassigned);
     const [selectedId, setSelectedId] = useState<number>(unmodifiableDirIds[0]);
 
@@ -14,7 +16,7 @@ const HostPage: React.FC = () => {
             key: TabsKey.Unassigned,
             label: '未分配',
             children: <div className="unassigned-wrapper">
-                    <Directory selectedId={selectedId} onSelect={setSelectedId} />
+                <Directory selectedId={selectedId} onSelect={setSelectedId} />
                 <div style={{ flex: 1 }}>
                     <HostList selectedId={selectedId} tabKey={TabsKey.Unassigned} />
                 </div>
@@ -33,14 +35,22 @@ const HostPage: React.FC = () => {
     ];
 
     return (
-        <div className="host-wrapper">
-            <Tabs
-                activeKey={tab}
-                onChange={(key) => setTab(key as TabsKey)}
-                tabBarGutter={32}
-                items={items}
-            />
-        </div>
+        <>
+            {
+                isDeleteHistoryRoute ? <Outlet /> : (
+                    <div className="host-wrapper">
+                        <Tabs
+                            activeKey={tab}
+                            onChange={(key) => setTab(key as TabsKey)}
+                            tabBarGutter={32}
+                            destroyOnHidden
+                            items={items}
+                        />
+                    </div>
+                )
+            }
+        </>
+
     );
 };
 
