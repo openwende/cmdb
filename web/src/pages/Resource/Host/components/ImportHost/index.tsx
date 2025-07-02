@@ -90,7 +90,8 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
 
     const handleClose = () => {
         onClose();
-        resetAll();
+        // wait for animation end
+        setTimeout(resetAll, 1000);
     }
 
     const resetAll = () => {
@@ -234,7 +235,8 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
             open={visible}
             title="导入主机"
             width={720}
-            onClose={onClose}
+            onClose={handleClose}
+            destroyOnHidden={true}
             className="import-host-drawer"
         >
             {/* Step area */}
@@ -286,7 +288,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                                 </>
                             )
                         }
-                        <Button onClick={onClose}>取消</Button>
+                        <Button onClick={handleClose}>取消</Button>
                     </div>
                 )
             }
