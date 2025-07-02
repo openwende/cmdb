@@ -999,6 +999,7 @@ export const allListMock = [
     ]
   }
 ];
+// 资源->主机列表->删除历史
 export const deleteHistoryMock = {
   "count": 2,
   "info": [
@@ -1040,6 +1041,7 @@ export const deleteHistoryMock = {
     }
   ]
 };
+// 资源->主机列表->删除历史详情
 export const deleteDetailsMock = [
   {
     "id": 23,
@@ -1111,6 +1113,7 @@ export const deleteDetailsMock = [
     "extend_resource_name": ""
   }
 ];
+// 资源->主机列表->导入主机结果
 export const hostImportStatus1 = {
   "error": [
       "7行静态寻址方式ipv4地址已存在，导入主机失败"
@@ -1121,3 +1124,8 @@ export const hostImportStatus2 = {
   "error": [],
   "success": true
 };
+// 资源->主机列表->导入主机模型列表
+export const modelListMock = [
+  { key: 1, name: '业务', unique: '业务ID' },
+  { key: 2, name: '云区域', unique: '云区域ID' }
+];

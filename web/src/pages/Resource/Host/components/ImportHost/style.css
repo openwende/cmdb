@@ -2,9 +2,13 @@
 
     /* steps */
     .import-steps {
-        width: 350px;
-        text-align: center;
+        display: flex;
+        justify-content: center;
         margin-bottom: 20px;
+
+        .ant-steps {
+            width: 350px;
+        }
     }
 
     /* alert */
@@ -14,15 +18,14 @@
 
     /* uploader */
     .import-uploader {
-        height: 100px;
         margin-bottom: 12px;
 
-        .ant-upload-drag-icon {
-            color: #1890ff;
+        .ant-upload-drag {
+            height: 200px;
         }
 
         .ant-upload-text {
-            color: #999;
+            font-size: 14px !important;
         }
     }
 
@@ -35,6 +38,10 @@
     /* bottom hint */
     .bottom-hint {
         margin-top: 10px;
+
+        &>*:first-child {
+            margin-right: 10px;
+        }
     }
 
     /* actions */
@@ -61,6 +68,12 @@
             .file-remove {
                 opacity: 1;
             }
+        }
+
+        &>*:first-child {
+            font-size: 26px;
+            margin-right: 10px;
+            color: rgb(151, 155, 165);
         }
 
         .file-name {
@@ -121,5 +134,9 @@
 
     .empty-text {
         margin: 50px 0;
+    }
+
+    .error-icon {
+        color: #ff4d4f;
     }
 }

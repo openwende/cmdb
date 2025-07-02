@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Drawer, Steps, Alert, Upload, Typography, Button, Checkbox, Select, Table, Empty, Result } from 'antd';
-import { InboxOutlined, CloseOutlined, VerticalAlignBottomOutlined } from '@ant-design/icons';
+import { InboxOutlined, CloseOutlined, VerticalAlignBottomOutlined, FileExcelOutlined, HddOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { hostUniqueOptions } from '@/pages/Resource/constants';
-import { hostImportStatus1, hostImportStatus2 } from '@/mock/resource';
+import { hostImportStatus1, hostImportStatus2, modelListMock } from '@/mock/resource';
 import './style.css';
 
 const { Dragger } = Upload;
@@ -18,11 +18,10 @@ interface ImportHostProps {
     onClose: () => void;
 }
 enum Step {
-    One = 1,
-    Two = 2,
-    Result = 3
+    One = 0,
+    Two = 1,
+    Result = 2
 }
-
 enum ImportStatus {
     None,
     Success,
@@ -36,10 +35,17 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
     const [importRelated, setImportRelated] = useState(false);
     const [uniqueKey, setUniqueKey] = useState(hostUniqueOptions[0]);
     // Mock related models data (empty for now)
-    const [relatedModels] = useState<any[]>([]);
+    const [modelList, setModelList] = useState<any[]>([]);
+    const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
 
     const [loading, setLoading] = useState(false);
     const [importStatus, setImportStatus] = useState<ImportStatus>(ImportStatus.None);
+
+    useEffect(() => {
+        if (step === Step.Two && modelList.length === 0) {
+            setModelList(modelListMock);
+        }
+    }, [step]);
 
     const uploadProps = {
         multiple: false,
@@ -86,6 +92,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
         setUniqueKey(hostUniqueOptions[0]);
         setImportStatus(ImportStatus.None);
         setStep(Step.One);
+        setSelectedKeys([]);
     };
 
     const renderStepOne = () => {
@@ -101,12 +108,13 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
 
                 {/* Upload area or file card */}
                 {fileList.length === 0 ? (
-                    <Dragger className="import-uploader" style={{ height: 100 }} {...uploadProps}>
+                    <Dragger className="import-uploader" {...uploadProps}>
                         <p className="ant-upload-drag-icon"><InboxOutlined /></p>
                         <p className="ant-upload-text">将文件拖到此处或 <Link>点击上传</Link></p>
                     </Dragger>
                 ) : (
                     <div className="file-card">
+                        <FileExcelOutlined />
                         <span className="file-name">{fileList[0].name}</span>
                         <span className="file-size">{(fileList[0].size / 1024).toFixed(2)}KB</span>
                         <CloseOutlined className="file-remove" onClick={() => setFileList([])} />
@@ -117,7 +125,8 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
                 <div className="bottom-hint">
                     <Text>20M 以内的 xlsx 文件 </Text>
                     <Link href="/template/host_import_template.xlsx" download>
-                        <VerticalAlignBottomOutlined />下载模板
+                        <VerticalAlignBottomOutlined />
+                        下载模板
                     </Link>
                 </div>
             </>
@@ -140,7 +149,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
                         {/* host info box */}
                         <div className="host-info-card">
                             <span className='host-info'>
-                                <span className="host-label"><InboxOutlined /></span>
+                                <span className="host-label"><HddOutlined /></span>
                                 <span className="host-text">主机
                                     <span className='host-model-text'>(模型本身)</span>
                                 </span>
@@ -159,9 +168,13 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
 
                         {/* related models table or empty */}
                         <Table
-                            dataSource={relatedModels}
+                            dataSource={modelList}
                             columns={columns}
-                            rowSelection={{ type: 'checkbox' }}
+                            rowSelection={{
+                                type: 'checkbox',
+                                selectedRowKeys: selectedKeys,
+                                onChange: keys => setSelectedKeys(keys)
+                            }}
                             pagination={false}
                             size="small"
                             locale={{
@@ -186,18 +199,24 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
                 status={isSuccess ? 'success' : 'error'}
                 title={isSuccess ? '导入成功' : '导入失败'}
                 extra={
-                    <Button type="primary" onClick={isSuccess ? handleClose : resetAll}>
+                    <Button
+                        type="primary"
+                        onClick={isSuccess ? handleClose : resetAll}
+                    >
                         {isSuccess ? '关闭' : '重新导入'}
                     </Button>
                 }
             >
-                {importStatus === ImportStatus.Fail && (
-                    <Alert
-                        type="error"
-                        showIcon
-                        message={hostImportStatus1.error[0]}
-                        banner
-                    />
+                {!isSuccess && (
+                    <>
+                        {
+                            hostImportStatus1.error.map(err => (
+                                <p key={err}>
+                                    <CloseCircleOutlined className="error-icon" /> {err}
+                                </p>
+                            ))
+                        }
+                    </>
                 )}
             </Result>
         );
@@ -213,16 +232,18 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
         >
             {/* Step area */}
             {
-                step !== Step.Result && <div className="import-steps">
-                    <Steps
-                        size="small"
-                        current={step}
-                        items={[
-                            { title: '上传文件' },
-                            { title: '选择关联模型' }
-                        ]}
-                    />
-                </div>
+                step !== Step.Result && (
+                    <div className="import-steps">
+                        <Steps
+                            size="small"
+                            current={step}
+                            items={[
+                                { title: '上传文件' },
+                                { title: '选择关联模型' }
+                            ]}
+                        />
+                    </div>
+                )
             }
 
             {step === Step.One && renderStepOne()}
@@ -251,7 +272,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
                                     <Button
                                         type="primary"
                                         onClick={handleImport}
-                                        disabled={importRelated && relatedModels.length === 0}
+                                        disabled={importRelated && selectedKeys.length === 0}
                                     >
                                         开始导入
                                     </Button>
