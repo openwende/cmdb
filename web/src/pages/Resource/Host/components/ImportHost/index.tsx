@@ -3,6 +3,7 @@ import { Drawer, Steps, Alert, Upload, Typography, Button, Checkbox, Select, Tab
 import { InboxOutlined, CloseOutlined, VerticalAlignBottomOutlined, FileExcelOutlined, HddOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { hostUniqueOptions } from '@/pages/Resource/constants';
 import { hostImportStatus1, hostImportStatus2, modelListMock } from '@/mock/resource';
+import hostImportTemplateUrl from '@/assets/templates/host_import_template.xlsx';
 import './style.css';
 
 const { Dragger } = Upload;
@@ -15,7 +16,9 @@ const columns = [
 
 interface ImportHostProps {
     visible: boolean;
+    selectedDirId?: Number;
     onClose: () => void;
+    onImportSuccess: () => void;
 }
 enum Step {
     One = 0,
@@ -28,7 +31,7 @@ enum ImportStatus {
     Fail
 }
 
-const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
+const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose, onImportSuccess }) => {
     const [fileList, setFileList] = useState<any[]>([]);
     // Step2 states
     const [step, setStep] = useState(Step.One);
@@ -37,8 +40,6 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
     // Mock related models data (empty for now)
     const [modelList, setModelList] = useState<any[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
-
-    const [loading, setLoading] = useState(false);
     const [importStatus, setImportStatus] = useState<ImportStatus>(ImportStatus.None);
 
     useEffect(() => {
@@ -66,17 +67,23 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
         setStep(prev => prev - 1);
     };
 
-    const handleImport = () => {
-        setLoading(true);
-        // simulate api call using mock
+    const handleImport = async () => {
+        if (fileList.length === 0) return;
+        const formData = new FormData();
+        formData.append('file', fileList[0]);
+        formData.append('params', JSON.stringify({ bk_module_id: selectedDirId, op: 2 }));
+
+        // TODO: replace with real api
+        // await axiosInstance.post('/host/import', formData });
+
         setTimeout(() => {
             const res = Math.random() > 0.5 ? hostImportStatus2 : hostImportStatus1;
             if (res.success) {
+                onImportSuccess();
                 setImportStatus(ImportStatus.Success);
             } else {
                 setImportStatus(ImportStatus.Fail);
             }
-            setLoading(false);
             setStep(Step.Result);
         }, 1000);
     };
@@ -124,7 +131,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
                 {/* hint & download */}
                 <div className="bottom-hint">
                     <Text>20M 以内的 xlsx 文件 </Text>
-                    <Link href="/template/host_import_template.xlsx" download>
+                    <Link href={hostImportTemplateUrl} download="host_import_template.xlsx">
                         <VerticalAlignBottomOutlined />
                         下载模板
                     </Link>
@@ -248,7 +255,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, onClose }) => {
 
             {step === Step.One && renderStepOne()}
             {step === Step.Two && renderStepTwo()}
-            {!loading && step === Step.Result && renderResult()}
+            {step === Step.Result && renderResult()}
 
             {/* actions */}
             {

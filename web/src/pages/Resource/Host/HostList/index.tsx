@@ -161,6 +161,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         navigate(deleteHistoryPath + '?' + searchParams.toString());
     }
 
+    const handleImportSuccess = () => {
+        // TODO: fetch hosts list and dirs
+    }
+
     const columns = [
         {
             title: "ID",
@@ -394,7 +398,9 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             {/* Import Host Drawer */}
             <ImportHost
                 visible={importModalVisible}
+                selectedDirId={selectedId}
                 onClose={() => setImportModalVisible(false)}
+                onImportSuccess={handleImportSuccess}
             />
         </div>
     );

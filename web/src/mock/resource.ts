@@ -1116,13 +1116,15 @@ export const deleteDetailsMock = [
 // 资源->主机列表->导入主机结果
 export const hostImportStatus1 = {
   "error": [
-      "7行静态寻址方式ipv4地址已存在，导入主机失败"
+    "7行静态寻址方式ipv4地址已存在，导入主机失败"
   ],
   "success": null
 };
 export const hostImportStatus2 = {
-  "error": [],
-  "success": true
+  "error": null,
+  "success": [
+    7
+  ]
 };
 // 资源->主机列表->导入主机模型列表
 export const modelListMock = [
