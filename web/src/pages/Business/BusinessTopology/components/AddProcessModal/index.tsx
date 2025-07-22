@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Tooltip, Modal } from 'antd';
+import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Tooltip } from 'antd';
 import './style.css';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { listenIPOptions } from '@/mock/business';
 import { ProcessItem } from '../TransferHost';
+import ConfirmModal from '@/components/common/ConfirmModal';
 
 const { Panel } = Collapse;
 
@@ -495,21 +496,12 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                         </Collapse>
                     </Form>
                 </div>
-            </Drawer>
-            <Modal
-                title={null}
-                width={400}
-                open={showModal}
-                okText='离开'
-                cancelText='取消'
-                maskClosable={false}
+            </Drawer>              
+            <ConfirmModal
+                visible={showModal}
                 onOk={handleConfirmClose}
                 onCancel={() => setShowModal(false)}
-                className='confirm-modal'
-            >
-                <p className='confirm-title'>确认离开当前页？</p>
-                <p className='confirm-desc'>离开将会导致未保存信息丢失</p>
-            </Modal>
+            />
         </>
     );
 };

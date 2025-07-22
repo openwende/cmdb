@@ -41,16 +41,3 @@
         }
     }
 }
-
-.confirm-modal {
-    text-align: center;
-
-    .confirm-title {
-        font-size: 20px;
-        margin-bottom: 14px;
-    }
-
-    .confirm-desc {
-     margin-bottom: 20px;
-    }
-}

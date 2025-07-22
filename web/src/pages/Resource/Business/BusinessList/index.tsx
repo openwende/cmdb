@@ -1,38 +1,52 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, Select } from "antd";
-import Pagination  from "@/components/common/Pagination";
+import { Table, Button, Input, Select, Tooltip, Space } from "antd";
+import Pagination from "@/components/common/Pagination";
 import { businessListMock } from "@/mock/resource";
 import ModifyDrawer from "../ModifyDrawer";
 import "./style.css";
+import { HistoryOutlined } from "@ant-design/icons";
+import dayjs from 'dayjs';
 
 const { Option } = Select;
 
 const columns = [
     {
         title: "ID",
-        dataIndex: "id",
+        dataIndex: "bk_biz_id",
         sorter: true,
-        width: 80,
+        width: 300,
     },
     {
         title: "业务名",
-        dataIndex: "name",
+        dataIndex: "bk_biz_name",
         sorter: true,
+        width: 300,
     },
     {
         title: "运维人员",
-        dataIndex: "operator",
+        dataIndex: "bk_biz_maintainer",
         sorter: true,
+        width: 300,
     },
     {
         title: "创建时间",
-        dataIndex: "createTime",
+        dataIndex: "bk_created_at",
         sorter: true,
+        width: 300,
+        render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
     },
     {
         title: "创建人",
-        dataIndex: "creator",
+        dataIndex: "bk_created_by",
         sorter: true,
+        width: 300,
+    },
+    {
+        title: "更新时间",
+        dataIndex: "bk_updated_at",
+        sorter: true,
+        width: 300,
+        render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
     },
     {
         title: "操作",
@@ -48,15 +62,27 @@ const PAGE_SIZE = 10;
 const BusinessList: React.FC = () => {
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
-    const [tableData, setTableData] = useState<any>([]);
+    const [businessCount, setBusinessCount] = useState(0);
+    const [businessList, setBusinessList] = useState<any>([]);
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [drawerType, setDrawerType] = useState<"create" | "edit">("create");
 
     useEffect(() => {
-        const data = businessListMock.slice((page - 1) * pageSize, page * pageSize);
-        setTableData(data);
+        const data = businessListMock.info.slice((page - 1) * pageSize, page * pageSize);
+        setBusinessList(data);
+        setBusinessCount(businessListMock.count);
     }, [businessListMock, page, pageSize])
+
+    const handleCreate = () => {
+        setDrawerType("create");
+        setDrawerVisible(true);
+    }
+
+    const handleEdit = () => {
+        setDrawerType("edit");
+        setDrawerVisible(true);
+    }
 
     return (
         <div className="business-list">
@@ -64,47 +90,51 @@ const BusinessList: React.FC = () => {
                 <div className="list-operation">
                     <Button
                         type="primary"
-                        style={{ marginRight: 8 }}
-                        onClick={() => { setDrawerType("create"); setDrawerVisible(true); }}
+                        onClick={handleCreate}
                     >新建</Button>
                     <Button
-                        style={{ marginRight: 16 }}
                         disabled={selectedRowKeys.length === 0}
-                        onClick={() => { setDrawerType("edit"); setDrawerVisible(true); }}
+                        onClick={handleEdit}
                     >批量编辑</Button>
                 </div>
                 <div className="list-search">
-                    <Input.Group compact>
+                    <Space.Compact>
                         <Select defaultValue="业务名" style={{ width: 120 }}>
                             <Option value="name">业务名</Option>
                         </Select>
                         <Input style={{ width: 200 }} placeholder="请输入业务名" />
-                    </Input.Group>
-                    <Button style={{ marginLeft: 8 }}>搜索</Button>
-                    <Button style={{ marginLeft: 8 }} icon={<span className="iconfont icon-setting" />}></Button>
+                    </Space.Compact>
+                    <Tooltip title="查看已归档业务">
+                        <Button icon={<HistoryOutlined />} />
+                    </Tooltip>
                 </div>
             </div>
+
             <Table
-                rowSelection={{ selectedRowKeys, onChange: setSelectedRowKeys }}
+                rowSelection={{
+                    selectedRowKeys,
+                    onChange: setSelectedRowKeys
+                }}
                 columns={columns}
-                dataSource={tableData}
+                dataSource={businessList}
                 showSorterTooltip={false}
-                rowKey="id"
+                rowKey="bk_biz_id"
                 bordered={true}
                 pagination={false}
             />
-            <div className="pagination-container">
-                <Pagination
-                    total={businessListMock.length}
-                    pageSize={pageSize}
-                    current={page}
-                    onChange={setPage}
-                    onSizeChange={(current, size) => {
-                        setPage(1);
-                        setPageSize(size);
-                    }}
-                />
-            </div>
+
+            <Pagination
+                total={businessCount}
+                pageSize={pageSize}
+                current={page}
+                onChange={setPage}
+                onSizeChange={(_, size) => {
+                    setPage(1);
+                    setPageSize(size);
+                }}
+            />
+
+            {/* Modify business drawer */}
             <ModifyDrawer
                 visible={drawerVisible}
                 type={drawerType}

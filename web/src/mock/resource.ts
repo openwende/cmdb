@@ -1,10 +1,74 @@
-export const businessListMock = Array.from({ length: 20 }).map((_, i) => ({
-  id: i + 1,
-  name: i === 0 ? "蓝鲸" : `business${i}`,
-  operator: i === 0 ? "admin" : "bk-cmdb",
-  createTime: `2025-05-15 18:${(10 + i).toString().padStart(2, "0")}:00`,
-  creator: i === 0 ? "--" : "bk-cmdb"
-}));
+// 资源->业务列表
+export const businessListMock = {
+  "count": 3,
+  "info": [
+    {
+      "bk_biz_developer": "",
+      "bk_biz_id": 2,
+      "bk_biz_maintainer": "admin",
+      "bk_biz_name": "蓝鲸",
+      "bk_biz_productor": "",
+      "bk_biz_tester": "",
+      "bk_created_at": "2025-06-30T04:09:10.221Z",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-06-30T04:09:10.221Z",
+      "create_time": "2025-06-30T04:09:10.221Z",
+      "default": 0,
+      "language": "1",
+      "last_time": "2025-06-30T04:09:10.221Z",
+      "life_cycle": "2",
+      "operator": "",
+      "time_zone": "Asia/Shanghai"
+    },
+    {
+      "bk_biz_developer": "",
+      "bk_biz_id": 3,
+      "bk_biz_maintainer": "bk-cmdb",
+      "bk_biz_name": "business2",
+      "bk_biz_productor": "",
+      "bk_biz_tester": "",
+      "bk_created_at": "2025-06-30T04:12:51.646Z",
+      "bk_created_by": "bk-cmdb",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-06-30T04:12:51.646Z",
+      "bk_updated_by": "",
+      "create_time": "2025-06-30T04:12:51.646Z",
+      "default": 0,
+      "language": "1",
+      "last_time": "2025-06-30T04:12:51.646Z",
+      "life_cycle": "2",
+      "operator": "",
+      "time_zone": "Asia/Shanghai"
+    },
+    {
+      "bk_biz_developer": "",
+      "bk_biz_id": 4,
+      "bk_biz_maintainer": "bk-cmdb",
+      "bk_biz_name": "City",
+      "bk_biz_productor": "",
+      "bk_biz_tester": "",
+      "bk_created_at": "2025-06-30T04:56:06.777Z",
+      "bk_created_by": "bk-cmdb",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-06-30T04:56:06.777Z",
+      "bk_updated_by": "",
+      "create_time": "2025-06-30T04:56:06.777Z",
+      "default": 0,
+      "language": "1",
+      "last_time": "2025-06-30T04:56:06.777Z",
+      "life_cycle": "2",
+      "operator": "",
+      "time_zone": "Asia/Shanghai"
+    }
+  ]
+};
+export const userListMock = [
+  { english_name: 'bk-cmdb', chinese_name: 'bk-cmdb' },
+  { english_name: 'admin', chinese_name: '管理员' },
+  { english_name: 'ad', chinese_name: '阿德' },
+  { english_name: 'dev', chinese_name: '开发' },
+  { english_name: 'test', chinese_name: '测试' }
+];
 
 // 主机
 // 目录及主机数量 mock
