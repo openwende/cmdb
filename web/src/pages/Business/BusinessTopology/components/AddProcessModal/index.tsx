@@ -501,6 +501,8 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                 visible={showModal}
                 onOk={handleConfirmClose}
                 onCancel={() => setShowModal(false)}
+                title="确认离开当前页？"
+                description="离开将会导致未保存信息丢失"
             />
         </>
     );

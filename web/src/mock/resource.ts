@@ -1195,3 +1195,52 @@ export const modelListMock = [
   { key: 1, name: '业务', unique: '业务ID' },
   { key: 2, name: '云区域', unique: '云区域ID' }
 ];
+
+// 资源->业务->已归档业务列表
+export const archivedBusinessListMock = {
+  "count": 2,
+  "info": [
+    {
+      "bk_biz_developer": "",
+      "bk_biz_id": 5,
+      "bk_biz_maintainer": "admin",
+      "bk_biz_name": "已归档业务1",
+      "bk_biz_productor": "dev",
+      "bk_biz_tester": "test",
+      "bk_created_at": "2025-05-30T04:09:10.221Z",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-07-30T04:09:10.221Z",
+      "create_time": "2025-05-30T04:09:10.221Z",
+      "default": 0,
+      "language": "1",
+      "last_time": "2025-07-30T04:09:10.221Z",
+      "life_cycle": "3",
+      "operator": "admin",
+      "time_zone": "Asia/Shanghai",
+      "archived_at": "2025-07-30T04:09:10.221Z",
+      "archived_by": "admin"
+    },
+    {
+      "bk_biz_developer": "",
+      "bk_biz_id": 6,
+      "bk_biz_maintainer": "bk-cmdb",
+      "bk_biz_name": "已归档业务2",
+      "bk_biz_productor": "ad",
+      "bk_biz_tester": "",
+      "bk_created_at": "2025-06-15T04:12:51.646Z",
+      "bk_created_by": "bk-cmdb",
+      "bk_supplier_account": "0",
+      "bk_updated_at": "2025-07-25T04:12:51.646Z",
+      "bk_updated_by": "ad",
+      "create_time": "2025-06-15T04:12:51.646Z",
+      "default": 0,
+      "language": "1",
+      "last_time": "2025-07-25T04:12:51.646Z",
+      "life_cycle": "3",
+      "operator": "ad",
+      "time_zone": "Asia/Shanghai",
+      "archived_at": "2025-07-25T04:12:51.646Z",
+      "archived_by": "ad"
+    }
+  ]
+};

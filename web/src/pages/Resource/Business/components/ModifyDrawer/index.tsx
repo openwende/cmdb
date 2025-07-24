@@ -8,7 +8,7 @@ import {
     FormFieldName,
     isCreateMode,
     isEditMode,
-} from '../components/FormFields';
+} from '../FormFields';
 import "./style.css";
 
 const { Panel } = Collapse;
@@ -177,8 +177,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
             className="modify-drawer"
         >
             <Form form={form} layout="vertical" onValuesChange={handleFormValueChange}>
-                <Collapse defaultActiveKey={["base", "role"]} ghost>                    
-                <Panel header="基础信息" key="base">
+                <Collapse defaultActiveKey={["base", "role"]} ghost>
+                    <Panel header="基础信息" key="base">
                         <div className="form-grid">
                             <FormFieldItem
                                 fieldName="businessName"
@@ -219,7 +219,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                                     <Select
                                         showSearch
                                         placeholder="请选择时区"
-                                        filterOption={(input, option) => (option?.value as string).toLowerCase().includes(input.toLowerCase())}                                        options={timeZoneOptions.map(tz => ({ value: tz, label: tz }))}
+                                        filterOption={(input, option) => (option?.value as string).toLowerCase().includes(input.toLowerCase())}
+                                        options={timeZoneOptions.map(tz => ({ value: tz, label: tz }))}
                                         className="select-input"
                                     />
                                 </FormFieldItem>)}
@@ -233,14 +234,14 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                             >
                                 <Select
                                     placeholder="请选择语言"
-                                    onChange={setLang}                                    
+                                    onChange={setLang}
                                     options={languageOptions.map(v => ({ label: v, value: v }))}
                                     disabled={isFieldDisabled('language')}
                                     className="select-input"
                                 />
                             </FormFieldItem>
                         </div>
-                    </Panel>                    
+                    </Panel>
                     <Panel header="角色" key="role">
                         <div className="form-grid">
                             <PersonnelSelectItem
@@ -306,8 +307,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                         </div>
                     </Panel>
                 </Collapse>
-            </Form>            
-            
+            </Form>
+
             <div className="button-container">
                 <Button
                     type="primary"
@@ -324,6 +325,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                 visible={showModal}
                 onOk={handleConfirmClose}
                 onCancel={() => setShowModal(false)}
+                title="确认离开当前页？"
+                description="离开将会导致未保存信息丢失"
             />
         </Drawer>
     );

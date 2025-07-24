@@ -1,6 +1,6 @@
 import React, { lazy, Suspense } from 'react';
 import { NavigationItem, PrimaryNavKey, BusinessNavKey, ResourceKey } from './Types';
-import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined} from '@ant-design/icons';
+import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
@@ -12,6 +12,7 @@ const ResourcePage = lazy(() => import('../pages/Resource'));
 const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
 const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
+const ArchivedBusiness = lazy(() => import('../pages/Resource/Business/ArchivedBusiness'));
 const ResourceHost = lazy(() => import('../pages/Resource/Host'));
 const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/components/DeleteHistory'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
@@ -89,7 +90,16 @@ export const routes: NavigationItem[] = [
         key: ResourceKey.Business,
         path: 'business',
         element: withSuspense(ResourceBusiness),
-        icon: <AppstoreOutlined />
+        icon: <AppstoreOutlined />,
+        children: [
+          {
+            name: '已归档业务',
+            key: ResourceKey.ArchivedBusiness,
+            path: 'archivedBusiness',
+            element: withSuspense(ArchivedBusiness),
+            hideInMenu: true
+          },
+        ]
       },
       {
         name: '主机',

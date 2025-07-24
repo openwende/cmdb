@@ -7,8 +7,8 @@ interface ConfirmModalProps {
     onOk: () => void;
     onCancel: () => void;
     width?: number;
-    title?: string;
-    description?: string;
+    title: string;
+    description?: React.ReactNode;
     okText?: string;
     cancelText?: string;
 }
@@ -18,9 +18,9 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     onOk,
     onCancel,
     width = 400,
-    title = '确认离开当前页？',
-    description = '离开将会导致未保存信息丢失',
-    okText = '离开',
+    title,
+    description,
+    okText = '确定',
     cancelText = '取消'
 }) => {
     return (

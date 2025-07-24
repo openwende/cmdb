@@ -25,6 +25,7 @@ export enum ResourceKey {
     Content = 'content',
     Project = 'project',
     Business = 'business',
+    ArchivedBusiness = 'ArchivedBusiness',
     Host = 'host',
     DeleteHistory = 'deleteHistory'
 }
