@@ -19,6 +19,15 @@
         .list-search {
             display: flex;
             gap: 10px;
+            
+            .search-select {
+                width: 120px;
+            }
+            
+            .search-input,
+            .search-date-picker {
+                width: 280px;
+            }
         }
     }
 }

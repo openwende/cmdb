@@ -109,3 +109,16 @@ export const hostUniqueOptions = [
     '内网IPv6 + 管控区域',
     'GSE Agent ID'
 ];
+
+/**
+ * Search field optons for business list
+*/
+export const searchFieldOptions = [
+    { value: "bk_biz_id", label: "ID" },
+    { value: "bk_biz_name", label: "业务名" },
+    { value: "bk_biz_maintainer", label: "运维人员" },
+    { value: "bk_created_at", label: "创建时间", isDate: true },
+    { value: "bk_created_by", label: "创建人" },
+    { value: "bk_updated_at", label: "更新时间", isDate: true }
+];
+
