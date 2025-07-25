@@ -114,7 +114,7 @@ const BusinessTopology: React.FC = () => {
         {
             key: 'nodeInfo',
             label: '节点信息',
-            children: <NodeInfo selectedNodes={selectedNodes} />
+            children: <NodeInfo selectedNode={selectedNodes[0]} />
         }
     ];
 

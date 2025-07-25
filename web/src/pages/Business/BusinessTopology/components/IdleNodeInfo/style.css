@@ -1,0 +1,13 @@
+.idle-container {
+    height: 400px;
+}
+
+.alert-info {
+    margin-bottom: 16px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}

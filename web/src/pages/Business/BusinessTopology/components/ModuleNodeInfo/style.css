@@ -1,0 +1,41 @@
+.info-header {
+    margin-bottom: 20px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.disabled-link {
+    padding: 0;
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-top: 24px;
+}
+
+/* Form styles */
+.service-category-wrapper {
+    margin-bottom: 20px;
+}
+
+.category-label {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.flex-item {
+    flex: 1
+}
+

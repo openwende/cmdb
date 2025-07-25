@@ -701,8 +701,55 @@ export const processInstanceDetail = [
     }
   }
 ];
+// 业务拓扑：业务节点信息
+export const bizNodeInfo = [
+  {
+    "bk_biz_developer": "",
+    "bk_biz_id": 4,
+    "bk_biz_maintainer": "bk-cmdb",
+    "bk_biz_name": "business",
+    "bk_biz_productor": "",
+    "bk_biz_tester": "",
+    "bk_created_at": "2025-07-25T01:43:49.8Z",
+    "bk_created_by": "bk-cmdb",
+    "bk_supplier_account": "0",
+    "bk_updated_at": "2025-07-25T01:43:49.8Z",
+    "bk_updated_by": "",
+    "create_time": "2025-07-25T01:43:49.8Z",
+    "default": 0,
+    "language": "1",
+    "last_time": "2025-07-25T01:43:49.8Z",
+    "life_cycle": "2",
+    "operator": "",
+    "time_zone": "Asia/Shanghai"
+  }
+];
+// 业务拓扑：集群节点信息
+export const setNodeInfo = [
+  {
+    "bk_biz_id": 4,
+    "bk_capacity": null,
+    "bk_created_at": "2025-07-25T01:57:33.464Z",
+    "bk_created_by": "bk-cmdb",
+    "bk_parent_id": 4,
+    "bk_service_status": "1",
+    "bk_set_desc": "",
+    "bk_set_env": "3",
+    "bk_set_id": 5,
+    "bk_set_name": "set2",
+    "bk_supplier_account": "0",
+    "bk_updated_at": "2025-07-25T01:57:33.464Z",
+    "bk_updated_by": null,
+    "create_time": "2025-07-25T01:57:33.464Z",
+    "default": 0,
+    "description": "",
+    "last_time": "2025-07-25T01:57:33.464Z",
+    "set_template_id": 0,
+    "set_template_version": null
+  }
+];
 // 业务拓扑：节点信息
-export const nodeInfo = [
+export const moduleNodeInfo = [
   {
     "bk_bak_operator": null,
     "bk_biz_id": 4,
