@@ -22,7 +22,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const [userOptions, setUserOptions] = useState<{ label: string, value: string }[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
-    
+
     const moduleData = moduleNodeInfo[0];    // Initialize form when editing starts
     const handleEdit = () => {
         // Convert operator strings to arrays for Select components
@@ -52,7 +52,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const handleDelete = () => {
         setIsDeleteModalVisible(true);
     };
-    
+
     const confirmDelete = () => {
         // 这里添加实际删除节点的逻辑
         message.success('删除模块节点成功');
@@ -129,16 +129,18 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const renderEditForm = () => {
         return (
             <>
-                <div className="service-category-wrapper">
-                    <div className="category-label">服务分类</div>
-                    <ServiceCategorySelector
-                        value={serviceCategory}
-                        onChange={(value: number[]) => {
-                            setServiceCategory(value);
-                            setFormChanged(true);
-                        }}
-                        style={{ width: 400 }}
-                    />
+                <div className="edit-info-header">
+                    <div className="service-category-wrapper">
+                        <div className="category-label">服务分类</div>
+                        <ServiceCategorySelector
+                            value={serviceCategory}
+                            onChange={(value: number[]) => {
+                                setServiceCategory(value);
+                                setFormChanged(true);
+                            }}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
                 </div>
 
                 <Collapse
@@ -246,12 +248,12 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 onCancel={() => setIsDeleteModalVisible(false)}
                 title="确定删除 module?"
             />
-            
+
             <div className="info-header">
-                <div>服务模板：无</div>
-                <div>服务分类：Default / Default</div>
+                <div><span className="header-label">服务模板：</span>无</div>
+                <div><span className="header-label">服务分类：</span>Default / Default</div>
                 <div>
-                    <span>主机属性自动应用：</span>
+                    <span className="header-label">主机属性自动应用：</span>
                     <Button type="link" className="disabled-link">未启用</Button>
                 </div>
             </div>

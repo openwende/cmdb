@@ -1,16 +1,64 @@
 .info-header {
     margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for header info */
+    gap: 16px;
 }
 
+@media screen and (max-width: 2200px) {
+    .info-header {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media screen and (max-width: 1800px) {
+    .info-header {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Make sure header items span correctly in the grid */
+.info-header > div {
+    min-width: 0; /* Ensures text can be truncated if needed */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-label {
+    font-weight: 500;
+    margin-right: 4px;
+}
+
+/* Use more specific selector to increase specificity */
+.node-info-container .info-grid,
 .info-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important; /* Default: 4 columns */
     gap: 16px;
+}
+
+/* Medium screens: 3 columns */
+@media screen and (max-width: 2200px) {
+    .node-info-container .info-grid,
+    .info-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+/* Small screens: 2 columns */
+@media screen and (max-width: 1800px) {
+    .node-info-container .info-grid,
+    .info-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
 }
 
 .disabled-link {
     padding: 0;
 }
+
+/* This section is intentionally removed to eliminate duplicate styles */
 
 .action-buttons {
     display: flex;
@@ -20,7 +68,21 @@
 }
 
 /* Form styles */
-.service-category-wrapper {
+.edit-info-header {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+@media screen and (max-width: 1800px) {
+    .edit-info-header {
+        grid-template-columns: 1fr;
+    }
+}
+
+.service-category-wrapper,
+.module-status-wrapper {
     margin-bottom: 20px;
 }
 
@@ -30,12 +92,26 @@
 }
 
 .form-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns for form items */
     gap: 16px;
     margin-bottom: 16px;
 }
 
+/* Responsive form rows */
+@media screen and (max-width: 2200px) {
+    .form-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media screen and (max-width: 1800px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
 .flex-item {
-    flex: 1
+    width: 100%;
 }
 
