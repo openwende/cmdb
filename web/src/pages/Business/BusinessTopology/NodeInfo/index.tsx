@@ -3,14 +3,15 @@ import { Form, Input, Select, Button, Collapse, message, CollapseProps } from 'a
 import { CopyOutlined } from '@ant-design/icons';
 import { nodeInfo } from '@/mock/business';
 import ServiceCategorySelector from '../components/ServiceCategory';
+import { TreeData } from '../../Types';
 
 const { Option } = Select;
 
 interface Props {
-    selectedNode?: any;
+    selectedNodes: TreeData[];
 }
 
-const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
+const NodeInfo: React.FC<Props> = ({ selectedNodes }) => {
     const [form] = Form.useForm();
     const [isEditing, setIsEditing] = useState(false);
     const [serviceCategory, setServiceCategory] = useState<number[]>([]);

@@ -149,7 +149,7 @@ export function filterTree(tree: TreeData[], keyword: string): TreeData[] {
 export function findNodeAndParents(nodes: TreeData[], key: string, parents: TreeData[] = []): { node: TreeData | null, parents: TreeData[] } {
     for (const node of nodes) {
         if (node.key === key) {
-            return { node, parents};
+            return { node, parents };
         }
         if (node.children) {
             const found = findNodeAndParents(node.children, key, [...parents, node]);
@@ -386,6 +386,28 @@ export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNo
 
     return false;
 };
+
+/**
+ * Get the status of the selected node to determine UI behavior
+ *
+ * @export
+ * @param {TreeData[]} selectedNodes
+ * @return {*} Object with node status flags
+ */
+export function getSelectedNodeStatus(selectedNodes: TreeData[]) {
+    if (!selectedNodes || selectedNodes.length === 0) {
+        return {
+            isModule: false,
+            isIdle: false,
+        };
+    }
+    const node = selectedNodes[0];
+
+    return {
+        isModule: node.type === TopoTreeNodeType.Module,
+        isIdle: node.type === TopoTreeNodeType.Idle,
+    };
+}
 
 /**
  * Get the text of the host record based on the copied key.

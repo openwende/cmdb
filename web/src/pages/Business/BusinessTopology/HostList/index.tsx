@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
-import { DownOutlined} from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import {
@@ -22,7 +22,7 @@ import { transferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
-import { checkHostsInIdlePool, findNodeAndParents, getHostCopyValue } from '../../utils';
+import { checkHostsInIdlePool, findNodeAndParents, getHostCopyValue, getSelectedNodeStatus } from '../../utils';
 import CreateNodeModal from '../components/CreateNodeModal';
 import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
@@ -224,18 +224,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   };
 
   const selectedNodeStatus = useMemo(() => {
-    if (!selectedNodes || selectedNodes.length === 0) {
-      return {
-        isModule: false,
-        isIdle: false,
-      };
-    }
-    const node = selectedNodes[0];
-
-    return {
-      isModule: node.type === TopoTreeNodeType.Module,
-      isIdle: node.type === TopoTreeNodeType.Idle,
-    };
+    return getSelectedNodeStatus(selectedNodes);
   }, [selectedNodes]);
 
   const isEmptySet = useMemo(() => {

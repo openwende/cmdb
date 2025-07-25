@@ -109,12 +109,12 @@ const BusinessTopology: React.FC = () => {
         {
             key: 'serviceInstance',
             label: '服务实例',
-            children: <ServiceInstance selectedNode={selectedNodes} view={view} setView={handleViewChange} />
+            children: <ServiceInstance selectedNodes={selectedNodes} view={view} setView={handleViewChange} />
         },
         {
             key: 'nodeInfo',
             label: '节点信息',
-            children: <NodeInfo selectedNode={selectedNodes} />
+            children: <NodeInfo selectedNodes={selectedNodes} />
         }
     ];
 
