@@ -20,7 +20,7 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 items={[
                     {
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>基础信息</span>,
+                        label: <span className='basic-info'>基础信息</span>,
                         children: (
                             <div className="info-grid">
                                 <InfoItem label="ID" value={bizData.bk_biz_id} />
@@ -37,7 +37,7 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     },
                     {
                         key: '2',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>角色</span>,
+                        label: <span className='basic-info'>角色</span>,
                         children: (
                             <div className="info-grid">
                                 <InfoItem label="运维人员" value={bizData.bk_biz_maintainer} />

@@ -1,8 +1,12 @@
 .info-header {
     margin-bottom: 20px;
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 columns for header info */
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
+
+    .header-label {
+        color: rgba(0, 0, 0, 0.65);
+    }
 }
 
 @media screen and (max-width: 2200px) {
@@ -21,7 +25,8 @@
 .node-info-container .info-grid,
 .info-grid {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important; /* Default: 4 columns */
+    grid-template-columns: repeat(4, 1fr) !important;
+    /* Default: 4 columns */
     gap: 16px;
 }
 
@@ -39,27 +44,4 @@
     .info-grid {
         grid-template-columns: repeat(2, 1fr) !important;
     }
-}
-
-.action-buttons {
-    display: flex;
-    justify-content: flex-start;
-    gap: 16px;
-    margin-top: 24px;
-}
-
-/* Form styles */
-.form-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns for form items */
-    gap: 16px;
-    margin-bottom: 16px;
-}
-
-.flex-item {
-    width: 100%;
-}
-
-.description-item {
-    width: 100%;
 }

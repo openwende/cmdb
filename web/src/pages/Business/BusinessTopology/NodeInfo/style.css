@@ -2,32 +2,9 @@
     background: #fff;
     padding: 24px;
 
-    .info-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-        padding: 0 16px;
-    }
-
-    /* Removed .info-grid from here to avoid conflicts with child component styles */
-
-    .service-category-wrapper {
-        margin-bottom: 60px;
-    }
-
     .category-label {
         margin-bottom: 8px;
         font-weight: 500;
-    }
-
-    .form-row {
-        display: flex;
-        gap: 16px;
-    }
-
-    .flex-item {
-        flex: 1;
     }
 
     .idle-container {
@@ -38,34 +15,29 @@
         margin-bottom: 16px;
     }
 
-    .info-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        .info-label {
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .info-value-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            position: relative;
-
-            .copy-icon {
-                cursor: pointer;
-                color: #1890ff;
-                font-size: 12px;
-            }
-        }
-    }
-
     .action-buttons {
         display: flex;
+        justify-content: flex-start;
         gap: 16px;
-        margin-top: 24px;
-        padding: 0 16px;
+        padding-left: 16px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 50px;
+    }
+
+    .flex-item {
+        width: 100%;
+    }
+
+    .description-item {
+        width: 100%;
+    }
+
+    .basic-info {
+        font-weight: bold;
+        color: #000;
     }
 }

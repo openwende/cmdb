@@ -38,7 +38,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     };
 
     const confirmDelete = () => {
-        // 这里添加实际删除节点的逻辑
+        // TODO: api
         message.success('删除集群节点成功');
         setIsDeleteModalVisible(false);
     };
@@ -64,7 +64,6 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
         setIsEditing(false);
     };
 
-    // Render edit form
     const renderEditForm = () => {
         return (
             <>
@@ -73,7 +72,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     ghost
                     items={[{
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>基础信息</span>,
+                        label: <span className="basic-info">基础信息</span>,
                         children: (
                             <Form form={form} layout="vertical">
                                 <div className="form-row">
@@ -137,17 +136,17 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
+                                    <Form.Item
+                                        label="备注"
+                                        name="bkSetDesc"
+                                        className="description-item"
+                                    >
+                                        <Input.TextArea
+                                            placeholder="请输入备注"
+                                            onChange={() => setFormChanged(true)}
+                                        />
+                                    </Form.Item>
                                 </div>
-                                <Form.Item
-                                    label="备注"
-                                    name="bkSetDesc"
-                                    className="description-item"
-                                >
-                                    <Input.TextArea
-                                        placeholder="请输入备注"
-                                        onChange={() => setFormChanged(true)}
-                                    />
-                                </Form.Item>
                             </Form>
                         ),
                     }]}
@@ -183,9 +182,9 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 onCancel={() => setIsDeleteModalVisible(false)}
                 title="确定删除 set?"
             />
-        
+
             <div className="info-header">
-                <div>集群模板：无</div>
+                <div><span className="header-label">集群模板：</span>无</div>
             </div>
 
             <Collapse

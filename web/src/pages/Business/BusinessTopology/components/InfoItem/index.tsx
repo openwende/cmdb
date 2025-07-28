@@ -11,7 +11,6 @@ interface Props {
 const InfoItem: React.FC<Props> = ({ label, value }) => {
     const [isHovered, setIsHovered] = useState(false);
 
-    // Copy functionality
     const handleCopy = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);

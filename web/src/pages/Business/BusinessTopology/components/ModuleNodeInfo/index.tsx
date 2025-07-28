@@ -6,6 +6,7 @@ import ServiceCategorySelector from '../../components/ServiceCategory';
 import InfoItem from '../InfoItem';
 import { TreeData } from '../../../Types';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { debounce } from '@/utils/performance';
 import './style.css';
 
 const { Option } = Select;
@@ -23,7 +24,8 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const [isSearching, setIsSearching] = useState(false);
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
-    const moduleData = moduleNodeInfo[0];    // Initialize form when editing starts
+    // Initialize form when editing starts
+    const moduleData = moduleNodeInfo[0];    
     const handleEdit = () => {
         // Convert operator strings to arrays for Select components
         let operators: string[] = [];
@@ -42,7 +44,9 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
             bkModuleName: moduleData.bk_module_name,
             bkModuleType: moduleData.bk_module_type,
             operator: operators,
-            bkBakOperator: backupOperators
+            bkBakOperator: backupOperators,
+            moduleStatus: 'normal',
+            moduleId: moduleData.bk_module_id
         });
 
         setFormChanged(false);
@@ -54,20 +58,9 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     };
 
     const confirmDelete = () => {
-        // 这里添加实际删除节点的逻辑
+        // TODO: api
         message.success('删除模块节点成功');
         setIsDeleteModalVisible(false);
-    };
-
-    // Debounce function for search
-    const debounce = (fn: Function, delay: number) => {
-        let timer: NodeJS.Timeout;
-        return (...args: any[]) => {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(() => {
-                fn(...args);
-            }, delay);
-        };
     };
 
     // Search users with debounce
@@ -125,7 +118,6 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
         setIsEditing(false);
     };
 
-    // Render edit form
     const renderEditForm = () => {
         return (
             <>
@@ -148,7 +140,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     ghost
                     items={[{
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>基础信息</span>,
+                        label: <span className="basic-info">基础信息</span>,
                         children: (
                             <Form form={form} layout="vertical">
                                 <div className="form-row">
@@ -176,8 +168,6 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                             <Option value="2">数据库</Option>
                                         </Select>
                                     </Form.Item>
-                                </div>
-                                <div className="form-row">
                                     <Form.Item
                                         label="主要维护人"
                                         name="operator"
@@ -195,6 +185,8 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                             style={{ width: '100%' }}
                                         />
                                     </Form.Item>
+                                </div>
+                                <div className="form-row">
                                     <Form.Item
                                         label="备份维护人"
                                         name="bkBakOperator"

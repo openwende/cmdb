@@ -2,23 +2,36 @@
     display: flex;
     align-items: flex-start;
     margin-bottom: 8px;
-}
 
-.info-label {
-    min-width: 80px;
-    color: rgba(0, 0, 0, 0.65);
-    text-align: right;
-    padding-right: 8px;
-}
+    .info-value-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: relative;
 
-.info-value-wrapper {
-    flex: 1;
-    display: flex;
-    align-items: center;
-}
+        .copy-icon {
+            cursor: pointer;
+            color: #1890ff;
+            font-size: 12px;
+        }
+    }
 
-.copy-icon {
-    margin-left: 8px;
-    cursor: pointer;
-    color: #1890ff;
+    .info-label {
+        min-width: 80px;
+        color: rgba(0, 0, 0, 0.65);
+        text-align: right;
+        padding-right: 4px;
+    }
+
+    .info-value-wrapper {
+        flex: 1;
+        display: flex;
+        align-items: center;
+    }
+
+    .copy-icon {
+        margin-left: 8px;
+        cursor: pointer;
+        color: #1890ff;
+    }
 }
