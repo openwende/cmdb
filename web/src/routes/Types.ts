@@ -6,11 +6,13 @@ export interface NavigationItem {
     children?: NavigationItem[];
     hideInMenu?: boolean;
     icon?: any;
+    index?: boolean;
 }
 
 export enum PrimaryNavKey {
     Home = 'home',
     Business = 'business',
+    BusinessSet = 'businessSet',
     Resource = 'resource',
     NotFound = 'notfound'
 }
@@ -19,6 +21,10 @@ export enum BusinessNavKey {
     Topology = 'topology',
     Template = 'template',
     TransferHost = 'transferHost'
+}
+
+export enum BusinessSetNavKey {
+    Topology = 'topology'
 }
 
 export enum ResourceKey {

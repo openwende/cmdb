@@ -18,7 +18,7 @@ import {
 } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
-import { transferHostPath } from '../index';
+import { getTransferHostPath } from '../index';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
@@ -107,7 +107,13 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
   };
 
   const handleNavToTransferPage = () => {
-    navigate(transferHostPath + '?' + searchParams.toString());
+    // 获取当前URL路径中的业务ID
+    const pathSegments = window.location.pathname.split('/');
+    if (pathSegments.length >= 3) {
+      const businessId = pathSegments[2];
+      const transferPath = getTransferHostPath(businessId);
+      navigate(transferPath + '?' + searchParams.toString());
+    }
   }
 
   const handleConfirmAddHosts = useCallback((hosts: TransferHostItem[]) => {

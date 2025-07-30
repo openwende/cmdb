@@ -1,0 +1,14 @@
+/* Business Selector styles */
+.business-selector-container {
+  padding: 16px;
+  background-color: #fff;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.business-selector {
+  width: 100%;
+}
+
+.business-selector .ant-select-selection-item {
+  font-weight: 500;
+}

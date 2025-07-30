@@ -15,6 +15,14 @@ export const bizInfo = {
     {
       "bk_biz_id": 4,
       "bk_biz_name": "project2"
+    },
+    {
+      "bk_biz_set_id": 9991001,
+      "bk_biz_set_name": "BlueKing"
+    },
+    {
+      "bk_biz_set_id": 9992001,
+      "bk_biz_set_name": "全业务-蓝盾测试部署专用"
     }
   ]
 };

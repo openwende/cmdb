@@ -9,8 +9,18 @@ import './style.css';
 import { TreeData } from '../Types';
 import { findNodeAndParents } from '../utils';
 
-export const businessTopoPath = '/business/topology';
-export const transferHostPath = businessTopoPath + '/transferHost';
+// 导出动态构建路径的方法而不是固定路径
+export const getBusinessTopoPath = (id: string) => `/business/${id}/topology`;
+export const getTransferHostPath = (id: string) => `${getBusinessTopoPath(id)}/transferHost`;
+
+// 获取当前 URL 中的业务 ID
+const getBusinessIdFromUrl = (): string => {
+    const pathSegments = window.location.pathname.split('/');
+    if (pathSegments.length >= 3 && (pathSegments[1] === 'business' || pathSegments[1] === 'business-set')) {
+        return pathSegments[2];
+    }
+    return '';
+};
 
 const BusinessTopology: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -23,13 +33,16 @@ const BusinessTopology: React.FC = () => {
     const [view, setView] = useState<'instance' | 'process'>(searchParams.get('view') === 'process' ? 'process' : 'instance');
     const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
     const location = useLocation();
-    const isTransferHostRoute = useMatch(transferHostPath);
+    const businessId = getBusinessIdFromUrl();
+    const currentBusinessTopoPath = businessId ? getBusinessTopoPath(businessId) : '';
+    const currentTransferHostPath = businessId ? getTransferHostPath(businessId) : '';
+    const isTransferHostRoute = useMatch(currentTransferHostPath);
     const prevPathnameRef = useRef<string>('');
 
     useEffect(() => {
         const isJustSwitchedToCurPath = (
-            location.pathname === businessTopoPath
-            && prevPathnameRef.current !== businessTopoPath
+            location.pathname === currentBusinessTopoPath
+            && prevPathnameRef.current !== currentBusinessTopoPath
         );
         if (!isJustSwitchedToCurPath) {
             // Update previous pathname after initialization

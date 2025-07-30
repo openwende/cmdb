@@ -1,5 +1,5 @@
 import React, { lazy, Suspense } from 'react';
-import { NavigationItem, PrimaryNavKey, BusinessNavKey, ResourceKey } from './Types';
+import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey } from './Types';
 import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
 // Lazy load all page components
@@ -37,7 +37,7 @@ export const routes: NavigationItem[] = [
   {
     name: '业务',
     key: PrimaryNavKey.Business,
-    path: '/business',
+    path: '/business/:businessId',
     element: withSuspense(BusinessPage),
     children: [
       {
@@ -46,6 +46,7 @@ export const routes: NavigationItem[] = [
         path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <UnorderedListOutlined />,
+        index: true,
         children: [
           {
             name: '转移主机',
@@ -53,7 +54,7 @@ export const routes: NavigationItem[] = [
             path: 'transferHost',
             element: withSuspense(TransferHost),
             hideInMenu: true
-          },
+          }
         ]
       },
       {
@@ -62,6 +63,23 @@ export const routes: NavigationItem[] = [
         path: 'template',
         element: withSuspense(ServiceTemplate),
         icon: <PieChartOutlined />
+      }
+    ]
+  },
+  {
+    name: '业务集',
+    key: PrimaryNavKey.BusinessSet,
+    path: '/business-set/:businessSetId',
+    element: withSuspense(BusinessPage),
+    hideInMenu: true,
+    children: [
+      {
+        name: '业务集拓扑',
+        key: BusinessSetNavKey.Topology,
+        path: 'topology',
+        element: withSuspense(BusinessTopology),
+        icon: <UnorderedListOutlined />,
+        index: true
       }
     ]
   },
