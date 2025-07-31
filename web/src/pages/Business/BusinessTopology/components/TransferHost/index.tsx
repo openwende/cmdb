@@ -9,7 +9,7 @@ import { transferTarget, transferWithClearServiceInstance } from '@/mock/busines
 import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
 import { AppendMenuItemKey, TransferHostItem, TransferMenuItemType, TreeData, RemoveMenuItemKey } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
-import { getBusinessTopoPath } from '../..';
+import { getBusinessTopologyPath } from '@/utils/routes';
 import TransferHostModal from '../TransferHostModal';
 import { allHosts2 } from '@/mock/business';
 
@@ -77,11 +77,11 @@ const TransferHost: React.FC = () => {
     };
 
     const backToPrePage = () => {
-        // 获取当前URL路径中的业务ID
+        // Navigate back to the previous page
         const pathSegments = window.location.pathname.split('/');
         if (pathSegments.length >= 3) {
             const businessId = pathSegments[2];
-            const topoPath = getBusinessTopoPath(businessId);
+            const topoPath = getBusinessTopologyPath(businessId);
             navigate(topoPath + window.location.search, { replace: true });
         }
     }

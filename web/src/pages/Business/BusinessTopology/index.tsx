@@ -8,12 +8,9 @@ import NodeInfo from './NodeInfo';
 import './style.css';
 import { TreeData } from '../Types';
 import { findNodeAndParents } from '../utils';
+import { getBusinessTopologyPath, getTransferHostPath } from '../../../utils/routes';
 
-// 导出动态构建路径的方法而不是固定路径
-export const getBusinessTopoPath = (id: string) => `/business/${id}/topology`;
-export const getTransferHostPath = (id: string) => `${getBusinessTopoPath(id)}/transferHost`;
-
-// 获取当前 URL 中的业务 ID
+// Get business ID from URL
 const getBusinessIdFromUrl = (): string => {
     const pathSegments = window.location.pathname.split('/');
     if (pathSegments.length >= 3 && (pathSegments[1] === 'business' || pathSegments[1] === 'business-set')) {
@@ -34,7 +31,7 @@ const BusinessTopology: React.FC = () => {
     const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
     const location = useLocation();
     const businessId = getBusinessIdFromUrl();
-    const currentBusinessTopoPath = businessId ? getBusinessTopoPath(businessId) : '';
+    const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
     const currentTransferHostPath = businessId ? getTransferHostPath(businessId) : '';
     const isTransferHostRoute = useMatch(currentTransferHostPath);
     const prevPathnameRef = useRef<string>('');

@@ -18,7 +18,7 @@ import {
 } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
-import { getTransferHostPath } from '../index';
+import { getTransferHostPath } from '@/utils/routes';
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';

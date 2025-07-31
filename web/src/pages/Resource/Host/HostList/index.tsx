@@ -15,7 +15,7 @@ import { useTransferHostStore } from "@/store/TransferHostStore";
 import { checkHostsInIdlePool } from "@/pages/Business/utils";
 import TransferHostModal from "@/pages/Business/BusinessTopology/components/TransferHostModal";
 import ReleaseHostModal from "@/pages/Business/BusinessTopology/components/ReleaseHostModal";
-import { transferHostPath } from "@/pages/Business/BusinessTopology";
+import { getTransferHostPath } from "@/utils/routes";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { hostDirectoryMock } from "@/mock/resource";
 import ImportHost from "../components/ImportHost";
@@ -148,7 +148,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         }
 
         setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
-        navigate(transferHostPath + '?' + searchParams.toString());
+        navigate(getTransferHostPath + '?' + searchParams.toString());
     }, [transferModalType, hostsNotInIdlePool, hostIdleStatuses])
 
     const handleReleaseHosts = useCallback((dirId: number) => {

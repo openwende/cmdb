@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 
 export enum BusinessType {
-    BUSINESS = 'business',
-    BUSINESS_SET = 'business_set'
+    Business = 'business',
+    BusinessSet = 'businessSet'
 }
 
 export interface BusinessItem {
@@ -12,66 +12,24 @@ export interface BusinessItem {
 }
 
 interface BusinessStoreState {
-    // Current selected business or business set
     currentBusiness: BusinessItem | null;
-
-    // List of businesses
     businessList: BusinessItem[];
-
-    // List of business sets
     businessSetList: BusinessItem[];
-
-    // Loading state
     loading: boolean;
-
-    /**
-     * Set the current business or business set
-     * @param business - Business or business set item
-     */
     setCurrentBusiness: (business: BusinessItem | null) => void;
-
-    /**
-     * Set the list of businesses
-     * @param list - List of business items
-     */
     setBusinessList: (list: BusinessItem[]) => void;
-
-    /**
-     * Set the list of business sets
-     * @param list - List of business set items
-     */
     setBusinessSetList: (list: BusinessItem[]) => void;
-
-    /**
-     * Set loading state
-     * @param status - Loading status
-     */
     setLoading: (status: boolean) => void;
-
-    /**
-     * Load business and business set data from API
-     * This method will call the mock API for now
-     */
     loadBusinessData: () => Promise<void>;
-
-    /**
-     * Get business or business set by ID and type
-     * @param id - Business or business set ID
-     * @param type - Business type (business or business set)
-     * @returns The found business item or null
-     */
     getBusinessById: (id: number | string, type: BusinessType) => BusinessItem | null;
 }
 
-// Create the Zustand store
 export const useBusinessStore = create<BusinessStoreState>((set, get) => ({
-    // Initial state
     currentBusiness: null,
     businessList: [],
     businessSetList: [],
     loading: false,
 
-    // Actions
     setCurrentBusiness: (business) => set({ currentBusiness: business }),
     setBusinessList: (list) => set({ businessList: list }),
     setBusinessSetList: (list) => set({ businessSetList: list }),
@@ -99,13 +57,13 @@ export const useBusinessStore = create<BusinessStoreState>((set, get) => ({
                         businesses.push({
                             id: item.bk_biz_id,
                             name: item.bk_biz_name,
-                            type: BusinessType.BUSINESS
+                            type: BusinessType.Business
                         });
                     } else if (item.bk_biz_set_id) {
                         businessSets.push({
                             id: item.bk_biz_set_id,
                             name: item.bk_biz_set_name,
-                            type: BusinessType.BUSINESS_SET
+                            type: BusinessType.BusinessSet
                         });
                     }
                 });
@@ -130,9 +88,8 @@ export const useBusinessStore = create<BusinessStoreState>((set, get) => ({
 
     getBusinessById: (id, type) => {
         const state = get();
-        const list = type === BusinessType.BUSINESS ? state.businessList : state.businessSetList;
+        const list = type === BusinessType.Business ? state.businessList : state.businessSetList;
         const numId = typeof id === 'string' ? parseInt(id, 10) : id;
-
         return list.find(item => item.id === numId) || null;
     }
 }));

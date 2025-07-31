@@ -72,7 +72,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNod
                 width: collapsed ? 0 : sidebarWidth,
                 minWidth: collapsed ? 0 : MIN_WIDTH,
                 maxWidth: collapsed ? 0 : MAX_WIDTH,
-                margin: collapsed ? 0 : 8,
+                margin: collapsed ? 0 : 12,
                 marginRight: collapsed ? 0 : 20
             }}
         >

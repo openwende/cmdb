@@ -120,7 +120,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
         <Fragment>
             {sidebarItems.length > 0 ? <Sider className="app-sidebar" width={collapsed ? 60 : 260}>
                 {/* Display business selector in business and business set sections */}
-                {isBusinessRelated && <BusinessSelector />}
+                {isBusinessRelated && <BusinessSelector collapsed={collapsed} />}
                 <Menu
                     mode="inline"
                     selectedKeys={[getSelectedKey()]}

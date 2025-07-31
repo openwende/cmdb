@@ -4,11 +4,6 @@
     position: relative;
     user-select: none;
 
-    .ant-tree {
-        height: 100%;
-        padding: 8px;
-    }
-
     .search-wrapper {
         padding: 8px;
     }

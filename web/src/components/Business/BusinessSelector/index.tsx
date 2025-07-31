@@ -1,14 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Select, Spin } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBusinessStore, BusinessType } from '../../../store/BusinessStore';
+import { getBusinessTopologyPath, getBusinessSetTopologyPath } from '../../../utils/routes';
 import './style.css';
+
+const SELECTOR_COLLAPSED_WIDTH = 42;
 
 const { Option, OptGroup } = Select;
 
-const BusinessSelector: React.FC = () => {
+interface BusinessSelectorProps {
+    collapsed?: boolean;
+}
+
+const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const containerRef = useRef<HTMLDivElement>(null);
 
     const {
         currentBusiness,
@@ -35,7 +43,7 @@ const BusinessSelector: React.FC = () => {
             if (id && !isNaN(Number(id))) {
                 return {
                     id,
-                    type: BusinessType.BUSINESS
+                    type: BusinessType.Business
                 };
             }
         }
@@ -47,7 +55,7 @@ const BusinessSelector: React.FC = () => {
             if (id && !isNaN(Number(id))) {
                 return {
                     id,
-                    type: BusinessType.BUSINESS_SET
+                    type: BusinessType.BusinessSet
                 };
             }
         }
@@ -80,20 +88,20 @@ const BusinessSelector: React.FC = () => {
         const [type, idStr] = value.split(':');
         const id = parseInt(idStr, 10);
 
-        if (type === BusinessType.BUSINESS) {
-            const business = getBusinessById(id, BusinessType.BUSINESS);
+        if (type === BusinessType.Business) {
+            const business = getBusinessById(id, BusinessType.Business);
             if (business) {
                 setCurrentBusiness(business);
                 // Always use replace to ensure page state refresh
-                navigate(`/business/${id}/topology`, { replace: true });
+                navigate(getBusinessTopologyPath(id), { replace: true });
             }
-        } else if (type === BusinessType.BUSINESS_SET) {
-            const businessSet = getBusinessById(id, BusinessType.BUSINESS_SET);
+        } else if (type === BusinessType.BusinessSet) {
+            const businessSet = getBusinessById(id, BusinessType.BusinessSet);
             if (businessSet) {
                 setCurrentBusiness(businessSet);
 
                 // Always use replace to ensure page state refresh
-                navigate(`/business-set/${id}/topology`, { replace: true });
+                navigate(getBusinessSetTopologyPath(id), { replace: true });
             }
         }
     };
@@ -105,7 +113,7 @@ const BusinessSelector: React.FC = () => {
     }
 
     return (
-        <div className="business-selector-container">
+        <div ref={containerRef} className="business-selector-container">
             <Select
                 value={getSelectValue()}
                 onChange={handleChange}
@@ -113,17 +121,18 @@ const BusinessSelector: React.FC = () => {
                 loading={loading}
                 notFoundContent={loading ? <Spin size="small" /> : null}
                 placeholder="请选择业务或业务集"
-                optionLabelProp="label"
+                getPopupContainer={() => containerRef.current!}
+                styles={{ root: { width: collapsed ? SELECTOR_COLLAPSED_WIDTH : undefined } }}
             >
                 {businessList.length > 0 && (
                     <OptGroup label="业务">
                         {businessList.map((business) => (
                             <Option
-                                key={`${BusinessType.BUSINESS}:${business.id}`}
-                                value={`${BusinessType.BUSINESS}:${business.id}`}
-                                label={business.name}
+                                key={`${BusinessType.Business}:${business.id}`}
+                                value={`${BusinessType.Business}:${business.id}`}
+                                label={`${business.name} (${business.id})`}
                             >
-                                {business.name}
+                                {business.name} <span className="option-id">({business.id})</span>
                             </Option>
                         ))}
                     </OptGroup>
@@ -133,11 +142,11 @@ const BusinessSelector: React.FC = () => {
                     <OptGroup label="业务集">
                         {businessSetList.map((businessSet) => (
                             <Option
-                                key={`${BusinessType.BUSINESS_SET}:${businessSet.id}`}
-                                value={`${BusinessType.BUSINESS_SET}:${businessSet.id}`}
-                                label={businessSet.name}
+                                key={`${BusinessType.BusinessSet}:${businessSet.id}`}
+                                value={`${BusinessType.BusinessSet}:${businessSet.id}`}
+                                label={`${businessSet.name} (${businessSet.id})`}
                             >
-                                {businessSet.name}
+                                {businessSet.name} <span className="option-id">({businessSet.id})</span>
                             </Option>
                         ))}
                     </OptGroup>

@@ -4,15 +4,14 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '../../../../routes';
 import { PrimaryNavKey } from '../../../../routes/Types';
 import { useBusinessStore } from '../../../../store/BusinessStore';
+import { getBusinessTopologyPath } from '@/utils/routes';
 import '../style.css';
 
 const Menu: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    // Get business data
     const { businessList, loadBusinessData, loading } = useBusinessStore();
 
-    // Ensure business data is loaded when component mounts
     useEffect(() => {
         if (businessList.length === 0 && !loading) {
             loadBusinessData();
@@ -40,7 +39,7 @@ const Menu: React.FC = () => {
             // Special handling for business and business set
             if (key === PrimaryNavKey.Business) {
                 // Check if current path is already under business
-                if (location.pathname.startsWith('/business/')) {
+                if (location.pathname.startsWith('/business')) {
                     // If already in a specific business path, do nothing
                     return;
                 }
@@ -48,13 +47,13 @@ const Menu: React.FC = () => {
                 // If business data exists, navigate directly to the first business
                 if (businessList.length > 0) {
                     const firstBusiness = businessList[0];
-                    navigate(`/business/${firstBusiness.id}/topology`);
+                    navigate(getBusinessTopologyPath(firstBusiness.id));
                 } else {
                     // If no business data, load data first, then navigate
                     loadBusinessData().then(() => {
                         const { businessList: updatedList } = useBusinessStore.getState();
                         if (updatedList.length > 0) {
-                            navigate(`/business/${updatedList[0].id}/topology`);
+                            navigate(getBusinessTopologyPath(updatedList[0].id));
                         } else {
                             message.warning('No business data available');
                         }

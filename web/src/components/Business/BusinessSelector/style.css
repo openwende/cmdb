@@ -1,14 +1,21 @@
-/* Business Selector styles */
 .business-selector-container {
-  padding: 16px;
-  background-color: #fff;
+  height: 53px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  margin-bottom: 6px;
   border-bottom: 1px solid #e8e8e8;
-}
 
-.business-selector {
-  width: 100%;
-}
+  .business-selector {
+    width: 100%;
+  }
 
-.business-selector .ant-select-selection-item {
-  font-weight: 500;
+  .ant-select-dropdown {
+    width: 320px !important;
+  }
+
+  .option-id {
+    color: #c4c6cc !important;
+  }
 }
