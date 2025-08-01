@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Table, Button, Input, Select, Tooltip, Space, message } from "antd";
 import { DatePicker } from "antd";
 import Pagination from "@/components/common/Pagination";
@@ -11,7 +11,8 @@ import "./style.css";
 import { HistoryOutlined } from "@ant-design/icons";
 import { archivedBusinessPath } from "../index";
 import dayjs from 'dayjs';
-import {searchFieldOptions} from "../../constants";
+import { searchFieldOptions } from "../../constants";
+import { CREATE_TYPES } from "@/constants/business";
 
 const { Option } = Select;
 
@@ -19,6 +20,7 @@ const PAGE_SIZE = 10;
 
 const BusinessList: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
     const [businessCount, setBusinessCount] = useState(0);
@@ -113,6 +115,17 @@ const BusinessList: React.FC = () => {
         const data = filteredData.slice((page - 1) * pageSize, page * pageSize);
         setBusinessList(data);
     }, [businessListMock, page, pageSize, archivedBusinessIds, searchField, searchText, searchDateRange])
+
+    // Handle URL parameters to auto-open drawer
+    useEffect(() => {
+        const searchParams = new URLSearchParams(location.search);
+        const createType = searchParams.get('create');
+
+        if (Number(createType) === CREATE_TYPES.BUSINESS) {
+            setDrawerType('create');
+            setDrawerVisible(true);
+        }
+    }, [location.search, navigate]);
 
     const handleCreate = () => {
         setDrawerType("create");

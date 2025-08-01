@@ -18,4 +18,16 @@
   .option-id {
     color: #c4c6cc !important;
   }
+
+  .create-business-divider {
+    margin: 0;
+  }
+
+  .create-business-container {
+    padding: 8px 0;
+  }
+
+  .create-business-button {
+    width: 100%;
+  }
 }

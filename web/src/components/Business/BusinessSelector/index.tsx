@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Select, Spin } from 'antd';
+import { Select, Spin, Divider, Button } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBusinessStore, BusinessType } from '../../../store/BusinessStore';
 import {
@@ -8,6 +9,7 @@ import {
     isBusinessRelatedPage,
     parseBusinessInfoFromUrl
 } from '../../../utils/routes';
+import { CREATE_TYPES } from '@/constants/business';
 import './style.css';
 
 const SELECTOR_COLLAPSED_WIDTH = 42;
@@ -36,9 +38,6 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     useEffect(() => {
         loadBusinessData();
     }, [loadBusinessData]);
-
-    // Parse business ID from URL
-    // This function is now removed and replaced with the utility function from routes.ts
 
     // Update current business when URL changes
     useEffect(() => {
@@ -83,6 +82,30 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
         }
     };
 
+    // Handle create business click
+    const handleCreateBusiness = () => {
+        navigate(`/resource/business?create=${CREATE_TYPES.BUSINESS}`);
+    };
+
+    // Custom popup render with create business option at bottom
+    const renderPopup = (menu: React.ReactElement) => (
+        <>
+            {menu}
+            <Divider className="create-business-divider" />
+            <div className="create-business-container">
+                <Button
+                    color="primary"
+                    variant="text"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreateBusiness}
+                    className="create-business-button"
+                >
+                    新建业务
+                </Button>
+            </div>
+        </>
+    );
+
     // Show selector in business or business set pages
     const isBusinessPath = isBusinessRelatedPage(location.pathname);
     if (!isBusinessPath) {
@@ -95,6 +118,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                 value={getSelectValue()}
                 onChange={handleChange}
                 className="business-selector"
+                popupRender={renderPopup}
                 loading={loading}
                 notFoundContent={loading ? <Spin size="small" /> : null}
                 placeholder="请选择业务或业务集"
