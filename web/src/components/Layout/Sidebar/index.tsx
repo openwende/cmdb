@@ -2,7 +2,7 @@ import React, { Fragment, useState } from "react";
 import { Layout, Menu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './style.css';
-import { NavigationItem, PrimaryNavKey } from "../../../routes/Types";
+import { NavigationItem, PrimaryNavKey, EntityRouteType } from "../../../routes/Types";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import BusinessSelector from "../../Business/BusinessSelector";
 import { routes } from "../../../routes";
@@ -14,6 +14,9 @@ import {
 } from "../../../utils/routes";
 
 const { Sider } = Layout;
+
+const SIDEBAR_COLLAPSED_WIDTH = 60;
+const SIDEBAR_EXPANDED_WIDTH = 260;
 
 interface SidebarProps {
     currentSection: NavigationItem | undefined;
@@ -87,23 +90,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
 
             // Check if current path is business related
             if (isBusinessPage(location.pathname)) {
-                const path = buildEntityPath(pathSegments, 'business', item.path);
-                if (path === null) {
-                    // If no valid entity ID, return to business home page
-                    navigate('/business');
-                    return;
-                }
-                fullPath = path;
+                fullPath = buildEntityPath(pathSegments, EntityRouteType.Business, item.path);
             }
             // Check if current path is business set related
             else if (isBusinessSetPage(location.pathname)) {
-                const path = buildEntityPath(pathSegments, 'business-set', item.path);
-                if (path === null) {
-                    // If no valid entity ID, return to business set home page
-                    navigate('/business-set');
-                    return;
-                }
-                fullPath = path;
+                fullPath = buildEntityPath(pathSegments, EntityRouteType.BusinessSet, item.path);
             }
             // Other paths
             else if (currentSection) {
@@ -122,24 +113,26 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
 
     return (
         <Fragment>
-            {sidebarItems.length > 0 ? <Sider className="app-sidebar" width={collapsed ? 60 : 260}>
-                {/* Display business selector in business and business set sections */}
-                {isBusinessRelated && <BusinessSelector collapsed={collapsed} />}
-                <Menu
-                    mode="inline"
-                    selectedKeys={[getSelectedKey()]}
-                    onClick={({ key }) => onMenuClick(key as string)}
-                    items={sidebarItems.map((item: NavigationItem) => ({
-                        key: item.key,
-                        label: item.name,
-                        icon: item.icon
-                    }))}
-                    inlineCollapsed={collapsed}
-                />
-                <div onClick={toggleCollapsed} className="menu-toggler">
-                    {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                </div>
-            </Sider> : null}
+            {sidebarItems.length > 0 ? (
+                <Sider className="app-sidebar" width={collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH}>
+                    {/* Display business selector in business and business set sections */}
+                    {isBusinessRelated && <BusinessSelector collapsed={collapsed} />}
+                    <Menu
+                        mode="inline"
+                        selectedKeys={[getSelectedKey()]}
+                        onClick={({ key }) => onMenuClick(key as string)}
+                        items={sidebarItems.map((item: NavigationItem) => ({
+                            key: item.key,
+                            label: item.name,
+                            icon: item.icon
+                        }))}
+                        inlineCollapsed={collapsed}
+                    />
+                    <div onClick={toggleCollapsed} className="menu-toggler">
+                        {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                    </div>
+                </Sider>
+            ) : null}
         </Fragment>
     );
 };

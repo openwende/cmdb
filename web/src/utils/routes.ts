@@ -4,6 +4,7 @@
  */
 
 import { BusinessType } from '../store/BusinessStore';
+import { EntityRouteType } from '../routes/Types';
 
 /**
  * Generate business topology page path
@@ -72,22 +73,22 @@ export const isBusinessRelatedPage = (pathname: string): boolean => {
 /**
  * Build business or business set related page path
  * @param pathSegments Current path split into array
- * @param entityType Entity type ('business' | 'business-set')
+ * @param entityType Entity type for URL path
  * @param itemPath Target page path
  * @returns Complete built path, or null if unable to build
  */
 export const buildEntityPath = (
   pathSegments: string[],
-  entityType: 'business' | 'business-set',
+  entityType: EntityRouteType,
   itemPath: string
-): string | null => {
+): string => {
   if (pathSegments.length >= 3) {
     const entityId = pathSegments[2];
     if (entityId) {
       return `/${entityType}/${entityId}/${itemPath}`;
     }
   }
-  return null;
+  return '/business';
 };
 
 /**
@@ -100,7 +101,7 @@ export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type:
   const pathSegments = path.split('/');
 
   // Check if path is business path: /business/:businessId/...
-  if (pathSegments.length >= 3 && pathSegments[1] === 'business') {
+  if (pathSegments.length >= 3 && pathSegments[1] === EntityRouteType.Business) {
     const id = pathSegments[2];
     // Ensure ID is not empty and is a valid number
     if (id && !isNaN(Number(id))) {
@@ -112,7 +113,7 @@ export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type:
   }
 
   // Check if path is business set path: /business-set/:businessSetId/...
-  if (pathSegments.length >= 3 && pathSegments[1] === 'business-set') {
+  if (pathSegments.length >= 3 && pathSegments[1] === EntityRouteType.BusinessSet) {
     const id = pathSegments[2];
     // Ensure ID is not empty and is a valid number
     if (id && !isNaN(Number(id))) {

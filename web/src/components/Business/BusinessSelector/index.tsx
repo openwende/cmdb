@@ -2,7 +2,12 @@ import React, { useEffect, useRef } from 'react';
 import { Select, Spin } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBusinessStore, BusinessType } from '../../../store/BusinessStore';
-import { getBusinessTopologyPath, getBusinessSetTopologyPath, isBusinessRelatedPage, parseBusinessInfoFromUrl } from '../../../utils/routes';
+import {
+    getBusinessTopologyPath,
+    getBusinessSetTopologyPath,
+    isBusinessRelatedPage,
+    parseBusinessInfoFromUrl
+} from '../../../utils/routes';
 import './style.css';
 
 const SELECTOR_COLLAPSED_WIDTH = 42;

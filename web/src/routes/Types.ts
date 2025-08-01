@@ -9,6 +9,14 @@ export interface NavigationItem {
     index?: boolean;
 }
 
+/**
+ * Entity route type for URL path segments
+ */
+export enum EntityRouteType {
+    Business = 'business',
+    BusinessSet = 'business-set'
+}
+
 export enum PrimaryNavKey {
     Home = 'home',
     Business = 'business',
