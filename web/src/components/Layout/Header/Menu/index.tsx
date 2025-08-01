@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { routes } from '../../../../routes';
 import { PrimaryNavKey } from '../../../../routes/Types';
 import { useBusinessStore } from '../../../../store/BusinessStore';
-import { getBusinessTopologyPath } from '@/utils/routes';
+import { getBusinessTopologyPath, isBusinessRelatedPage } from '@/utils/routes';
 import '../style.css';
 
 const Menu: React.FC = () => {
@@ -23,7 +23,7 @@ const Menu: React.FC = () => {
         const path = location.pathname;
 
         // Special handling: business related paths
-        if (path.startsWith('/business')) {
+        if (isBusinessRelatedPage(path)) {
             return PrimaryNavKey.Business;
         }
 
@@ -39,7 +39,7 @@ const Menu: React.FC = () => {
             // Special handling for business and business set
             if (key === PrimaryNavKey.Business) {
                 // Check if current path is already under business
-                if (location.pathname.startsWith('/business')) {
+                if (isBusinessRelatedPage(location.pathname)) {
                     // If already in a specific business path, do nothing
                     return;
                 }

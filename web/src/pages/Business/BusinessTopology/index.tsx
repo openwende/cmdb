@@ -8,16 +8,7 @@ import NodeInfo from './NodeInfo';
 import './style.css';
 import { TreeData } from '../Types';
 import { findNodeAndParents } from '../utils';
-import { getBusinessTopologyPath, getTransferHostPath } from '../../../utils/routes';
-
-// Get business ID from URL
-const getBusinessIdFromUrl = (): string => {
-    const pathSegments = window.location.pathname.split('/');
-    if (pathSegments.length >= 3 && (pathSegments[1] === 'business' || pathSegments[1] === 'business-set')) {
-        return pathSegments[2];
-    }
-    return '';
-};
+import { getBusinessTopologyPath, getTransferHostPath, getBusinessIdFromUrl } from '../../../utils/routes';
 
 const BusinessTopology: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();

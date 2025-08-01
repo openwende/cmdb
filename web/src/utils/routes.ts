@@ -1,41 +1,137 @@
 /**
- * 定义应用程序中的路由路径构建函数
- * 这些函数用于生成标准化的路由路径，确保整个应用中路由格式一致
+ * Route path building functions for the application
+ * These functions are used to generate standardized route paths, ensuring consistent route formats throughout the application
  */
 
+import { BusinessType } from '../store/BusinessStore';
+
 /**
- * 生成业务拓扑页面路径
- * @param id 业务ID
- * @returns 业务拓扑页面完整路径
+ * Generate business topology page path
+ * @param id Business ID
+ * @returns Complete business topology page path
  */
 export const getBusinessTopologyPath = (id: number | string): string => {
   return `/business/${id}/topology`;
 };
 
 /**
- * 生成业务集拓扑页面路径
- * @param id 业务集ID
- * @returns 业务集拓扑页面完整路径
+ * Generate business set topology page path
+ * @param id Business set ID
+ * @returns Complete business set topology page path
  */
 export const getBusinessSetTopologyPath = (id: number | string): string => {
   return `/business-set/${id}/topology`;
 };
 
 /**
- * 生成业务或业务集拓扑页面路径
- * @param id 业务或业务集ID
- * @param isBusinessSet 是否为业务集
- * @returns 对应的拓扑页面完整路径
+ * Generate business or business set topology page path
+ * @param id Business or business set ID
+ * @param isBusinessSet Whether it is a business set
+ * @returns Corresponding topology page complete path
  */
 export const getEntityTopologyPath = (id: number | string, isBusinessSet: boolean = false): string => {
   return isBusinessSet ? getBusinessSetTopologyPath(id) : getBusinessTopologyPath(id);
 };
 
 /**
- * 生成主机迁移页面路径
- * @param id 业务ID
- * @returns 主机迁移页面完整路径
+ * Generate host transfer page path
+ * @param id Business ID
+ * @returns Complete host transfer page path
  */
 export const getTransferHostPath = (id: number | string): string => {
   return `${getBusinessTopologyPath(id)}/transferHost`;
+};
+
+/**
+ * Check if current path is a business-related page
+ * @param pathname Current page path
+ * @returns Whether it is a business-related page
+ */
+export const isBusinessPage = (pathname: string): boolean => {
+  return pathname.startsWith('/business/');
+};
+
+/**
+ * Check if current path is a business set related page
+ * @param pathname Current page path
+ * @returns Whether it is a business set related page
+ */
+export const isBusinessSetPage = (pathname: string): boolean => {
+  return pathname.startsWith('/business-set/');
+};
+
+/**
+ * Check if current path is a business or business set related page
+ * @param pathname Current page path
+ * @returns Whether it is a business or business set related page
+ */
+export const isBusinessRelatedPage = (pathname: string): boolean => {
+  return isBusinessPage(pathname) || isBusinessSetPage(pathname);
+};
+
+/**
+ * Build business or business set related page path
+ * @param pathSegments Current path split into array
+ * @param entityType Entity type ('business' | 'business-set')
+ * @param itemPath Target page path
+ * @returns Complete built path, or null if unable to build
+ */
+export const buildEntityPath = (
+  pathSegments: string[],
+  entityType: 'business' | 'business-set',
+  itemPath: string
+): string | null => {
+  if (pathSegments.length >= 3) {
+    const entityId = pathSegments[2];
+    if (entityId) {
+      return `/${entityType}/${entityId}/${itemPath}`;
+    }
+  }
+  return null;
+};
+
+/**
+ * Parse business ID and type information from URL
+ * @param pathname Current page path, uses window.location.pathname if not provided
+ * @returns Object containing ID and type, or null if parsing fails
+ */
+export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type: BusinessType } | null => {
+  const path = pathname || window.location.pathname;
+  const pathSegments = path.split('/');
+
+  // Check if path is business path: /business/:businessId/...
+  if (pathSegments.length >= 3 && pathSegments[1] === 'business') {
+    const id = pathSegments[2];
+    // Ensure ID is not empty and is a valid number
+    if (id && !isNaN(Number(id))) {
+      return {
+        id: Number(id),
+        type: BusinessType.Business
+      };
+    }
+  }
+
+  // Check if path is business set path: /business-set/:businessSetId/...
+  if (pathSegments.length >= 3 && pathSegments[1] === 'business-set') {
+    const id = pathSegments[2];
+    // Ensure ID is not empty and is a valid number
+    if (id && !isNaN(Number(id))) {
+      return {
+        id: Number(id),
+        type: BusinessType.BusinessSet
+      };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Get business ID from URL
+ * @param pathname Current page path, uses window.location.pathname if not provided
+ * @returns Business ID number, returns 0 if parsing fails
+ */
+export const getBusinessIdFromUrl = (pathname?: string): number => {
+  const result = parseBusinessInfoFromUrl(pathname);
+  return result ? result.id : 0;
 };

@@ -9,6 +9,7 @@ import Footer from '../Footer';
 import { routes } from '../../../routes';
 import { PrimaryNavKey } from '../../../routes/Types';
 import './style.css';
+import { isBusinessPage, isBusinessSetPage } from '@/utils/routes';
 
 const MainLayout: React.FC = () => {
     const location = useLocation();
@@ -16,12 +17,12 @@ const MainLayout: React.FC = () => {
     // Determine which top-level section we're in
     const getCurrentTopLevel = () => {
         const path = location.pathname;
-        // Special case: when path starts with /business, match to business route
-        if (path.startsWith('/business')) {
+        // Special case: when it is business path, match to business route
+        if (isBusinessPage(path)) {
             return routes.find(nav => nav.key === PrimaryNavKey.Business);
         }
-        // Special case: when path starts with /business-set, match to business set route
-        if (path.startsWith('/business-set')) {
+        // Special case: when it is business set path, match to business set route
+        if (isBusinessSetPage(path)) {
             return routes.find(nav => nav.key === PrimaryNavKey.BusinessSet);
         }
         // Normal case

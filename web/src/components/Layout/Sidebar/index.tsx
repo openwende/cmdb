@@ -6,6 +6,12 @@ import { NavigationItem, PrimaryNavKey } from "../../../routes/Types";
 import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
 import BusinessSelector from "../../Business/BusinessSelector";
 import { routes } from "../../../routes";
+import {
+    isBusinessSetPage,
+    isBusinessPage,
+    isBusinessRelatedPage,
+    buildEntityPath
+} from "../../../utils/routes";
 
 const { Sider } = Layout;
 
@@ -30,9 +36,11 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
         if (!currentSection) return [];
 
         // Check if the path is for a business set
-        if (location.pathname.startsWith('/business-set')) {
+        if (isBusinessSetPage(location.pathname)) {
             // Find business set configuration from routes
-            const businessSetRoute = routes.find((route: NavigationItem) => route.key === PrimaryNavKey.BusinessSet);
+            const businessSetRoute = routes.find((route: NavigationItem) => {
+                return route.key === PrimaryNavKey.BusinessSet;
+            });
             return businessSetRoute?.children || [];
         }
 
@@ -47,19 +55,23 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
         const path = location.pathname;
         if (sidebarItems.length > 0) {
             // Special handling for business set paths
-            if (path.startsWith('/business-set/')) {
+            if (isBusinessSetPage(path)) {
                 // Extract current page type from path
                 const pathSegments = path.split('/');
                 if (pathSegments.length >= 4) {
                     // Get the last segment as the current page type
                     const pageType = pathSegments[3]; // e.g., topology
                     // Find the matching item in sidebar items
-                    const selectedItem = sidebarItems.find((item: NavigationItem) => item.path === pageType);
+                    const selectedItem = sidebarItems.find((item: NavigationItem) => {
+                        return item.path === pageType;
+                    });
                     return selectedItem ? selectedItem.key : '';
                 }
             } else {
                 // Regular path handling
-                const selectedItem = sidebarItems.find((item: NavigationItem) => path.endsWith(item.path));
+                const selectedItem = sidebarItems.find((item: NavigationItem) => {
+                    return path.endsWith(item.path);
+                });
                 return selectedItem ? selectedItem.key : '';
             }
         }
@@ -74,32 +86,24 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
             let fullPath = '';
 
             // Check if current path is business related
-            if (location.pathname.startsWith('/business/')) {
-                if (pathSegments.length >= 3) {
-                    // Business path: replace :businessId parameter
-                    const businessId = pathSegments[2];
-                    if (businessId && businessId !== ':businessId') {
-                        fullPath = `/business/${businessId}/${item.path}`;
-                    } else {
-                        // If no valid business ID, return to business home page
-                        navigate('/business');
-                        return;
-                    }
+            if (isBusinessPage(location.pathname)) {
+                const path = buildEntityPath(pathSegments, 'business', item.path);
+                if (path === null) {
+                    // If no valid entity ID, return to business home page
+                    navigate('/business');
+                    return;
                 }
+                fullPath = path;
             }
             // Check if current path is business set related
-            else if (location.pathname.startsWith('/business-set/')) {
-                if (pathSegments.length >= 3) {
-                    // Business set path: replace :businessSetId parameter
-                    const businessSetId = pathSegments[2];
-                    if (businessSetId && businessSetId !== ':businessSetId') {
-                        fullPath = `/business-set/${businessSetId}/${item.path}`;
-                    } else {
-                        // If no valid business set ID, return to business set home page
-                        navigate('/business-set');
-                        return;
-                    }
+            else if (isBusinessSetPage(location.pathname)) {
+                const path = buildEntityPath(pathSegments, 'business-set', item.path);
+                if (path === null) {
+                    // If no valid entity ID, return to business set home page
+                    navigate('/business-set');
+                    return;
                 }
+                fullPath = path;
             }
             // Other paths
             else if (currentSection) {
@@ -114,7 +118,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
     }
 
     // Check if we're in business or business set related section
-    const isBusinessRelated = location.pathname.startsWith('/business');
+    const isBusinessRelated = isBusinessRelatedPage(location.pathname);
 
     return (
         <Fragment>

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Select, Spin } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBusinessStore, BusinessType } from '../../../store/BusinessStore';
-import { getBusinessTopologyPath, getBusinessSetTopologyPath } from '../../../utils/routes';
+import { getBusinessTopologyPath, getBusinessSetTopologyPath, isBusinessRelatedPage, parseBusinessInfoFromUrl } from '../../../utils/routes';
 import './style.css';
 
 const SELECTOR_COLLAPSED_WIDTH = 42;
@@ -33,43 +33,15 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     }, [loadBusinessData]);
 
     // Parse business ID from URL
-    const getBusinessIdFromUrl = (): { id: string; type: BusinessType } | null => {
-        const pathSegments = location.pathname.split('/');
-
-        // Check if path is business path: /business/:businessId/...
-        if (pathSegments.length >= 3 && pathSegments[1] === 'business') {
-            const id = pathSegments[2];
-            // Ensure ID is a number and not empty
-            if (id && !isNaN(Number(id))) {
-                return {
-                    id,
-                    type: BusinessType.Business
-                };
-            }
-        }
-
-        // Check if path is business set path: /business-set/:businessSetId/...
-        if (pathSegments.length >= 3 && pathSegments[1] === 'business-set') {
-            const id = pathSegments[2];
-            // Ensure ID is a number and not empty
-            if (id && !isNaN(Number(id))) {
-                return {
-                    id,
-                    type: BusinessType.BusinessSet
-                };
-            }
-        }
-
-        return null;
-    };
+    // This function is now removed and replaced with the utility function from routes.ts
 
     // Update current business when URL changes
     useEffect(() => {
-        const businessInfo = getBusinessIdFromUrl();
+        const businessInfo = parseBusinessInfoFromUrl(location.pathname);
 
         if (businessInfo) {
             const { id, type } = businessInfo;
-            const business = getBusinessById(id, type);
+            const business = getBusinessById(id.toString(), type);
 
             if (business) {
                 setCurrentBusiness(business);
@@ -107,7 +79,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     };
 
     // Show selector in business or business set pages
-    const isBusinessPath = location.pathname.startsWith('/business');
+    const isBusinessPath = isBusinessRelatedPage(location.pathname);
     if (!isBusinessPath) {
         return null;
     }
