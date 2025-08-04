@@ -28,7 +28,8 @@ export enum PrimaryNavKey {
 export enum BusinessNavKey {
     Topology = 'topology',
     Template = 'template',
-    TransferHost = 'transferHost'
+    TransferHost = 'transferHost',
+    DynamicGroup = 'dynamicGroup'
 }
 
 export enum BusinessSetNavKey {

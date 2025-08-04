@@ -1,0 +1,38 @@
+.dynamic-group {
+    background-color: #fff;
+    margin: 12px 20px;
+    padding: 15px;
+
+    .ant-table {
+        margin-bottom: 16px;
+    }
+
+    .dynamic-group-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+
+        .header-operation {
+            display: flex;
+            gap: 12px;
+        }
+
+        .header-search {
+            display: flex;
+            align-items: center;
+
+            .search-select {
+                width: 120px;
+            }
+
+            .search-input {
+                width: 280px;
+            }
+
+            .search-date-picker {
+                width: 280px;
+            }
+        }
+    }
+}

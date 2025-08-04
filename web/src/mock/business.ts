@@ -986,3 +986,123 @@ export const listenIPOptions = {
     "::"
   ]
 };
+
+/**
+ * 动态分组
+*/
+// 动态分组列表
+export const dynamicGroupList = {
+  "count": 3,
+  "info": [
+    {
+      "bk_biz_id": 2,
+      "id": "9d3d9c48-7107-11f0-b907-0242ac110002",
+      "name": "group1",
+      "bk_obj_id": "host",
+      "info": {
+        "condition": [
+          {
+            "bk_obj_id": "host",
+            "condition": [
+              {
+                "field": "bk_province_name",
+                "operator": "$in",
+                "value": [
+                  "110000",
+                  "140000"
+                ]
+              }
+            ]
+          }
+        ],
+        "variable_condition": [
+          {
+            "bk_obj_id": "host",
+            "condition": [
+              {
+                "field": "bk_disk",
+                "operator": "$eq",
+                "value": 1
+              },
+              {
+                "field": "bk_addressing",
+                "operator": "$in",
+                "value": [
+                  "static"
+                ]
+              },
+              {
+                "field": "bk_created_by",
+                "operator": "$in",
+                "value": [
+                  "bk-cmdb"
+                ]
+              },
+              {
+                "field": "bk_cloud_zone",
+                "operator": "$in",
+                "value": [
+                  "shanghai"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "create_user": "bk-cmdb",
+      "modify_user": "bk-cmdb",
+      "create_time": "2025-08-04T07:49:56.525Z",
+      "last_time": "2025-08-04T07:49:56.525Z"
+    },
+    {
+      "bk_biz_id": 2,
+      "id": "8c2c8b37-6006-10e0-a906-0242ac110003",
+      "name": "生产环境主机",
+      "bk_obj_id": "host",
+      "info": {
+        "condition": [
+          {
+            "bk_obj_id": "host",
+            "condition": [
+              {
+                "field": "bk_state",
+                "operator": "$eq",
+                "value": "运行中"
+              }
+            ]
+          }
+        ],
+        "variable_condition": []
+      },
+      "create_user": "admin",
+      "modify_user": "admin",
+      "create_time": "2025-08-03T10:30:20.123Z",
+      "last_time": "2025-08-04T15:22:10.456Z"
+    },
+    {
+      "bk_biz_id": 2,
+      "id": "7b1b7a26-5005-0fe0-9905-0242ac110004",
+      "name": "测试服务器组",
+      "bk_obj_id": "host",
+      "info": {
+        "condition": [
+          {
+            "bk_obj_id": "host",
+            "condition": [
+              {
+                "field": "bk_host_name",
+                "operator": "$regex",
+                "value": "test.*"
+              }
+            ]
+          }
+        ],
+        "variable_condition": []
+      },
+      "create_user": "tester",
+      "modify_user": "bk-cmdb",
+      "create_time": "2025-08-02T14:15:30.789Z",
+      "last_time": "2025-08-04T09:45:55.321Z"
+    }
+  ]
+};

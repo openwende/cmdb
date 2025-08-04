@@ -8,6 +8,7 @@ const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
 const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/components/TransferHost'));
 const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
+const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
 const ResourcePage = lazy(() => import('../pages/Resource'));
 const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
 const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
@@ -62,6 +63,13 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.Template,
         path: 'template',
         element: withSuspense(ServiceTemplate),
+        icon: <PieChartOutlined />
+      },
+      {
+        name: '动态分组',
+        key: BusinessNavKey.DynamicGroup,
+        path: 'dynamicGroup',
+        element: withSuspense(DynamicGroup),
         icon: <PieChartOutlined />
       }
     ]
