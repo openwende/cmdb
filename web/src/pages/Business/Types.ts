@@ -49,6 +49,64 @@ export enum AppendMenuItemKey {
 export enum RemoveMenuItemKey {
     CurrentModule = "currentModule"
 }
+
+/**
+ * Dynamic Group Types
+ */
+export interface DynamicGroupProperty {
+    id: number;
+    bk_obj_id: string;
+    bk_property_id: string;
+    bk_property_name: string;
+    bk_property_type: string;
+    bk_property_group: string;
+    bk_property_group_name: string;
+    option?: any;
+    placeholder?: string;
+    unit?: string;
+    description?: string;
+    editable: boolean;
+    ispre: boolean;
+    isrequired: boolean;
+    isreadonly: boolean;
+    isonly: boolean;
+    bk_issystem: boolean;
+    bk_isapi: boolean;
+    ismultiple?: boolean;
+}
+
+export interface DynamicGroupCondition {
+    field: string;
+    operator: string;
+    value: any;
+}
+
+export interface DynamicGroupConditionGroup {
+    bk_obj_id: string;
+    condition: DynamicGroupCondition[];
+}
+
+export interface DynamicGroupFormData {
+    name: string;
+    bk_obj_id: string;
+    bk_biz_id?: number;
+    condition: DynamicGroupConditionGroup[];
+    variable_condition?: DynamicGroupConditionGroup[];
+}
+
+export interface PropertyCondition {
+    id: string;
+    property: DynamicGroupProperty;
+    operator: string;
+    value: any;
+    conditionType: 'condition' | 'variable_condition';
+    isVariable?: boolean;
+}
+
+export interface DynamicGroupPreviewData {
+    count: number;
+    info: any[];
+}
 // "Copy" dropdown menu item key
 export enum CopyMenuItemKey {
     Id = 'id',

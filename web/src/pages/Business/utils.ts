@@ -1,5 +1,6 @@
 import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData } from "./Types";
 import { CopyMenuItemKey as HostCopyKey } from './Types';
+import { DYNAMIC_GROUP_OPERATORS } from './constants';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -48,12 +49,113 @@ export function getFormattedTopoPath(
     if (matchedNode) {
         // Reverse the array to make the order from the outer most to the inner most
         const reversedPath = [...matchedNode.topo_path].reverse();
-        // Extract the bk_ins_name from reversed path
-        const breadcrumbParts = reversedPath.map(node => node.bk_inst_name);
-        return breadcrumbParts.join(' / ');
-    } else {
-        return "";
+
+        // Create a formatted path string
+        return reversedPath.map((pathItem: any) => pathItem.bk_inst_name).join(" / ");
     }
+
+    return "";
+}
+
+/**
+ * Dynamic Group Utils
+ */
+export function buildPropertyMap(properties: any[]): Record<string, any[]> {
+    const propertyMap: Record<string, any[]> = {
+        host: [],
+        module: [],
+        set: []
+    };
+    
+    properties.forEach(property => {
+        const objId = property.bk_obj_id;
+        if (propertyMap[objId]) {
+            propertyMap[objId].push(property);
+        }
+    });
+    
+    return propertyMap;
+}
+
+export function getOperatorsByPropertyType(propertyType: string): string[] {
+    const { EQ, NE, IN, NIN, LIKE, REGEX, RANGE, GTE, LTE } = DYNAMIC_GROUP_OPERATORS;
+    
+    switch (propertyType) {
+        case 'int':
+        case 'float':
+            return [EQ, NE, GTE, LTE, RANGE, IN, NIN];
+        case 'singlechar':
+        case 'longchar':
+            return [EQ, NE, LIKE, REGEX, IN, NIN];
+        case 'enum':
+        case 'enummulti':
+            return [IN, NIN];
+        case 'bool':
+            return [EQ, NE];
+        case 'date':
+        case 'time':
+            return [RANGE];
+        case 'service-template':
+            return [IN, NIN];
+        default:
+            return [EQ, NE, IN, NIN];
+    }
+}
+
+export function transformConditionForSubmit(conditions: any[]): any[] {
+    const groupedConditions: Record<string, any> = {};
+    
+    conditions.forEach(condition => {
+        const { property, operator, value } = condition;
+        const objId = property.bk_obj_id;
+        
+        if (!groupedConditions[objId]) {
+            groupedConditions[objId] = {
+                bk_obj_id: objId,
+                condition: []
+            };
+        }
+        
+        groupedConditions[objId].condition.push({
+            field: property.bk_property_id,
+            operator,
+            value
+        });
+    });
+    
+    return Object.values(groupedConditions);
+}
+
+export function parseConditionFromDetail(detail: any): any[] {
+    const allConditions: any[] = [];
+    
+    // Parse locked conditions
+    if (detail.info?.condition) {
+        detail.info.condition.forEach((group: any) => {
+            group.condition.forEach((cond: any) => {
+                allConditions.push({
+                    ...cond,
+                    bk_obj_id: group.bk_obj_id,
+                    conditionType: 'condition'
+                });
+            });
+        });
+    }
+    
+    // Parse variable conditions
+    if (detail.info?.variable_condition) {
+        detail.info.variable_condition.forEach((group: any) => {
+            group.condition.forEach((cond: any) => {
+                allConditions.push({
+                    ...cond,
+                    bk_obj_id: group.bk_obj_id,
+                    conditionType: 'variable_condition'
+                });
+            });
+        });
+    }
+    
+    return allConditions;
 }
 
 /**

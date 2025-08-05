@@ -38,3 +38,55 @@ export const transferBaseMenuItems = [
     { key: TransferMenuItemType.hostPool, label: '主机池' },
     { key: TransferMenuItemType.otherBusiness, label: '其他业务' },
 ] as const;
+
+/**
+ * Dynamic Group Constants
+ */
+export const DYNAMIC_GROUP_CONDITION_TYPES = {
+    VARIABLE: 'variable_condition',
+    LOCKED: 'condition'
+} as const;
+
+export const DYNAMIC_GROUP_OPERATORS = {
+    EQ: '$eq',
+    NE: '$ne',
+    IN: '$in',
+    NIN: '$nin',
+    LIKE: '$like',
+    REGEX: '$regex',
+    RANGE: '$range',
+    GTE: '$gte',
+    LTE: '$lte'
+} as const;
+
+export const DYNAMIC_GROUP_FIELD_TYPES = {
+    SINGLECHAR: 'singlechar',
+    LONGCHAR: 'longchar',
+    INT: 'int',
+    FLOAT: 'float',
+    ENUM: 'enum',
+    ENUMMULTI: 'enummulti',
+    BOOL: 'bool',
+    DATE: 'date',
+    TIME: 'time',
+    USER: 'objuser',
+    SERVICE_TEMPLATE: 'service-template'
+} as const;
+
+export const DYNAMIC_GROUP_OBJECT_TYPES = {
+    HOST: 'host',
+    MODULE: 'module',
+    SET: 'set'
+} as const;
+
+export const OPERATOR_LABELS = {
+    [DYNAMIC_GROUP_OPERATORS.EQ]: '等于',
+    [DYNAMIC_GROUP_OPERATORS.NE]: '不等于',
+    [DYNAMIC_GROUP_OPERATORS.IN]: '包含',
+    [DYNAMIC_GROUP_OPERATORS.NIN]: '不包含',
+    [DYNAMIC_GROUP_OPERATORS.LIKE]: '包含',
+    [DYNAMIC_GROUP_OPERATORS.REGEX]: '正则',
+    [DYNAMIC_GROUP_OPERATORS.RANGE]: '范围',
+    [DYNAMIC_GROUP_OPERATORS.GTE]: '大于等于',
+    [DYNAMIC_GROUP_OPERATORS.LTE]: '小于等于'
+} as const;

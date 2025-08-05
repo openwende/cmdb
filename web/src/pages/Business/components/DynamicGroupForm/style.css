@@ -1,0 +1,84 @@
+/* DynamicGroupForm 样式 */
+.dynamic-group-drawer .ant-drawer-body {
+  padding: 24px;
+}
+
+.dynamic-group-drawer .ant-form-item {
+  margin-bottom: 16px;
+}
+
+.dynamic-group-drawer .ant-collapse {
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.dynamic-group-drawer .ant-collapse-header {
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.dynamic-group-drawer .ant-collapse-content {
+  border-top: none;
+}
+
+.dynamic-group-drawer .ant-card {
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+}
+
+.dynamic-group-drawer .ant-card-head {
+  background: #fafafa;
+}
+
+.dynamic-group-drawer .ant-empty {
+  margin: 20px 0;
+}
+
+/* FormTarget Radio样式 */
+.form-target-radio-group {
+  display: flex;
+}
+
+.form-target-radio-group .ant-radio-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  background: #fff;
+  transition: all 0.2s;
+  flex: 1;
+  min-width: 140px;
+}
+
+.form-target-radio-group .ant-radio-wrapper:hover {
+  border-color: #1890ff;
+}
+
+.form-target-radio-group .ant-radio-wrapper-checked {
+  border-color: #1890ff;
+}
+
+.form-target-radio-group .ant-radio {
+  margin-top: 0;
+}
+
+.radio-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.radio-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #262626;
+  line-height: 1.4;
+  margin-bottom: 2px;
+}
+
+.radio-desc {
+  font-size: 12px;
+  color: #8c8c8c;
+  line-height: 1.3;
+}

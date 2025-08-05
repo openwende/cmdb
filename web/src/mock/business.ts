@@ -1106,3 +1106,3640 @@ export const dynamicGroupList = {
     }
   ]
 };
+// 动态分组条件
+export const dynamicGroupCondition = [
+  {
+    "bk_biz_id": 0,
+    "id": 171,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_addressing",
+    "bk_property_name": "寻址方式",
+    "bk_property_group": "default",
+    "bk_property_index": 21,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "static",
+        "is_default": true,
+        "name": "静态",
+        "type": "text"
+      },
+      {
+        "id": "dynamic",
+        "is_default": false,
+        "name": "动态",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:33",
+    "last_time": "2025-08-04 06:46:33",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 158,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_agent_id",
+    "bk_property_name": "GSE Agent ID",
+    "bk_property_group": "default",
+    "bk_property_index": 19,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "^[a-zA-Z0-9]{0,64}$",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:33",
+    "last_time": "2025-08-04 06:46:33",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 30,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_asset_id",
+    "bk_property_name": "固资编号",
+    "bk_property_group": "default",
+    "bk_property_index": 4,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 29,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_bak_operator",
+    "bk_property_name": "备份维护人",
+    "bk_property_group": "default",
+    "bk_property_index": 3,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": true,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 146,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_host_status",
+    "bk_property_name": "云主机状态",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "未知",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "启动中",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "运行中",
+        "type": "text"
+      },
+      {
+        "id": "4",
+        "is_default": false,
+        "name": "停止中",
+        "type": "text"
+      },
+      {
+        "id": "5",
+        "is_default": false,
+        "name": "已停止",
+        "type": "text"
+      },
+      {
+        "id": "6",
+        "is_default": false,
+        "name": "已销毁",
+        "type": "text"
+      }
+    ],
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:32",
+    "last_time": "2025-08-04 06:46:32",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 35,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_id",
+    "bk_property_name": "管控区域",
+    "bk_property_group": "default",
+    "bk_property_index": 9,
+    "unit": "",
+    "placeholder": "管控区域为“未分配”的主机可在节点管理中重新指定管控区域并安装Agent",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "foreignkey",
+    "option": null,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 145,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_inst_id",
+    "bk_property_name": "云主机实例ID",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:32",
+    "last_time": "2025-08-04 06:46:32",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 220,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_region",
+    "bk_property_name": "云地域（Region）",
+    "bk_property_group": "default",
+    "bk_property_index": 22,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:34",
+    "last_time": "2025-08-04 06:46:34",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 147,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_vendor",
+    "bk_property_name": "云厂商",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "亚马逊云",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "腾讯云",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "GCP",
+        "type": "text"
+      },
+      {
+        "id": "4",
+        "is_default": false,
+        "name": "微软云",
+        "type": "text"
+      },
+      {
+        "id": "5",
+        "is_default": false,
+        "name": "企业私有云",
+        "type": "text"
+      },
+      {
+        "id": "6",
+        "is_default": false,
+        "name": "雨花石云",
+        "type": "text"
+      },
+      {
+        "id": "7",
+        "is_default": false,
+        "name": "Oracle云",
+        "type": "text"
+      },
+      {
+        "id": "8",
+        "is_default": false,
+        "name": "IBM云",
+        "type": "text"
+      },
+      {
+        "id": "9",
+        "is_default": false,
+        "name": "阿里云",
+        "type": "text"
+      },
+      {
+        "id": "10",
+        "is_default": false,
+        "name": "中国电信",
+        "type": "text"
+      },
+      {
+        "id": "11",
+        "is_default": false,
+        "name": "优云",
+        "type": "text"
+      },
+      {
+        "id": "12",
+        "is_default": false,
+        "name": "美团云",
+        "type": "text"
+      },
+      {
+        "id": "13",
+        "is_default": false,
+        "name": "金山云",
+        "type": "text"
+      },
+      {
+        "id": "14",
+        "is_default": false,
+        "name": "百度云",
+        "type": "text"
+      },
+      {
+        "id": "15",
+        "is_default": false,
+        "name": "华为云",
+        "type": "text"
+      },
+      {
+        "id": "16",
+        "is_default": false,
+        "name": "首都云",
+        "type": "text"
+      }
+    ],
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:32",
+    "last_time": "2025-08-04 06:46:32",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 221,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cloud_zone",
+    "bk_property_name": "云可用区（Zone）",
+    "bk_property_group": "default",
+    "bk_property_index": 23,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:34",
+    "last_time": "2025-08-04 06:46:34",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 32,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_comment",
+    "bk_property_name": "备注",
+    "bk_property_group": "default",
+    "bk_property_index": 6,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "longchar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 44,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cpu",
+    "bk_property_name": "CPU逻辑核心数",
+    "bk_property_group": "auto",
+    "bk_property_index": 5,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "int",
+    "option": {
+      "max": "1000000",
+      "min": "1"
+    },
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 149,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cpu_architecture",
+    "bk_property_name": "CPU架构",
+    "bk_property_group": "auto",
+    "bk_property_index": 16,
+    "unit": "",
+    "placeholder": "选择CPU架构类型，如X86或ARM",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "x86",
+        "is_default": true,
+        "name": "X86",
+        "type": "text"
+      },
+      {
+        "id": "arm",
+        "is_default": false,
+        "name": "ARM",
+        "type": "text"
+      }
+    ],
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:32",
+    "last_time": "2025-08-04 06:46:32",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 46,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_cpu_module",
+    "bk_property_name": "CPU型号",
+    "bk_property_group": "auto",
+    "bk_property_index": 7,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 172,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_created_at",
+    "bk_property_name": "创建时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 173,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_created_by",
+    "bk_property_name": "创建人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 48,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_disk",
+    "bk_property_name": "磁盘容量(GB)",
+    "bk_property_group": "auto",
+    "bk_property_index": 9,
+    "unit": "GB",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "int",
+    "option": {
+      "max": "100000000",
+      "min": "1"
+    },
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 26,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_host_innerip",
+    "bk_property_name": "内网IPv4",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "^((1?\\d{1,2}|2[0-4]\\d|25[0-5])[.]){3}(1?\\d{1,2}|2[0-4]\\d|25[0-5])(,((1?\\d{1,2}|2[0-4]\\d|25[0-5])[.]){3}(1?\\d{1,2}|2[0-4]\\d|25[0-5]))*$",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 156,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_host_innerip_v6",
+    "bk_property_name": "内网IPv6",
+    "bk_property_group": "default",
+    "bk_property_index": 17,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?(((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?)*$",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:33",
+    "last_time": "2025-08-04 06:46:33",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 39,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_host_name",
+    "bk_property_name": "主机名称",
+    "bk_property_group": "auto",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 27,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_host_outerip",
+    "bk_property_name": "外网IPv4",
+    "bk_property_group": "default",
+    "bk_property_index": 1,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "^((1?\\d{1,2}|2[0-4]\\d|25[0-5])[.]){3}(1?\\d{1,2}|2[0-4]\\d|25[0-5])(,((1?\\d{1,2}|2[0-4]\\d|25[0-5])[.]){3}(1?\\d{1,2}|2[0-4]\\d|25[0-5]))*$",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 157,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_host_outerip_v6",
+    "bk_property_name": "外网IPv6",
+    "bk_property_group": "default",
+    "bk_property_index": 18,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?(((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?)*$",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:33",
+    "last_time": "2025-08-04 06:46:33",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 38,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_isp_name",
+    "bk_property_name": "所属运营商",
+    "bk_property_group": "default",
+    "bk_property_index": 12,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "0",
+        "is_default": false,
+        "name": "其它",
+        "type": "text"
+      },
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "电信",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "联通",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "移动",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 49,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_mac",
+    "bk_property_name": "内网MAC地址",
+    "bk_property_group": "auto",
+    "bk_property_index": 10,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 47,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_mem",
+    "bk_property_name": "内存容量(MB)",
+    "bk_property_group": "auto",
+    "bk_property_index": 8,
+    "unit": "MB",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "int",
+    "option": {
+      "max": "100000000",
+      "min": "1"
+    },
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 43,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_os_bit",
+    "bk_property_name": "操作系统位数",
+    "bk_property_group": "auto",
+    "bk_property_index": 4,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 41,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_os_name",
+    "bk_property_name": "操作系统名称",
+    "bk_property_group": "auto",
+    "bk_property_index": 2,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 40,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_os_type",
+    "bk_property_name": "操作系统类型",
+    "bk_property_group": "auto",
+    "bk_property_index": 1,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "Linux",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "Windows",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "AIX",
+        "type": "text"
+      },
+      {
+        "id": "4",
+        "is_default": false,
+        "name": "Unix",
+        "type": "text"
+      },
+      {
+        "id": "5",
+        "is_default": false,
+        "name": "Solaris",
+        "type": "text"
+      },
+      {
+        "id": "7",
+        "is_default": false,
+        "name": "FreeBSD",
+        "type": "text"
+      },
+      {
+        "id": "8",
+        "is_default": false,
+        "name": "MacOS",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 42,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_os_version",
+    "bk_property_name": "操作系统版本",
+    "bk_property_group": "auto",
+    "bk_property_index": 3,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 50,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_outer_mac",
+    "bk_property_name": "外网MAC地址",
+    "bk_property_group": "auto",
+    "bk_property_index": 11,
+    "unit": "",
+    "placeholder": "可人工设置。若需自动发现，请在主机上安装GseAgent和采集器。",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "主机系统配置"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 37,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_province_name",
+    "bk_property_name": "所在省份",
+    "bk_property_group": "default",
+    "bk_property_index": 11,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "110000",
+        "is_default": false,
+        "name": "北京市",
+        "type": "text"
+      },
+      {
+        "id": "120000",
+        "is_default": false,
+        "name": "天津市",
+        "type": "text"
+      },
+      {
+        "id": "130000",
+        "is_default": false,
+        "name": "河北省",
+        "type": "text"
+      },
+      {
+        "id": "140000",
+        "is_default": false,
+        "name": "山西省",
+        "type": "text"
+      },
+      {
+        "id": "150000",
+        "is_default": false,
+        "name": "内蒙古自治区",
+        "type": "text"
+      },
+      {
+        "id": "210000",
+        "is_default": false,
+        "name": "辽宁省",
+        "type": "text"
+      },
+      {
+        "id": "220000",
+        "is_default": false,
+        "name": "吉林省",
+        "type": "text"
+      },
+      {
+        "id": "230000",
+        "is_default": false,
+        "name": "黑龙江省",
+        "type": "text"
+      },
+      {
+        "id": "310000",
+        "is_default": false,
+        "name": "上海市",
+        "type": "text"
+      },
+      {
+        "id": "320000",
+        "is_default": false,
+        "name": "江苏省",
+        "type": "text"
+      },
+      {
+        "id": "330000",
+        "is_default": false,
+        "name": "浙江省",
+        "type": "text"
+      },
+      {
+        "id": "340000",
+        "is_default": false,
+        "name": "安徽省",
+        "type": "text"
+      },
+      {
+        "id": "350000",
+        "is_default": false,
+        "name": "福建省",
+        "type": "text"
+      },
+      {
+        "id": "360000",
+        "is_default": false,
+        "name": "江西省",
+        "type": "text"
+      },
+      {
+        "id": "370000",
+        "is_default": false,
+        "name": "山东省",
+        "type": "text"
+      },
+      {
+        "id": "410000",
+        "is_default": false,
+        "name": "河南省",
+        "type": "text"
+      },
+      {
+        "id": "420000",
+        "is_default": false,
+        "name": "湖北省",
+        "type": "text"
+      },
+      {
+        "id": "430000",
+        "is_default": false,
+        "name": "湖南省",
+        "type": "text"
+      },
+      {
+        "id": "440000",
+        "is_default": false,
+        "name": "广东省",
+        "type": "text"
+      },
+      {
+        "id": "450000",
+        "is_default": false,
+        "name": "广西壮族自治区",
+        "type": "text"
+      },
+      {
+        "id": "460000",
+        "is_default": false,
+        "name": "海南省",
+        "type": "text"
+      },
+      {
+        "id": "500000",
+        "is_default": false,
+        "name": "重庆市",
+        "type": "text"
+      },
+      {
+        "id": "510000",
+        "is_default": false,
+        "name": "四川省",
+        "type": "text"
+      },
+      {
+        "id": "520000",
+        "is_default": false,
+        "name": "贵州省",
+        "type": "text"
+      },
+      {
+        "id": "530000",
+        "is_default": false,
+        "name": "云南省",
+        "type": "text"
+      },
+      {
+        "id": "540000",
+        "is_default": false,
+        "name": "西藏自治区",
+        "type": "text"
+      },
+      {
+        "id": "610000",
+        "is_default": false,
+        "name": "陕西省",
+        "type": "text"
+      },
+      {
+        "id": "620000",
+        "is_default": false,
+        "name": "甘肃省",
+        "type": "text"
+      },
+      {
+        "id": "630000",
+        "is_default": false,
+        "name": "青海省",
+        "type": "text"
+      },
+      {
+        "id": "640000",
+        "is_default": false,
+        "name": "宁夏回族自治区",
+        "type": "text"
+      },
+      {
+        "id": "650000",
+        "is_default": false,
+        "name": "新疆维吾尔自治区",
+        "type": "text"
+      },
+      {
+        "id": "710000",
+        "is_default": false,
+        "name": "台湾省",
+        "type": "text"
+      },
+      {
+        "id": "810000",
+        "is_default": false,
+        "name": "香港特别行政区",
+        "type": "text"
+      },
+      {
+        "id": "820000",
+        "is_default": false,
+        "name": "澳门特别行政区",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 33,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_service_term",
+    "bk_property_name": "质保年限",
+    "bk_property_group": "default",
+    "bk_property_index": 7,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "int",
+    "option": {
+      "max": "10",
+      "min": "1"
+    },
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 34,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_sla",
+    "bk_property_name": "SLA级别",
+    "bk_property_group": "default",
+    "bk_property_index": 8,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "L1",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "L2",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "L3",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 31,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_sn",
+    "bk_property_name": "设备SN",
+    "bk_property_group": "default",
+    "bk_property_index": 5,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 125,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_state",
+    "bk_property_name": "当前状态",
+    "bk_property_group": "default",
+    "bk_property_index": 15,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "list",
+    "option": [
+      "运营中[需告警]",
+      "运营中[无告警]",
+      "开发中[需告警]",
+      "开发中[无告警]",
+      "备用机",
+      "测试中",
+      "故障中"
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:32",
+    "last_time": "2025-08-04 06:46:32",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 36,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_state_name",
+    "bk_property_name": "所在国家",
+    "bk_property_group": "default",
+    "bk_property_index": 10,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "AR",
+        "is_default": false,
+        "name": "阿根廷",
+        "type": "text"
+      },
+      {
+        "id": "AD",
+        "is_default": false,
+        "name": "安道尔",
+        "type": "text"
+      },
+      {
+        "id": "AE",
+        "is_default": false,
+        "name": "阿联酋",
+        "type": "text"
+      },
+      {
+        "id": "AF",
+        "is_default": false,
+        "name": "阿富汗",
+        "type": "text"
+      },
+      {
+        "id": "AG",
+        "is_default": false,
+        "name": "安提瓜和巴布达",
+        "type": "text"
+      },
+      {
+        "id": "AI",
+        "is_default": false,
+        "name": "安圭拉",
+        "type": "text"
+      },
+      {
+        "id": "AL",
+        "is_default": false,
+        "name": "阿尔巴尼亚",
+        "type": "text"
+      },
+      {
+        "id": "AM",
+        "is_default": false,
+        "name": "亚美尼亚",
+        "type": "text"
+      },
+      {
+        "id": "AO",
+        "is_default": false,
+        "name": "安哥拉",
+        "type": "text"
+      },
+      {
+        "id": "AQ",
+        "is_default": false,
+        "name": "南极洲",
+        "type": "text"
+      },
+      {
+        "id": "AS",
+        "is_default": false,
+        "name": "美属萨摩亚",
+        "type": "text"
+      },
+      {
+        "id": "AT",
+        "is_default": false,
+        "name": "奥地利",
+        "type": "text"
+      },
+      {
+        "id": "AU",
+        "is_default": false,
+        "name": "澳大利亚",
+        "type": "text"
+      },
+      {
+        "id": "AW",
+        "is_default": false,
+        "name": "阿鲁巴",
+        "type": "text"
+      },
+      {
+        "id": "AX",
+        "is_default": false,
+        "name": "奥兰群岛",
+        "type": "text"
+      },
+      {
+        "id": "AZ",
+        "is_default": false,
+        "name": "阿塞拜疆",
+        "type": "text"
+      },
+      {
+        "id": "BA",
+        "is_default": false,
+        "name": "波黑",
+        "type": "text"
+      },
+      {
+        "id": "BB",
+        "is_default": false,
+        "name": "巴巴多斯",
+        "type": "text"
+      },
+      {
+        "id": "BD",
+        "is_default": false,
+        "name": "孟加拉",
+        "type": "text"
+      },
+      {
+        "id": "BE",
+        "is_default": false,
+        "name": "比利时",
+        "type": "text"
+      },
+      {
+        "id": "BF",
+        "is_default": false,
+        "name": "布基纳法索",
+        "type": "text"
+      },
+      {
+        "id": "BG",
+        "is_default": false,
+        "name": "保加利亚",
+        "type": "text"
+      },
+      {
+        "id": "BH",
+        "is_default": false,
+        "name": "巴林",
+        "type": "text"
+      },
+      {
+        "id": "BI",
+        "is_default": false,
+        "name": "布隆迪",
+        "type": "text"
+      },
+      {
+        "id": "BJ",
+        "is_default": false,
+        "name": "贝宁",
+        "type": "text"
+      },
+      {
+        "id": "BL",
+        "is_default": false,
+        "name": "圣巴泰勒米岛",
+        "type": "text"
+      },
+      {
+        "id": "BM",
+        "is_default": false,
+        "name": "百慕大",
+        "type": "text"
+      },
+      {
+        "id": "BN",
+        "is_default": false,
+        "name": "文莱",
+        "type": "text"
+      },
+      {
+        "id": "BO",
+        "is_default": false,
+        "name": "玻利维亚",
+        "type": "text"
+      },
+      {
+        "id": "BQ",
+        "is_default": false,
+        "name": "荷兰加勒比区",
+        "type": "text"
+      },
+      {
+        "id": "BR",
+        "is_default": false,
+        "name": "巴西",
+        "type": "text"
+      },
+      {
+        "id": "BS",
+        "is_default": false,
+        "name": "巴哈马",
+        "type": "text"
+      },
+      {
+        "id": "BT",
+        "is_default": false,
+        "name": "不丹",
+        "type": "text"
+      },
+      {
+        "id": "BV",
+        "is_default": false,
+        "name": "布韦岛",
+        "type": "text"
+      },
+      {
+        "id": "BW",
+        "is_default": false,
+        "name": "博茨瓦纳",
+        "type": "text"
+      },
+      {
+        "id": "BY",
+        "is_default": false,
+        "name": "白俄罗斯",
+        "type": "text"
+      },
+      {
+        "id": "BZ",
+        "is_default": false,
+        "name": "伯利兹",
+        "type": "text"
+      },
+      {
+        "id": "CA",
+        "is_default": false,
+        "name": "加拿大",
+        "type": "text"
+      },
+      {
+        "id": "CC",
+        "is_default": false,
+        "name": "科科斯群岛",
+        "type": "text"
+      },
+      {
+        "id": "CD",
+        "is_default": false,
+        "name": "刚果（金）",
+        "type": "text"
+      },
+      {
+        "id": "CF",
+        "is_default": false,
+        "name": "中非",
+        "type": "text"
+      },
+      {
+        "id": "CG",
+        "is_default": false,
+        "name": "刚果（布）",
+        "type": "text"
+      },
+      {
+        "id": "CH",
+        "is_default": false,
+        "name": "瑞士",
+        "type": "text"
+      },
+      {
+        "id": "CI",
+        "is_default": false,
+        "name": "科特迪瓦",
+        "type": "text"
+      },
+      {
+        "id": "CK",
+        "is_default": false,
+        "name": "库克群岛",
+        "type": "text"
+      },
+      {
+        "id": "CL",
+        "is_default": false,
+        "name": "智利",
+        "type": "text"
+      },
+      {
+        "id": "CM",
+        "is_default": false,
+        "name": "喀麦隆",
+        "type": "text"
+      },
+      {
+        "id": "CN",
+        "is_default": false,
+        "name": "中国",
+        "type": "text"
+      },
+      {
+        "id": "CO",
+        "is_default": false,
+        "name": "哥伦比亚",
+        "type": "text"
+      },
+      {
+        "id": "CR",
+        "is_default": false,
+        "name": "哥斯达黎加",
+        "type": "text"
+      },
+      {
+        "id": "CU",
+        "is_default": false,
+        "name": "古巴",
+        "type": "text"
+      },
+      {
+        "id": "CV",
+        "is_default": false,
+        "name": "佛得角",
+        "type": "text"
+      },
+      {
+        "id": "CW",
+        "is_default": false,
+        "name": "库拉索",
+        "type": "text"
+      },
+      {
+        "id": "CX",
+        "is_default": false,
+        "name": "圣诞岛",
+        "type": "text"
+      },
+      {
+        "id": "CY",
+        "is_default": false,
+        "name": "塞浦路斯",
+        "type": "text"
+      },
+      {
+        "id": "CZ",
+        "is_default": false,
+        "name": "捷克",
+        "type": "text"
+      },
+      {
+        "id": "DE",
+        "is_default": false,
+        "name": "德国",
+        "type": "text"
+      },
+      {
+        "id": "DJ",
+        "is_default": false,
+        "name": "吉布提",
+        "type": "text"
+      },
+      {
+        "id": "DK",
+        "is_default": false,
+        "name": "丹麦",
+        "type": "text"
+      },
+      {
+        "id": "DM",
+        "is_default": false,
+        "name": "多米尼克",
+        "type": "text"
+      },
+      {
+        "id": "DO",
+        "is_default": false,
+        "name": "多米尼加",
+        "type": "text"
+      },
+      {
+        "id": "DZ",
+        "is_default": false,
+        "name": "阿尔及利亚",
+        "type": "text"
+      },
+      {
+        "id": "EC",
+        "is_default": false,
+        "name": "厄瓜多尔",
+        "type": "text"
+      },
+      {
+        "id": "EE",
+        "is_default": false,
+        "name": "爱沙尼亚",
+        "type": "text"
+      },
+      {
+        "id": "EG",
+        "is_default": false,
+        "name": "埃及",
+        "type": "text"
+      },
+      {
+        "id": "EH",
+        "is_default": false,
+        "name": "西撒哈拉",
+        "type": "text"
+      },
+      {
+        "id": "ER",
+        "is_default": false,
+        "name": "厄立特里亚",
+        "type": "text"
+      },
+      {
+        "id": "ES",
+        "is_default": false,
+        "name": "西班牙",
+        "type": "text"
+      },
+      {
+        "id": "ET",
+        "is_default": false,
+        "name": "埃塞俄比亚",
+        "type": "text"
+      },
+      {
+        "id": "FI",
+        "is_default": false,
+        "name": "芬兰",
+        "type": "text"
+      },
+      {
+        "id": "FJ",
+        "is_default": false,
+        "name": "斐济群岛",
+        "type": "text"
+      },
+      {
+        "id": "FK",
+        "is_default": false,
+        "name": "马尔维纳斯群岛（福克兰）",
+        "type": "text"
+      },
+      {
+        "id": "FM",
+        "is_default": false,
+        "name": "密克罗尼西亚联邦",
+        "type": "text"
+      },
+      {
+        "id": "FO",
+        "is_default": false,
+        "name": "法罗群岛",
+        "type": "text"
+      },
+      {
+        "id": "FR",
+        "is_default": false,
+        "name": "法国",
+        "type": "text"
+      },
+      {
+        "id": "GA",
+        "is_default": false,
+        "name": "加蓬",
+        "type": "text"
+      },
+      {
+        "id": "GB",
+        "is_default": false,
+        "name": "英国",
+        "type": "text"
+      },
+      {
+        "id": "GD",
+        "is_default": false,
+        "name": "格林纳达",
+        "type": "text"
+      },
+      {
+        "id": "GE",
+        "is_default": false,
+        "name": "格鲁吉亚",
+        "type": "text"
+      },
+      {
+        "id": "GF",
+        "is_default": false,
+        "name": "法属圭亚那",
+        "type": "text"
+      },
+      {
+        "id": "GG",
+        "is_default": false,
+        "name": "根西岛",
+        "type": "text"
+      },
+      {
+        "id": "GH",
+        "is_default": false,
+        "name": "加纳",
+        "type": "text"
+      },
+      {
+        "id": "GI",
+        "is_default": false,
+        "name": "直布罗陀",
+        "type": "text"
+      },
+      {
+        "id": "GL",
+        "is_default": false,
+        "name": "格陵兰",
+        "type": "text"
+      },
+      {
+        "id": "GM",
+        "is_default": false,
+        "name": "冈比亚",
+        "type": "text"
+      },
+      {
+        "id": "GN",
+        "is_default": false,
+        "name": "几内亚",
+        "type": "text"
+      },
+      {
+        "id": "GP",
+        "is_default": false,
+        "name": "瓜德罗普",
+        "type": "text"
+      },
+      {
+        "id": "GQ",
+        "is_default": false,
+        "name": "赤道几内亚",
+        "type": "text"
+      },
+      {
+        "id": "GR",
+        "is_default": false,
+        "name": "希腊",
+        "type": "text"
+      },
+      {
+        "id": "GS",
+        "is_default": false,
+        "name": "南乔治亚岛和南桑威奇群岛",
+        "type": "text"
+      },
+      {
+        "id": "GT",
+        "is_default": false,
+        "name": "危地马拉",
+        "type": "text"
+      },
+      {
+        "id": "GU",
+        "is_default": false,
+        "name": "关岛",
+        "type": "text"
+      },
+      {
+        "id": "GW",
+        "is_default": false,
+        "name": "几内亚比绍",
+        "type": "text"
+      },
+      {
+        "id": "GY",
+        "is_default": false,
+        "name": "圭亚那",
+        "type": "text"
+      },
+      {
+        "id": "HM",
+        "is_default": false,
+        "name": "赫德岛和麦克唐纳群岛",
+        "type": "text"
+      },
+      {
+        "id": "HN",
+        "is_default": false,
+        "name": "洪都拉斯",
+        "type": "text"
+      },
+      {
+        "id": "HR",
+        "is_default": false,
+        "name": "克罗地亚",
+        "type": "text"
+      },
+      {
+        "id": "HT",
+        "is_default": false,
+        "name": "海地",
+        "type": "text"
+      },
+      {
+        "id": "HU",
+        "is_default": false,
+        "name": "匈牙利",
+        "type": "text"
+      },
+      {
+        "id": "ID",
+        "is_default": false,
+        "name": "印尼",
+        "type": "text"
+      },
+      {
+        "id": "IE",
+        "is_default": false,
+        "name": "爱尔兰",
+        "type": "text"
+      },
+      {
+        "id": "IL",
+        "is_default": false,
+        "name": "以色列",
+        "type": "text"
+      },
+      {
+        "id": "IM",
+        "is_default": false,
+        "name": "马恩岛",
+        "type": "text"
+      },
+      {
+        "id": "IN",
+        "is_default": false,
+        "name": "印度",
+        "type": "text"
+      },
+      {
+        "id": "IO",
+        "is_default": false,
+        "name": "英属印度洋领地",
+        "type": "text"
+      },
+      {
+        "id": "IQ",
+        "is_default": false,
+        "name": "伊拉克",
+        "type": "text"
+      },
+      {
+        "id": "IR",
+        "is_default": false,
+        "name": "伊朗",
+        "type": "text"
+      },
+      {
+        "id": "IS",
+        "is_default": false,
+        "name": "冰岛",
+        "type": "text"
+      },
+      {
+        "id": "IT",
+        "is_default": false,
+        "name": "意大利",
+        "type": "text"
+      },
+      {
+        "id": "JE",
+        "is_default": false,
+        "name": "泽西岛",
+        "type": "text"
+      },
+      {
+        "id": "JM",
+        "is_default": false,
+        "name": "牙买加",
+        "type": "text"
+      },
+      {
+        "id": "JO",
+        "is_default": false,
+        "name": "约旦",
+        "type": "text"
+      },
+      {
+        "id": "JP",
+        "is_default": false,
+        "name": "日本",
+        "type": "text"
+      },
+      {
+        "id": "KE",
+        "is_default": false,
+        "name": "肯尼亚",
+        "type": "text"
+      },
+      {
+        "id": "KG",
+        "is_default": false,
+        "name": "吉尔吉斯斯坦",
+        "type": "text"
+      },
+      {
+        "id": "KH",
+        "is_default": false,
+        "name": "柬埔寨",
+        "type": "text"
+      },
+      {
+        "id": "KI",
+        "is_default": false,
+        "name": "基里巴斯",
+        "type": "text"
+      },
+      {
+        "id": "KM",
+        "is_default": false,
+        "name": "科摩罗",
+        "type": "text"
+      },
+      {
+        "id": "KN",
+        "is_default": false,
+        "name": "圣基茨和尼维斯",
+        "type": "text"
+      },
+      {
+        "id": "KP",
+        "is_default": false,
+        "name": "朝鲜",
+        "type": "text"
+      },
+      {
+        "id": "KR",
+        "is_default": false,
+        "name": "韩国",
+        "type": "text"
+      },
+      {
+        "id": "KW",
+        "is_default": false,
+        "name": "科威特",
+        "type": "text"
+      },
+      {
+        "id": "KY",
+        "is_default": false,
+        "name": "开曼群岛",
+        "type": "text"
+      },
+      {
+        "id": "KZ",
+        "is_default": false,
+        "name": "哈萨克斯坦",
+        "type": "text"
+      },
+      {
+        "id": "LA",
+        "is_default": false,
+        "name": "老挝",
+        "type": "text"
+      },
+      {
+        "id": "LB",
+        "is_default": false,
+        "name": "黎巴嫩",
+        "type": "text"
+      },
+      {
+        "id": "LC",
+        "is_default": false,
+        "name": "圣卢西亚",
+        "type": "text"
+      },
+      {
+        "id": "LI",
+        "is_default": false,
+        "name": "列支敦士登",
+        "type": "text"
+      },
+      {
+        "id": "LK",
+        "is_default": false,
+        "name": "斯里兰卡",
+        "type": "text"
+      },
+      {
+        "id": "LR",
+        "is_default": false,
+        "name": "利比里亚",
+        "type": "text"
+      },
+      {
+        "id": "LS",
+        "is_default": false,
+        "name": "莱索托",
+        "type": "text"
+      },
+      {
+        "id": "LT",
+        "is_default": false,
+        "name": "立陶宛",
+        "type": "text"
+      },
+      {
+        "id": "LU",
+        "is_default": false,
+        "name": "卢森堡",
+        "type": "text"
+      },
+      {
+        "id": "LV",
+        "is_default": false,
+        "name": "拉脱维亚",
+        "type": "text"
+      },
+      {
+        "id": "LY",
+        "is_default": false,
+        "name": "利比亚",
+        "type": "text"
+      },
+      {
+        "id": "MA",
+        "is_default": false,
+        "name": "摩洛哥",
+        "type": "text"
+      },
+      {
+        "id": "MC",
+        "is_default": false,
+        "name": "摩纳哥",
+        "type": "text"
+      },
+      {
+        "id": "MD",
+        "is_default": false,
+        "name": "摩尔多瓦",
+        "type": "text"
+      },
+      {
+        "id": "ME",
+        "is_default": false,
+        "name": "黑山",
+        "type": "text"
+      },
+      {
+        "id": "MF",
+        "is_default": false,
+        "name": "法属圣马丁",
+        "type": "text"
+      },
+      {
+        "id": "MG",
+        "is_default": false,
+        "name": "马达加斯加",
+        "type": "text"
+      },
+      {
+        "id": "MH",
+        "is_default": false,
+        "name": "马绍尔群岛",
+        "type": "text"
+      },
+      {
+        "id": "MK",
+        "is_default": false,
+        "name": "马其顿",
+        "type": "text"
+      },
+      {
+        "id": "ML",
+        "is_default": false,
+        "name": "马里",
+        "type": "text"
+      },
+      {
+        "id": "MM",
+        "is_default": false,
+        "name": "缅甸",
+        "type": "text"
+      },
+      {
+        "id": "MN",
+        "is_default": false,
+        "name": "蒙古国",
+        "type": "text"
+      },
+      {
+        "id": "MP",
+        "is_default": false,
+        "name": "北马里亚纳群岛",
+        "type": "text"
+      },
+      {
+        "id": "MQ",
+        "is_default": false,
+        "name": "马提尼克",
+        "type": "text"
+      },
+      {
+        "id": "MR",
+        "is_default": false,
+        "name": "毛里塔尼亚",
+        "type": "text"
+      },
+      {
+        "id": "MS",
+        "is_default": false,
+        "name": "蒙塞拉特岛",
+        "type": "text"
+      },
+      {
+        "id": "MT",
+        "is_default": false,
+        "name": "马耳他",
+        "type": "text"
+      },
+      {
+        "id": "MU",
+        "is_default": false,
+        "name": "毛里求斯",
+        "type": "text"
+      },
+      {
+        "id": "MV",
+        "is_default": false,
+        "name": "马尔代夫",
+        "type": "text"
+      },
+      {
+        "id": "MW",
+        "is_default": false,
+        "name": "马拉维",
+        "type": "text"
+      },
+      {
+        "id": "MX",
+        "is_default": false,
+        "name": "墨西哥",
+        "type": "text"
+      },
+      {
+        "id": "MY",
+        "is_default": false,
+        "name": "马来西亚",
+        "type": "text"
+      },
+      {
+        "id": "MZ",
+        "is_default": false,
+        "name": "莫桑比克",
+        "type": "text"
+      },
+      {
+        "id": "NA",
+        "is_default": false,
+        "name": "纳米比亚",
+        "type": "text"
+      },
+      {
+        "id": "NC",
+        "is_default": false,
+        "name": "新喀里多尼亚",
+        "type": "text"
+      },
+      {
+        "id": "NE",
+        "is_default": false,
+        "name": "尼日尔",
+        "type": "text"
+      },
+      {
+        "id": "NF",
+        "is_default": false,
+        "name": "诺福克岛",
+        "type": "text"
+      },
+      {
+        "id": "NG",
+        "is_default": false,
+        "name": "尼日利亚",
+        "type": "text"
+      },
+      {
+        "id": "NI",
+        "is_default": false,
+        "name": "尼加拉瓜",
+        "type": "text"
+      },
+      {
+        "id": "NL",
+        "is_default": false,
+        "name": "荷兰",
+        "type": "text"
+      },
+      {
+        "id": "NO",
+        "is_default": false,
+        "name": "挪威",
+        "type": "text"
+      },
+      {
+        "id": "NP",
+        "is_default": false,
+        "name": "尼泊尔",
+        "type": "text"
+      },
+      {
+        "id": "NR",
+        "is_default": false,
+        "name": "瑙鲁",
+        "type": "text"
+      },
+      {
+        "id": "NU",
+        "is_default": false,
+        "name": "纽埃",
+        "type": "text"
+      },
+      {
+        "id": "NZ",
+        "is_default": false,
+        "name": "新西兰",
+        "type": "text"
+      },
+      {
+        "id": "OM",
+        "is_default": false,
+        "name": "阿曼",
+        "type": "text"
+      },
+      {
+        "id": "PA",
+        "is_default": false,
+        "name": "巴拿马",
+        "type": "text"
+      },
+      {
+        "id": "PE",
+        "is_default": false,
+        "name": "秘鲁",
+        "type": "text"
+      },
+      {
+        "id": "PF",
+        "is_default": false,
+        "name": "法属波利尼西亚",
+        "type": "text"
+      },
+      {
+        "id": "PG",
+        "is_default": false,
+        "name": "巴布亚新几内亚",
+        "type": "text"
+      },
+      {
+        "id": "PH",
+        "is_default": false,
+        "name": "菲律宾",
+        "type": "text"
+      },
+      {
+        "id": "PK",
+        "is_default": false,
+        "name": "巴基斯坦",
+        "type": "text"
+      },
+      {
+        "id": "PL",
+        "is_default": false,
+        "name": "波兰",
+        "type": "text"
+      },
+      {
+        "id": "PM",
+        "is_default": false,
+        "name": "圣皮埃尔和密克隆",
+        "type": "text"
+      },
+      {
+        "id": "PN",
+        "is_default": false,
+        "name": "皮特凯恩群岛",
+        "type": "text"
+      },
+      {
+        "id": "PR",
+        "is_default": false,
+        "name": "波多黎各",
+        "type": "text"
+      },
+      {
+        "id": "PS",
+        "is_default": false,
+        "name": "巴勒斯坦",
+        "type": "text"
+      },
+      {
+        "id": "PT",
+        "is_default": false,
+        "name": "葡萄牙",
+        "type": "text"
+      },
+      {
+        "id": "PW",
+        "is_default": false,
+        "name": "帕劳",
+        "type": "text"
+      },
+      {
+        "id": "PY",
+        "is_default": false,
+        "name": "巴拉圭",
+        "type": "text"
+      },
+      {
+        "id": "QA",
+        "is_default": false,
+        "name": "卡塔尔",
+        "type": "text"
+      },
+      {
+        "id": "RE",
+        "is_default": false,
+        "name": "留尼汪",
+        "type": "text"
+      },
+      {
+        "id": "RO",
+        "is_default": false,
+        "name": "罗马尼亚",
+        "type": "text"
+      },
+      {
+        "id": "RS",
+        "is_default": false,
+        "name": "塞尔维亚",
+        "type": "text"
+      },
+      {
+        "id": "RU",
+        "is_default": false,
+        "name": "俄罗斯",
+        "type": "text"
+      },
+      {
+        "id": "RW",
+        "is_default": false,
+        "name": "卢旺达",
+        "type": "text"
+      },
+      {
+        "id": "SA",
+        "is_default": false,
+        "name": "沙特阿拉伯",
+        "type": "text"
+      },
+      {
+        "id": "SB",
+        "is_default": false,
+        "name": "所罗门群岛",
+        "type": "text"
+      },
+      {
+        "id": "SC",
+        "is_default": false,
+        "name": "塞舌尔",
+        "type": "text"
+      },
+      {
+        "id": "SD",
+        "is_default": false,
+        "name": "苏丹",
+        "type": "text"
+      },
+      {
+        "id": "SE",
+        "is_default": false,
+        "name": "瑞典",
+        "type": "text"
+      },
+      {
+        "id": "SG",
+        "is_default": false,
+        "name": "新加坡",
+        "type": "text"
+      },
+      {
+        "id": "SH",
+        "is_default": false,
+        "name": "圣赫勒拿",
+        "type": "text"
+      },
+      {
+        "id": "SI",
+        "is_default": false,
+        "name": "斯洛文尼亚",
+        "type": "text"
+      },
+      {
+        "id": "SJ",
+        "is_default": false,
+        "name": "斯瓦尔巴群岛和扬马延岛",
+        "type": "text"
+      },
+      {
+        "id": "SK",
+        "is_default": false,
+        "name": "斯洛伐克",
+        "type": "text"
+      },
+      {
+        "id": "SL",
+        "is_default": false,
+        "name": "塞拉利昂",
+        "type": "text"
+      },
+      {
+        "id": "SM",
+        "is_default": false,
+        "name": "圣马力诺",
+        "type": "text"
+      },
+      {
+        "id": "SN",
+        "is_default": false,
+        "name": "塞内加尔",
+        "type": "text"
+      },
+      {
+        "id": "SO",
+        "is_default": false,
+        "name": "索马里",
+        "type": "text"
+      },
+      {
+        "id": "SR",
+        "is_default": false,
+        "name": "苏里南",
+        "type": "text"
+      },
+      {
+        "id": "SS",
+        "is_default": false,
+        "name": "南苏丹",
+        "type": "text"
+      },
+      {
+        "id": "ST",
+        "is_default": false,
+        "name": "圣多美和普林西比",
+        "type": "text"
+      },
+      {
+        "id": "SV",
+        "is_default": false,
+        "name": "萨尔瓦多",
+        "type": "text"
+      },
+      {
+        "id": "SX",
+        "is_default": false,
+        "name": "荷属圣马丁",
+        "type": "text"
+      },
+      {
+        "id": "SY",
+        "is_default": false,
+        "name": "叙利亚",
+        "type": "text"
+      },
+      {
+        "id": "SZ",
+        "is_default": false,
+        "name": "斯威士兰",
+        "type": "text"
+      },
+      {
+        "id": "TC",
+        "is_default": false,
+        "name": "特克斯和凯科斯群岛",
+        "type": "text"
+      },
+      {
+        "id": "TD",
+        "is_default": false,
+        "name": "乍得",
+        "type": "text"
+      },
+      {
+        "id": "TF",
+        "is_default": false,
+        "name": "法属南部领地",
+        "type": "text"
+      },
+      {
+        "id": "TG",
+        "is_default": false,
+        "name": "多哥",
+        "type": "text"
+      },
+      {
+        "id": "TH",
+        "is_default": false,
+        "name": "泰国",
+        "type": "text"
+      },
+      {
+        "id": "TJ",
+        "is_default": false,
+        "name": "塔吉克斯坦",
+        "type": "text"
+      },
+      {
+        "id": "TK",
+        "is_default": false,
+        "name": "托克劳",
+        "type": "text"
+      },
+      {
+        "id": "TL",
+        "is_default": false,
+        "name": "东帝汶",
+        "type": "text"
+      },
+      {
+        "id": "TM",
+        "is_default": false,
+        "name": "土库曼斯坦",
+        "type": "text"
+      },
+      {
+        "id": "TN",
+        "is_default": false,
+        "name": "突尼斯",
+        "type": "text"
+      },
+      {
+        "id": "TO",
+        "is_default": false,
+        "name": "汤加",
+        "type": "text"
+      },
+      {
+        "id": "TR",
+        "is_default": false,
+        "name": "土耳其",
+        "type": "text"
+      },
+      {
+        "id": "TT",
+        "is_default": false,
+        "name": "特立尼达和多巴哥",
+        "type": "text"
+      },
+      {
+        "id": "TV",
+        "is_default": false,
+        "name": "图瓦卢",
+        "type": "text"
+      },
+      {
+        "id": "TZ",
+        "is_default": false,
+        "name": "坦桑尼亚",
+        "type": "text"
+      },
+      {
+        "id": "UA",
+        "is_default": false,
+        "name": "乌克兰",
+        "type": "text"
+      },
+      {
+        "id": "UG",
+        "is_default": false,
+        "name": "乌干达",
+        "type": "text"
+      },
+      {
+        "id": "UM",
+        "is_default": false,
+        "name": "美国本土外小岛屿",
+        "type": "text"
+      },
+      {
+        "id": "UY",
+        "is_default": false,
+        "name": "乌拉圭",
+        "type": "text"
+      },
+      {
+        "id": "UZ",
+        "is_default": false,
+        "name": "乌兹别克斯坦",
+        "type": "text"
+      },
+      {
+        "id": "VA",
+        "is_default": false,
+        "name": "梵蒂冈",
+        "type": "text"
+      },
+      {
+        "id": "VC",
+        "is_default": false,
+        "name": "圣文森特和格林纳丁斯",
+        "type": "text"
+      },
+      {
+        "id": "VE",
+        "is_default": false,
+        "name": "委内瑞拉",
+        "type": "text"
+      },
+      {
+        "id": "VG",
+        "is_default": false,
+        "name": "英属维尔京群岛",
+        "type": "text"
+      },
+      {
+        "id": "VI",
+        "is_default": false,
+        "name": "美属维尔京群岛",
+        "type": "text"
+      },
+      {
+        "id": "VN",
+        "is_default": false,
+        "name": "越南",
+        "type": "text"
+      },
+      {
+        "id": "US",
+        "is_default": false,
+        "name": "美国",
+        "type": "text"
+      },
+      {
+        "id": "VU",
+        "is_default": false,
+        "name": "瓦努阿图",
+        "type": "text"
+      },
+      {
+        "id": "WF",
+        "is_default": false,
+        "name": "瓦利斯和富图纳",
+        "type": "text"
+      },
+      {
+        "id": "WS",
+        "is_default": false,
+        "name": "萨摩亚",
+        "type": "text"
+      },
+      {
+        "id": "YE",
+        "is_default": false,
+        "name": "也门",
+        "type": "text"
+      },
+      {
+        "id": "YT",
+        "is_default": false,
+        "name": "马约特",
+        "type": "text"
+      },
+      {
+        "id": "ZA",
+        "is_default": false,
+        "name": "南非",
+        "type": "text"
+      },
+      {
+        "id": "ZM",
+        "is_default": false,
+        "name": "赞比亚",
+        "type": "text"
+      },
+      {
+        "id": "ZW",
+        "is_default": false,
+        "name": "津巴布韦",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 174,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_updated_at",
+    "bk_property_name": "更新时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 175,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "bk_updated_by",
+    "bk_property_name": "更新人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 51,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "create_time",
+    "bk_property_name": "录入时间",
+    "bk_property_group": "default",
+    "bk_property_index": 13,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 52,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "import_from",
+    "bk_property_name": "录入方式",
+    "bk_property_group": "default",
+    "bk_property_index": 14,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "excel",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "agent",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "api",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 28,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "host",
+    "bk_property_id": "operator",
+    "bk_property_name": "主要维护人",
+    "bk_property_group": "default",
+    "bk_property_index": 2,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": true,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 25,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_bak_operator",
+    "bk_property_name": "备份维护人",
+    "bk_property_group": "default",
+    "bk_property_index": 6,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": true,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 176,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_created_at",
+    "bk_property_name": "创建时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 177,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_created_by",
+    "bk_property_name": "创建人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 21,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_module_name",
+    "bk_property_name": "模块名",
+    "bk_property_group": "default",
+    "bk_property_index": 2,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": true,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 23,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_module_type",
+    "bk_property_name": "模块类型",
+    "bk_property_group": "default",
+    "bk_property_index": 4,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": true,
+        "name": "普通",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "数据库",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 178,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_updated_at",
+    "bk_property_name": "更新时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 179,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "bk_updated_by",
+    "bk_property_name": "更新人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 24,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "module",
+    "bk_property_id": "operator",
+    "bk_property_name": "主要维护人",
+    "bk_property_group": "default",
+    "bk_property_index": 5,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": true,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 16,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_capacity",
+    "bk_property_name": "设计容量",
+    "bk_property_group": "default",
+    "bk_property_index": 6,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "int",
+    "option": {
+      "max": "999999999",
+      "min": "1"
+    },
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 180,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_created_at",
+    "bk_property_name": "创建时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 181,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_created_by",
+    "bk_property_name": "创建人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 14,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_service_status",
+    "bk_property_name": "服务状态",
+    "bk_property_group": "default",
+    "bk_property_index": 4,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": true,
+        "name": "开放",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "关闭",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 12,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_set_desc",
+    "bk_property_name": "集群描述",
+    "bk_property_group": "default",
+    "bk_property_index": 2,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 13,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_set_env",
+    "bk_property_name": "环境类型",
+    "bk_property_group": "default",
+    "bk_property_index": 3,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "测试",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "体验",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": true,
+        "name": "正式",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 11,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_set_name",
+    "bk_property_name": "集群名",
+    "bk_property_group": "default",
+    "bk_property_index": 1,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": true,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "singlechar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 182,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_updated_at",
+    "bk_property_name": "更新时间",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "time",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 183,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "bk_updated_by",
+    "bk_property_name": "更新人",
+    "bk_property_group": "default",
+    "bk_property_index": 0,
+    "unit": "",
+    "placeholder": "",
+    "editable": false,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "objuser",
+    "option": "",
+    "ismultiple": false,
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "bk_property_group_name": "基础信息"
+  },
+  {
+    "bk_biz_id": 0,
+    "id": 15,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "set",
+    "bk_property_id": "description",
+    "bk_property_name": "备注",
+    "bk_property_group": "default",
+    "bk_property_index": 5,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": true,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "longchar",
+    "option": "",
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-08-04 06:46:30",
+    "last_time": "2025-08-04 06:46:30",
+    "bk_property_group_name": "基础信息"
+  }
+];
