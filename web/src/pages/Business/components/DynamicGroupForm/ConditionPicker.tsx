@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Button, Popover } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { DynamicGroupConditionType, Property, Model } from './types';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import { DynamicGroupConditionType, DGProperty } from '../../Types';
+import { ObjectMainLine } from '../../Types';
 
 interface ConditionPickerProps {
   text?: string;
   placement?: string;
   icon?: string;
-  selected?: Property[];
-  propertyMap: Record<string, Property[]>;
-  handler: (properties: Property[]) => void;
+  selected?: DGProperty[];
+  propertyMap: Record<string, DGProperty[]>;
+  handler: (properties: DGProperty[]) => void;
   disabled?: boolean;
   conditionType?: DynamicGroupConditionType;
-  models?: Model[];
+  models?: readonly ObjectMainLine[];
 }
 
 const ConditionPicker: React.FC<ConditionPickerProps> = ({
@@ -27,7 +28,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
 }) => {
   const [isShow, setIsShow] = useState(false);
 
-  const handlePropertySelect = (property: Property) => {
+  const handlePropertySelect = (property: DGProperty) => {
     const newProperty = { ...property, conditionType };
     handler([...selected, newProperty]);
     setIsShow(false);
@@ -77,10 +78,13 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
       onOpenChange={setIsShow}
     >
       <Button
-        type="dashed"
+        type="link"
         size="small"
         disabled={disabled}
-        icon={<PlusOutlined />}
+        icon={<PlusCircleOutlined />}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
       >
         {text}
       </Button>

@@ -1,22 +1,13 @@
-import { forwardRef, useImperativeHandle, useState } from 'react';
-import {
-    Drawer,
-    Form,
-    Input,
-    Button,
-    message,
-    Space,
-    Row,
-    Col,
-    Card,
-    Empty,
-    Collapse,
-    Tooltip
-} from 'antd';
-import { DynamicGroupFormData } from '../../Types';
+import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { Drawer, Form, Input, Button, message, Space, Row, Col, Card, Empty, Collapse, Tooltip } from 'antd';
+import { DynamicGroupFormData, ObjectMainLine, DGProperty } from '../../Types';
+import { availableModelIds, conditionTypes, requestConfig } from '../../constants';
+import { PROPERTY_TYPES } from '../../constants';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
+import { getAvailableModels, batchSearchObjectAttribute } from '@/api';
+import { useBusinessStore } from '@/store/BusinessStore';
 import './style.css';
 
 interface DynamicGroupFormRef {
@@ -37,24 +28,84 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     onClose,
     onSave
 }, ref) => {
+    const { currentBusiness } = useBusinessStore();
+
     const [form] = Form.useForm();
     const [isShow, setIsShow] = useState(false);
     const [loading, setLoading] = useState(false);
     const [target, setTarget] = useState<'host' | 'set'>('host');
+    const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
+    const [propertyMap, setPropertyMap] = useState<Record<string, DGProperty[]>>({});
+    const [disabledPropertyMap, setDisabledPropertyMap] = useState<Record<string, string[]>>({});
+    // 添加条件状态管理
+    const [variableConditions, setVariableConditions] = useState<Record<string, any>>({});
+    const [fixedConditions, setFixedConditions] = useState<Record<string, any>>({});
 
-    // 条件类型配置
-    const conditionTypes = [
-        {
-            key: 'variable',
-            title: '可变条件',
-            desc: '在使用动态分组时，操作符和条件值可修改'
-        },
-        {
-            key: 'fixed',
-            title: '锁定条件',
-            desc: '在使用动态分组时，条件及条件值均不可修改'
+    useEffect(() => {
+        getMainLineModels();
+        getModelProperties();
+    }, [])
+
+    const getMainLineModels = async () => {
+        try {
+            // TODO: api
+            const models = await getAvailableModels();
+            // eslint-disable-next-line max-len
+            const availableModels = availableModelIds.map(modelId => models.find(model => model.bk_obj_id === modelId));
+            setAvailableModels(Object.freeze(availableModels) as readonly ObjectMainLine[]);
+        } catch (error) {
+            console.error(error);
         }
-    ];
+    }
+
+    const getModelProperties = async () => {
+        try {
+            // TODO: api
+            const propertyMap = await batchSearchObjectAttribute({
+                params: {
+                    bk_biz_id: currentBusiness?.id,
+                    bk_obj_id: { $in: availableModels.map(model => model.bk_obj_id) },
+                    bk_supplier_account: 0
+                },
+                config: {
+                    requestId: requestConfig.property,
+                    fromCache: true
+                }
+            })
+            propertyMap.module.unshift(getServiceTemplateProperty());
+            setPropertyMap(Object.freeze(propertyMap) as any);
+
+            const disabledPropertyMap: any = {};
+            Object.keys(propertyMap).forEach((objId) => {
+                disabledPropertyMap[objId] = propertyMap[objId]
+                    .filter(item => item.bk_property_type === PROPERTY_TYPES.INNER_TABLE)
+                    .map(item => item.bk_property_id)
+            })
+            setDisabledPropertyMap(disabledPropertyMap);
+        } catch (error) {
+            console.error(error)
+            setPropertyMap({});
+        }
+    }
+
+    const getServiceTemplateProperty = () => {
+        return {
+            id: Date.now(),
+            bk_obj_id: 'module',
+            bk_property_id: 'service_template_id',
+            bk_property_name: '服务模板',
+            bk_property_index: -1,
+            bk_property_type: 'service-template',
+            isonly: true,
+            ispre: true,
+            bk_isapi: true,
+            bk_issystem: true,
+            isreadonly: true,
+            editable: false,
+            bk_property_group: null,
+            _is_inject_: true
+        }
+    }
 
     useImperativeHandle(ref, () => ({
         show: () => {
@@ -70,6 +121,9 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
         form.resetFields();
         setTarget('host');
         form.setFieldsValue({ bk_obj_id: 'host' });
+        // 重置条件状态
+        setVariableConditions({});
+        setFixedConditions({});
         onClose?.();
     };
 
@@ -171,8 +225,8 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                     ),
                                     extra: (
                                         <ConditionPicker
-                                            propertyMap={{}}
-                                            models={[]}
+                                            propertyMap={propertyMap}
+                                            models={availableModels}
                                             selected={[]}
                                             conditionType={conditionType.key as any}
                                             handler={(properties) => {
@@ -183,12 +237,16 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                     children: (
                                         <FormPropertyList
                                             conditionType={conditionType.key as any}
-                                            properties={[]}
-                                            modelMap={{}}
+                                            propertyMap={propertyMap}
                                             searchObjId={target}
-                                            condition={{}}
+                                            condition={conditionType.key === 'variable' ? variableConditions : fixedConditions}
                                             onConditionChange={(condition) => {
                                                 console.log('条件变化', condition);
+                                                if (conditionType.key === 'variable') {
+                                                    setVariableConditions(condition);
+                                                } else {
+                                                    setFixedConditions(condition);
+                                                }
                                             }}
                                             onRemove={(property) => {
                                                 console.log('移除属性', property);

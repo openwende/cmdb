@@ -46,7 +46,6 @@ export const DYNAMIC_GROUP_CONDITION_TYPES = {
     VARIABLE: 'variable_condition',
     LOCKED: 'condition'
 } as const;
-
 export const DYNAMIC_GROUP_OPERATORS = {
     EQ: '$eq',
     NE: '$ne',
@@ -58,7 +57,6 @@ export const DYNAMIC_GROUP_OPERATORS = {
     GTE: '$gte',
     LTE: '$lte'
 } as const;
-
 export const DYNAMIC_GROUP_FIELD_TYPES = {
     SINGLECHAR: 'singlechar',
     LONGCHAR: 'longchar',
@@ -72,13 +70,11 @@ export const DYNAMIC_GROUP_FIELD_TYPES = {
     USER: 'objuser',
     SERVICE_TEMPLATE: 'service-template'
 } as const;
-
 export const DYNAMIC_GROUP_OBJECT_TYPES = {
     HOST: 'host',
     MODULE: 'module',
     SET: 'set'
 } as const;
-
 export const OPERATOR_LABELS = {
     [DYNAMIC_GROUP_OPERATORS.EQ]: '等于',
     [DYNAMIC_GROUP_OPERATORS.NE]: '不等于',
@@ -90,3 +86,73 @@ export const OPERATOR_LABELS = {
     [DYNAMIC_GROUP_OPERATORS.GTE]: '大于等于',
     [DYNAMIC_GROUP_OPERATORS.LTE]: '小于等于'
 } as const;
+export const PROPERTY_TYPES = Object.freeze({
+  SINGLECHAR: 'singlechar',
+  INT: 'int',
+  FLOAT: 'float',
+  ENUM: 'enum',
+  DATE: 'date',
+  TIME: 'time',
+  LONGCHAR: 'longchar',
+  OBJUSER: 'objuser',
+  TIMEZONE: 'timezone',
+  BOOL: 'bool',
+  LIST: 'list',
+  ORGANIZATION: 'organization',
+  ENUMMULTI: 'enummulti',
+  ENUMQUOTE: 'enumquote',
+  MAP: 'map',
+  OBJECT: 'object',
+  ARRAY: 'array',
+  TABLE: 'table',
+  SERVICE_TEMPLATE: 'service-template',
+  TOPOLOGY: 'topology',
+  FOREIGNKEY: 'foreignkey',
+  INNER_TABLE: 'innertable'
+})
+// BUILTIN_MODELS 的值
+export const BUILTIN_MODELS = Object.freeze({
+  BUSINESS_SET: 'bk_biz_set_obj',
+  BUSINESS: 'biz',
+  HOST: 'host',
+  PROJECT: 'bk_project'
+})
+// BUILTIN_MODEL_PROPERTY_KEYS 的值
+export const BUILTIN_MODEL_PROPERTY_KEYS = Object.freeze({
+  [BUILTIN_MODELS.BUSINESS_SET]: {
+    ID: 'bk_biz_set_id',
+    NAME: 'bk_biz_set_name'
+  },
+  [BUILTIN_MODELS.BUSINESS]: {
+    ID: 'bk_biz_id',
+    NAME: 'bk_biz_name'
+  },
+  [BUILTIN_MODELS.HOST]: {
+    ID: 'bk_host_id',
+    NAME: 'bk_host_name'
+  },
+  [BUILTIN_MODELS.PROJECT]: {
+    ID: 'id',
+    NAME: 'bk_project_name'
+  }
+})
+export const conditionTypes = [
+    {
+        key: 'variable',
+        title: '可变条件',
+        desc: '在使用动态分组时，操作符和条件值可修改'
+    },
+    {
+        key: 'fixed',
+        title: '锁定条件',
+        desc: '在使用动态分组时，条件及条件值均不可修改'
+    }
+];
+export const availableModelIds = Object.freeze(['host', 'module', 'set'])
+export const requestConfig = Object.freeze({
+    mainline: Symbol('mainline'),
+    property: Symbol('property'),
+    details: Symbol('details'),
+    create: Symbol('create'),
+    update: Symbol('update')
+})

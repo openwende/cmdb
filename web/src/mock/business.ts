@@ -1106,6 +1106,45 @@ export const dynamicGroupList = {
     }
   ]
 };
+// 动态分组条件分类
+export const objectmainline = [
+  {
+    "bk_obj_id": "biz",
+    "bk_obj_name": "业务",
+    "bk_supplier_account": "0",
+    "bk_next_obj": "set",
+    "bk_next_name": "集群",
+    "bk_pre_obj_id": "",
+    "bk_pre_obj_name": ""
+  },
+  {
+    "bk_obj_id": "set",
+    "bk_obj_name": "集群",
+    "bk_supplier_account": "0",
+    "bk_next_obj": "module",
+    "bk_next_name": "模块",
+    "bk_pre_obj_id": "biz",
+    "bk_pre_obj_name": "业务"
+  },
+  {
+    "bk_obj_id": "module",
+    "bk_obj_name": "模块",
+    "bk_supplier_account": "0",
+    "bk_next_obj": "host",
+    "bk_next_name": "主机",
+    "bk_pre_obj_id": "set",
+    "bk_pre_obj_name": "集群"
+  },
+  {
+    "bk_obj_id": "host",
+    "bk_obj_name": "主机",
+    "bk_supplier_account": "0",
+    "bk_next_obj": "",
+    "bk_next_name": "",
+    "bk_pre_obj_id": "module",
+    "bk_pre_obj_name": "模块"
+  }
+];
 // 动态分组条件
 export const dynamicGroupCondition = [
   {

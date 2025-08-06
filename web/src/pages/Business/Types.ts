@@ -49,64 +49,6 @@ export enum AppendMenuItemKey {
 export enum RemoveMenuItemKey {
     CurrentModule = "currentModule"
 }
-
-/**
- * Dynamic Group Types
- */
-export interface DynamicGroupProperty {
-    id: number;
-    bk_obj_id: string;
-    bk_property_id: string;
-    bk_property_name: string;
-    bk_property_type: string;
-    bk_property_group: string;
-    bk_property_group_name: string;
-    option?: any;
-    placeholder?: string;
-    unit?: string;
-    description?: string;
-    editable: boolean;
-    ispre: boolean;
-    isrequired: boolean;
-    isreadonly: boolean;
-    isonly: boolean;
-    bk_issystem: boolean;
-    bk_isapi: boolean;
-    ismultiple?: boolean;
-}
-
-export interface DynamicGroupCondition {
-    field: string;
-    operator: string;
-    value: any;
-}
-
-export interface DynamicGroupConditionGroup {
-    bk_obj_id: string;
-    condition: DynamicGroupCondition[];
-}
-
-export interface DynamicGroupFormData {
-    name: string;
-    bk_obj_id: string;
-    bk_biz_id?: number;
-    condition: DynamicGroupConditionGroup[];
-    variable_condition?: DynamicGroupConditionGroup[];
-}
-
-export interface PropertyCondition {
-    id: string;
-    property: DynamicGroupProperty;
-    operator: string;
-    value: any;
-    conditionType: 'condition' | 'variable_condition';
-    isVariable?: boolean;
-}
-
-export interface DynamicGroupPreviewData {
-    count: number;
-    info: any[];
-}
 // "Copy" dropdown menu item key
 export enum CopyMenuItemKey {
     Id = 'id',
@@ -156,3 +98,147 @@ export interface TransferHostItem {
     inIdlePool?: boolean;
     cloudInfo?: string;
 }
+
+/**
+ * Dynamic Group Types
+ */
+export interface DynamicGroupProperty {
+    id: number;
+    bk_obj_id: string;
+    bk_property_id: string;
+    bk_property_name: string;
+    bk_property_type: string;
+    bk_property_group: string;
+    bk_property_group_name: string;
+    option?: any;
+    placeholder?: string;
+    unit?: string;
+    description?: string;
+    editable: boolean;
+    ispre: boolean;
+    isrequired: boolean;
+    isreadonly: boolean;
+    isonly: boolean;
+    bk_issystem: boolean;
+    bk_isapi: boolean;
+    ismultiple?: boolean;
+}
+export interface DynamicGroupCondition {
+    field: string;
+    operator: string;
+    value: any;
+}
+export interface DynamicGroupConditionGroup {
+    bk_obj_id: string;
+    condition: DynamicGroupCondition[];
+}
+export interface DynamicGroupFormData {
+    name: string;
+    bk_obj_id: string;
+    bk_biz_id?: number;
+    condition: DynamicGroupConditionGroup[];
+    variable_condition?: DynamicGroupConditionGroup[];
+}
+export interface PropertyCondition {
+    id: string;
+    property: DynamicGroupProperty;
+    operator: string;
+    value: any;
+    conditionType: 'condition' | 'variable_condition';
+    isVariable?: boolean;
+}
+export interface DynamicGroupPreviewData {
+    count: number;
+    info: any[];
+}
+export interface ObjectMainLine {
+    bk_obj_id: string;
+    bk_obj_name: string;
+    bk_supplier_account: string;
+    bk_next_obj: string;
+    bk_next_name: string;
+    bk_pre_obj_id: string;
+    bk_pre_obj_name: string;
+}
+export enum DynamicGroupConditionType {
+  IMMUTABLE = 'condition',
+  VARIABLE = 'varCondition'
+}
+export interface PropertyModel {
+  id: number;
+  bk_obj_id: string;
+  bk_property_id: string;
+  bk_property_name: string;
+  bk_property_type: string;
+  bk_property_group: string | null;
+  bk_supplier_account?: string;
+  creator?: string;
+  description?: string;
+  editable?: boolean;
+  isonly?: boolean;
+  ispre?: boolean;
+  isreadonly?: boolean;
+  isrequired?: boolean;
+  option?: string;
+  unit?: string;
+  placeholder?: string;
+  bk_asst_obj_id?: string;
+  bk_biz_id?: number;
+  create_time?: string;
+  last_time?: string;
+  bk_property_group_name?: string;
+}
+export interface PropertyMap {
+  [objId: string]: PropertyModel[];
+}
+export interface DGProperty {
+  id: string;
+  bk_obj_id: string;
+  bk_property_id: string;
+  bk_property_name: string;
+  bk_property_type: string;
+  bk_property_index?: number;
+  option?: any[];
+  placeholder?: string;
+  conditionType?: DynamicGroupConditionType;
+  isonly?: boolean;
+  ispre?: boolean;
+  bk_isapi?: boolean;
+  bk_issystem?: boolean;
+  isreadonly?: boolean;
+  editable?: boolean;
+  bk_property_group?: string | null;
+  _is_inject_?: boolean;
+}
+export interface Condition {
+  property: DGProperty;
+  operator: string;
+  value: any;
+}
+export interface Model {
+  bk_obj_id: string;
+  bk_obj_name: string;
+  desc?: string;
+}
+export const DYNAMIC_GROUP_COND_NAMES = {
+  [DynamicGroupConditionType.IMMUTABLE]: '锁定条件',
+  [DynamicGroupConditionType.VARIABLE]: '可变条件'
+};
+export const BUILTIN_MODELS_DG = {
+  HOST: 'host',
+  SET: 'set',
+  MODULE: 'module'
+};
+export const QUERY_OPERATOR = {
+  EQ: '$eq',
+  NE: '$ne',
+  IN: '$in',
+  NIN: '$nin',
+  LIKE: '$like',
+  CONTAINS: '$contains',
+  CONTAINS_CS: '$contains_cs',
+  GTE: '$gte',
+  LTE: '$lte',
+  RANGE: '$range'
+};
+

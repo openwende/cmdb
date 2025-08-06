@@ -1,18 +1,17 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useCallback } from 'react';
 import { Form, Tooltip } from 'antd';
 import { DeleteOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './FormOperatorSelector';
-import { DynamicGroupConditionType, Property, Condition } from './types';
+import { DynamicGroupConditionType, DGProperty, Condition } from '../../Types';
 
 interface FormPropertyListProps {
   disabled?: boolean;
   conditionType: DynamicGroupConditionType;
-  properties: Property[];
-  modelMap: Record<string, any>;
+  propertyMap: Record<string, any>;
   searchObjId: string;
-  onRemove: (property: Property) => void;
-  onToggle: (property: Property, conditionType: DynamicGroupConditionType) => void;
+  onRemove: (property: DGProperty) => void;
+  onToggle: (property: DGProperty, conditionType: DynamicGroupConditionType) => void;
   condition: Record<string, Condition>;
   onConditionChange: (condition: Record<string, Condition>) => void;
 }
@@ -20,8 +19,7 @@ interface FormPropertyListProps {
 const FormPropertyList: React.FC<FormPropertyListProps> = ({
   disabled = false,
   conditionType,
-  properties,
-  modelMap,
+  propertyMap,
   searchObjId,
   onRemove,
   onToggle,
@@ -47,8 +45,8 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
   }, [conditionType, t]);
 
   const filteredProperties = useMemo(() => {
-    return properties.filter(property => property.conditionType === conditionType);
-  }, [properties, conditionType]);
+    return propertyMap.filter((property: any) => property.conditionType === conditionType);
+  }, [propertyMap, conditionType]);
 
   // 自定义操作符类型映射
   const customOperatorTypeMap = useMemo(() => {
@@ -105,7 +103,7 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
     return operatorSymbolMap;
   }, [operatorSymbolMap]);
 
-  const getDefaultData = (property: Property) => {
+  const getDefaultData = (property: DGProperty) => {
     const defaultMap: Record<string, { operator: string; value: any }> = {
       bool: {
         operator: '$eq',
@@ -140,10 +138,10 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
     };
   };
 
-  const updateCondition = () => {
+  const updateCondition = useCallback(() => {
     const newCondition: Record<string, Condition> = {};
     
-    filteredProperties.forEach((property) => {
+    filteredProperties.forEach((property: any) => {
       if (condition[property.id]) {
         // 修改conditionType为property.conditionType，保证conditionType正确
         condition[property.id].property.conditionType = property.conditionType;
@@ -156,14 +154,18 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
       }
     });
 
-    onConditionChange(newCondition);
-  };
+    // 检查是否真的有变化再调用onConditionChange，避免无限循环
+    const hasChanges = JSON.stringify(newCondition) !== JSON.stringify(condition);
+    if (hasChanges) {
+      onConditionChange(newCondition);
+    }
+  }, [filteredProperties, condition, onConditionChange]);
 
   useEffect(() => {
     updateCondition();
-  }, [filteredProperties]);
+  }, [updateCondition]);
 
-  const handleOperatorChange = (property: Property, operator: string) => {
+  const handleOperatorChange = (property: DGProperty, operator: string) => {
     const newCondition = { ...condition };
     const currentCondition = newCondition[property.id];
 
@@ -183,24 +185,24 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
     onConditionChange(newCondition);
   };
 
-  const handleRemove = (property: Property) => {
+  const handleRemove = (property: DGProperty) => {
     if (disabled) return;
     onRemove(property);
   };
 
-  const handleToggle = (property: Property) => {
+  const handleToggle = (property: DGProperty) => {
     if (disabled) return;
     onToggle(property, conditionType);
   };
 
-  const getPropertyLabel = (property: Property) => {
+  const getPropertyLabel = (property: DGProperty) => {
     const modelId = property.bk_obj_id;
     const propertyName = property.bk_property_name;
-    const modelName = modelMap[modelId]?.bk_obj_name || modelId;
+    const modelName = propertyMap[modelId]?.bk_obj_name || modelId;
     return `${modelName} - ${propertyName}`;
   };
 
-  const getPlaceholder = (property: Property) => {
+  const getPlaceholder = (property: DGProperty) => {
     const selectTypes = ['list', 'enum', 'timezone', 'organization', 'date', 'time', 'enumquote', 'enummulti', 'foreignkey'];
     const name = t(conditionType === DynamicGroupConditionType.IMMUTABLE ? '条件值' : '默认值');
     
@@ -211,7 +213,7 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
     return t('请输入xx', { name });
   };
 
-  const renderComponent = (property: Property) => {
+  const renderComponent = (property: DGProperty) => {
     // 这里需要根据property类型渲染不同的组件
     // 由于没有具体的组件实现，这里用Input作为占位符
     return (
@@ -232,7 +234,7 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
   return (
     <div className="form-property-list" ref={propertyListRef}>
       <Form form={form} layout="vertical" labelCol={{ span: 24 }}>
-        {filteredProperties.map((property) => (
+        {filteredProperties.map((property: any) => (
           <Form.Item key={property.id} label={getPropertyLabel(property)}>
             <div className="form-property-item">
               {!withoutOperator.includes(property.bk_property_type) && (
