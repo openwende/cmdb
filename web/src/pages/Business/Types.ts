@@ -164,7 +164,7 @@ export enum DynamicGroupConditionType {
   IMMUTABLE = 'condition',
   VARIABLE = 'varCondition'
 }
-export interface PropertyModel {
+export interface Property {
   id: number;
   bk_obj_id: string;
   bk_property_id: string;
@@ -187,31 +187,16 @@ export interface PropertyModel {
   create_time?: string;
   last_time?: string;
   bk_property_group_name?: string;
-}
-export interface PropertyMap {
-  [objId: string]: PropertyModel[];
-}
-export interface DGProperty {
-  id: string;
-  bk_obj_id: string;
-  bk_property_id: string;
-  bk_property_name: string;
-  bk_property_type: string;
   bk_property_index?: number;
-  option?: any[];
-  placeholder?: string;
-  conditionType?: DynamicGroupConditionType;
-  isonly?: boolean;
-  ispre?: boolean;
+  _is_inject_?: boolean;
   bk_isapi?: boolean;
   bk_issystem?: boolean;
-  isreadonly?: boolean;
-  editable?: boolean;
-  bk_property_group?: string | null;
-  _is_inject_?: boolean;
+}
+export interface PropertyMap {
+  [objId: string]: Property[];
 }
 export interface Condition {
-  property: DGProperty;
+  property: Property;
   operator: string;
   value: any;
 }
@@ -220,25 +205,3 @@ export interface Model {
   bk_obj_name: string;
   desc?: string;
 }
-export const DYNAMIC_GROUP_COND_NAMES = {
-  [DynamicGroupConditionType.IMMUTABLE]: '锁定条件',
-  [DynamicGroupConditionType.VARIABLE]: '可变条件'
-};
-export const BUILTIN_MODELS_DG = {
-  HOST: 'host',
-  SET: 'set',
-  MODULE: 'module'
-};
-export const QUERY_OPERATOR = {
-  EQ: '$eq',
-  NE: '$ne',
-  IN: '$in',
-  NIN: '$nin',
-  LIKE: '$like',
-  CONTAINS: '$contains',
-  CONTAINS_CS: '$contains_cs',
-  GTE: '$gte',
-  LTE: '$lte',
-  RANGE: '$range'
-};
-

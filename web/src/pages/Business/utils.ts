@@ -1,4 +1,4 @@
-import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, PropertyModel, PropertyMap, DGProperty, Model } from "./Types";
+import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, Property } from "./Types";
 import { CopyMenuItemKey as HostCopyKey } from './Types';
 import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS } from './constants';
 
@@ -606,102 +606,23 @@ export function createIdProperty(objId: string) {
 }
 
 /**
- * 创建服务模板属性（参考蓝鲸实现）
+ * Create a default service template property
  */
-export const createServiceTemplateProperty = (): PropertyModel => {
-  return {
-    id: Date.now(),
-    bk_obj_id: 'module',
-    bk_property_id: 'service_template_id',
-    bk_property_name: '服务模板',
-    bk_property_type: 'service-template',
-    bk_property_group: 'default',
-    bk_supplier_account: '0',
-    isonly: true,
-    ispre: true,
-    isreadonly: true,
-    editable: false,
-    bk_property_group_name: '基础信息'
-  };
-};
-
-/**
- * 过滤禁用的属性
- * @param properties 属性列表
- * @returns 过滤后的属性列表
- */
-export const filterDisabledProperties = (properties: PropertyModel[]): PropertyModel[] => {
-  return properties.filter(property => {
-    // 过滤掉内部表格类型的属性
-    return property.bk_property_type !== 'inner_table' && 
-           !property.bk_property_id?.startsWith('bk_');
-  });
-};
-
-/**
- * 将API返回的PropertyModel转换为组件期望的DGProperty类型
- */
-export const convertPropertyModelToDGProperty = (propertyModel: PropertyModel): DGProperty => {
-  return {
-    id: propertyModel.id.toString(), // 转换number到string
-    bk_obj_id: propertyModel.bk_obj_id,
-    bk_property_id: propertyModel.bk_property_id,
-    bk_property_name: propertyModel.bk_property_name,
-    bk_property_type: propertyModel.bk_property_type,
-    bk_property_index: 0, // 默认值
-    option: propertyModel.option ? JSON.parse(propertyModel.option) : undefined,
-    placeholder: propertyModel.placeholder,
-    isonly: propertyModel.isonly,
-    ispre: propertyModel.ispre,
-    bk_isapi: false, // 默认值
-    bk_issystem: false, // 默认值
-    isreadonly: propertyModel.isreadonly,
-    editable: propertyModel.editable,
-    bk_property_group: propertyModel.bk_property_group,
-    _is_inject_: false // 默认值
-  };
-};
-
-/**
- * 将API返回的PropertyMap转换为组件期望的PropertyMap类型
- */
-export const convertApiPropertyMapToComponentPropertyMap = (
-  apiPropertyMap: PropertyMap
-): Record<string, DGProperty[]> => {
-  const result: Record<string, DGProperty[]> = {};
-  
-  Object.keys(apiPropertyMap).forEach(objId => {
-    result[objId] = apiPropertyMap[objId].map(convertPropertyModelToDGProperty);
-  });
-  
-  return result;
-};
-
-/**
- * 根据可用的模型ID生成模型信息
- */
-export const generateModelsFromObjIds = (objIds: readonly string[]): Model[] => {
-  const modelNameMap: Record<string, string> = {
-    'host': '主机',
-    'set': '集群',
-    'module': '模块',
-    'biz': '业务'
-  };
-
-  return objIds.map(objId => ({
-    bk_obj_id: objId,
-    bk_obj_name: modelNameMap[objId] || objId,
-    desc: `${modelNameMap[objId] || objId}模型`
-  }));
-};
-
-/**
- * 从属性列表中提取唯一的模型ID
- */
-export const extractUniqueObjIds = (properties: DGProperty[]): string[] => {
-  const objIds = new Set<string>();
-  properties.forEach(property => {
-    objIds.add(property.bk_obj_id);
-  });
-  return Array.from(objIds);
+export const createServiceTemplateProperty = (): Property => {
+    return {
+        id: Date.now(),
+        bk_obj_id: 'module',
+        bk_property_id: 'service_template_id',
+        bk_property_name: '服务模板',
+        bk_property_index: -1,
+        bk_property_type: 'service-template',
+        isonly: true,
+        ispre: true,
+        bk_isapi: true,
+        bk_issystem: true,
+        isreadonly: true,
+        editable: false,
+        bk_property_group: null,
+        _is_inject_: true
+    };
 };

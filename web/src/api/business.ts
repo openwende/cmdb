@@ -1,5 +1,5 @@
 import axios from './axiosInstance';
-import { PropertyModel, PropertyMap, Property } from '../pages/Business/components/DynamicGroupForm/types';
+import { Property, PropertyMap } from '../pages/Business/Types';
 import { dynamicGroupCondition, objectmainline } from '../mock/business';
 import { ObjectMainLine } from '../pages/Business/Types';
 import { createIdProperty } from '@/pages/Business/utils';
@@ -8,7 +8,7 @@ interface BatchSearchOptions {
     params: {
         bk_biz_id?: number;
         bk_obj_id: { $in: string[] };
-        bk_supplier_account: number;
+        bk_supplier_account: string;
     };
     config?: {
         requestId?: symbol;
@@ -40,7 +40,7 @@ export const batchSearchObjectAttribute = async (
     {
         params,
         config,
-        injectId = '0'
+        injectId
     }: BatchSearchOptions
 ): Promise<PropertyMap> => {
     try {
@@ -78,7 +78,7 @@ export const batchSearchObjectAttribute = async (
 export const searchObjectAttribute = async (
     objId: string,
     _bizId?: number // 使用下划线前缀表示未使用的参数
-): Promise<PropertyModel[]> => {
+): Promise<Property[]> => {
     try {
         // const params = {
         //   bk_obj_id: objId,
@@ -86,13 +86,13 @@ export const searchObjectAttribute = async (
         // };
 
         const mockData = dynamicGroupCondition;
-        const result: PropertyModel[] = [];
+        const result: Property[] = [];
 
         if (mockData && Array.isArray(mockData)) {
             mockData.forEach((property: any) => {
                 if (property.bk_obj_id === objId) {
                     // 转换mock数据格式为PropertyModel格式
-                    const formattedProperty: PropertyModel = {
+                    const formattedProperty: Property = {
                         ...property,
                         option: Array.isArray(property.option) ? JSON.stringify(property.option) : property.option || ""
                     };

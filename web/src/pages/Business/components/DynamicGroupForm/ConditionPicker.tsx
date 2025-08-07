@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
 import { Button, Popover } from 'antd';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { DynamicGroupConditionType, DGProperty } from '../../Types';
-import { ObjectMainLine } from '../../Types';
+import { DynamicGroupConditionType, ObjectMainLine, PropertyMap, Property } from '../../Types';
 
 interface ConditionPickerProps {
   text?: string;
   placement?: string;
   icon?: string;
-  selected?: DGProperty[];
-  propertyMap: Record<string, DGProperty[]>;
-  handler: (properties: DGProperty[]) => void;
+  selected?: Property[];
+  propertyMap: PropertyMap;
+  handler: (properties: Property[]) => void;
   disabled?: boolean;
   conditionType?: DynamicGroupConditionType;
   models?: readonly ObjectMainLine[];
@@ -28,26 +27,26 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
 }) => {
   const [isShow, setIsShow] = useState(false);
 
-  const handlePropertySelect = (property: DGProperty) => {
+  const handlePropertySelect = (property: Property) => {
     const newProperty = { ...property, conditionType };
-    handler([...selected, newProperty]);
+    // handler([...selected, newProperty]);
     setIsShow(false);
   };
 
   const content = (
-    <div style={{ maxWidth: 300, maxHeight: 400, overflow: 'auto' }}>
+    <div style={{ width: 400, height: 500, overflow: 'auto' }}>
       {Object.keys(propertyMap).map(modelId => {
         const properties = propertyMap[modelId];
         const modelName = models.find(m => m.bk_obj_id === modelId)?.bk_obj_name || modelId;
-        
+
         return (
           <div key={modelId} style={{ marginBottom: 16 }}>
             <div style={{ fontWeight: 'bold', marginBottom: 8 }}>{modelName}</div>
             {properties.map(property => (
               <div
                 key={property.id}
-                style={{ 
-                  padding: '4px 8px', 
+                style={{
+                  padding: '4px 8px',
                   cursor: 'pointer',
                   borderRadius: 4,
                   margin: '2px 0'

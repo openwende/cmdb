@@ -1,10 +1,10 @@
 import React from 'react';
 import { Select } from 'antd';
-import { DGProperty } from '../../Types';
+import { Property } from '../../Types';
 
 interface FormOperatorSelectorProps {
   className?: string;
-  property: DGProperty;
+  property: Property;
   customTypeMap: Record<string, string[]>;
   symbolMap: Record<string, string>;
   descMap: Record<string, string>;
