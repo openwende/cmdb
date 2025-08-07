@@ -1,4 +1,4 @@
-import { CopyMenuItemKey, TransferMenuItemType } from "./Types";
+import { CopyMenuItemKey, TransferMenuItemType, ConditionType } from "./Types";
 
 /**
  * "Copy" dropdown menu items
@@ -138,12 +138,12 @@ export const BUILTIN_MODEL_PROPERTY_KEYS = Object.freeze({
 })
 export const conditionTypes = [
     {
-        key: 'variable',
+        key: ConditionType.VARIABLE,
         title: '可变条件',
         desc: '在使用动态分组时，操作符和条件值可修改'
     },
     {
-        key: 'fixed',
+        key: ConditionType.IMMUTABLE,
         title: '锁定条件',
         desc: '在使用动态分组时，条件及条件值均不可修改'
     }

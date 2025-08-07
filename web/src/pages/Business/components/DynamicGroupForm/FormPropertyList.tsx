@@ -3,20 +3,20 @@ import { Form, Tooltip } from 'antd';
 import { DeleteOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './FormOperatorSelector';
-import { DynamicGroupConditionType, Property, Condition, PropertyMap } from '../../Types';
+import { ConditionType, Property, Condition, PropertyMap } from '../../Types';
 
-interface FormPropertyListProps {
+interface ListProps {
   disabled?: boolean;
-  conditionType: DynamicGroupConditionType;
+  conditionType: ConditionType;
   propertyMap: PropertyMap;
   searchObjId: string;
   onRemove: (property: Property) => void;
-  onToggle: (property: Property, conditionType: DynamicGroupConditionType) => void;
+  onToggle: (property: Property, conditionType: ConditionType) => void;
   condition: Record<string, Condition>;
   onConditionChange: (condition: Record<string, Condition>) => void;
 }
 
-const FormPropertyList: React.FC<FormPropertyListProps> = ({
+const FormPropertyList: React.FC<ListProps> = ({
   disabled = false,
   conditionType,
   propertyMap,
@@ -33,15 +33,15 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
   const withoutOperator = ['date', 'time', 'bool', 'service-template'];
 
   const conditionName = useMemo(() => {
-    const exchangeType = {
-      [DynamicGroupConditionType.VARIABLE]: DynamicGroupConditionType.IMMUTABLE,
-      [DynamicGroupConditionType.IMMUTABLE]: DynamicGroupConditionType.VARIABLE
-    };
-    const conditionNames = {
-      [DynamicGroupConditionType.VARIABLE]: '可变条件',
-      [DynamicGroupConditionType.IMMUTABLE]: '锁定条件'
-    };
-    return t(conditionNames[exchangeType[conditionType]]);
+    // const exchangeType = {
+    //   [DynamicGroupConditionType.VARIABLE]: DynamicGroupConditionType.IMMUTABLE,
+    //   [DynamicGroupConditionType.IMMUTABLE]: DynamicGroupConditionType.VARIABLE
+    // };
+    // const conditionNames = {
+    //   [DynamicGroupConditionType.VARIABLE]: '可变条件',
+    //   [DynamicGroupConditionType.IMMUTABLE]: '锁定条件'
+    // };
+    // return t(conditionNames[exchangeType[conditionType]]);
   }, [conditionType, t]);
 
   const filteredProperties = useMemo(() => {
@@ -206,7 +206,7 @@ const FormPropertyList: React.FC<FormPropertyListProps> = ({
 
   const getPlaceholder = (property: Property) => {
     const selectTypes = ['list', 'enum', 'timezone', 'organization', 'date', 'time', 'enumquote', 'enummulti', 'foreignkey'];
-    const name = t(conditionType === DynamicGroupConditionType.IMMUTABLE ? '条件值' : '默认值');
+    const name = t(conditionType === ConditionType.IMMUTABLE ? '条件值' : '默认值');
 
     if (selectTypes.includes(property.bk_property_type)) {
       return t('请选择xx', { name });

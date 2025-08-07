@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
 import { Drawer, Form, Input, Button, message, Space, Row, Col, Card, Empty, Collapse, Tooltip } from 'antd';
 import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property } from '../../Types';
 import { availableModelIds, conditionTypes, requestConfig, PROPERTY_TYPES } from '../../constants';
-import { createServiceTemplateProperty } from '../../utils';
+import { createServiceTemplateProperty, getConditionSelect, updatePropertySelect } from '../../utils';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
@@ -36,6 +36,8 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     const [target, setTarget] = useState<'host' | 'set'>('host');
     const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
     const [propertyMap, setPropertyMap] = useState<PropertyMap>();
+    const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
+
     const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
     const [variableConditions, setVariableConditions] = useState<Record<string, any>>({});
     const [fixedConditions, setFixedConditions] = useState<Record<string, any>>({});
@@ -93,6 +95,14 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
             console.error(error)
             setPropertyMap({});
         }
+    }
+
+    const handlePropertyChange = (newProperties: Property[]) => {
+        setSelectedProperties(newProperties);
+        // if (!newProperties.length) { setSelectedProperties([]); }
+
+        // const { addSelect, deleteSelect } = getConditionSelect(newProperties, selectedProperties);
+        // updatePropertySelect(selectedProperties, addSelect, deleteSelect, setSelectedProperties, 'unshift');
     }
 
     useImperativeHandle(ref, () => ({
@@ -215,26 +225,24 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                         <ConditionPicker
                                             propertyMap={propertyMap!}
                                             models={availableModels}
-                                            selected={[]}
-                                            conditionType={conditionType.key as any}
-                                            handler={(properties) => {
-                                                console.log(`添加${conditionType.title}`, properties);
-                                            }}
+                                            selected={selectedProperties}
+                                            conditionType={conditionType.key}
+                                            onPropertyChange={handlePropertyChange}
                                         />
                                     ),
                                     children: (
                                         <FormPropertyList
-                                            conditionType={conditionType.key as any}
+                                            conditionType={conditionType.key}
                                             propertyMap={propertyMap!}
                                             searchObjId={target}
-                                            condition={conditionType.key === 'variable' ? variableConditions : fixedConditions}
+                                            // condition={conditionType.key === ConditionType ? variableConditions : fixedConditions}
+                                            condition={fixedConditions}
                                             onConditionChange={(condition) => {
-                                                console.log('条件变化', condition);
-                                                if (conditionType.key === 'variable') {
-                                                    setVariableConditions(condition);
-                                                } else {
-                                                    setFixedConditions(condition);
-                                                }
+                                                // if (conditionType.key === 'variable') {
+                                                //     setVariableConditions(condition);
+                                                // } else {
+                                                //     setFixedConditions(condition);
+                                                // }
                                             }}
                                             onRemove={(property) => {
                                                 console.log('移除属性', property);

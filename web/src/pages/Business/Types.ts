@@ -160,7 +160,7 @@ export interface ObjectMainLine {
     bk_pre_obj_id: string;
     bk_pre_obj_name: string;
 }
-export enum DynamicGroupConditionType {
+export enum ConditionType {
   IMMUTABLE = 'condition',
   VARIABLE = 'varCondition'
 }

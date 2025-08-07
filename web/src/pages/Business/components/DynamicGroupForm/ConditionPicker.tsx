@@ -1,35 +1,33 @@
 import React, { useState, useMemo } from 'react';
 import { Button, Popover, Input, Checkbox } from 'antd';
 import { PlusCircleOutlined, SearchOutlined, CheckOutlined } from '@ant-design/icons';
-import { DynamicGroupConditionType, ObjectMainLine, PropertyMap, Property } from '../../Types';
-import EmptySearchResult from '../../../../components/common/EmptySearchResult';
+import { ObjectMainLine, PropertyMap, Property, ConditionType } from '../../Types';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
 
 interface ConditionPickerProps {
   text?: string;
   placement?: string;
-  icon?: string;
-  selected?: Property[];
-  propertyMap: PropertyMap;
-  handler: (properties: Property[]) => void;
   disabled?: boolean;
-  conditionType?: DynamicGroupConditionType;
-  models?: readonly ObjectMainLine[];
+  selected: Property[];
+  propertyMap: PropertyMap;
+  models: readonly ObjectMainLine[];
+  conditionType: ConditionType;
+  onPropertyChange: (properties: Property[]) => void;
 }
 
 const ConditionPicker: React.FC<ConditionPickerProps> = ({
   text = '添加',
   placement = 'bottom',
-  selected = [],
+  selected,
   propertyMap,
-  handler,
   disabled = false,
+  models = [],
   conditionType,
-  models = []
+  onPropertyChange
 }) => {
   const [isShow, setIsShow] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const [selectedProperties, setSelectedProperties] = useState<Property[]>(selected);
 
   // Filter properties based on search text
   const filteredPropertyMap = useMemo(() => {
@@ -50,39 +48,40 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
 
   // Handle property selection
   const handlePropertySelect = (property: Property) => {
-    const propertyWithCondition = { ...property, conditionType };
-    const isSelected = selectedProperties.some(p => p.id === property.id);
+    const isSelected = selected.some((p: Property) => p.id === property.id);
 
     if (isSelected) {
-      setSelectedProperties(prev => prev.filter(p => p.id !== property.id));
+      // Remove property
+      onPropertyChange(selected.filter((p: Property) => p.id !== property.id));
     } else {
-      setSelectedProperties(prev => [...prev, propertyWithCondition]);
+      // Add property with conditionType
+      const propertyWithConditionType = { ...property, conditionType };
+      onPropertyChange([...selected, propertyWithConditionType]);
     }
   };
 
   // Handle category select all
   const handleCategorySelectAll = (modelId: string, checked: boolean) => {
     const modelProperties = filteredPropertyMap[modelId] || [];
-    const propertiesWithCondition = modelProperties.map(p => ({ ...p, conditionType }));
 
     if (checked) {
-      // Add all unselected properties from this category
-      const newProperties = propertiesWithCondition.filter(p =>
-        !selectedProperties.some(selected => selected.id === p.id)
-      );
-      setSelectedProperties(prev => [...prev, ...newProperties]);
+      // Add all unselected properties from this category with conditionType
+      const newProperties = modelProperties
+        .filter((p: Property) => !selected.some((selectedProp: Property) => selectedProp.id === p.id))
+        .map((property: Property) => ({ ...property, conditionType }));
+      onPropertyChange([...selected, ...newProperties]);
     } else {
       // Remove all selected properties from this category
-      const modelPropertyIds = modelProperties.map(p => p.id);
-      setSelectedProperties(prev => prev.filter(p => !modelPropertyIds.includes(p.id)));
+      const modelPropertyIds = modelProperties.map((p: Property) => p.id);
+      onPropertyChange(selected.filter((p: Property) => !modelPropertyIds.includes(p.id)));
     }
   };
 
   // Check category selection state
   const getCategorySelectState = (modelId: string) => {
     const modelProperties = filteredPropertyMap[modelId] || [];
-    const selectedCount = modelProperties.filter(p =>
-      selectedProperties.some(selected => selected.id === p.id)
+    const selectedCount = modelProperties.filter((p: Property) =>
+      selected.some((selectedProp: Property) => selectedProp.id === p.id)
     ).length;
 
     if (selectedCount === 0) return { checked: false, indeterminate: false };
@@ -120,7 +119,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
             {/* Property section */}
             <div className="properties-grid">
               {properties.map(property => {
-                const isSelected = selectedProperties.some(p => p.id === property.id);
+                const isSelected = selected.some((p: Property) => p.id === property.id);
                 return (
                   <div
                     key={property.id}
@@ -177,7 +176,6 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
       onOpenChange={(open) => {
         setIsShow(open);
         if (open) {
-          setSelectedProperties(selected);
           setSearchText('');
         }
       }}

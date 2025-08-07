@@ -58,107 +58,6 @@ export function getFormattedTopoPath(
 }
 
 /**
- * Dynamic Group Utils
- */
-export function buildPropertyMap(properties: any[]): Record<string, any[]> {
-    const propertyMap: Record<string, any[]> = {
-        host: [],
-        module: [],
-        set: []
-    };
-
-    properties.forEach(property => {
-        const objId = property.bk_obj_id;
-        if (propertyMap[objId]) {
-            propertyMap[objId].push(property);
-        }
-    });
-
-    return propertyMap;
-}
-
-export function getOperatorsByPropertyType(propertyType: string): string[] {
-    const { EQ, NE, IN, NIN, LIKE, REGEX, RANGE, GTE, LTE } = DYNAMIC_GROUP_OPERATORS;
-
-    switch (propertyType) {
-        case 'int':
-        case 'float':
-            return [EQ, NE, GTE, LTE, RANGE, IN, NIN];
-        case 'singlechar':
-        case 'longchar':
-            return [EQ, NE, LIKE, REGEX, IN, NIN];
-        case 'enum':
-        case 'enummulti':
-            return [IN, NIN];
-        case 'bool':
-            return [EQ, NE];
-        case 'date':
-        case 'time':
-            return [RANGE];
-        case 'service-template':
-            return [IN, NIN];
-        default:
-            return [EQ, NE, IN, NIN];
-    }
-}
-
-export function transformConditionForSubmit(conditions: any[]): any[] {
-    const groupedConditions: Record<string, any> = {};
-
-    conditions.forEach(condition => {
-        const { property, operator, value } = condition;
-        const objId = property.bk_obj_id;
-
-        if (!groupedConditions[objId]) {
-            groupedConditions[objId] = {
-                bk_obj_id: objId,
-                condition: []
-            };
-        }
-
-        groupedConditions[objId].condition.push({
-            field: property.bk_property_id,
-            operator,
-            value
-        });
-    });
-
-    return Object.values(groupedConditions);
-}
-
-export function parseConditionFromDetail(detail: any): any[] {
-    const allConditions: any[] = [];
-
-    // Parse locked conditions
-    if (detail.info?.condition) {
-        detail.info.condition.forEach((group: any) => {
-            group.condition.forEach((cond: any) => {
-                allConditions.push({
-                    ...cond,
-                    bk_obj_id: group.bk_obj_id,
-                    conditionType: 'condition'
-                });
-            });
-        });
-    }
-
-    // Parse variable conditions
-    if (detail.info?.variable_condition) {
-        detail.info.variable_condition.forEach((group: any) => {
-            group.condition.forEach((cond: any) => {
-                allConditions.push({
-                    ...cond,
-                    bk_obj_id: group.bk_obj_id,
-                    conditionType: 'variable_condition'
-                });
-            });
-        });
-    }
-
-    return allConditions;
-}
-
-/**
  * Check whether the selected host(s) are in the idle pool
  * 
  * @param selectedRowKeys Array of selected host keys (host IDs)
@@ -248,7 +147,10 @@ export function filterTree(tree: TreeData[], keyword: string): TreeData[] {
  * @param {TreeData[]} [parents=[]]
  * @return {*}  {({ node: TreeData | null, parents: TreeData[] })}
  */
-export function findNodeAndParents(nodes: TreeData[], key: string, parents: TreeData[] = []): { node: TreeData | null, parents: TreeData[] } {
+export function findNodeAndParents(nodes: TreeData[], key: string, parents: TreeData[] = []): {
+    node: TreeData | null,
+    parents: TreeData[]
+} {
     for (const node of nodes) {
         if (node.key === key) {
             return { node, parents };
@@ -579,7 +481,10 @@ export function getHostCopyValue(record: any, copyKey: HostCopyKey): string {
 
 /**
  * Create a default ID property for the given object type
-*/
+ * 
+ * @param objId The object type ID (e.g., 'biz', 'set', 'host', 'project')
+ * @returns A Property object representing the ID property
+ */
 export function createIdProperty(objId: string) {
     const keyMap: Record<string, string> = {
         [BUILTIN_MODELS.BUSINESS]: BUILTIN_MODEL_PROPERTY_KEYS[BUILTIN_MODELS.BUSINESS].ID,
@@ -606,6 +511,37 @@ export function createIdProperty(objId: string) {
 }
 
 /**
+ * Get the operators available for a given property type
+ * 
+ * @param propertyType The type of the property
+ * @returns Array of operator strings
+ */
+export function getOperatorsByPropertyType(propertyType: string): string[] {
+    const { EQ, NE, IN, NIN, LIKE, REGEX, RANGE, GTE, LTE } = DYNAMIC_GROUP_OPERATORS;
+
+    switch (propertyType) {
+        case 'int':
+        case 'float':
+            return [EQ, NE, GTE, LTE, RANGE, IN, NIN];
+        case 'singlechar':
+        case 'longchar':
+            return [EQ, NE, LIKE, REGEX, IN, NIN];
+        case 'enum':
+        case 'enummulti':
+            return [IN, NIN];
+        case 'bool':
+            return [EQ, NE];
+        case 'date':
+        case 'time':
+            return [RANGE];
+        case 'service-template':
+            return [IN, NIN];
+        default:
+            return [EQ, NE, IN, NIN];
+    }
+}
+
+/**
  * Create a default service template property
  */
 export const createServiceTemplateProperty = (): Property => {
@@ -626,3 +562,84 @@ export const createServiceTemplateProperty = (): Property => {
         _is_inject_: true
     };
 };
+
+/**
+ * Compare two arrays of selected properties and determine which properties were added or removed.
+ * 
+ * @param val The current array of selected properties
+ * @param oldVal The previous array of selected properties
+ * @returns An object containing two arrays: addSelect and deleteSelect
+ */
+export const getConditionSelect = (val: Property[], oldVal: Property[]): {
+    addSelect: Property[],
+    deleteSelect: Property[]
+} => {
+    // Newly added properties
+    const addSelect: Property[] = [];
+    // Removed properties
+    const deleteSelect: Property[] = [];
+    const selectedSet = new Set();
+
+    // 1. Build a set of the current selected properties for quick lookup
+    val.forEach(property => selectedSet.add(`${property.bk_property_id}-${property.bk_obj_id}`));
+
+    // 2. Find properties to remove
+    oldVal.forEach((property) => {
+        const { bk_property_id: propertyId, bk_obj_id: modelId } = property;
+        const key = `${propertyId}-${modelId}`;
+        if (selectedSet.has(key)) {
+            // Remove existing property from the set
+            selectedSet.delete(key);
+        } else {
+            // Add to delete list
+            deleteSelect.push(property);
+        }
+    })
+
+    // 3. The remaining properties are newly added
+    val.forEach((property) => {
+        const { bk_property_id: propertyId, bk_obj_id: modelId } = property;
+        const key = `${propertyId}-${modelId}`;
+        if (selectedSet.has(key)) {
+            addSelect.push(property);
+        }
+    })
+
+    return {
+        addSelect,
+        deleteSelect
+    }
+}
+
+type UpdateMethod = 'push' | 'unshift';
+/**
+ * Update the selected properties array by adding and removing properties.
+ * 
+ * @param selected The current array of selected properties
+ * @param addSelect Array of properties to add
+ * @param deleteSelect Array of properties to remove
+ * @param updater A function to update the selected properties state
+ * @param type Method to add new properties ('push' to end, 'unshift' to start)
+ */
+export const updatePropertySelect = (
+    selected: Property[],
+    addSelect: Property[],
+    deleteSelect: Property[],
+    updater: (newSelected: Property[]) => void,
+    type: UpdateMethod = 'push'
+) => {
+    const newSelected = selected.slice();
+    deleteSelect.forEach(property => {
+        const index = selected.findIndex(target => target.id === property.id)
+        if (index > -1) {
+            newSelected.splice(index, 1)
+        }
+    })
+    let start = 0
+    const limit = 10
+    while (start < addSelect.length) {
+        setTimeout(() => newSelected[type](...addSelect.splice(0, limit)))
+        start += limit;
+    }
+    updater(newSelected);
+}
