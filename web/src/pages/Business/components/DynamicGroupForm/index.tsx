@@ -1,8 +1,8 @@
 import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
-import { Drawer, Form, Input, Button, message, Space, Row, Col, Card, Empty, Collapse, Tooltip } from 'antd';
-import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property } from '../../Types';
-import { availableModelIds, conditionTypes, requestConfig, PROPERTY_TYPES } from '../../constants';
-import { createServiceTemplateProperty, getConditionSelect, updatePropertySelect } from '../../utils';
+import { Drawer, Form, Input, Button, Space, Row, Col, Card, Empty, Collapse, Tooltip } from 'antd';
+import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName } from '../../Types';
+import { availableModelIds, requestConfig, PROPERTY_TYPES, BUILTIN_MODELS } from '../../constants';
+import { createServiceTemplateProperty } from '../../utils';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
@@ -10,11 +10,27 @@ import { getAvailableModels, batchSearchObjectAttribute } from '@/api';
 import { useBusinessStore } from '@/store/BusinessStore';
 import './style.css';
 
+export const conditionTypes = [
+    {
+        key: ConditionType.VARIABLE,
+        title: ConditionName.VARIABLE,
+        desc: '在使用动态分组时，操作符和条件值可修改'
+    },
+    {
+        key: ConditionType.IMMUTABLE,
+        title: ConditionName.IMMUTABLE,
+        desc: '在使用动态分组时，条件及条件值均不可修改'
+    }
+];
+const exchangeType = {
+    [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
+    [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
+}
+
 interface DynamicGroupFormRef {
     show: () => void;
     hide: () => void;
 }
-
 interface DynamicGroupFormProps {
     id?: string | number;
     title?: string;
@@ -33,14 +49,16 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     const [form] = Form.useForm();
     const [isShow, setIsShow] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [target, setTarget] = useState<'host' | 'set'>('host');
+    const [groupObject, setGroupObject] = useState<BUILTIN_MODELS>(BUILTIN_MODELS.HOST);
     const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
-    const [propertyMap, setPropertyMap] = useState<PropertyMap>();
+    const [propertyMap, setPropertyMap] = useState<PropertyMap>({});
     const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
 
     const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
     const [variableConditions, setVariableConditions] = useState<Record<string, any>>({});
     const [fixedConditions, setFixedConditions] = useState<Record<string, any>>({});
+    // 条件缓存存储 - 用于临时保存和恢复条件状态
+    const [storageCondition, setStorageCondition] = useState<Record<string, any>>({});
 
     useEffect(() => {
         getMainLineModels();
@@ -105,6 +123,44 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
         // updatePropertySelect(selectedProperties, addSelect, deleteSelect, setSelectedProperties, 'unshift');
     }
 
+    const handleRemoveProperty = (property: Property) => {
+        const newSelectedProperties = selectedProperties.filter(p => p.id !== property.id);
+        setSelectedProperties(newSelectedProperties);
+    }
+
+    const handleToggleProperty = (property: Property, conditionType: ConditionType) => {
+        // Remove the property from selectedProperties
+        handleRemoveProperty(property);
+
+        // Set the new condition type
+        const newConditionType = exchangeType[conditionType];
+        // Create a new property object with the new condition type
+        const updatedProperty = { ...property, conditionType: newConditionType };
+
+        // Update the propertyMap with the new condition type
+        setPropertyMap(prevPropertyMap => {
+            const newPropertyMap = { ...prevPropertyMap };
+            const modelProperties = newPropertyMap[property.bk_obj_id];
+
+            if (modelProperties) {
+                const targetIdx = modelProperties.findIndex(
+                    p => p.bk_property_id === property.bk_property_id
+                );
+                if (targetIdx > -1) {
+                    newPropertyMap[property.bk_obj_id] = [...modelProperties];
+                    newPropertyMap[property.bk_obj_id][targetIdx] = {
+                        ...modelProperties[targetIdx],
+                        conditionType: newConditionType
+                    };
+                }
+            }
+            return newPropertyMap;
+        });
+
+        // Add the updated property to selectedProperties
+        setSelectedProperties(prev => [...prev, updatedProperty]);
+    };
+
     useImperativeHandle(ref, () => ({
         show: () => {
             setIsShow(true);
@@ -117,11 +173,10 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     const handleClose = () => {
         setIsShow(false);
         form.resetFields();
-        setTarget('host');
-        form.setFieldsValue({ bk_obj_id: 'host' });
-        // 重置条件状态
+        form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
         setVariableConditions({});
         setFixedConditions({});
+        setStorageCondition({});
         onClose?.();
     };
 
@@ -131,21 +186,18 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
             const values = await form.validateFields();
 
             const formData: DynamicGroupFormData = {
-                name: values.name,
-                bk_obj_id: values.bk_obj_id,
+                name: values.groupName,
+                bk_obj_id: values.groupObject,
                 condition: [],
                 variable_condition: []
             };
 
-            console.log('=== 蓝鲸CMDB动态分组保存 ===');
             console.log('表单数据:', formData);
 
             onSave?.(formData);
-            message.success('动态分组保存成功');
             handleClose();
         } catch (error) {
-            console.error('提交失败:', error);
-            message.error('保存失败');
+            console.error(error);
         } finally {
             setLoading(false);
         }
@@ -175,14 +227,14 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                         form={form}
                         layout="vertical"
                         initialValues={{
-                            name: '',
-                            bk_obj_id: target
+                            groupName: '',
+                            groupObject
                         }}
                     >
                         <h4>基础信息</h4>
                         <Form.Item
                             label="分组名称"
-                            name="name"
+                            name="groupName"
                             rules={[
                                 { required: true, message: '请输入分组名称' },
                                 { max: 256 }
@@ -193,18 +245,12 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
 
                         <Form.Item
                             label="查询对象"
-                            name="bk_obj_id"
-                            rules={[
-                                { required: true, message: '请选择查询对象' }
-                            ]}
-                            initialValue={target}
+                            name="groupObject"
+                            rules={[{ required: true }]}
                         >
                             <FormTarget
-                                value={target}
-                                onChange={(value) => {
-                                    setTarget(value as 'host' | 'set');
-                                    form.setFieldsValue({ bk_obj_id: value });
-                                }}
+                                value={groupObject}
+                                onChange={(value) => { setGroupObject(value) }}
                             />
                         </Form.Item>
 
@@ -217,7 +263,7 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                 items={[{
                                     key: conditionType.key,
                                     label: (
-                                        <Tooltip title={conditionType.desc} placement="topLeft">
+                                        <Tooltip title={conditionType.desc} styles={{ root: { maxWidth: 'none' } }}>
                                             <span>{conditionType.title}</span>
                                         </Tooltip>
                                     ),
@@ -233,23 +279,13 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                     children: (
                                         <FormPropertyList
                                             conditionType={conditionType.key}
-                                            propertyMap={propertyMap!}
-                                            searchObjId={target}
-                                            // condition={conditionType.key === ConditionType ? variableConditions : fixedConditions}
-                                            condition={fixedConditions}
-                                            onConditionChange={(condition) => {
-                                                // if (conditionType.key === 'variable') {
-                                                //     setVariableConditions(condition);
-                                                // } else {
-                                                //     setFixedConditions(condition);
-                                                // }
-                                            }}
-                                            onRemove={(property) => {
-                                                console.log('移除属性', property);
-                                            }}
-                                            onToggle={(property, type) => {
-                                                console.log('切换条件类型', property, type);
-                                            }}
+                                            groupObjId={groupObject}
+                                            models={availableModels}
+                                            selectedProperties={selectedProperties}
+                                            storageCondition={storageCondition}
+                                            onConditionChange={setStorageCondition}
+                                            onRemove={handleRemoveProperty}
+                                            onToggle={handleToggleProperty}
                                         />
                                     )
                                 }]}

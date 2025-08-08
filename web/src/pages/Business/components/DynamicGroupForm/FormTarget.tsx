@@ -1,23 +1,25 @@
 import React from 'react';
-import { Radio, Space } from 'antd';
+import { Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { RadioChangeEvent } from 'antd/es/radio';
+import { BUILTIN_MODELS } from '../../constants';
 
 interface FormTargetProps {
-  value?: string;
+  value?: BUILTIN_MODELS;
   disabled?: boolean;
   showCancelDialog?: boolean;
-  onChange?: (value: string, oldValue?: string) => void;
+  onChange?: (value: BUILTIN_MODELS, oldValue?: BUILTIN_MODELS) => void;
   onCanShowDialog?: (item: any) => void;
 }
 
 interface TargetItem {
-  bk_obj_id: string;
-  bk_obj_name: string;
+  id: string;
+  name: string;
   desc: string;
 }
 
 const FormTarget: React.FC<FormTargetProps> = ({
-  value = '',
+  value = BUILTIN_MODELS.HOST,
   disabled = false,
   showCancelDialog = false,
   onChange,
@@ -27,25 +29,25 @@ const FormTarget: React.FC<FormTargetProps> = ({
 
   const list: TargetItem[] = [
     {
-      bk_obj_id: 'host',
-      bk_obj_name: t('主机'),
+      id: BUILTIN_MODELS.HOST,
+      name: t('主机'),
       desc: t('目标为主机列表')
     },
     {
-      bk_obj_id: 'set',
-      bk_obj_name: t('集群'),
+      id: BUILTIN_MODELS.SET,
+      name: t('集群'),
       desc: t('目标为集群列表')
     }
   ];
 
-  const handleChange = (e: any) => {
+  const handleChange = (e: RadioChangeEvent) => {
     const newValue = e.target.value;
     const oldValue = value;
 
     if (disabled) return;
 
     if (showCancelDialog) {
-      const item = list.find(item => item.bk_obj_id === newValue);
+      const item = list.find(item => item.id === newValue);
       onCanShowDialog?.(item);
       return;
     }
@@ -61,9 +63,9 @@ const FormTarget: React.FC<FormTargetProps> = ({
       className="form-target-radio-group"
     >
       {list.map((item) => (
-        <Radio key={item.bk_obj_id} value={item.bk_obj_id}>
+        <Radio key={item.id} value={item.id}>
           <div className="radio-content">
-            <div className="radio-title">{item.bk_obj_name}</div>
+            <div className="radio-title">{item.name}</div>
             <div className="radio-desc">{item.desc}</div>
           </div>
         </Radio>

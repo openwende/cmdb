@@ -164,6 +164,10 @@ export enum ConditionType {
   IMMUTABLE = 'condition',
   VARIABLE = 'varCondition'
 }
+export enum ConditionName {
+  IMMUTABLE = '锁定条件',
+  VARIABLE = '可变条件'
+}
 export interface Property {
   id: number;
   bk_obj_id: string;
@@ -191,6 +195,7 @@ export interface Property {
   _is_inject_?: boolean;
   bk_isapi?: boolean;
   bk_issystem?: boolean;
+  conditionType?: ConditionType;
 }
 export interface PropertyMap {
   [objId: string]: Property[];
@@ -199,9 +204,4 @@ export interface Condition {
   property: Property;
   operator: string;
   value: any;
-}
-export interface Model {
-  bk_obj_id: string;
-  bk_obj_name: string;
-  desc?: string;
 }

@@ -1,6 +1,6 @@
 import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, Property } from "./Types";
 import { CopyMenuItemKey as HostCopyKey } from './Types';
-import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS } from './constants';
+import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS, QUERY_OPERATOR_SYMBOL } from './constants';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -642,4 +642,16 @@ export const updatePropertySelect = (
         start += limit;
     }
     updater(newSelected);
+}
+
+/**
+ * Get the operator symbol for a given operator
+ * 
+ * @param operator The operator string
+ * @param symbolMap Optional custom symbol map
+ * @returns The symbol for the operator
+ */
+export function getOperatorSymbol(operator: string, symbolMap: Record<string, string>) {
+  const data = symbolMap || QUERY_OPERATOR_SYMBOL;
+  return data[operator]
 }
