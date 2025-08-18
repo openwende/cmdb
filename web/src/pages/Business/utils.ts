@@ -643,15 +643,3 @@ export const updatePropertySelect = (
     }
     updater(newSelected);
 }
-
-/**
- * Get the operator symbol for a given operator
- * 
- * @param operator The operator string
- * @param symbolMap Optional custom symbol map
- * @returns The symbol for the operator
- */
-export function getOperatorSymbol(operator: string, symbolMap: Record<string, string>) {
-  const data = symbolMap || QUERY_OPERATOR_SYMBOL;
-  return data[operator]
-}

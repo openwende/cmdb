@@ -1,17 +1,10 @@
 import React, { useMemo, useEffect } from 'react';
-import { Form, Tooltip, Input } from 'antd';
+import { Tooltip, Input } from 'antd';
 import { DeleteOutlined, SwapOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './FormOperatorSelector';
 import { ConditionType, Property, Condition, ObjectMainLine, ConditionName } from '../../Types';
-import {
-  QUERY_OPERATOR,
-  BUILTIN_MODELS,
-  QUERY_OPERATOR_HOST_SYMBOL,
-  QUERY_OPERATOR_OTHER_SYMBOL,
-  QUERY_OPERATOR_HOST_DESC,
-  QUERY_OPERATOR_OTHER_DESC
-} from '../../constants';
+import { QUERY_OPERATOR } from '../../constants';
 import './style.css';
 
 const defaultDataMap = {
@@ -33,7 +26,6 @@ interface ListProps {
   conditionType: ConditionType;
   models: readonly ObjectMainLine[];
   selectedProperties: Property[];
-  groupObjId: BUILTIN_MODELS;
   storageCondition: Record<string, any>;
   onConditionChange: (storageCondition: Record<string, any>) => void;
   disabled?: boolean;
@@ -44,7 +36,6 @@ interface ListProps {
 const FormPropertyList: React.FC<ListProps> = ({
   conditionType,
   models,
-  groupObjId,
   selectedProperties,
   storageCondition,
   onConditionChange,
@@ -53,7 +44,6 @@ const FormPropertyList: React.FC<ListProps> = ({
   onToggle
 }) => {
   const { t } = useTranslation();
-  const [form] = Form.useForm();
   const [condition, setCondition] = React.useState<Record<string, Condition>>({});
 
   useEffect(() => {
@@ -79,44 +69,6 @@ const FormPropertyList: React.FC<ListProps> = ({
     });
     return map;
   }, [models]);
-
-  const customOperatorTypeMap = useMemo(() => {
-    const { EQ, NE, GTE, LTE, RANGE, IN, NIN, LIKE, CONTAINS, CONTAINS_CS } = QUERY_OPERATOR;
-    const operatorTypeMap = {
-      float: [EQ, NE, GTE, LTE, RANGE],
-      int: [EQ, NE, GTE, LTE, RANGE]
-    };
-    if (groupObjId === BUILTIN_MODELS.HOST) {
-      return {
-        ...operatorTypeMap,
-        longchar: [IN, NIN, CONTAINS, LIKE],
-        singlechar: [IN, NIN, CONTAINS, LIKE],
-        array: [IN, NIN, CONTAINS, LIKE],
-        object: [IN, NIN, CONTAINS, LIKE]
-      };
-    }
-    return {
-      ...operatorTypeMap,
-      longchar: [IN, NIN, CONTAINS, CONTAINS_CS],
-      singlechar: [IN, NIN, CONTAINS, CONTAINS_CS],
-      array: [IN, NIN, CONTAINS, CONTAINS_CS],
-      object: [IN, NIN, CONTAINS, CONTAINS_CS]
-    };
-  }, [groupObjId]);
-
-  const operatorSymbolMap = useMemo(() => {
-    if (groupObjId === BUILTIN_MODELS.HOST) {
-      return QUERY_OPERATOR_HOST_SYMBOL;
-    }
-    return QUERY_OPERATOR_OTHER_SYMBOL;
-  }, [groupObjId]);
-
-  const operatorDescMap = useMemo(() => {
-    if (groupObjId === BUILTIN_MODELS.HOST) {
-      return QUERY_OPERATOR_HOST_DESC;
-    }
-    return QUERY_OPERATOR_OTHER_DESC;
-  }, [groupObjId]);
 
   const getDefaultData = (property: Property) => {
     const specificDefault = defaultDataMap[property.bk_property_type as DefaultMapKey];
@@ -195,50 +147,45 @@ const FormPropertyList: React.FC<ListProps> = ({
 
   return (
     <div className="form-property-list">
-      <Form form={form} layout="vertical" labelCol={{ span: 24 }}>
-        {properties.map((property: Property) => (
-          <div className="form-property-item">
-            {/* The First Line */}
-            <div className="item-header">
-              <div className="item-label">
-                {getPropertyLabel(property)}
-              </div>
-              {!disabled && (
-                <div className="item-actions">
-                  <Tooltip title={`切换为${exchangeName[conditionType]}`}>
-                    <SwapOutlined
-                      className="item-toggle"
-                      onClick={() => onToggle(property, conditionType)}
-                    />
-                  </Tooltip>
-                  <DeleteOutlined
-                    className="item-remove"
-                    onClick={() => onRemove(property)}
-                  />
-                </div>
-              )}
+      {properties.map((property: Property) => (
+        <div key={property.id} className="form-property-item">
+          {/* The First Line */}
+          <div className="item-header">
+            <div className="item-label">
+              {getPropertyLabel(property)}
             </div>
-            {/* The second line */}
-            <div className="item-controls">
-              {!WITHOUT_OPERATOR.includes(property.bk_property_type) && (
-                <FormOperatorSelector
-                  className="item-operator"
-                  property={property}
-                  customTypeMap={customOperatorTypeMap}
-                  symbolMap={operatorSymbolMap}
-                  descMap={operatorDescMap}
-                  // value={condition[property.id].operator}
-                  disabled={disabled}
-                  onChange={(operator) => handleOperatorChange(property, operator)}
+            {!disabled && (
+              <div className="item-actions">
+                <Tooltip title={`切换为${exchangeName[conditionType]}`}>
+                  <SwapOutlined
+                    className="item-toggle"
+                    onClick={() => onToggle(property, conditionType)}
+                  />
+                </Tooltip>
+                <DeleteOutlined
+                  className="item-remove"
+                  onClick={() => onRemove(property)}
                 />
-              )}
-              <div className="item-value">
-                {renderComponent(property)}
               </div>
+            )}
+          </div>
+          {/* The second line */}
+          <div className="item-controls">
+            {!WITHOUT_OPERATOR.includes(property.bk_property_type) && (
+              <FormOperatorSelector
+                className="item-operator"
+                property={property}
+                // value={condition[property.id].operator}
+                disabled={disabled}
+                onChange={(operator) => handleOperatorChange(property, operator)}
+              />
+            )}
+            <div className="item-value">
+              {renderComponent(property)}
             </div>
           </div>
-        ))}
-      </Form>
+        </div>
+      ))}
     </div>
   );
 };

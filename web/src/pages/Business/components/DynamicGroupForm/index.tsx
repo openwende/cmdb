@@ -279,7 +279,6 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                     children: (
                                         <FormPropertyList
                                             conditionType={conditionType.key}
-                                            groupObjId={groupObject}
                                             models={availableModels}
                                             selectedProperties={selectedProperties}
                                             storageCondition={storageCondition}
