@@ -1,3 +1,5 @@
+import {QUERY_OPERATOR} from './constants';
+
 // Business topology
 export enum CreateMode {
     Template = "template",
@@ -200,8 +202,9 @@ export interface Property {
 export interface PropertyMap {
   [objId: string]: Property[];
 }
+export type OperatorType = typeof QUERY_OPERATOR[keyof typeof QUERY_OPERATOR];
 export interface Condition {
   property: Property;
-  operator: string;
+  operator: OperatorType;
   value: any;
 }

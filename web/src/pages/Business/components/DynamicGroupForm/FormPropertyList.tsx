@@ -1,9 +1,9 @@
 import React, { useMemo, useEffect } from 'react';
-import { Tooltip, Input } from 'antd';
+import { Tooltip } from 'antd';
 import { DeleteOutlined, SwapOutlined } from '@ant-design/icons';
-import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './FormOperatorSelector';
-import { ConditionType, Property, Condition, ObjectMainLine, ConditionName } from '../../Types';
+import FormComponent from './FormComponent';
+import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
 import { QUERY_OPERATOR } from '../../constants';
 import './style.css';
 
@@ -20,9 +20,15 @@ const exchangeName = {
   [ConditionType.VARIABLE]: ConditionName.IMMUTABLE,
   [ConditionType.IMMUTABLE]: ConditionName.VARIABLE
 }
+const SUPPORTED_OPERATORS = [
+  QUERY_OPERATOR.LIKE,
+  QUERY_OPERATOR.CONTAINS,
+  QUERY_OPERATOR.CONTAINS_CS
+] as OperatorType[];
 
 type DefaultMapKey = keyof typeof defaultDataMap;
 interface ListProps {
+  bizId: number;
   conditionType: ConditionType;
   models: readonly ObjectMainLine[];
   selectedProperties: Property[];
@@ -34,6 +40,7 @@ interface ListProps {
 }
 
 const FormPropertyList: React.FC<ListProps> = ({
+  bizId,
   conditionType,
   models,
   selectedProperties,
@@ -43,12 +50,7 @@ const FormPropertyList: React.FC<ListProps> = ({
   onRemove,
   onToggle
 }) => {
-  const { t } = useTranslation();
   const [condition, setCondition] = React.useState<Record<string, Condition>>({});
-
-  useEffect(() => {
-    updateCondition();
-  }, [selectedProperties]);
 
   useEffect(() => {
     if (Object.keys(condition).length > 0) {
@@ -70,10 +72,14 @@ const FormPropertyList: React.FC<ListProps> = ({
     return map;
   }, [models]);
 
+  useEffect(() => {
+    updateCondition();
+  }, [properties]);
+
   const getDefaultData = (property: Property) => {
     const specificDefault = defaultDataMap[property.bk_property_type as DefaultMapKey];
     return {
-      operator: specificDefault?.operator ?? '$in',
+      operator: (specificDefault?.operator ?? '$in') as OperatorType,
       value: specificDefault?.value ?? []
     };
   }
@@ -82,7 +88,7 @@ const FormPropertyList: React.FC<ListProps> = ({
     const newCondition: Record<string, Condition> = {}
     properties.forEach((property) => {
       if (storageCondition && storageCondition[property.id]) {
-        // 修改conditionType为property.conditionType，保证conditionType正确
+        // If the property already exists in storageCondition, use it
         storageCondition[property.id].property.conditionType = property.conditionType
         newCondition[property.id] = storageCondition[property.id]
       } else {
@@ -95,19 +101,44 @@ const FormPropertyList: React.FC<ListProps> = ({
     setCondition(newCondition);
   }
 
-  const handleOperatorChange = (property: Property, operator: any) => {
-    const newCondition = { ...condition };
+  const handleOperatorChange = (property: Property, operator: OperatorType) => {
+    const currentItem = condition[property.id];
+    let newValue;
+
     if (operator === QUERY_OPERATOR.RANGE) {
-      newCondition[property.id].value = [];
-    } else if ([QUERY_OPERATOR.LIKE, QUERY_OPERATOR.CONTAINS, QUERY_OPERATOR.CONTAINS_CS].includes(operator)) {
-      const currentValue = condition[property.id].value;
-      newCondition[property.id].value = Array.isArray(currentValue) ? (currentValue[0] || '') : currentValue;
+      newValue = [];
+    } else if (SUPPORTED_OPERATORS.includes(operator)) {
+      const currentValue = currentItem.value;
+      newValue = Array.isArray(currentValue) ? (currentValue[0] || '') : currentValue;
     } else {
       const defaultValue = getDefaultData(property).value;
-      const currentValue = condition[property.id].value;
-      const isTypeChanged = (Array.isArray(defaultValue)) !== (Array.isArray(currentValue));
-      newCondition[property.id].value = isTypeChanged ? defaultValue : currentValue;
+      const currentValue = currentItem.value;
+      const isTypeChanged = Array.isArray(defaultValue) !== Array.isArray(currentValue);
+      newValue = isTypeChanged ? defaultValue : currentValue;
     }
+
+    const newCondition = {
+      ...condition,
+      [property.id]: {
+        ...currentItem,
+        operator: operator,
+        value: newValue,
+      }
+    };
+
+    setCondition(newCondition);
+  };
+
+  const handleComponentChange = (property: Property, value: any) => {
+    console.log('Component changed:', property, value);
+    const currentItem = condition[property.id];
+    const newCondition = {
+      ...condition,
+      [property.id]: {
+        ...currentItem,
+        value: value
+      }
+    };
     setCondition(newCondition);
   };
 
@@ -118,38 +149,11 @@ const FormPropertyList: React.FC<ListProps> = ({
     return `${modelName} - ${propertyName}`;
   };
 
-  const getPlaceholder = (property: Property) => {
-    const selectTypes = ['list', 'enum', 'timezone', 'organization', 'date', 'time', 'enumquote', 'enummulti', 'foreignkey'];
-    const name = t(conditionType === ConditionType.IMMUTABLE ? '条件值' : '默认值');
-
-    if (selectTypes.includes(property.bk_property_type)) {
-      return t('请选择', { name });
-    }
-
-    return t('请输入', { name });
-  };
-
-  const renderComponent = (property: Property) => {
-    return (
-      <Input
-        className="form-element"
-        placeholder={getPlaceholder(property)}
-        // value={condition[property.id]?.value}
-        // onChange={(e) => {
-        //   const newCondition = { ...condition };
-        //   newCondition[property.id].value = e.target.value;
-        //   onConditionChange(newCondition);
-        // }}
-        disabled={disabled}
-      />
-    );
-  };
-
   return (
     <div className="form-property-list">
       {properties.map((property: Property) => (
         <div key={property.id} className="form-property-item">
-          {/* The First Line */}
+          {/* The first line */}
           <div className="item-header">
             <div className="item-label">
               {getPropertyLabel(property)}
@@ -175,13 +179,21 @@ const FormPropertyList: React.FC<ListProps> = ({
               <FormOperatorSelector
                 className="item-operator"
                 property={property}
-                // value={condition[property.id].operator}
+                value={condition[property.id]?.operator}
                 disabled={disabled}
                 onChange={(operator) => handleOperatorChange(property, operator)}
               />
             )}
             <div className="item-value">
-              {renderComponent(property)}
+              <FormComponent
+                property={property}
+                conditionType={conditionType}
+                operator={condition[property.id]?.operator}
+                value={condition[property.id]?.value}
+                disabled={disabled}
+                bizId={bizId}
+                onChange={(value) => handleComponentChange(property, value)}
+              />
             </div>
           </div>
         </div>

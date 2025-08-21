@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Select } from 'antd';
-import { Property } from '../../Types';
+import { Property, OperatorType } from '../../Types';
 import { QUERY_OPERATOR, QUERY_OPERATOR_SYMBOL, QUERY_OPERATOR_DESC } from '../../constants';
 import './style.css';
 
@@ -36,9 +36,9 @@ interface OperatorOption {
 interface FormOperatorSelectorProps {
   className?: string;
   property: Property;
-  value?: string;
+  value?: OperatorType;
   disabled?: boolean;
-  onChange?: (operator: string) => void;
+  onChange?: (operator: OperatorType) => void;
 }
 
 const FormOperatorSelector: React.FC<FormOperatorSelectorProps> = ({

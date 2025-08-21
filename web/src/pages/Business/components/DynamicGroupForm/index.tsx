@@ -55,9 +55,7 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
 
     const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
-    const [variableConditions, setVariableConditions] = useState<Record<string, any>>({});
-    const [fixedConditions, setFixedConditions] = useState<Record<string, any>>({});
-    // 条件缓存存储 - 用于临时保存和恢复条件状态
+    // Storage for conditions that are not yet applied
     const [storageCondition, setStorageCondition] = useState<Record<string, any>>({});
 
     useEffect(() => {
@@ -174,8 +172,6 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
         setIsShow(false);
         form.resetFields();
         form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
-        setVariableConditions({});
-        setFixedConditions({});
         setStorageCondition({});
         onClose?.();
     };
@@ -278,6 +274,7 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                     ),
                                     children: (
                                         <FormPropertyList
+                                            bizId={currentBusiness?.id!}
                                             conditionType={conditionType.key}
                                             models={availableModels}
                                             selectedProperties={selectedProperties}

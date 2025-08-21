@@ -1145,6 +1145,46 @@ export const objectmainline = [
     "bk_pre_obj_name": "模块"
   }
 ];
+// 动态分组管控区域
+export const dynamicCloudArea = [
+  {
+    "bk_account_id": 0,
+    "bk_cloud_id": 0,
+    "bk_cloud_name": "Default Area",
+    "bk_cloud_vendor": "",
+    "bk_created_at": "2025-08-18T03:18:07.382Z",
+    "bk_creator": "cc_system",
+    "bk_last_editor": "cc_system",
+    "bk_region": "",
+    "bk_status": "1",
+    "bk_status_detail": "",
+    "bk_supplier_account": "0",
+    "bk_updated_at": "2025-08-18T03:18:09.948Z",
+    "bk_vpc_id": "",
+    "bk_vpc_name": "",
+    "create_time": "2025-08-18T03:18:07.382Z",
+    "default": 1,
+    "last_time": "2025-08-18T03:18:09.948Z"
+  },
+  {
+    "bk_account_id": 0,
+    "bk_cloud_id": 90000001,
+    "bk_cloud_name": "未分配",
+    "bk_cloud_vendor": "",
+    "bk_created_at": "2025-08-18T03:18:11.553Z",
+    "bk_creator": "cc_system",
+    "bk_last_editor": "cc_system",
+    "bk_region": "",
+    "bk_status": "",
+    "bk_supplier_account": "0",
+    "bk_updated_at": "2025-08-18T03:18:11.553Z",
+    "bk_vpc_id": "",
+    "bk_vpc_name": "",
+    "create_time": "2025-08-18T03:18:11.553Z",
+    "default": 1,
+    "last_time": "2025-08-18T03:18:11.553Z"
+  }
+];
 // 动态分组条件
 export const dynamicGroupCondition = [
   {
