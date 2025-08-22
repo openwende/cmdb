@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Table, Button, Input, Select, Alert, Space, message, Popconfirm } from "antd";
 import Pagination from "@/components/common/Pagination";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import { dynamicGroupList } from "@/mock/business";
-import DynamicGroupForm, { DynamicGroupFormRef } from "../components/DynamicGroupForm";
+import DynamicGroupForm from "../components/DynamicGroupForm";
 import { DynamicGroupFormData } from "../Types";
 import dayjs from 'dayjs';
 import "./style.css";
@@ -21,7 +21,6 @@ const searchFieldOptions = [
 ];
 
 const DynamicGroup: React.FC = () => {
-    const formRef = useRef<DynamicGroupFormRef>(null);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
     const [groupCount, setGroupCount] = useState(0);
@@ -31,9 +30,8 @@ const DynamicGroup: React.FC = () => {
     const [searchDateRange, setSearchDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [alertVisible, setAlertVisible] = useState(true);
-    
-    // Dynamic group form states
     const [editingGroup, setEditingGroup] = useState<any>(null);
+    const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
 
     // Find current field option
     const currentFieldOption = searchFieldOptions.find(option => option.value === searchField);
@@ -148,8 +146,7 @@ const DynamicGroup: React.FC = () => {
     }, [dynamicGroupList, page, pageSize, searchField, searchText, searchDateRange]);
 
     const handleCreate = () => {
-        setEditingGroup(null);
-        formRef.current?.show();
+        setDrawerVisible(true);
     };
 
     const handlePreview = (record: any) => {
@@ -159,7 +156,7 @@ const DynamicGroup: React.FC = () => {
 
     const handleEdit = (record: any) => {
         setEditingGroup(record);
-        formRef.current?.show();
+        setDrawerVisible(true);
     };
 
     const handleDelete = (record: any) => {
@@ -168,28 +165,9 @@ const DynamicGroup: React.FC = () => {
         // TODO: Remove from list after successful API call
     };
 
-    const handleFormSave = (data: DynamicGroupFormData) => {
-        try {
-            console.log('Save dynamic group:', data);
-            // TODO: Call API to save/update dynamic group
-            
-            if (editingGroup) {
-                message.success('动态分组更新成功');
-            } else {
-                message.success('动态分组创建成功');
-            }
-            
-            formRef.current?.hide();
-            setEditingGroup(null);
-            // TODO: Refresh list
-        } catch (error) {
-            message.error('保存失败');
-        }
-    };
-
-    const handleFormClose = () => {
-        formRef.current?.hide();
+    const handleDrawerClose = () => {
         setEditingGroup(null);
+        setDrawerVisible(false);
     };
 
     const handleTextSearch = (value: string) => {
@@ -288,12 +266,11 @@ const DynamicGroup: React.FC = () => {
                     setPageSize(size);
                 }}
             />
-            
+
             {/* Dynamic Group Form */}
             <DynamicGroupForm
-                ref={formRef}
-                onClose={handleFormClose}
-                onSave={handleFormSave}
+                visible={drawerVisible}
+                onClose={handleDrawerClose}
                 title={editingGroup ? '编辑动态分组' : '创建动态分组'}
             />
         </div>

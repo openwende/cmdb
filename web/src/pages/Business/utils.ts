@@ -1,4 +1,4 @@
-import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, Property } from "./Types";
+import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, Property, Condition, ConditionType, DynamicGroupCondition, DynamicGroupConditionGroup } from "./Types";
 import { CopyMenuItemKey as HostCopyKey } from './Types';
 import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS, QUERY_OPERATOR_SYMBOL } from './constants';
 
@@ -643,3 +643,70 @@ export const updatePropertySelect = (
     }
     updater(newSelected);
 }
+
+/**
+ * Transform the conditions object into the format required for dynamic group creation.
+ * 
+ * @param conditions The conditions object that users have set
+ * @returns An object containing two arrays: condition (immutable conditions) and variable_condition (variable conditions)
+ */
+export const formatDynamicConditions = (conditions: Record<string, Condition>) => {
+  const conditionMap: Record<string, DynamicGroupConditionGroup> = {};
+  const variableConditionMap: Record<string, DynamicGroupConditionGroup> = {};
+
+  Object.values(conditions).forEach((cond) => {
+    const { property, operator, value } = cond;
+    const objId = property.bk_obj_id;
+    const field = property.bk_property_id;
+
+    const conditionItem: DynamicGroupCondition = {
+      field,
+      operator,
+      value
+    };
+
+    if (property.conditionType === ConditionType.IMMUTABLE) {
+        // immutable conditions
+      if (!conditionMap[objId]) {
+        conditionMap[objId] = {
+          bk_obj_id: objId,
+          condition: []
+        };
+      }
+      conditionMap[objId].condition.push(conditionItem);
+    } else {
+      // variable conditions
+      if (!variableConditionMap[objId]) {
+        variableConditionMap[objId] = {
+          bk_obj_id: objId,
+          condition: []
+        };
+      }
+      variableConditionMap[objId].condition.push(conditionItem);
+    }
+  });
+
+  // transform the map to an array
+  const conditionArray = Object.values(conditionMap);
+  const variableConditionArray = Object.values(variableConditionMap);
+
+  return {
+    condition: conditionArray,
+    variable_condition: variableConditionArray
+  };
+};
+
+/**
+ * Validate if the condition value is valid
+ * @param value 
+ * @returns
+ */
+export const isValidCondition = (value: any): boolean => {
+  if (value === undefined || value === null || value === '') {
+    return false;
+  }
+  if (Array.isArray(value) && value.length === 0) {
+    return false;
+  }
+  return true;
+};

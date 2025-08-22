@@ -33,6 +33,28 @@
   .ant-empty {
     margin: 20px 0;
   }
+
+  .dynamic-group-content {
+    display: flex;
+    gap: 24px;
+    height: 100%;
+
+    .form-section {
+      flex: 0 0 58.33%; /* 相当于之前的 span={14} */
+      display: flex;
+      flex-direction: column;
+
+      .form-actions {
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid #f0f0f0;
+      }
+    }
+
+    .preview-section {
+      flex: 1; /* 相当于之前的 span={10} */
+    }
+  }
 }
 
 .condition-picker-popover {
@@ -268,6 +290,11 @@
         color: #c4c6cc !important;
         margin-left: 4px;
       }
+    }
+
+    .form-error {
+      font-size: 12px;
+      color: #ff4d4f;
     }
   }
 }

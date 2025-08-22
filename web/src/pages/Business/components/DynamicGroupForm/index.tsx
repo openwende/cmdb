@@ -1,8 +1,8 @@
-import { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
-import { Drawer, Form, Input, Button, Space, Row, Col, Card, Empty, Collapse, Tooltip } from 'antd';
-import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName } from '../../Types';
+import { useState, useEffect } from 'react';
+import { Drawer, Form, Input, Button, Space, Card, Empty, Collapse, Tooltip, Popconfirm } from 'antd';
+import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName, Condition } from '../../Types';
 import { availableModelIds, requestConfig, PROPERTY_TYPES, BUILTIN_MODELS } from '../../constants';
-import { createServiceTemplateProperty } from '../../utils';
+import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition } from '../../utils';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
@@ -27,27 +27,20 @@ const exchangeType = {
     [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
 }
 
-interface DynamicGroupFormRef {
-    show: () => void;
-    hide: () => void;
-}
 interface DynamicGroupFormProps {
-    id?: string | number;
-    title?: string;
-    isPreview?: boolean;
-    onClose?: () => void;
-    onSave?: (data: DynamicGroupFormData) => void;
+    title: string;
+    visible: boolean;
+    onClose: () => void;
 }
 
-const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(({
-    title = '动态分组',
+const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
+    title,
+    visible,
     onClose,
-    onSave
-}, ref) => {
+}) => {
     const { currentBusiness } = useBusinessStore();
 
     const [form] = Form.useForm();
-    const [isShow, setIsShow] = useState(false);
     const [loading, setLoading] = useState(false);
     const [groupObject, setGroupObject] = useState<BUILTIN_MODELS>(BUILTIN_MODELS.HOST);
     const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
@@ -55,8 +48,10 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
     const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
 
     const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
+    const [conditions, setConditions] = useState<Record<string, Condition>>({});
+    const [errors, setErrors] = useState<Set<number>>(new Set());
     // Storage for conditions that are not yet applied
-    const [storageCondition, setStorageCondition] = useState<Record<string, any>>({});
+    const [storageConditions, setStorageConditions] = useState<Record<string, Condition>>({});
 
     useEffect(() => {
         getMainLineModels();
@@ -159,38 +154,65 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
         setSelectedProperties(prev => [...prev, updatedProperty]);
     };
 
-    useImperativeHandle(ref, () => ({
-        show: () => {
-            setIsShow(true);
-        },
-        hide: () => {
-            setIsShow(false);
-        }
-    }));
+    const handleConditionChange = (newCondition: Record<string, Condition>) => {
+        setConditions(newCondition);
+        setStorageConditions(newCondition);
+    };
 
-    const handleClose = () => {
-        setIsShow(false);
-        form.resetFields();
-        form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
-        setStorageCondition({});
-        onClose?.();
+    const handleErrors = (propertyId: number, hasError: boolean) => {
+        setErrors(prev => {
+            const newErrors = new Set(prev);
+            if (hasError) {
+                newErrors.add(propertyId);
+            } else {
+                newErrors.delete(propertyId);
+            }
+            return newErrors;
+        });
+    };
+
+    // Validate all conditions
+    const validateAllConditions = (): boolean => {
+        let isValid = true;
+        const newErrors = new Set<number>();
+
+        Object.values(conditions).forEach(condition => {
+            if (!isValidCondition(condition.value)) {
+                newErrors.add(condition.property.id);
+                isValid = false;
+            }
+        });
+
+        setErrors(newErrors);
+        return isValid;
     };
 
     const handleSubmit = async () => {
         try {
+            // TODO: api
             setLoading(true);
             const values = await form.validateFields();
 
+            // Validate all conditions
+            if (!validateAllConditions()) {
+                setLoading(false);
+                return;
+            }
+
+            const {
+                condition,
+                variable_condition
+            } = formatDynamicConditions(conditions);
+
             const formData: DynamicGroupFormData = {
                 name: values.groupName,
+                bk_biz_id: currentBusiness?.id,
                 bk_obj_id: values.groupObject,
-                condition: [],
-                variable_condition: []
+                condition,
+                variable_condition
             };
+            console.log('提交数据:', formData);
 
-            console.log('表单数据:', formData);
-
-            onSave?.(formData);
             handleClose();
         } catch (error) {
             console.error(error);
@@ -199,26 +221,61 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
         }
     };
 
+    const handlePreview = async () => {
+        try {
+            setLoading(true);
+            const values = await form.validateFields();
+
+            // Validate all conditions
+            if (!validateAllConditions()) {
+                setLoading(false);
+                return;
+            }
+
+            const {
+                condition,
+                variable_condition
+            } = formatDynamicConditions(conditions);
+
+            const previewData = {
+                name: values.groupName,
+                bk_biz_id: currentBusiness?.id,
+                bk_obj_id: values.groupObject,
+                condition,
+                variable_condition
+            };
+            console.log('预览数据:', previewData);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleClose = () => {
+        onClose();
+        handleClearConditions();
+        form.resetFields();
+        form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
+        setErrors(new Set());
+    };
+
+    const handleClearConditions = () => {
+        setSelectedProperties([]);
+        setConditions({});
+        setStorageConditions({});
+    };
+
     return (
         <Drawer
             title={title}
-            open={isShow}
+            open={visible}
             onClose={handleClose}
             width={1200}
             className="dynamic-group-drawer"
-            footer={
-                <div style={{ textAlign: 'right' }}>
-                    <Space>
-                        <Button onClick={handleClose}>取消</Button>
-                        <Button type="primary" onClick={handleSubmit} loading={loading}>
-                            保存
-                        </Button>
-                    </Space>
-                </div>
-            }
         >
-            <Row gutter={24}>
-                <Col span={14}>
+            <div className="dynamic-group-content">
+                <div className="form-section">
                     <Form
                         form={form}
                         layout="vertical"
@@ -232,7 +289,7 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                             label="分组名称"
                             name="groupName"
                             rules={[
-                                { required: true, message: '请输入分组名称' },
+                                { required: true, message: '该字段是必填项' },
                                 { max: 256 }
                             ]}
                         >
@@ -277,35 +334,66 @@ const DynamicGroupForm = forwardRef<DynamicGroupFormRef, DynamicGroupFormProps>(
                                             bizId={currentBusiness?.id!}
                                             conditionType={conditionType.key}
                                             models={availableModels}
+                                            conditions={conditions}
                                             selectedProperties={selectedProperties}
-                                            storageCondition={storageCondition}
-                                            onConditionChange={setStorageCondition}
+                                            storageConditions={storageConditions}
+                                            errors={errors}
                                             onRemove={handleRemoveProperty}
                                             onToggle={handleToggleProperty}
+                                            onConditionChange={handleConditionChange}
+                                            onUpdateErrors={handleErrors}
                                         />
                                     )
                                 }]}
                             />
                         ))}
-                    </Form>
-                </Col>
 
-                <Col span={10}>
+                        <div className="form-actions">
+                            <Space>
+                                <Button
+                                    type="primary"
+                                    onClick={handleSubmit}
+                                    loading={loading}
+                                    disabled={selectedProperties.length === 0}
+                                >
+                                    提交
+                                </Button>
+                                <Button
+                                    onClick={handlePreview}
+                                    disabled={selectedProperties.length === 0}
+                                >
+                                    预览
+                                </Button>
+                                <Popconfirm
+                                    title="确认清空当前的分组条件？"
+                                    onConfirm={handleClearConditions}
+                                    okText="确认"
+                                    cancelText="取消"
+                                >
+                                    <Button disabled={selectedProperties.length === 0}>
+                                        清空条件
+                                    </Button>
+                                </Popconfirm>
+                                <Button onClick={handleClose}>
+                                    取消
+                                </Button>
+                            </Space>
+                        </div>
+                    </Form>
+                </div>
+
+                <div className="preview-section">
                     <Card title="结果预览" size="small" style={{ height: '100%', minHeight: '600px' }}>
                         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
                             <Empty
                                 description="请先在左侧设置分组条件"
-                                style={{ color: '#999' }}
                             />
                         </div>
                     </Card>
-                </Col>
-            </Row>
+                </div>
+            </div>
         </Drawer>
     );
-});
-
-DynamicGroupForm.displayName = 'DynamicGroupForm';
+};
 
 export default DynamicGroupForm;
-export type { DynamicGroupFormRef };

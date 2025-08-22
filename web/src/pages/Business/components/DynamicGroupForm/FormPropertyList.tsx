@@ -5,6 +5,7 @@ import FormOperatorSelector from './FormOperatorSelector';
 import FormComponent from './FormComponent';
 import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
 import { QUERY_OPERATOR } from '../../constants';
+import { isValidCondition } from '../../utils';
 import './style.css';
 
 const defaultDataMap = {
@@ -15,7 +16,12 @@ const defaultDataMap = {
   time: { operator: '$range', value: [] },
   'service-template': { operator: '$in', value: [] }
 };
-const WITHOUT_OPERATOR = ['date', 'time', 'bool', 'service-template'];
+const WITHOUT_OPERATOR = [
+  'date',
+  'time',
+  'bool',
+  'service-template'
+];
 const exchangeName = {
   [ConditionType.VARIABLE]: ConditionName.IMMUTABLE,
   [ConditionType.IMMUTABLE]: ConditionName.VARIABLE
@@ -32,11 +38,14 @@ interface ListProps {
   conditionType: ConditionType;
   models: readonly ObjectMainLine[];
   selectedProperties: Property[];
-  storageCondition: Record<string, any>;
-  onConditionChange: (storageCondition: Record<string, any>) => void;
+  conditions: Record<string, Condition>;
+  storageConditions: Record<string, any>;
+  errors: Set<number>;
   disabled?: boolean;
   onRemove: (property: Property) => void;
   onToggle: (property: Property, conditionType: ConditionType) => void;
+  onConditionChange: (condition: Record<string, Condition>) => void;
+  onUpdateErrors: (propertyId: number, hasError: boolean) => void;
 }
 
 const FormPropertyList: React.FC<ListProps> = ({
@@ -44,19 +53,15 @@ const FormPropertyList: React.FC<ListProps> = ({
   conditionType,
   models,
   selectedProperties,
-  storageCondition,
-  onConditionChange,
+  conditions,
+  storageConditions,
+  errors,
   disabled = false,
   onRemove,
-  onToggle
+  onToggle,
+  onConditionChange,
+  onUpdateErrors
 }) => {
-  const [condition, setCondition] = React.useState<Record<string, Condition>>({});
-
-  useEffect(() => {
-    if (Object.keys(condition).length > 0) {
-      onConditionChange({ ...storageCondition, ...condition });
-    }
-  }, [condition]);
 
   const properties = useMemo(() => {
     return selectedProperties.filter(property => {
@@ -87,22 +92,22 @@ const FormPropertyList: React.FC<ListProps> = ({
   const updateCondition = () => {
     const newCondition: Record<string, Condition> = {}
     properties.forEach((property) => {
-      if (storageCondition && storageCondition[property.id]) {
-        // If the property already exists in storageCondition, use it
-        storageCondition[property.id].property.conditionType = property.conditionType
-        newCondition[property.id] = storageCondition[property.id]
+      if (storageConditions && storageConditions[property.id]) {
+        // If the property already exists in storageConditions, use it
+        storageConditions[property.id].property.conditionType = property.conditionType;
+        newCondition[property.id] = storageConditions[property.id];
       } else {
         newCondition[property.id] = {
           property,
-          ...getDefaultData(property)
-        }
+          ...getDefaultData(property),
+        };
       }
     })
-    setCondition(newCondition);
+    onConditionChange(newCondition);
   }
 
   const handleOperatorChange = (property: Property, operator: OperatorType) => {
-    const currentItem = condition[property.id];
+    const currentItem = conditions[property.id];
     let newValue;
 
     if (operator === QUERY_OPERATOR.RANGE) {
@@ -118,7 +123,7 @@ const FormPropertyList: React.FC<ListProps> = ({
     }
 
     const newCondition = {
-      ...condition,
+      ...conditions,
       [property.id]: {
         ...currentItem,
         operator: operator,
@@ -126,20 +131,28 @@ const FormPropertyList: React.FC<ListProps> = ({
       }
     };
 
-    setCondition(newCondition);
+    onConditionChange(newCondition);
+  };
+
+  const updateErrors = (propertyId: number, hasError: boolean) => {
+    onUpdateErrors(propertyId, hasError);
   };
 
   const handleComponentChange = (property: Property, value: any) => {
     console.log('Component changed:', property, value);
-    const currentItem = condition[property.id];
+    const currentItem = conditions[property.id];
     const newCondition = {
-      ...condition,
+      ...conditions,
       [property.id]: {
         ...currentItem,
         value: value
       }
     };
-    setCondition(newCondition);
+    onConditionChange(newCondition);
+
+    // Validate field value
+    const hasError = !isValidCondition(value);
+    updateErrors(property.id, hasError);
   };
 
   const getPropertyLabel = (property: Property) => {
@@ -173,13 +186,14 @@ const FormPropertyList: React.FC<ListProps> = ({
               </div>
             )}
           </div>
+
           {/* The second line */}
           <div className="item-controls">
             {!WITHOUT_OPERATOR.includes(property.bk_property_type) && (
               <FormOperatorSelector
                 className="item-operator"
                 property={property}
-                value={condition[property.id]?.operator}
+                value={conditions[property.id]?.operator}
                 disabled={disabled}
                 onChange={(operator) => handleOperatorChange(property, operator)}
               />
@@ -188,14 +202,21 @@ const FormPropertyList: React.FC<ListProps> = ({
               <FormComponent
                 property={property}
                 conditionType={conditionType}
-                operator={condition[property.id]?.operator}
-                value={condition[property.id]?.value}
+                operator={conditions[property.id]?.operator}
+                value={conditions[property.id]?.value}
                 disabled={disabled}
                 bizId={bizId}
                 onChange={(value) => handleComponentChange(property, value)}
               />
             </div>
           </div>
+
+          {/* Error message */}
+          {errors.has(property.id) && (
+            <div className="form-error">
+              该字段是必填项
+            </div>
+          )}
         </div>
       ))}
     </div>
