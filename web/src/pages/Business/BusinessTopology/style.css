@@ -1,6 +1,7 @@
 .topology-wrapper {
     display: flex;
     height: calc(100vh - 100px);
+    margin-right: 20px;
 }
 
 .topology-tabs {

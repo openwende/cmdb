@@ -7,9 +7,9 @@ import { BUILTIN_MODELS } from '../../constants';
 interface FormTargetProps {
   value?: BUILTIN_MODELS;
   disabled?: boolean;
-  showCancelDialog?: boolean;
+  showModal?: boolean;
   onChange?: (value: BUILTIN_MODELS, oldValue?: BUILTIN_MODELS) => void;
-  onCanShowDialog?: (item: any) => void;
+  onShowModal?: (id: BUILTIN_MODELS) => void;
 }
 
 interface TargetItem {
@@ -21,9 +21,9 @@ interface TargetItem {
 const FormTarget: React.FC<FormTargetProps> = ({
   value = BUILTIN_MODELS.HOST,
   disabled = false,
-  showCancelDialog = false,
+  showModal = false,
   onChange,
-  onCanShowDialog
+  onShowModal
 }) => {
   const { t } = useTranslation();
 
@@ -46,9 +46,9 @@ const FormTarget: React.FC<FormTargetProps> = ({
 
     if (disabled) return;
 
-    if (showCancelDialog) {
+    if (showModal) {
       const item = list.find(item => item.id === newValue);
-      onCanShowDialog?.(item);
+      if (item?.id) onShowModal?.(item.id as BUILTIN_MODELS);
       return;
     }
 

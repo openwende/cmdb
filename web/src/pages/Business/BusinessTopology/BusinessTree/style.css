@@ -3,6 +3,7 @@
     border-right: 1px solid #eee;
     position: relative;
     user-select: none;
+    margin: 12px 20px 12px auto;
 
     .search-wrapper {
         padding: 8px;
@@ -23,7 +24,7 @@
         box-shadow: none;
 
         &:hover {
-            background: #1677ff;
+            background-color: #1677ff;
             opacity: 0.5;
             box-shadow: 0 0 8px #1890ff55;
         }

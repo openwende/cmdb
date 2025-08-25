@@ -1,14 +1,16 @@
-import React, { Fragment, useRef, useState } from "react";
+import React, { Fragment, useState } from "react";
 import { Input } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import TopologyTree from "../components/TopologyTree";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
+import DragHandle from "@/components/common/DragHandle";
 import "./style.css";
 import { useTranslation } from "react-i18next";
 import { TreeData } from "../../Types";
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
+const DEFAULT_WIDTH = 320;
 
 interface Props {
     selectedKeys?: string[];
@@ -22,10 +24,7 @@ const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNod
     const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
     // The sidebar state
-    const [sidebarWidth, setSidebarWidth] = useState<number>(320);
-    const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [isHover, setIsHover] = useState<boolean>(false);
-    const dragging = useRef<boolean>(false);
+    const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
@@ -39,41 +38,13 @@ const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNod
         setSearchValue('');
     };
 
-    // The dragger event
-    const onMouseDown = (e: React.MouseEvent) => {
-        dragging.current = true;
-        setIsDragging(true);
-        const startX = e.clientX;
-        const startWidth = sidebarWidth;
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            if (!dragging.current) return;
-            const delta = moveEvent.clientX - startX;
-            let newWidth = startWidth + delta;
-            if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
-            if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
-            setSidebarWidth(newWidth);
-        };
-
-        const onMouseUp = () => {
-            dragging.current = false;
-            setIsDragging(false);
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        };
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    };
-
     return (
         <div className="tree-wrapper"
             style={{
                 width: collapsed ? 0 : sidebarWidth,
                 minWidth: collapsed ? 0 : MIN_WIDTH,
                 maxWidth: collapsed ? 0 : MAX_WIDTH,
-                margin: collapsed ? 0 : 12,
-                marginRight: collapsed ? 0 : 20
+                marginLeft: collapsed ? 0 : 20
             }}
         >
             {/* The search input and tree*/}
@@ -99,22 +70,11 @@ const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNod
                         />
                     )}
                     {/* The dragger */}
-                    <div
-                        style={{
-                            position: "absolute",
-                            right: 0,
-                            top: 0,
-                            width: 2,
-                            height: "100%",
-                            cursor: "col-resize",
-                            zIndex: 10,
-                            background: isDragging || isHover ? "#1890ff" : "transparent",
-                            borderRadius: 3,
-                            transition: "background 0.2s"
-                        }}
-                        onMouseDown={onMouseDown}
-                        onMouseEnter={() => setIsHover(true)}
-                        onMouseLeave={() => setIsHover(false)}
+                    <DragHandle
+                        minWidth={MIN_WIDTH}
+                        maxWidth={MAX_WIDTH}
+                        currentWidth={sidebarWidth}
+                        onWidthChange={setSidebarWidth}
                     />
                 </Fragment>
             )}

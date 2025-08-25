@@ -1,58 +1,49 @@
 .dynamic-group-drawer {
-  .ant-drawer-body {
-    padding: 24px;
+  .ant-collapse-header {
+    background: #f5f5f5;
+    border-radius: 8px !important;
+  }
+
+  .ant-collapse-content-box {
+    padding: 0;
   }
 
   .ant-form-item {
     margin-bottom: 16px;
   }
 
-  .ant-collapse {
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-  }
-
-  .ant-collapse-header {
-    background: #fafafa;
-    border-bottom: 1px solid #f0f0f0;
-  }
-
-  .ant-collapse-content {
-    border-top: none;
-  }
-
-  .ant-card {
-    border: 1px solid #f0f0f0;
-    border-radius: 6px;
-  }
-
-  .ant-card-head {
-    background: #fafafa;
-  }
-
-  .ant-empty {
-    margin: 20px 0;
-  }
-
   .dynamic-group-content {
     display: flex;
-    gap: 24px;
     height: 100%;
 
     .form-section {
-      flex: 0 0 58.33%; /* 相当于之前的 span={14} */
+      flex: none;
       display: flex;
       flex-direction: column;
+      position: relative;
+      padding: 24px 24px 24px 0;                        
+      margin: -24px 0;
+      user-select: none;
+      border-right: 1px solid rgba(5, 5, 5, 0.06);
+
+      .condition-title {
+        font-weight: bold;
+      }
 
       .form-actions {
-        margin-top: 24px;
         padding-top: 16px;
-        border-top: 1px solid #f0f0f0;
+        border-top: 1px solid rgba(5, 5, 5, 0.06);
       }
     }
 
+    .section-title {
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+
     .preview-section {
-      flex: 1; /* 相当于之前的 span={10} */
+      flex: 1;
+      user-select: none;
     }
   }
 }
@@ -213,9 +204,8 @@
   .form-property-item {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     padding: 8px;
-    margin-bottom: 4px;
 
     &:hover {
       border-radius: 6px;
@@ -230,16 +220,13 @@
 
       .item-label {
         flex: 1;
-        font-size: 14px;
-        color: #262626;
-        font-weight: 500;
       }
 
       .item-actions {
         display: flex;
         align-items: center;
-        gap: 8px;
         flex-shrink: 0;
+        font-size: 12px;
 
         .item-toggle,
         .item-remove {

@@ -6,9 +6,14 @@ import { createServiceTemplateProperty, formatDynamicConditions, isValidConditio
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
+import DragHandle from '@/components/common/DragHandle';
+import ConfirmModal from '@/components/common/ConfirmModal';
 import { getAvailableModels, batchSearchObjectAttribute } from '@/api';
 import { useBusinessStore } from '@/store/BusinessStore';
 import './style.css';
+
+const MIN_WIDTH = 400;
+const MAX_WIDTH = 500;
 
 export const conditionTypes = [
     {
@@ -39,19 +44,22 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     onClose,
 }) => {
     const { currentBusiness } = useBusinessStore();
-
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [groupObject, setGroupObject] = useState<BUILTIN_MODELS>(BUILTIN_MODELS.HOST);
     const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
     const [propertyMap, setPropertyMap] = useState<PropertyMap>({});
     const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
-
     const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
     const [conditions, setConditions] = useState<Record<string, Condition>>({});
     const [errors, setErrors] = useState<Set<number>>(new Set());
     // Storage for conditions that are not yet applied
     const [storageConditions, setStorageConditions] = useState<Record<string, Condition>>({});
+    // State for form section width
+    const [basicInfoWidth, setBasicInfoWidth] = useState<number>(MIN_WIDTH);
+    // State for confirm modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [pendingGroupObject, setPendingGroupObject] = useState<BUILTIN_MODELS | null>(null);
 
     useEffect(() => {
         getMainLineModels();
@@ -257,13 +265,38 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         handleClearConditions();
         form.resetFields();
         form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
-        setErrors(new Set());
     };
 
     const handleClearConditions = () => {
         setSelectedProperties([]);
         setConditions({});
         setStorageConditions({});
+        setErrors(new Set());
+    };
+
+    const handleGroupObjectChange = (newValue: BUILTIN_MODELS) => {
+        setGroupObject(newValue);
+        form.setFieldsValue({ groupObject: newValue });
+    };
+
+    const handleShowConfirmModal = (id: BUILTIN_MODELS) => {
+        setPendingGroupObject(id);
+        setShowConfirmModal(true);
+    };
+
+    const handleConfirmOk = () => {
+        if (pendingGroupObject) {
+            handleClearConditions();
+            setGroupObject(pendingGroupObject);
+            form.setFieldsValue({ groupObject: pendingGroupObject });
+        }
+        setShowConfirmModal(false);
+        setPendingGroupObject(null);
+    };
+
+    const handleConfirmCancel = () => {
+        setShowConfirmModal(false);
+        setPendingGroupObject(null);
     };
 
     return (
@@ -275,7 +308,10 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             className="dynamic-group-drawer"
         >
             <div className="dynamic-group-content">
-                <div className="form-section">
+                <div
+                    className="form-section"
+                    style={{ width: basicInfoWidth }}
+                >
                     <Form
                         form={form}
                         layout="vertical"
@@ -284,7 +320,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                             groupObject
                         }}
                     >
-                        <h4>基础信息</h4>
+                        <div className="section-title">基础信息</div>
                         <Form.Item
                             label="分组名称"
                             name="groupName"
@@ -303,21 +339,22 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                         >
                             <FormTarget
                                 value={groupObject}
-                                onChange={(value) => { setGroupObject(value) }}
+                                showModal={selectedProperties.length > 0}
+                                onChange={handleGroupObjectChange}
+                                onShowModal={handleShowConfirmModal}
                             />
                         </Form.Item>
 
                         {conditionTypes.map(conditionType => (
                             <Collapse
-                                key={conditionType.key}
                                 ghost
+                                key={conditionType.key}
                                 defaultActiveKey={[conditionType.key]}
-                                style={{ marginBottom: 16 }}
                                 items={[{
                                     key: conditionType.key,
                                     label: (
                                         <Tooltip title={conditionType.desc} styles={{ root: { maxWidth: 'none' } }}>
-                                            <span>{conditionType.title}</span>
+                                            <span className="condition-title">{conditionType.title}</span>
                                         </Tooltip>
                                     ),
                                     extra: (
@@ -380,18 +417,32 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                             </Space>
                         </div>
                     </Form>
+
+                    {/* The rag handle */}
+                    <DragHandle
+                        minWidth={MIN_WIDTH}
+                        maxWidth={MAX_WIDTH}
+                        currentWidth={basicInfoWidth}
+                        onWidthChange={setBasicInfoWidth}
+                    />
                 </div>
 
                 <div className="preview-section">
-                    <Card title="结果预览" size="small" style={{ height: '100%', minHeight: '600px' }}>
-                        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-                            <Empty
-                                description="请先在左侧设置分组条件"
-                            />
-                        </div>
-                    </Card>
+                    <div className="section-title">结果预览</div>
+                    <Empty
+                        description="请先在左侧设置分组条件"
+                    />
                 </div>
             </div>
+
+            {/* Confirm Modal */}
+            <ConfirmModal
+                visible={showConfirmModal}
+                title="确认切换？"
+                description="填写内容会清空，确认切换？"
+                onOk={handleConfirmOk}
+                onCancel={handleConfirmCancel}
+            />
         </Drawer>
     );
 };

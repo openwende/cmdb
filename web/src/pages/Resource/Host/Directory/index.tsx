@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { useTranslation } from 'react-i18next';
 import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message, InputRef } from "antd";
 import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined, ExclamationCircleFilled, PushpinOutlined } from "@ant-design/icons";
+import DragHandle from "@/components/common/DragHandle";
 import { hostDirectoryMock } from "@/mock/resource";
 import { DirectoryData, DirMenuKey } from "../../Types";
 import "./style.css";
@@ -34,9 +35,6 @@ const Directory: React.FC<{
     const [pinnedOrder, setPinnedOrder] = useState<number[]>([]);
     // State for the sidebar
     const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
-    const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [isHover, setIsHover] = useState<boolean>(false);
-    const dragging = useRef<boolean>(false);
     // State for the collapsed
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
@@ -202,34 +200,6 @@ const Directory: React.FC<{
         }
     }
 
-    // The sidebar dragger event
-    const onMouseDown = (e: React.MouseEvent) => {
-        dragging.current = true;
-        setIsDragging(true);
-        const startX = e.clientX;
-        const startWidth = sidebarWidth;
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            if (!dragging.current) return;
-            // Calculate the width of the sidebar
-            const delta = moveEvent.clientX - startX;
-            let newWidth = startWidth + delta;
-            if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
-            if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
-            setSidebarWidth(newWidth);
-        };
-
-        const onMouseUp = () => {
-            dragging.current = false;
-            setIsDragging(false);
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        };
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    };
-
     // The directory menu items
     const items: MenuProps['items'] = [
         {
@@ -370,7 +340,7 @@ const Directory: React.FC<{
                 width: collapsed ? 0 : sidebarWidth,
                 minWidth: collapsed ? 0 : MIN_WIDTH,
                 maxWidth: collapsed ? 0 : MAX_WIDTH,
-                marginRight: collapsed ? 0 : 20,
+                marginRight: collapsed ? 0 : 20
             }}
         >
             {/* The search input and the add icon */}
@@ -395,22 +365,11 @@ const Directory: React.FC<{
                 className="directory-tree"
             />
             {/* The dragger */}
-            <div
-                style={{
-                    position: "absolute",
-                    right: 0,
-                    top: 0,
-                    width: 2,
-                    height: "100%",
-                    cursor: "col-resize",
-                    zIndex: 10,
-                    background: isDragging || isHover ? "#1890ff" : "transparent",
-                    borderRadius: 3,
-                    transition: "background 0.2s"
-                }}
-                onMouseDown={onMouseDown}
-                onMouseEnter={() => setIsHover(true)}
-                onMouseLeave={() => setIsHover(false)}
+            <DragHandle
+                minWidth={MIN_WIDTH}
+                maxWidth={MAX_WIDTH}
+                currentWidth={sidebarWidth}
+                onWidthChange={setSidebarWidth}
             />
             {/* The collapsed button */}
             <div

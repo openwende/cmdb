@@ -1,0 +1,16 @@
+﻿.drag-handle {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 10;
+    background: transparent;
+    border-radius: 3px;
+    transition: background 0.2s;
+
+    &.active {
+        background: #1890ff;
+    }
+}

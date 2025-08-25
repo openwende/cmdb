@@ -1,11 +1,20 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty, Tooltip } from 'antd';
-import TopologyTree from '../TopologyTree';
-import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
-import { TailEleType, TopoTreeNodeType, TransferHostItem, TransferHostType, TransferMenuItemType, TreeData, AppendMenuItemKey } from '@/pages/Business/Types';
-import './style.css';
 import { CloseOutlined } from '@ant-design/icons';
+import TopologyTree from '../TopologyTree';
+import DragHandle from '@/components/common/DragHandle';
+import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
 import { findNodeAndParents, isHostAlreadyInTarget } from '@/pages/Business/utils';
+import {
+  TailEleType,
+  TopoTreeNodeType,
+  TransferHostItem,
+  TransferHostType,
+  TransferMenuItemType,
+  TreeData,
+  AppendMenuItemKey
+} from '@/pages/Business/Types';
+import './style.css';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
@@ -44,9 +53,6 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
   // State for sidebar
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [isDraggerHover, setIsDraggerHover] = useState<boolean>(false);
-  const dragging = useRef<boolean>(false);
 
   const transferStatus = useMemo(() => {
     return {
@@ -106,9 +112,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
         }))
       }));
     } else if (transferStatus.isOtherBusiness && selectedBizId) {
-      const biz = bizInfo.info.find((b: { bk_biz_id: number }) => String(b.bk_biz_id) === selectedBizId);
+      const biz = bizInfo.info.find((b) => String(b.bk_biz_id) === selectedBizId);
       if (!biz) return [];
-      return buildIdlePoolTree(biz.bk_biz_name);
+      return buildIdlePoolTree(biz.bk_biz_name!);
     }
     return [];
   }, [transferStatus, selectedBizId]);
@@ -159,32 +165,6 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     const list = transferStatus.isSingleSelect ? selectedNodes.slice(0, 1) : selectedNodes;
     setPreviewList(list);
   }, [selectedKeys, customTreeData, transferStatus]);
-
-  // Handle drag sidebar
-  const onMouseDown = (e: React.MouseEvent) => {
-    dragging.current = true;
-    setIsDragging(true);
-    const startX = e.clientX;
-    const startWidth = sidebarWidth;
-
-    const onMouseMove = (moveEvent: MouseEvent) => {
-      if (!dragging.current) return;
-      const delta = moveEvent.clientX - startX;
-      let newWidth = startWidth + delta;
-      if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
-      if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
-      setSidebarWidth(newWidth);
-    };
-
-    const onMouseUp = () => {
-      dragging.current = false;
-      setIsDragging(false);
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
-    };
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
-  };
 
   // Handle node selection (single or multi based on transferType)
   const handleSelectNode = (node: TreeData) => {
@@ -254,7 +234,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return null;
   };
 
-  const bizOptions = bizInfo.info.map((biz: { bk_biz_id: number; bk_biz_name: string }) => ({
+  const bizOptions = bizInfo.info.map((biz) => ({
     label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
     value: String(biz.bk_biz_id),
   }));
@@ -302,7 +282,14 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     >
       <div className="transfer-host-modal-body">
         {/* Left side */}
-        <div className="transfer-host-modal-left" style={{ width: sidebarWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}>
+        <div
+          className="transfer-host-modal-left"
+          style={{
+            width: sidebarWidth,
+            minWidth: MIN_WIDTH,
+            maxWidth: MAX_WIDTH
+          }}
+        >
           {transferStatus.isOtherBusiness ? (
             <>
               <Select
@@ -344,22 +331,11 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
             />
           }
           {/* The dragger */}
-          <div
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              width: 2,
-              height: '100%',
-              cursor: 'col-resize',
-              zIndex: 10,
-              background: isDragging || isDraggerHover ? '#1890ff' : 'transparent',
-              borderRadius: 3,
-              transition: 'background 0.2s',
-            }}
-            onMouseDown={onMouseDown}
-            onMouseEnter={() => setIsDraggerHover(true)}
-            onMouseLeave={() => setIsDraggerHover(false)}
+          <DragHandle
+            minWidth={MIN_WIDTH}
+            maxWidth={MAX_WIDTH}
+            currentWidth={sidebarWidth}
+            onWidthChange={setSidebarWidth}
           />
         </div>
         {/* Right side */}

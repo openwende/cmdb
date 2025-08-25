@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
-import { DeleteOutlined, SwapOutlined } from '@ant-design/icons';
+import { CloseOutlined, SwapOutlined } from '@ant-design/icons';
 import FormOperatorSelector from './FormOperatorSelector';
 import FormComponent from './FormComponent';
 import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
@@ -62,6 +62,7 @@ const FormPropertyList: React.FC<ListProps> = ({
   onConditionChange,
   onUpdateErrors
 }) => {
+  const [hoveredProperty, setHoveredProperty] = useState<number | null>(null);
 
   const properties = useMemo(() => {
     return selectedProperties.filter(property => {
@@ -165,13 +166,18 @@ const FormPropertyList: React.FC<ListProps> = ({
   return (
     <div className="form-property-list">
       {properties.map((property: Property) => (
-        <div key={property.id} className="form-property-item">
+        <div
+          key={property.id}
+          className="form-property-item"
+          onMouseEnter={() => setHoveredProperty(property.id)}
+          onMouseLeave={() => setHoveredProperty(null)}
+        >
           {/* The first line */}
           <div className="item-header">
             <div className="item-label">
               {getPropertyLabel(property)}
             </div>
-            {!disabled && (
+            {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
                 <Tooltip title={`切换为${exchangeName[conditionType]}`}>
                   <SwapOutlined
@@ -179,7 +185,7 @@ const FormPropertyList: React.FC<ListProps> = ({
                     onClick={() => onToggle(property, conditionType)}
                   />
                 </Tooltip>
-                <DeleteOutlined
+                <CloseOutlined
                   className="item-remove"
                   onClick={() => onRemove(property)}
                 />
