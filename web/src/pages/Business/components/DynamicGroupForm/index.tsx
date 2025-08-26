@@ -1,19 +1,24 @@
 import { useState, useEffect } from 'react';
-import { Drawer, Form, Input, Button, Space, Card, Empty, Collapse, Tooltip, Popconfirm } from 'antd';
+import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
 import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName, Condition } from '../../Types';
-import { availableModelIds, requestConfig, PROPERTY_TYPES, BUILTIN_MODELS } from '../../constants';
+import { availableModelIds, requestConfig, BUILTIN_MODELS } from '../../constants';
 import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition } from '../../utils';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
+import PreviewResult from './PreviewResult';
 import DragHandle from '@/components/common/DragHandle';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { getAvailableModels, batchSearchObjectAttribute } from '@/api';
 import { useBusinessStore } from '@/store/BusinessStore';
+import dayjs from 'dayjs';
+import { dynamicGroupPreviewResult } from '@/mock/business';
 import './style.css';
 
+const DRAWER_WIDTH = 1200;
 const MIN_WIDTH = 400;
 const MAX_WIDTH = 500;
+const PADDING = 24;
 
 export const conditionTypes = [
     {
@@ -50,7 +55,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
     const [propertyMap, setPropertyMap] = useState<PropertyMap>({});
     const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
-    const [disabledPropertyMap, setDisabledPropertyMap] = useState<PropertyMap>({});
     const [conditions, setConditions] = useState<Record<string, Condition>>({});
     const [errors, setErrors] = useState<Set<number>>(new Set());
     // Storage for conditions that are not yet applied
@@ -60,6 +64,11 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     // State for confirm modal
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [pendingGroupObject, setPendingGroupObject] = useState<BUILTIN_MODELS | null>(null);
+    // State for leave confirm modal
+    const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
+    // Preview result state
+    const [previewData, setPreviewData] = useState<any[]>([]);
+    const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
 
     useEffect(() => {
         getMainLineModels();
@@ -102,14 +111,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             })
             propertyMap.module.unshift(createServiceTemplateProperty());
             setPropertyMap(Object.freeze(propertyMap));
-
-            const disabledPropertyMap: any = {};
-            Object.keys(propertyMap).forEach((objId) => {
-                disabledPropertyMap[objId] = propertyMap[objId]
-                    .filter((item: Property) => item.bk_property_type === PROPERTY_TYPES.INNER_TABLE)
-                    .map((item: Property) => item.bk_property_id)
-            })
-            setDisabledPropertyMap(disabledPropertyMap);
         } catch (error) {
             console.error(error)
             setPropertyMap({});
@@ -232,7 +233,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     const handlePreview = async () => {
         try {
             setLoading(true);
-            const values = await form.validateFields();
 
             // Validate all conditions
             if (!validateAllConditions()) {
@@ -246,13 +246,14 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             } = formatDynamicConditions(conditions);
 
             const previewData = {
-                name: values.groupName,
                 bk_biz_id: currentBusiness?.id,
-                bk_obj_id: values.groupObject,
                 condition,
                 variable_condition
             };
             console.log('预览数据:', previewData);
+            // TODO: API
+            setPreviewData(dynamicGroupPreviewResult);
+            setLastUpdateTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
         } catch (error) {
             console.error(error);
         } finally {
@@ -261,10 +262,27 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     };
 
     const handleClose = () => {
+        if (selectedProperties.length > 0) {
+            setShowLeaveConfirmModal(true);
+            return;
+        }
+        handleActualClose();
+    };
+
+    const handleActualClose = () => {
         onClose();
         handleClearConditions();
         form.resetFields();
         form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
+    };
+
+    const handleLeaveConfirmOk = () => {
+        setShowLeaveConfirmModal(false);
+        handleActualClose();
+    };
+
+    const handleLeaveConfirmCancel = () => {
+        setShowLeaveConfirmModal(false);
     };
 
     const handleClearConditions = () => {
@@ -272,6 +290,8 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         setConditions({});
         setStorageConditions({});
         setErrors(new Set());
+        setPreviewData([]);
+        setLastUpdateTime('');
     };
 
     const handleGroupObjectChange = (newValue: BUILTIN_MODELS) => {
@@ -304,121 +324,122 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             title={title}
             open={visible}
             onClose={handleClose}
-            width={1200}
+            width={DRAWER_WIDTH}
             className="dynamic-group-drawer"
         >
             <div className="dynamic-group-content">
-                <div
-                    className="form-section"
-                    style={{ width: basicInfoWidth }}
-                >
-                    <Form
-                        form={form}
-                        layout="vertical"
-                        initialValues={{
-                            groupName: '',
-                            groupObject
-                        }}
-                    >
-                        <div className="section-title">基础信息</div>
-                        <Form.Item
-                            label="分组名称"
-                            name="groupName"
-                            rules={[
-                                { required: true, message: '该字段是必填项' },
-                                { max: 256 }
-                            ]}
+                <div className="form-section" style={{ width: basicInfoWidth }}>
+                    <div className="form-content">
+                        <Form
+                            form={form}
+                            layout="vertical"
+                            initialValues={{
+                                groupName: '',
+                                groupObject
+                            }}
                         >
-                            <Input placeholder="请输入分组名称" />
-                        </Form.Item>
+                            <div className="section-title">基础信息</div>
+                            <Form.Item
+                                label="分组名称"
+                                name="groupName"
+                                rules={[
+                                    { required: true, message: '该字段是必填项' },
+                                    { max: 256 }
+                                ]}
+                            >
+                                <Input placeholder="请输入分组名称" />
+                            </Form.Item>
 
-                        <Form.Item
-                            label="查询对象"
-                            name="groupObject"
-                            rules={[{ required: true }]}
-                        >
-                            <FormTarget
-                                value={groupObject}
-                                showModal={selectedProperties.length > 0}
-                                onChange={handleGroupObjectChange}
-                                onShowModal={handleShowConfirmModal}
-                            />
-                        </Form.Item>
+                            <Form.Item
+                                label="查询对象"
+                                name="groupObject"
+                                rules={[{ required: true }]}
+                            >
+                                <FormTarget
+                                    value={groupObject}
+                                    showModal={selectedProperties.length > 0}
+                                    onChange={handleGroupObjectChange}
+                                    onShowModal={handleShowConfirmModal}
+                                />
+                            </Form.Item>
 
-                        {conditionTypes.map(conditionType => (
-                            <Collapse
-                                ghost
-                                key={conditionType.key}
-                                defaultActiveKey={[conditionType.key]}
-                                items={[{
-                                    key: conditionType.key,
-                                    label: (
-                                        <Tooltip title={conditionType.desc} styles={{ root: { maxWidth: 'none' } }}>
-                                            <span className="condition-title">{conditionType.title}</span>
-                                        </Tooltip>
-                                    ),
-                                    extra: (
-                                        <ConditionPicker
-                                            propertyMap={propertyMap!}
-                                            models={availableModels}
-                                            selected={selectedProperties}
-                                            conditionType={conditionType.key}
-                                            onPropertyChange={handlePropertyChange}
-                                        />
-                                    ),
-                                    children: (
-                                        <FormPropertyList
-                                            bizId={currentBusiness?.id!}
-                                            conditionType={conditionType.key}
-                                            models={availableModels}
-                                            conditions={conditions}
-                                            selectedProperties={selectedProperties}
-                                            storageConditions={storageConditions}
-                                            errors={errors}
-                                            onRemove={handleRemoveProperty}
-                                            onToggle={handleToggleProperty}
-                                            onConditionChange={handleConditionChange}
-                                            onUpdateErrors={handleErrors}
-                                        />
-                                    )
-                                }]}
-                            />
-                        ))}
+                            {conditionTypes.map(conditionType => (
+                                <Collapse
+                                    ghost
+                                    key={conditionType.key}
+                                    defaultActiveKey={[conditionType.key]}
+                                    items={[{
+                                        key: conditionType.key,
+                                        label: (
+                                            <Tooltip title={conditionType.desc} styles={{ root: { maxWidth: 'none' } }}>
+                                                <span className="condition-title">{conditionType.title}</span>
+                                            </Tooltip>
+                                        ),
+                                        extra: (
+                                            <ConditionPicker
+                                                propertyMap={propertyMap!}
+                                                models={availableModels}
+                                                selected={selectedProperties}
+                                                conditionType={conditionType.key}
+                                                onPropertyChange={handlePropertyChange}
+                                            />
+                                        ),
+                                        children: (
+                                            <FormPropertyList
+                                                bizId={currentBusiness?.id!}
+                                                conditionType={conditionType.key}
+                                                models={availableModels}
+                                                conditions={conditions}
+                                                selectedProperties={selectedProperties}
+                                                storageConditions={storageConditions}
+                                                errors={errors}
+                                                onRemove={handleRemoveProperty}
+                                                onToggle={handleToggleProperty}
+                                                onConditionChange={handleConditionChange}
+                                                onUpdateErrors={handleErrors}
+                                            />
+                                        )
+                                    }]}
+                                />
+                            ))}
+                        </Form>
+                    </div>
 
-                        <div className="form-actions">
-                            <Space>
-                                <Button
-                                    type="primary"
-                                    onClick={handleSubmit}
-                                    loading={loading}
-                                    disabled={selectedProperties.length === 0}
-                                >
-                                    提交
+                    <div className="form-actions">
+                        <Space>
+                            <Button
+                                type="primary"
+                                onClick={handleSubmit}
+                                loading={loading}
+                                disabled={selectedProperties.length === 0}
+                            >
+                                提交
+                            </Button>
+                            <Button
+                                onClick={handlePreview}
+                                disabled={selectedProperties.length === 0}
+                                color="primary"
+                                variant="outlined"
+                            >
+                                预览
+                            </Button>
+                            <Popconfirm
+                                title="确认清空当前的分组条件？"
+                                onConfirm={handleClearConditions}
+                                okText="确认"
+                                cancelText="取消"
+                            >
+                                <Button disabled={selectedProperties.length === 0}>
+                                    清空条件
                                 </Button>
-                                <Button
-                                    onClick={handlePreview}
-                                    disabled={selectedProperties.length === 0}
-                                >
-                                    预览
-                                </Button>
-                                <Popconfirm
-                                    title="确认清空当前的分组条件？"
-                                    onConfirm={handleClearConditions}
-                                    okText="确认"
-                                    cancelText="取消"
-                                >
-                                    <Button disabled={selectedProperties.length === 0}>
-                                        清空条件
-                                    </Button>
-                                </Popconfirm>
-                                <Button onClick={handleClose}>
-                                    取消
-                                </Button>
-                            </Space>
-                        </div>
-                    </Form>
+                            </Popconfirm>
+                            <Button onClick={handleClose}>
+                                取消
+                            </Button>
+                        </Space>
+                    </div>
 
-                    {/* The rag handle */}
+                    {/* The drag handle */}
                     <DragHandle
                         minWidth={MIN_WIDTH}
                         maxWidth={MAX_WIDTH}
@@ -427,21 +448,35 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                     />
                 </div>
 
-                <div className="preview-section">
-                    <div className="section-title">结果预览</div>
-                    <Empty
-                        description="请先在左侧设置分组条件"
+                <div
+                    className="preview-section"
+                    style={{ width: DRAWER_WIDTH - basicInfoWidth - PADDING * 2 }}
+                >
+                    <PreviewResult
+                        data={previewData}
+                        loading={loading}
+                        lastUpdateTime={lastUpdateTime}
+                        onRefresh={handlePreview}
                     />
                 </div>
             </div>
 
-            {/* Confirm Modal */}
+            {/* Toggle Confirm Modal */}
             <ConfirmModal
                 visible={showConfirmModal}
                 title="确认切换？"
                 description="填写内容会清空，确认切换？"
                 onOk={handleConfirmOk}
                 onCancel={handleConfirmCancel}
+            />
+
+            {/* Leave Confirm Modal */}
+            <ConfirmModal
+                visible={showLeaveConfirmModal}
+                title="确认离开当前页？"
+                description="离开将会导致未保存信息丢失"
+                onOk={handleLeaveConfirmOk}
+                onCancel={handleLeaveConfirmCancel}
             />
         </Drawer>
     );

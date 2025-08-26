@@ -4822,3 +4822,26 @@ export const dynamicGroupCondition = [
     "bk_property_group_name": "基础信息"
   }
 ];
+// 动态分组、预览结果
+export const dynamicGroupPreviewResult = [
+  {
+    id: '1',
+    internalIPv4: '10.0.0.1',
+    region: 'cn-north-1',
+    cloudVendor: 'running',
+    cloudVendorID: 'i-1234567890',
+    cloudBusiness: 'AWS',
+    createTime: '2025-08-26 10:30:00',
+    creator: 'admin'
+  },
+  {
+    id: '2',
+    internalIPv4: '10.0.0.2',
+    region: 'cn-south-1',
+    cloudVendor: 'stopped',
+    cloudVendorID: 'i-0987654321',
+    cloudBusiness: 'Tencent Cloud',
+    createTime: '2025-08-26 11:15:00',
+    creator: 'user1'
+  }
+]

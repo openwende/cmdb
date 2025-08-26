@@ -1,11 +1,16 @@
 .dynamic-group-drawer {
+  .ant-drawer-body {
+    padding: 0 24px;
+  }
+
   .ant-collapse-header {
     background: #f5f5f5;
     border-radius: 8px !important;
   }
 
   .ant-collapse-content-box {
-    padding: 0;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
   }
 
   .ant-form-item {
@@ -21,18 +26,60 @@
       display: flex;
       flex-direction: column;
       position: relative;
-      padding: 24px 24px 24px 0;                        
-      margin: -24px 0;
       user-select: none;
+      height: 100%;
       border-right: 1px solid rgba(5, 5, 5, 0.06);
+
+      /* Add draggable indicator */
+      &::after {
+        content: '⋯⋯';
+        position: absolute;
+        top: 50%;
+        right: -14px;
+        transform: translateY(-50%) rotate(90deg);
+        font-size: 16px;
+        color: rgba(5, 5, 5, 0.3);
+        line-height: 1;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .form-content {
+        flex: 1;
+        padding: 16px 24px 0 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        /* Custom scrollbar styles */
+        &::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          background: #c1c1c1;
+          border-radius: 3px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+          background: #a1a1a1;
+        }
+      }
 
       .condition-title {
         font-weight: bold;
       }
 
       .form-actions {
-        padding-top: 16px;
+        flex: none;
+        margin-left: -24px;
+        padding: 16px 24px;
         border-top: 1px solid rgba(5, 5, 5, 0.06);
+        background: #fff;
       }
     }
 
@@ -42,8 +89,45 @@
     }
 
     .preview-section {
-      flex: 1;
+      max-width: 726px;
       user-select: none;
+      padding: 16px 0 24px 24px;
+      display: flex;
+      flex-direction: column;
+
+      .preview-empty {
+        margin-top: 30%;
+      }
+
+      .preview-result {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        .preview-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+
+          .section-title {
+            font-weight: bold;
+            margin: 0;
+            display: flex;
+            align-items: center;
+
+            .update-time {
+              font-weight: normal;
+              font-size: 12px;
+              color: #8c8c8c;
+            }
+          }
+
+          .ant-btn-icon {
+            font-size: 12px;
+          }
+        }
+      }
     }
   }
 }
@@ -133,7 +217,17 @@
           background-color: #e6f4ff;
         }
 
-        &:not(.selected):hover {
+        &.disabled {
+          color: #bfbfbf;
+          cursor: not-allowed;
+          background-color: #f5f5f5;
+
+          .property-name {
+            color: #bfbfbf;
+          }
+        }
+
+        &:not(.selected):not(.disabled):hover {
           background-color: #f5f5f5;
         }
 
@@ -212,7 +306,6 @@
       background-color: #f5f5f5;
     }
 
-    /* 第一行：标签 + 操作图标 */
     .item-header {
       display: flex;
       justify-content: space-between;
@@ -243,7 +336,6 @@
       }
     }
 
-    /* 第二行：操作符 + 输入框 */
     .item-controls {
       display: flex;
       align-items: center;
