@@ -4,18 +4,10 @@ import { CloseOutlined, SwapOutlined } from '@ant-design/icons';
 import FormOperatorSelector from './FormOperatorSelector';
 import FormComponent from './FormComponent';
 import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
-import { QUERY_OPERATOR } from '../../constants';
+import { QUERY_OPERATOR, DEFAULT_CONDITIONS_DATA } from '../../constants';
 import { isValidCondition } from '../../utils';
 import './style.css';
 
-const defaultDataMap = {
-  bool: { operator: '$eq', value: '' },
-  date: { operator: '$range', value: [] },
-  float: { operator: '$eq', value: '' },
-  int: { operator: '$eq', value: '' },
-  time: { operator: '$range', value: [] },
-  'service-template': { operator: '$in', value: [] }
-};
 const WITHOUT_OPERATOR = [
   'date',
   'time',
@@ -32,7 +24,7 @@ const SUPPORTED_OPERATORS = [
   QUERY_OPERATOR.CONTAINS_CS
 ] as OperatorType[];
 
-type DefaultMapKey = keyof typeof defaultDataMap;
+type DefaultMapKey = keyof typeof DEFAULT_CONDITIONS_DATA;
 interface ListProps {
   bizId: number;
   conditionType: ConditionType;
@@ -83,9 +75,9 @@ const FormPropertyList: React.FC<ListProps> = ({
   }, [properties]);
 
   const getDefaultData = (property: Property) => {
-    const specificDefault = defaultDataMap[property.bk_property_type as DefaultMapKey];
+    const specificDefault = DEFAULT_CONDITIONS_DATA[property.bk_property_type as DefaultMapKey];
     return {
-      operator: (specificDefault?.operator ?? '$in') as OperatorType,
+      operator: (specificDefault?.operator ?? QUERY_OPERATOR.IN) as OperatorType,
       value: specificDefault?.value ?? []
     };
   }
@@ -140,7 +132,6 @@ const FormPropertyList: React.FC<ListProps> = ({
   };
 
   const handleComponentChange = (property: Property, value: any) => {
-    console.log('Component changed:', property, value);
     const currentItem = conditions[property.id];
     const newCondition = {
       ...conditions,

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
 import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName, Condition } from '../../Types';
 import { availableModelIds, requestConfig, BUILTIN_MODELS } from '../../constants';
-import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition } from '../../utils';
+import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition, processConditionGroups } from '../../utils';
 import FormTarget from './FormTarget';
 import ConditionPicker from './ConditionPicker';
 import FormPropertyList from './FormPropertyList';
@@ -37,16 +37,30 @@ const exchangeType = {
     [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
 }
 
+export enum FormMode {
+    CREATE = 'create',
+    EDIT = 'edit',
+    PREVIEW = 'preview'
+}
+
 interface DynamicGroupFormProps {
     title: string;
     visible: boolean;
+    mode: FormMode;
+    initialData: any;
     onClose: () => void;
+    onDataChange: () => void;
+    onModeChange: (mode: FormMode) => void;
 }
 
 const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     title,
     visible,
+    mode,
+    initialData,
     onClose,
+    onDataChange,
+    onModeChange
 }) => {
     const { currentBusiness } = useBusinessStore();
     const [form] = Form.useForm();
@@ -69,6 +83,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     // Preview result state
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+    const disabled = mode === FormMode.PREVIEW;
 
     useEffect(() => {
         getMainLineModels();
@@ -79,6 +94,29 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             getModelProperties();
         }
     }, [availableModels]);
+
+    useEffect(() => {
+        if (
+            (mode === FormMode.EDIT || mode === FormMode.PREVIEW)
+            && initialData && Object.keys(propertyMap).length > 0
+        ) {
+            initializeFormData(initialData);
+        }
+    }, [mode, initialData, propertyMap]);
+
+    useEffect(() => {
+        if (
+            (mode === FormMode.EDIT || mode === FormMode.PREVIEW)
+            && Object.keys(conditions).length > 0
+        ) {
+            // Use setTimeout to avoid calling during render
+            const timeoutId = setTimeout(() => {
+                handlePreview();
+            }, 100);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [conditions, mode]);
 
     const getMainLineModels = async () => {
         try {
@@ -116,6 +154,44 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             setPropertyMap({});
         }
     }
+
+    const initializeFormData = (data: any) => {
+        form.setFieldsValue({
+            groupName: data.name,
+            groupObject: data.bk_obj_id
+        });
+        setGroupObject(data.bk_obj_id);
+
+        const newSelectedProperties: Property[] = [];
+        const initialStorageConditions: Record<string, Condition> = {};
+
+        // Process immutable conditions
+        const immutableResult = processConditionGroups(
+            data.info?.condition || [],
+            ConditionType.IMMUTABLE,
+            propertyMap
+        );
+        // Process variable conditions
+        const variableResult = processConditionGroups(
+            data.info?.variable_condition || [],
+            ConditionType.VARIABLE,
+            propertyMap
+        );
+
+        // Combine results
+        newSelectedProperties.push(
+            ...immutableResult.selectedProperties,
+            ...variableResult.selectedProperties
+        );
+        Object.assign(
+            initialStorageConditions,
+            immutableResult.storageConditions,
+            variableResult.storageConditions
+        );
+
+        setSelectedProperties(newSelectedProperties);
+        setStorageConditions(initialStorageConditions);
+    };
 
     const handlePropertyChange = (newProperties: Property[]) => {
         setSelectedProperties(newProperties);
@@ -222,6 +298,9 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             };
             console.log('提交数据:', formData);
 
+            // Call service to get group data
+            onDataChange();
+
             handleClose();
         } catch (error) {
             console.error(error);
@@ -262,7 +341,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     };
 
     const handleClose = () => {
-        if (selectedProperties.length > 0) {
+        if (mode !== FormMode.PREVIEW && selectedProperties.length > 0) {
             setShowLeaveConfirmModal(true);
             return;
         }
@@ -347,7 +426,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                     { max: 256 }
                                 ]}
                             >
-                                <Input placeholder="请输入分组名称" />
+                                <Input placeholder="请输入分组名称" disabled={disabled} />
                             </Form.Item>
 
                             <Form.Item
@@ -358,6 +437,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                 <FormTarget
                                     value={groupObject}
                                     showModal={selectedProperties.length > 0}
+                                    disabled={disabled}
                                     onChange={handleGroupObjectChange}
                                     onShowModal={handleShowConfirmModal}
                                 />
@@ -381,6 +461,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                                 models={availableModels}
                                                 selected={selectedProperties}
                                                 conditionType={conditionType.key}
+                                                disabled={disabled}
                                                 onPropertyChange={handlePropertyChange}
                                             />
                                         ),
@@ -389,10 +470,11 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                                 bizId={currentBusiness?.id!}
                                                 conditionType={conditionType.key}
                                                 models={availableModels}
-                                                conditions={conditions}
                                                 selectedProperties={selectedProperties}
+                                                conditions={conditions}
                                                 storageConditions={storageConditions}
                                                 errors={errors}
+                                                disabled={disabled}
                                                 onRemove={handleRemoveProperty}
                                                 onToggle={handleToggleProperty}
                                                 onConditionChange={handleConditionChange}
@@ -407,32 +489,43 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
                     <div className="form-actions">
                         <Space>
-                            <Button
-                                type="primary"
-                                onClick={handleSubmit}
-                                loading={loading}
-                                disabled={selectedProperties.length === 0}
-                            >
-                                提交
-                            </Button>
-                            <Button
-                                onClick={handlePreview}
-                                disabled={selectedProperties.length === 0}
-                                color="primary"
-                                variant="outlined"
-                            >
-                                预览
-                            </Button>
-                            <Popconfirm
-                                title="确认清空当前的分组条件？"
-                                onConfirm={handleClearConditions}
-                                okText="确认"
-                                cancelText="取消"
-                            >
-                                <Button disabled={selectedProperties.length === 0}>
-                                    清空条件
+                            {mode === FormMode.PREVIEW ? (
+                                <Button
+                                    type="primary"
+                                    onClick={() => onModeChange(FormMode.EDIT)}
+                                >
+                                    编辑
                                 </Button>
-                            </Popconfirm>
+                            ) : (
+                                <>
+                                    <Button
+                                        type="primary"
+                                        onClick={handleSubmit}
+                                        loading={loading}
+                                        disabled={disabled || selectedProperties.length === 0}
+                                    >
+                                        {mode === FormMode.CREATE ? "提交" : "保存"}
+                                    </Button>
+                                    <Button
+                                        onClick={handlePreview}
+                                        disabled={selectedProperties.length === 0}
+                                        color="primary"
+                                        variant="outlined"
+                                    >
+                                        预览
+                                    </Button>
+                                    <Popconfirm
+                                        title="确认清空当前的分组条件？"
+                                        onConfirm={handleClearConditions}
+                                        okText="确认"
+                                        cancelText="取消"
+                                    >
+                                        <Button disabled={disabled || selectedProperties.length === 0}>
+                                            清空条件
+                                        </Button>
+                                    </Popconfirm>
+                                </>
+                            )}
                             <Button onClick={handleClose}>
                                 取消
                             </Button>

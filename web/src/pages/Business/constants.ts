@@ -181,3 +181,11 @@ export const requestConfig = Object.freeze({
   create: Symbol('create'),
   update: Symbol('update')
 })
+export const DEFAULT_CONDITIONS_DATA = {
+  bool: { operator: QUERY_OPERATOR.EQ, value: '' },
+  date: { operator: QUERY_OPERATOR.RANGE, value: [] },
+  float: { operator: QUERY_OPERATOR.EQ, value: '' },
+  int: { operator: QUERY_OPERATOR.EQ, value: '' },
+  time: { operator: QUERY_OPERATOR.RANGE, value: [] },
+  'service-template': { operator: QUERY_OPERATOR.IN, value: [] }
+};

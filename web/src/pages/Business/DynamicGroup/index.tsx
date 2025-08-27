@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { Table, Button, Input, Select, Alert, Space, message, Popconfirm } from "antd";
+import { Table, Button, Input, Select, Alert, Space, message } from "antd";
 import Pagination from "@/components/common/Pagination";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
+import ConfirmModal from "@/components/common/ConfirmModal";
 import { dynamicGroupList } from "@/mock/business";
-import DynamicGroupForm from "../components/DynamicGroupForm";
-import { DynamicGroupFormData } from "../Types";
+import DynamicGroupForm, { FormMode } from "../components/DynamicGroupForm";
 import dayjs from 'dayjs';
 import "./style.css";
 
@@ -32,6 +32,9 @@ const DynamicGroup: React.FC = () => {
     const [alertVisible, setAlertVisible] = useState(true);
     const [editingGroup, setEditingGroup] = useState<any>(null);
     const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
+    const [formMode, setFormMode] = useState<FormMode>(FormMode.CREATE);
+    const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+    const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
 
     // Find current field option
     const currentFieldOption = searchFieldOptions.find(option => option.value === searchField);
@@ -101,26 +104,24 @@ const DynamicGroup: React.FC = () => {
                     >
                         编辑
                     </Button>
-                    <Popconfirm
-                        title="确定要删除这个动态分组吗？"
-                        onConfirm={() => handleDelete(record)}
-                        okText="确定"
-                        cancelText="取消"
+                    <Button
+                        type="link"
+                        size="small"
+                        danger
+                        onClick={() => handleDeleteClick(record)}
                     >
-                        <Button
-                            type="link"
-                            size="small"
-                            danger
-                        >
-                            删除
-                        </Button>
-                    </Popconfirm>
+                        删除
+                    </Button>
                 </Space>
             ),
         },
     ];
 
     useEffect(() => {
+        handleGroupData();
+    }, []);
+
+    const handleGroupData = () => {
         // Filter and search data
         let filteredData = dynamicGroupList.info;
 
@@ -143,30 +144,58 @@ const DynamicGroup: React.FC = () => {
         setGroupCount(filteredData.length);
         const data = filteredData.slice((page - 1) * pageSize, page * pageSize);
         setGroupList(data);
-    }, [dynamicGroupList, page, pageSize, searchField, searchText, searchDateRange]);
+    }
 
     const handleCreate = () => {
+        setEditingGroup(null);
+        setFormMode(FormMode.CREATE);
         setDrawerVisible(true);
     };
 
     const handlePreview = (record: any) => {
-        console.log('Preview dynamic group:', record);
-        message.info('预览功能将在条件配置完成后实现');
+        setEditingGroup(record);
+        setFormMode(FormMode.PREVIEW);
+        setDrawerVisible(true);
     };
 
     const handleEdit = (record: any) => {
         setEditingGroup(record);
+        setFormMode(FormMode.EDIT);
         setDrawerVisible(true);
     };
 
-    const handleDelete = (record: any) => {
-        console.log('Delete dynamic group:', record);
+    const handleDeleteClick = (record: any) => {
+        setDeletingGroup({
+            id: record.id,
+            name: record.name
+        });
+        setShowConfirmModal(true);
+    };
+
+    const handleDelete = () => {
+        if (deletingGroup) {
+            // TODO: Call API to delete the group in background
+            // Remove the item from local data directly
+            const updatedList = groupList.filter((item: any) => {
+                return item.id !== deletingGroup.id;
+            });
+            setGroupList(updatedList);
+            setGroupCount(prev => prev - 1);
+        }
+
+        setShowConfirmModal(false);
+        setDeletingGroup(null);
         message.success('删除成功');
-        // TODO: Remove from list after successful API call
+    };
+
+    const handleDeleteCancel = () => {
+        setShowConfirmModal(false);
+        setDeletingGroup(null);
     };
 
     const handleDrawerClose = () => {
         setEditingGroup(null);
+        setFormMode(FormMode.CREATE);
         setDrawerVisible(false);
     };
 
@@ -186,6 +215,18 @@ const DynamicGroup: React.FC = () => {
         setSearchText("");
         setSearchDateRange(null);
         setPage(1);
+    };
+
+    const getFormTitle = () => {
+        switch (formMode) {
+            case FormMode.PREVIEW:
+                return '动态分组详情';
+            case FormMode.EDIT:
+                return '编辑动态分组';
+            case FormMode.CREATE:
+            default:
+                return '创建动态分组';
+        }
     };
 
     return (
@@ -270,8 +311,21 @@ const DynamicGroup: React.FC = () => {
             {/* Dynamic Group Form */}
             <DynamicGroupForm
                 visible={drawerVisible}
+                mode={formMode}
+                title={getFormTitle()}
+                initialData={editingGroup}
                 onClose={handleDrawerClose}
-                title={editingGroup ? '编辑动态分组' : '创建动态分组'}
+                onDataChange={handleGroupData}
+                onModeChange={setFormMode}
+            />
+
+            {/* Delete Confirm Modal */}
+            <ConfirmModal
+                visible={showConfirmModal}
+                onOk={handleDelete}
+                onCancel={handleDeleteCancel}
+                title="确定删除"
+                description={`确认要删除"${deletingGroup?.name}"分组?`}
             />
         </div>
     );

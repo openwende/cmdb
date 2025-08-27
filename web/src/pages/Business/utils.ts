@@ -1,6 +1,17 @@
-import { TransferHostItem, RawNodeData, TopoTreeNodeType, TreeData, Property, Condition, ConditionType, DynamicGroupCondition, DynamicGroupConditionGroup } from "./Types";
-import { CopyMenuItemKey as HostCopyKey } from './Types';
-import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS, QUERY_OPERATOR_SYMBOL } from './constants';
+import {
+    TransferHostItem,
+    RawNodeData,
+    TopoTreeNodeType,
+    TreeData,
+    Property,
+    Condition,
+    ConditionType,
+    DynamicGroupCondition,
+    DynamicGroupConditionGroup,
+    OperatorType,
+    CopyMenuItemKey as HostCopyKey
+} from "./Types";
+import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS, QUERY_OPERATOR } from './constants';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -651,49 +662,49 @@ export const updatePropertySelect = (
  * @returns An object containing two arrays: condition (immutable conditions) and variable_condition (variable conditions)
  */
 export const formatDynamicConditions = (conditions: Record<string, Condition>) => {
-  const conditionMap: Record<string, DynamicGroupConditionGroup> = {};
-  const variableConditionMap: Record<string, DynamicGroupConditionGroup> = {};
+    const conditionMap: Record<string, DynamicGroupConditionGroup> = {};
+    const variableConditionMap: Record<string, DynamicGroupConditionGroup> = {};
 
-  Object.values(conditions).forEach((cond) => {
-    const { property, operator, value } = cond;
-    const objId = property.bk_obj_id;
-    const field = property.bk_property_id;
+    Object.values(conditions).forEach((cond) => {
+        const { property, operator, value } = cond;
+        const objId = property.bk_obj_id;
+        const field = property.bk_property_id;
 
-    const conditionItem: DynamicGroupCondition = {
-      field,
-      operator,
-      value
+        const conditionItem: DynamicGroupCondition = {
+            field,
+            operator,
+            value
+        };
+
+        if (property.conditionType === ConditionType.IMMUTABLE) {
+            // immutable conditions
+            if (!conditionMap[objId]) {
+                conditionMap[objId] = {
+                    bk_obj_id: objId,
+                    condition: []
+                };
+            }
+            conditionMap[objId].condition.push(conditionItem);
+        } else {
+            // variable conditions
+            if (!variableConditionMap[objId]) {
+                variableConditionMap[objId] = {
+                    bk_obj_id: objId,
+                    condition: []
+                };
+            }
+            variableConditionMap[objId].condition.push(conditionItem);
+        }
+    });
+
+    // transform the map to an array
+    const conditionArray = Object.values(conditionMap);
+    const variableConditionArray = Object.values(variableConditionMap);
+
+    return {
+        condition: conditionArray,
+        variable_condition: variableConditionArray
     };
-
-    if (property.conditionType === ConditionType.IMMUTABLE) {
-        // immutable conditions
-      if (!conditionMap[objId]) {
-        conditionMap[objId] = {
-          bk_obj_id: objId,
-          condition: []
-        };
-      }
-      conditionMap[objId].condition.push(conditionItem);
-    } else {
-      // variable conditions
-      if (!variableConditionMap[objId]) {
-        variableConditionMap[objId] = {
-          bk_obj_id: objId,
-          condition: []
-        };
-      }
-      variableConditionMap[objId].condition.push(conditionItem);
-    }
-  });
-
-  // transform the map to an array
-  const conditionArray = Object.values(conditionMap);
-  const variableConditionArray = Object.values(variableConditionMap);
-
-  return {
-    condition: conditionArray,
-    variable_condition: variableConditionArray
-  };
 };
 
 /**
@@ -702,11 +713,141 @@ export const formatDynamicConditions = (conditions: Record<string, Condition>) =
  * @returns
  */
 export const isValidCondition = (value: any): boolean => {
-  if (value === undefined || value === null || value === '') {
-    return false;
-  }
-  if (Array.isArray(value) && value.length === 0) {
-    return false;
-  }
-  return true;
+    if (value === undefined || value === null || value === '') {
+        return false;
+    }
+    if (Array.isArray(value) && value.length === 0) {
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Process condition groups and extract properties with conditions
+ * @param conditionGroups - Array of condition groups from API
+ * @param conditionType - The type of condition (VARIABLE or IMMUTABLE)
+ * @param propertyMap - Map of object ID to properties
+ * @returns Object containing selectedProperties and storageConditions
+ */
+export const processConditionGroups = (
+    conditionGroups: DynamicGroupConditionGroup[],
+    conditionType: ConditionType,
+    propertyMap: Record<string, Property[]>
+): {
+    selectedProperties: Property[];
+    storageConditions: Record<string, Condition>;
+} => {
+    const selectedProperties: Property[] = [];
+    const storageConditions: Record<string, Condition> = {};
+
+    // Track properties that might have range conditions (gte + lte)
+    const rangeConditions: Record<string, DynamicGroupCondition & { property: Property }> = {};
+    // Track processed properties to avoid duplicates
+    const processedPropertyIds = new Set<number>();
+    // Track range properties that have been added to maintain order
+    const rangePropertiesAdded = new Set<string>();
+
+    conditionGroups.forEach((conditionGroup: DynamicGroupConditionGroup) => {
+        const objId = conditionGroup.bk_obj_id;
+        const properties = propertyMap[objId] || [];
+
+        // Process regular conditions in their original order
+        conditionGroup.condition?.forEach((cond: DynamicGroupCondition) => {
+            const property = properties.find(p => p.bk_property_id === cond.field);
+
+            if (property) {
+                const propertyKey = `${objId}_${cond.field}`;
+
+                // Handle range conditions ($gte and $lte)
+                if (cond.operator === QUERY_OPERATOR.GTE || cond.operator === QUERY_OPERATOR.LTE) {
+                    if (!rangeConditions[propertyKey]) {
+                        rangeConditions[propertyKey] = {
+                            field: cond.field,
+                            operator: QUERY_OPERATOR.RANGE as OperatorType,
+                            value: [],
+                            property
+                        };
+                    }
+
+                    if (cond.operator === QUERY_OPERATOR.GTE) {
+                        rangeConditions[propertyKey].value[0] = cond.value;
+                    } else if (cond.operator === QUERY_OPERATOR.LTE) {
+                        rangeConditions[propertyKey].value[1] = cond.value;
+                    }
+
+                    // Add the property immediately when first encountered (on $gte or if $lte comes first)
+                    if (!rangePropertiesAdded.has(propertyKey) && !processedPropertyIds.has(property.id)) {
+                        const propertyWithType = {
+                            ...property,
+                            conditionType
+                        };
+
+                        selectedProperties.push(propertyWithType);
+                        processedPropertyIds.add(property.id);
+                        rangePropertiesAdded.add(propertyKey);
+
+                        // Store the range condition immediately
+                        storageConditions[property.id] = {
+                            property: propertyWithType,
+                            operator: QUERY_OPERATOR.RANGE as OperatorType,
+                            value: rangeConditions[propertyKey].value
+                        };
+                    } else if (rangePropertiesAdded.has(propertyKey)) {
+                        // Update the existing condition value when the second part of range is encountered
+                        storageConditions[property.id] = {
+                            ...storageConditions[property.id],
+                            value: rangeConditions[propertyKey].value
+                        };
+                    }
+                } else {
+                    // Handle regular conditions
+                    if (!processedPropertyIds.has(property.id)) {
+                        const propertyWithType = {
+                            ...property,
+                            conditionType
+                        };
+
+                        selectedProperties.push(propertyWithType);
+                        processedPropertyIds.add(property.id);
+
+                        // Store regular condition
+                        storageConditions[property.id] = {
+                            property: propertyWithType,
+                            operator: cond.operator as OperatorType,
+                            value: cond.value
+                        };
+                    }
+                }
+            }
+        });
+
+        // Then, process time_condition
+        if (conditionGroup.time_condition) {
+            const { rules } = conditionGroup.time_condition;
+
+            rules.forEach(rule => {
+                const { field, start, end } = rule;
+                const property = properties.find(p => p.bk_property_id === field);
+
+                if (property && !processedPropertyIds.has(property.id)) {
+                    const propertyWithType = {
+                        ...property,
+                        conditionType
+                    };
+
+                    selectedProperties.push(propertyWithType);
+                    processedPropertyIds.add(property.id);
+
+                    // Store time range as array [start, end]
+                    storageConditions[property.id] = {
+                        property: propertyWithType,
+                        operator: QUERY_OPERATOR.RANGE as OperatorType,
+                        value: [start, end]
+                    };
+                }
+            });
+        }
+    });
+
+    return { selectedProperties, storageConditions };
 };

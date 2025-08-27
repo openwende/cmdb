@@ -1066,7 +1066,7 @@ export const dynamicGroupList = {
             "condition": [
               {
                 "field": "bk_state",
-                "operator": "$eq",
+                "operator": "$in",
                 "value": "运行中"
               }
             ]
@@ -1081,8 +1081,8 @@ export const dynamicGroupList = {
     },
     {
       "bk_biz_id": 2,
-      "id": "7b1b7a26-5005-0fe0-9905-0242ac110004",
-      "name": "测试服务器组",
+      "id": "dcca5954-82ed-11f0-83ea-0242ac110003",
+      "name": "groupTest",
       "bk_obj_id": "host",
       "info": {
         "condition": [
@@ -1090,20 +1090,81 @@ export const dynamicGroupList = {
             "bk_obj_id": "host",
             "condition": [
               {
-                "field": "bk_host_name",
+                "field": "bk_cloud_id",
+                "operator": "$nin",
+                "value": [
+                  0,
+                  90000001
+                ]
+              },
+              {
+                "field": "bk_cpu",
+                "operator": "$gte",
+                "value": 2
+              },
+              {
+                "field": "bk_cpu",
+                "operator": "$lte",
+                "value": 5
+              },
+              {
+                "field": "bk_created_by",
+                "operator": "$in",
+                "value": [
+                  "bk-cmdb"
+                ]
+              }
+            ],
+            "time_condition": {
+              "oper": "and",
+              "rules": [
+                {
+                  "field": "bk_updated_at",
+                  "start": "2025-08-05T00:00:00Z",
+                  "end": "2025-09-24T23:59:59Z"
+                }
+              ]
+            }
+          }
+        ],
+        "variable_condition": [
+          {
+            "bk_obj_id": "host",
+            "condition": [
+              {
+                "field": "bk_comment",
                 "operator": "$regex",
-                "value": "test.*"
+                "value": "是的好的你的我的"
+              },
+              {
+                "field": "bk_state",
+                "operator": "$nin",
+                "value": [
+                  "备用机",
+                  "开发中[需告警]"
+                ]
+              },
+              {
+                "field": "bk_agent_id",
+                "operator": "$regex",
+                "value": "testid"
+              },
+              {
+                "field": "bk_addressing",
+                "operator": "$nin",
+                "value": [
+                  "dynamic"
+                ]
               }
             ]
           }
-        ],
-        "variable_condition": []
+        ]
       },
-      "create_user": "tester",
+      "create_user": "bk-cmdb",
       "modify_user": "bk-cmdb",
-      "create_time": "2025-08-02T14:15:30.789Z",
-      "last_time": "2025-08-04T09:45:55.321Z"
-    }
+      "create_time": "2025-08-27T02:30:57.159Z",
+      "last_time": "2025-08-27T02:30:57.159Z"
+    },
   ]
 };
 // 动态分组条件分类

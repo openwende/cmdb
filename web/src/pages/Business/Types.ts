@@ -133,6 +133,14 @@ export interface DynamicGroupCondition {
 export interface DynamicGroupConditionGroup {
     bk_obj_id: string;
     condition: DynamicGroupCondition[];
+    time_condition?: {
+        oper: string;
+        rules: {
+            field: string;
+            start: string;
+            end: string;
+        }[];
+    };
 }
 export interface DynamicGroupFormData {
     name: string;
