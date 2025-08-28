@@ -27,7 +27,6 @@ const DynamicGroup: React.FC = () => {
     const [groupList, setGroupList] = useState<any>([]);
     const [searchField, setSearchField] = useState<string>(searchFieldOptions[0].value);
     const [searchText, setSearchText] = useState<string>("");
-    const [searchDateRange, setSearchDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [alertVisible, setAlertVisible] = useState(true);
     const [editingGroup, setEditingGroup] = useState<any>(null);
@@ -130,10 +129,6 @@ const DynamicGroup: React.FC = () => {
         console.log('Search Parameters for API:', {
             field: searchField,
             textValue: searchText,
-            dateRange: searchDateRange ? {
-                startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
-                endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss')
-            } : null,
             pagination: {
                 page,
                 pageSize
@@ -201,19 +196,16 @@ const DynamicGroup: React.FC = () => {
 
     const handleTextSearch = (value: string) => {
         setSearchText(value);
-        setSearchDateRange(null);
         setPage(1);
     };
 
     const handleFieldChange = (value: string) => {
         setSearchField(value);
         setSearchText("");
-        setSearchDateRange(null);
     };
 
     const clearSearch = () => {
         setSearchText("");
-        setSearchDateRange(null);
         setPage(1);
     };
 
