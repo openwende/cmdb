@@ -1,22 +1,26 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import { CloseOutlined, SwapOutlined } from '@ant-design/icons';
-import FormOperatorSelector from './FormOperatorSelector';
+import FormOperatorSelector from './OperatorSelector';
 import FormComponent from './FormComponent';
 import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
-import { QUERY_OPERATOR, DEFAULT_CONDITIONS_DATA } from '../../constants';
+import { QUERY_OPERATOR, DEFAULT_CONDITIONS_DATA, PROPERTY_TYPES } from '../../constants';
 import { isValidCondition } from '../../utils';
 import './style.css';
 
 const WITHOUT_OPERATOR = [
-  'date',
-  'time',
-  'bool',
-  'service-template'
+  PROPERTY_TYPES.DATE,
+  PROPERTY_TYPES.TIME,
+  PROPERTY_TYPES.BOOL,
+  PROPERTY_TYPES.SERVICE_TEMPLATE
 ];
-const exchangeName = {
+const EXCHANGE_NAME = {
   [ConditionType.VARIABLE]: ConditionName.IMMUTABLE,
   [ConditionType.IMMUTABLE]: ConditionName.VARIABLE
+}
+const EXCHANGE_TYPE = {
+    [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
+    [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
 }
 const SUPPORTED_OPERATORS = [
   QUERY_OPERATOR.LIKE,
@@ -35,12 +39,12 @@ interface ListProps {
   errors: Set<number>;
   disabled?: boolean;
   onRemove: (property: Property) => void;
-  onToggle: (property: Property, conditionType: ConditionType) => void;
+  onToggle: (property: Property, newConditionType: ConditionType) => void;
   onConditionChange: (condition: Record<string, Condition>) => void;
   onUpdateErrors: (propertyId: number, hasError: boolean) => void;
 }
 
-const FormPropertyList: React.FC<ListProps> = ({
+const PropertyList: React.FC<ListProps> = ({
   bizId,
   conditionType,
   models,
@@ -84,6 +88,7 @@ const FormPropertyList: React.FC<ListProps> = ({
 
   const updateCondition = () => {
     const newCondition: Record<string, Condition> = {}
+    
     properties.forEach((property) => {
       if (storageConditions && storageConditions[property.id]) {
         // If the property already exists in storageConditions, use it
@@ -116,7 +121,6 @@ const FormPropertyList: React.FC<ListProps> = ({
     }
 
     const newCondition = {
-      ...conditions,
       [property.id]: {
         ...currentItem,
         operator: operator,
@@ -134,7 +138,6 @@ const FormPropertyList: React.FC<ListProps> = ({
   const handleComponentChange = (property: Property, value: any) => {
     const currentItem = conditions[property.id];
     const newCondition = {
-      ...conditions,
       [property.id]: {
         ...currentItem,
         value: value
@@ -170,10 +173,10 @@ const FormPropertyList: React.FC<ListProps> = ({
             </div>
             {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
-                <Tooltip title={`切换为${exchangeName[conditionType]}`}>
+                <Tooltip title={`切换为${EXCHANGE_NAME[conditionType]}`}>
                   <SwapOutlined
                     className="item-toggle"
-                    onClick={() => onToggle(property, conditionType)}
+                    onClick={() => onToggle(property, EXCHANGE_TYPE[conditionType])}
                   />
                 </Tooltip>
                 <CloseOutlined
@@ -186,7 +189,7 @@ const FormPropertyList: React.FC<ListProps> = ({
 
           {/* The second line */}
           <div className="item-controls">
-            {!WITHOUT_OPERATOR.includes(property.bk_property_type) && (
+            {!WITHOUT_OPERATOR.includes(property.bk_property_type as PROPERTY_TYPES) && (
               <FormOperatorSelector
                 className="item-operator"
                 property={property}
@@ -220,4 +223,4 @@ const FormPropertyList: React.FC<ListProps> = ({
   );
 };
 
-export default FormPropertyList;
+export default PropertyList;

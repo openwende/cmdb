@@ -1,10 +1,27 @@
 import React from 'react';
 import { Radio } from 'antd';
-import { useTranslation } from 'react-i18next';
 import { RadioChangeEvent } from 'antd/es/radio';
 import { BUILTIN_MODELS } from '../../constants';
 
-interface FormTargetProps {
+const list: TargetItem[] = [
+  {
+    id: BUILTIN_MODELS.HOST,
+    name: '主机',
+    desc: '目标为主机列表'
+  },
+  {
+    id: BUILTIN_MODELS.SET,
+    name: '集群',
+    desc: '目标为集群列表'
+  }
+];
+
+interface TargetItem {
+  id: string;
+  name: string;
+  desc: string;
+}
+interface SearchTargetProps {
   value?: BUILTIN_MODELS;
   disabled?: boolean;
   showModal?: boolean;
@@ -12,34 +29,13 @@ interface FormTargetProps {
   onShowModal?: (id: BUILTIN_MODELS) => void;
 }
 
-interface TargetItem {
-  id: string;
-  name: string;
-  desc: string;
-}
-
-const FormTarget: React.FC<FormTargetProps> = ({
+const SearchTarget: React.FC<SearchTargetProps> = ({
   value = BUILTIN_MODELS.HOST,
   disabled = false,
   showModal = false,
   onChange,
   onShowModal
 }) => {
-  const { t } = useTranslation();
-
-  const list: TargetItem[] = [
-    {
-      id: BUILTIN_MODELS.HOST,
-      name: t('主机'),
-      desc: t('目标为主机列表')
-    },
-    {
-      id: BUILTIN_MODELS.SET,
-      name: t('集群'),
-      desc: t('目标为集群列表')
-    }
-  ];
-
   const handleChange = (e: RadioChangeEvent) => {
     const newValue = e.target.value;
     const oldValue = value;
@@ -74,4 +70,4 @@ const FormTarget: React.FC<FormTargetProps> = ({
   );
 };
 
-export default FormTarget;
+export default SearchTarget;

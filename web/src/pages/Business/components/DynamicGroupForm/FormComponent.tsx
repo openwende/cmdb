@@ -1,26 +1,26 @@
 import React, { useMemo } from 'react';
 import { Property, ConditionType, OperatorType } from '../../Types';
-import { QUERY_OPERATOR } from '../../constants';
+import { QUERY_OPERATOR, PROPERTY_TYPES } from '../../constants';
 import DynamicComponent from '@/components/Business/FormComponents/DynamicComponent';
 import { usePropertyInfo } from '../../hooks/usePropertyInfo';
 
 const SELECT_TYPES = [
-    'list',
-    'enum',
-    'timezone',
-    'organization',
-    'date',
-    'time',
-    'enumquote',
-    'enummulti',
-    'foreignkey'
+    PROPERTY_TYPES.LIST,
+    PROPERTY_TYPES.ENUM,
+    PROPERTY_TYPES.TIMEZONE,
+    PROPERTY_TYPES.ORGANIZATION,
+    PROPERTY_TYPES.DATE,
+    PROPERTY_TYPES.TIME,
+    PROPERTY_TYPES.ENUMQUOTE,
+    PROPERTY_TYPES.ENUMMULTI,
+    PROPERTY_TYPES.FOREIGNKEY
 ];
 const OPTION_PROP_TYPES = [
-    'int',
-    'list',
-    'enum',
-    'enumquote',
-    'enummulti'
+    PROPERTY_TYPES.INT,
+    PROPERTY_TYPES.LIST,
+    PROPERTY_TYPES.ENUM,
+    PROPERTY_TYPES.ENUMQUOTE,
+    PROPERTY_TYPES.ENUMMULTI
 ];
 const UNSUPPORTED_OPERATORS = [
     QUERY_OPERATOR.CONTAINS,
@@ -54,16 +54,16 @@ const FormComponent: React.FC<ComponentProps> = ({
             (isSetName || isModuleName) &&
             !UNSUPPORTED_OPERATORS.includes(operator)
         ) {
-            return 'objname';
+            return PROPERTY_TYPES.OBJNAME;
         }
         return propertyType;
     }, [operator]);
 
     const additionalProps = useMemo(() => {
         const props: { [key: string]: any } = {};
-        if (OPTION_PROP_TYPES.includes(propertyType)) {
+        if (OPTION_PROP_TYPES.includes(propertyType as PROPERTY_TYPES)) {
             props.options = options || [];
-        } else if (propertyType === 'objuser') {
+        } else if (propertyType === PROPERTY_TYPES.OBJUSER) {
             props.fastSelect = true;
         }
         if (isSetName || isModuleName) {
@@ -76,7 +76,7 @@ const FormComponent: React.FC<ComponentProps> = ({
         const name = conditionType === ConditionType.IMMUTABLE
             ? '条件值'
             : '默认值';
-        if (SELECT_TYPES.includes(propertyType)) {
+        if (SELECT_TYPES.includes(propertyType as PROPERTY_TYPES)) {
             return `请选择${name}`;
         }
         return `请输入${name}`;

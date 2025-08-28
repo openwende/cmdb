@@ -5,6 +5,7 @@
 
 import { lazy, ComponentType } from 'react';
 import { Property } from '../../../pages/Business/Types';
+import {PROPERTY_TYPES} from '../../../pages/Business/constants';
 
 // Unified Props interface for all form components
 export interface FormComponentProps {
@@ -23,16 +24,16 @@ export interface SelectOption {
 
 // Lazy-loaded components mapping
 const LAZY_COMPONENTS = {
-    'singlechar': lazy(() => import('./Singlechar')),
-    'longchar': lazy(() => import('./Longchar')),
-    'int': lazy(() => import('./Int')),
-    'enum': lazy(() => import('./Enum')),
-    'time': lazy(() => import('./Time')),
-    'objuser': lazy(() => import('./ObjUser')),
-    'list': lazy(() => import('./List')),
-    'foreignkey': lazy(() => import('./Foreignkey')),
-    'service-template': lazy(() => import('./ServiceTemplate')),
-    'objname': lazy(() => import('./ObjName')),
+    [PROPERTY_TYPES.SINGLECHAR]: lazy(() => import('./Singlechar')),
+    [PROPERTY_TYPES.LONGCHAR]: lazy(() => import('./Longchar')),
+    [PROPERTY_TYPES.INT]: lazy(() => import('./Int')),
+    [PROPERTY_TYPES.ENUM]: lazy(() => import('./Enum')),
+    [PROPERTY_TYPES.TIME]: lazy(() => import('./Time')),
+    [PROPERTY_TYPES.OBJUSER]: lazy(() => import('./ObjUser')),
+    [PROPERTY_TYPES.LIST]: lazy(() => import('./List')),
+    [PROPERTY_TYPES.FOREIGNKEY]: lazy(() => import('./Foreignkey')),
+    [PROPERTY_TYPES.SERVICE_TEMPLATE]: lazy(() => import('./ServiceTemplate')),
+    [PROPERTY_TYPES.OBJNAME]: lazy(() => import('./ObjName')),
     // ... other components
 } as const;
 

@@ -43,18 +43,18 @@ export const transferBaseMenuItems = [
  * Dynamic Group Constants
  */
 export const QUERY_OPERATOR = Object.freeze({
-  EQ: '$eq',          // 等于
-  NE: '$ne',          // 不等于
-  IN: '$in',          // 属于
-  NIN: '$nin',        // 不属于
-  LT: '$lt',          // 小于
-  GT: '$gt',          // 大于
-  LTE: '$lte',        // 小于等于
-  GTE: '$gte',        // 大于等于
-  RANGE: '$range',    // 范围（前端构造，后台会拆分为gte, lte）
-  LIKE: '$regex',     // 模糊匹配
-  CONTAINS: '$contains',     // 包含（大小写不敏感）
-  CONTAINS_CS: '$contains_s' // 包含（大小写敏感）
+  EQ: '$eq',          // Equals
+  NE: '$ne',          // Not Equals
+  IN: '$in',          // In
+  NIN: '$nin',        // Not In
+  LT: '$lt',          // Less Than
+  GT: '$gt',          // Greater Than
+  LTE: '$lte',        // Less Than or Equals
+  GTE: '$gte',        // Greater Than or Equals
+  RANGE: '$range',    // Range (constructed on the front-end, split into gte, lte on the back-end)
+  LIKE: '$regex',     // Fuzzy Match
+  CONTAINS: '$contains',     // Contains (case-insensitive)
+  CONTAINS_CS: '$contains_s' // Contains (case-sensitive)
 });
 export const QUERY_OPERATOR_SYMBOL = {
   [QUERY_OPERATOR.EQ]: '=',
@@ -84,70 +84,31 @@ export const QUERY_OPERATOR_DESC = {
   [QUERY_OPERATOR.CONTAINS]: '匹配(大小写不敏感)',
   [QUERY_OPERATOR.CONTAINS_CS]: '匹配(大小写敏感)'
 }
-export const DYNAMIC_GROUP_OPERATORS = {
-  EQ: '$eq',
-  NE: '$ne',
-  IN: '$in',
-  NIN: '$nin',
-  LIKE: '$like',
-  REGEX: '$regex',
-  RANGE: '$range',
-  GTE: '$gte',
-  LTE: '$lte'
-} as const;
-export const DYNAMIC_GROUP_FIELD_TYPES = {
-  SINGLECHAR: 'singlechar',
-  LONGCHAR: 'longchar',
-  INT: 'int',
-  FLOAT: 'float',
-  ENUM: 'enum',
-  ENUMMULTI: 'enummulti',
-  BOOL: 'bool',
-  DATE: 'date',
-  TIME: 'time',
-  USER: 'objuser',
-  SERVICE_TEMPLATE: 'service-template'
-} as const;
-export const DYNAMIC_GROUP_OBJECT_TYPES = {
-  HOST: 'host',
-  MODULE: 'module',
-  SET: 'set'
-} as const;
-export const OPERATOR_LABELS = {
-  [DYNAMIC_GROUP_OPERATORS.EQ]: '等于',
-  [DYNAMIC_GROUP_OPERATORS.NE]: '不等于',
-  [DYNAMIC_GROUP_OPERATORS.IN]: '包含',
-  [DYNAMIC_GROUP_OPERATORS.NIN]: '不包含',
-  [DYNAMIC_GROUP_OPERATORS.LIKE]: '包含',
-  [DYNAMIC_GROUP_OPERATORS.REGEX]: '正则',
-  [DYNAMIC_GROUP_OPERATORS.RANGE]: '范围',
-  [DYNAMIC_GROUP_OPERATORS.GTE]: '大于等于',
-  [DYNAMIC_GROUP_OPERATORS.LTE]: '小于等于'
-} as const;
-export const PROPERTY_TYPES = Object.freeze({
-  SINGLECHAR: 'singlechar',
-  INT: 'int',
-  FLOAT: 'float',
-  ENUM: 'enum',
-  DATE: 'date',
-  TIME: 'time',
-  LONGCHAR: 'longchar',
-  OBJUSER: 'objuser',
-  TIMEZONE: 'timezone',
-  BOOL: 'bool',
-  LIST: 'list',
-  ORGANIZATION: 'organization',
-  ENUMMULTI: 'enummulti',
-  ENUMQUOTE: 'enumquote',
-  MAP: 'map',
-  OBJECT: 'object',
-  ARRAY: 'array',
-  TABLE: 'table',
-  SERVICE_TEMPLATE: 'service-template',
-  TOPOLOGY: 'topology',
-  FOREIGNKEY: 'foreignkey',
-  INNER_TABLE: 'innertable'
-})
+export const enum PROPERTY_TYPES {
+  SINGLECHAR = 'singlechar',
+  INT = 'int',
+  FLOAT = 'float',
+  ENUM = 'enum',
+  DATE = 'date',
+  TIME = 'time',
+  LONGCHAR = 'longchar',
+  OBJUSER = 'objuser',
+  TIMEZONE = 'timezone',
+  BOOL = 'bool',
+  LIST = 'list',
+  ORGANIZATION = 'organization',
+  ENUMMULTI = 'enummulti',
+  ENUMQUOTE = 'enumquote',
+  MAP = 'map',
+  OBJECT = 'object',
+  ARRAY = 'array',
+  TABLE = 'table',
+  SERVICE_TEMPLATE = 'service-template',
+  TOPOLOGY = 'topology',
+  FOREIGNKEY = 'foreignkey',
+  INNER_TABLE = 'innertable',
+  OBJNAME = 'objname'
+}
 export enum BUILTIN_MODELS {
   BUSINESS_SET = 'bk_biz_set_obj',
   BUSINESS = 'biz',
@@ -181,11 +142,34 @@ export const requestConfig = Object.freeze({
   create: Symbol('create'),
   update: Symbol('update')
 })
+const { EQ, NE, IN, NIN, LTE, GTE, RANGE, LIKE } = QUERY_OPERATOR;
 export const DEFAULT_CONDITIONS_DATA = {
-  bool: { operator: QUERY_OPERATOR.EQ, value: '' },
-  date: { operator: QUERY_OPERATOR.RANGE, value: [] },
-  float: { operator: QUERY_OPERATOR.EQ, value: '' },
-  int: { operator: QUERY_OPERATOR.EQ, value: '' },
-  time: { operator: QUERY_OPERATOR.RANGE, value: [] },
-  'service-template': { operator: QUERY_OPERATOR.IN, value: [] }
+  [PROPERTY_TYPES.BOOL]: { operator: EQ, value: '' },
+  [PROPERTY_TYPES.DATE]: { operator: RANGE, value: [] },
+  [PROPERTY_TYPES.FLOAT]: { operator: EQ, value: '' },
+  [PROPERTY_TYPES.INT]: { operator: EQ, value: '' },
+  [PROPERTY_TYPES.TIME]: { operator: RANGE, value: [] },
+  [PROPERTY_TYPES.SERVICE_TEMPLATE]: { operator: IN, value: [] }
+};
+export const DEFAULT_OPERATOR_MAP = {
+  [PROPERTY_TYPES.BOOL]: [EQ, NE],
+  [PROPERTY_TYPES.DATE]: [GTE, LTE],
+  [PROPERTY_TYPES.ENUM]: [IN, NIN],
+  [PROPERTY_TYPES.ENUMMULTI]: [IN, NIN],
+  [PROPERTY_TYPES.ENUMQUOTE]: [IN, NIN],
+  [PROPERTY_TYPES.FLOAT]: [EQ, NE, GTE, LTE, RANGE],
+  [PROPERTY_TYPES.INT]: [EQ, NE, GTE, LTE, RANGE],
+  [PROPERTY_TYPES.LIST]: [IN, NIN],
+  [PROPERTY_TYPES.LONGCHAR]: [IN, NIN, LIKE],
+  [PROPERTY_TYPES.OBJUSER]: [IN, NIN],
+  [PROPERTY_TYPES.ORGANIZATION]: [IN, NIN],
+  [PROPERTY_TYPES.SINGLECHAR]: [IN, NIN, LIKE],
+  [PROPERTY_TYPES.TIME]: [GTE, LTE],
+  [PROPERTY_TYPES.TIMEZONE]: [IN, NIN],
+  [PROPERTY_TYPES.FOREIGNKEY]: [IN, NIN],
+  [PROPERTY_TYPES.TABLE]: [IN, NIN],
+  [PROPERTY_TYPES.SERVICE_TEMPLATE]: [IN],
+  [PROPERTY_TYPES.ARRAY]: [IN, NIN, LIKE],
+  [PROPERTY_TYPES.OBJECT]: [IN, NIN, LIKE],
+  [PROPERTY_TYPES.MAP]: [IN, NIN]
 };

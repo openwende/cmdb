@@ -124,6 +124,7 @@ const PreviewResult: React.FC<PreviewResultProps> = ({
       </div>
 
       <Table
+        rowKey="id"
         columns={columns}
         dataSource={data}
         loading={loading}

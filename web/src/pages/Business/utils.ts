@@ -11,7 +11,7 @@ import {
     OperatorType,
     CopyMenuItemKey as HostCopyKey
 } from "./Types";
-import { DYNAMIC_GROUP_OPERATORS, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS, QUERY_OPERATOR } from './constants';
+import { QUERY_OPERATOR, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS } from './constants';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -518,37 +518,6 @@ export function createIdProperty(objId: string) {
         editable: false,
         bk_property_group: null,
         _is_inject_: true
-    }
-}
-
-/**
- * Get the operators available for a given property type
- * 
- * @param propertyType The type of the property
- * @returns Array of operator strings
- */
-export function getOperatorsByPropertyType(propertyType: string): string[] {
-    const { EQ, NE, IN, NIN, LIKE, REGEX, RANGE, GTE, LTE } = DYNAMIC_GROUP_OPERATORS;
-
-    switch (propertyType) {
-        case 'int':
-        case 'float':
-            return [EQ, NE, GTE, LTE, RANGE, IN, NIN];
-        case 'singlechar':
-        case 'longchar':
-            return [EQ, NE, LIKE, REGEX, IN, NIN];
-        case 'enum':
-        case 'enummulti':
-            return [IN, NIN];
-        case 'bool':
-            return [EQ, NE];
-        case 'date':
-        case 'time':
-            return [RANGE];
-        case 'service-template':
-            return [IN, NIN];
-        default:
-            return [EQ, NE, IN, NIN];
     }
 }
 

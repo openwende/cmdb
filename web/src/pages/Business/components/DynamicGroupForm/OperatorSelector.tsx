@@ -1,39 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { Select } from 'antd';
 import { Property, OperatorType } from '../../Types';
-import { QUERY_OPERATOR, QUERY_OPERATOR_SYMBOL, QUERY_OPERATOR_DESC } from '../../constants';
+import { QUERY_OPERATOR_SYMBOL, QUERY_OPERATOR_DESC, DEFAULT_OPERATOR_MAP } from '../../constants';
 import './style.css';
 
-const { EQ, NE, IN, NIN, LTE, GTE, RANGE, LIKE } = QUERY_OPERATOR;
-const typeMap = {
-  bool: [EQ, NE],
-  date: [GTE, LTE],
-  enum: [IN, NIN],
-  enummulti: [IN, NIN],
-  enumquote: [IN, NIN],
-  float: [EQ, NE, GTE, LTE, RANGE],
-  int: [EQ, NE, GTE, LTE, RANGE],
-  list: [IN, NIN],
-  longchar: [IN, NIN, LIKE],
-  objuser: [IN, NIN],
-  organization: [IN, NIN],
-  singlechar: [IN, NIN, LIKE],
-  time: [GTE, LTE],
-  timezone: [IN, NIN],
-  foreignkey: [IN, NIN],
-  table: [IN, NIN],
-  'service-template': [IN],
-  array: [IN, NIN, LIKE],
-  object: [IN, NIN, LIKE],
-  map: [IN, NIN]
-};
-
+type OperatorMapKey = keyof typeof DEFAULT_OPERATOR_MAP;
 interface OperatorOption {
   id: string;
   name: string;
   title: string;
 }
-interface FormOperatorSelectorProps {
+interface OperatorSelectorProps {
   className?: string;
   property: Property;
   value?: OperatorType;
@@ -41,7 +18,7 @@ interface FormOperatorSelectorProps {
   onChange?: (operator: OperatorType) => void;
 }
 
-const FormOperatorSelector: React.FC<FormOperatorSelectorProps> = ({
+const OperatorSelector: React.FC<OperatorSelectorProps> = ({
   className,
   property,
   value,
@@ -52,7 +29,8 @@ const FormOperatorSelector: React.FC<FormOperatorSelectorProps> = ({
 
   const options = useMemo(() => {
     const { bk_property_type: propertyType } = property;
-    return typeMap[propertyType as keyof typeof typeMap].map((operator) => ({
+    const operators = DEFAULT_OPERATOR_MAP[propertyType as OperatorMapKey] || [];
+    return operators.map((operator) => ({
       id: operator,
       name: QUERY_OPERATOR_SYMBOL[operator],
       title: QUERY_OPERATOR_DESC[operator]
@@ -93,4 +71,4 @@ const FormOperatorSelector: React.FC<FormOperatorSelectorProps> = ({
   );
 };
 
-export default FormOperatorSelector;
+export default OperatorSelector;

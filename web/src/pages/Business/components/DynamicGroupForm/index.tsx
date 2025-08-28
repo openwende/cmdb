@@ -3,9 +3,9 @@ import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } fro
 import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName, Condition } from '../../Types';
 import { availableModelIds, requestConfig, BUILTIN_MODELS } from '../../constants';
 import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition, processConditionGroups } from '../../utils';
-import FormTarget from './FormTarget';
+import SearchTarget from './SearchTarget';
 import ConditionPicker from './ConditionPicker';
-import FormPropertyList from './FormPropertyList';
+import PropertyList from './PropertyList';
 import PreviewResult from './PreviewResult';
 import DragHandle from '@/components/common/DragHandle';
 import ConfirmModal from '@/components/common/ConfirmModal';
@@ -32,17 +32,12 @@ export const conditionTypes = [
         desc: '在使用动态分组时，条件及条件值均不可修改'
     }
 ];
-const exchangeType = {
-    [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
-    [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
-}
 
 export enum FormMode {
     CREATE = 'create',
     EDIT = 'edit',
     PREVIEW = 'preview'
 }
-
 interface DynamicGroupFormProps {
     title: string;
     visible: boolean;
@@ -163,7 +158,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         setGroupObject(data.bk_obj_id);
 
         const newSelectedProperties: Property[] = [];
-        const initialStorageConditions: Record<string, Condition> = {};
+        const initialConditions: Record<string, Condition> = {};
 
         // Process immutable conditions
         const immutableResult = processConditionGroups(
@@ -184,13 +179,13 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             ...variableResult.selectedProperties
         );
         Object.assign(
-            initialStorageConditions,
+            initialConditions,
             immutableResult.storageConditions,
             variableResult.storageConditions
         );
 
         setSelectedProperties(newSelectedProperties);
-        setStorageConditions(initialStorageConditions);
+        setStorageConditions(initialConditions);
     };
 
     const handlePropertyChange = (newProperties: Property[]) => {
@@ -204,44 +199,67 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     const handleRemoveProperty = (property: Property) => {
         const newSelectedProperties = selectedProperties.filter(p => p.id !== property.id);
         setSelectedProperties(newSelectedProperties);
+
+        // Remove the property from conditions and storageConditions
+        const newConditions = { ...conditions };
+        const newStorageConditions = { ...storageConditions };
+
+        delete newConditions[property.id];
+        delete newStorageConditions[property.id];
+
+        setConditions(newConditions);
+        setStorageConditions(newStorageConditions);
     }
 
-    const handleToggleProperty = (property: Property, conditionType: ConditionType) => {
-        // Remove the property from selectedProperties
-        handleRemoveProperty(property);
-
+    const handleToggleProperty = (property: Property, newConditionType: ConditionType) => {
         // Set the new condition type
-        const newConditionType = exchangeType[conditionType];
-        // Create a new property object with the new condition type
         const updatedProperty = { ...property, conditionType: newConditionType };
 
-        // Update the propertyMap with the new condition type
-        setPropertyMap(prevPropertyMap => {
-            const newPropertyMap = { ...prevPropertyMap };
-            const modelProperties = newPropertyMap[property.bk_obj_id];
-
-            if (modelProperties) {
-                const targetIdx = modelProperties.findIndex(
-                    p => p.bk_property_id === property.bk_property_id
-                );
-                if (targetIdx > -1) {
-                    newPropertyMap[property.bk_obj_id] = [...modelProperties];
-                    newPropertyMap[property.bk_obj_id][targetIdx] = {
-                        ...modelProperties[targetIdx],
-                        conditionType: newConditionType
-                    };
-                }
-            }
-            return newPropertyMap;
+        // Update selectedProperties - remove old and add updated
+        setSelectedProperties(prev => {
+            const filtered = prev.filter(p => p.id !== property.id);
+            return [...filtered, updatedProperty];
         });
 
-        // Add the updated property to selectedProperties
-        setSelectedProperties(prev => [...prev, updatedProperty]);
+        // Update conditions to reflect the new condition type
+        setConditions(prev => {
+            if (prev[property.id]) {
+                return {
+                    ...prev,
+                    [property.id]: {
+                        ...prev[property.id],
+                        property: updatedProperty
+                    }
+                };
+            }
+            return prev;
+        });
+
+        // Update storageConditions to reflect the new condition type
+        setStorageConditions(prev => {
+            if (prev[property.id]) {
+                return {
+                    ...prev,
+                    [property.id]: {
+                        ...prev[property.id],
+                        property: updatedProperty
+                    }
+                };
+            }
+            return prev;
+        });
     };
 
     const handleConditionChange = (newCondition: Record<string, Condition>) => {
-        setConditions(newCondition);
-        setStorageConditions(newCondition);
+        // Merge new conditions with existing conditions instead of replacing
+        setConditions(prev => ({
+            ...prev,
+            ...newCondition
+        }));
+        setStorageConditions(prev => ({
+            ...prev,
+            ...newCondition
+        }));
     };
 
     const handleErrors = (propertyId: number, hasError: boolean) => {
@@ -301,7 +319,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             // Call service to get group data
             onDataChange();
 
-            handleClose();
+            handleActualClose();
         } catch (error) {
             console.error(error);
         } finally {
@@ -434,7 +452,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                 name="groupObject"
                                 rules={[{ required: true }]}
                             >
-                                <FormTarget
+                                <SearchTarget
                                     value={groupObject}
                                     showModal={selectedProperties.length > 0}
                                     disabled={disabled}
@@ -466,7 +484,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                             />
                                         ),
                                         children: (
-                                            <FormPropertyList
+                                            <PropertyList
                                                 bizId={currentBusiness?.id!}
                                                 conditionType={conditionType.key}
                                                 models={availableModels}

@@ -261,10 +261,6 @@
     min-width: 140px;
   }
 
-  .ant-radio-wrapper:hover {
-    border-color: #1890ff;
-  }
-
   .ant-radio-wrapper-checked {
     border-color: #1890ff;
   }

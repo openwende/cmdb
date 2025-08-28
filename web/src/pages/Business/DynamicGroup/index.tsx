@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Input, Select, Alert, Space, message } from "antd";
+import dayjs from 'dayjs';
 import Pagination from "@/components/common/Pagination";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import { dynamicGroupList } from "@/mock/business";
 import DynamicGroupForm, { FormMode } from "../components/DynamicGroupForm";
-import dayjs from 'dayjs';
+import { dynamicGroupList } from "@/mock/business";
 import "./style.css";
 
 const { Option } = Select;
