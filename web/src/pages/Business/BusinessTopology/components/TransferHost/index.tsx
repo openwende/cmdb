@@ -318,7 +318,7 @@ const TransferHost: React.FC = () => {
                                 </div>
                             );
                         }
-                        )
+                    )
                 }
             </div>
         );
@@ -531,8 +531,8 @@ const TransferHost: React.FC = () => {
                 selectedHosts={selectedHosts}
                 onClose={() => setShowTransferModal(false)}
                 onConfirm={handleTransferNode}
-                initialSelectedKeys={initialKeys}
                 initialExpandedKeys={initialKeys}
+                initialSelectedKeys={initialKeys}
             />
         </div>
     );

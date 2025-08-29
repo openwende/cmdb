@@ -1,37 +1,78 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { Input } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import TopologyTree from "../components/TopologyTree";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import DragHandle from "@/components/common/DragHandle";
-import "./style.css";
-import { useTranslation } from "react-i18next";
 import { TreeData } from "../../Types";
+import { buildTreeData, filterTree, findNodeAndParents } from "../../utils";
+import { businessData2, idleCluster2 } from "@/mock/business";
+import "./style.css";
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
 const DEFAULT_WIDTH = 320;
 
 interface Props {
-    selectedKeys?: string[];
-    expandedKeys?: string[];
-    onSelectNode: (node: TreeData) => void;
-    onSearchDataChange?: (data: TreeData[]) => void;
+    selectedNode: TreeData | null;
+    initialSelectedKey?: string | null;
+    onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
 }
 
-const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNode, onSearchDataChange }) => {
+const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNodeSelect }) => {
     const { t } = useTranslation();
     const [searchValue, setSearchValue] = useState<string>("");
     const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
+    const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
-    // Handle search data changes from TopologyTree
-    const handleSearchDataChange = (data: any[]) => {
-        setHasSearchResults(data.length > 0);
+    // Build complete tree data
+    const fullTreeData = useMemo(() => {
+        return buildTreeData(businessData2, idleCluster2);
+    }, []);
+
+    // Filter tree data based on search value
+    const filteredTreeData = useMemo(() => {
+        if (!searchValue || !searchValue.trim()) {
+            return fullTreeData;
+        }
+        return filterTree(fullTreeData, searchValue);
+    }, [fullTreeData, searchValue]);
+
+    useEffect(() => {
+        if (initialSelectedKey) {
+            const { node, parents } = findNodeAndParents(fullTreeData, initialSelectedKey);
+            if (node) {
+                const parentKeys = parents.map(p => p.key);
+                setSelectedKeys([initialSelectedKey]);
+                setExpandedKeys([...parentKeys, initialSelectedKey]);
+                onNodeSelect(node, parents);
+            }
+        } else if (!selectedNode) {
+            // Select first node if no specific node is provided
+            const firstNode = fullTreeData[0];
+            setSelectedKeys([firstNode.key]);
+            setExpandedKeys([firstNode.key]);
+            onNodeSelect(firstNode, []);
+        }
+    }, [initialSelectedKey]);
+
+    // Handle node selection from TopologyTree
+    const handleNodeSelect = (selectedNode: TreeData, parentNodes: TreeData[]) => {
+        setSelectedKeys([selectedNode.key]);
+        onNodeSelect(selectedNode, parentNodes);
     };
+
+    // Update search results status and notify parent
+    useMemo(() => {
+        const hasResults = filteredTreeData.length > 0;
+        setHasSearchResults(hasResults);
+    }, [filteredTreeData]);
 
     // Handle clear search
     const handleClearSearch = () => {
@@ -62,11 +103,11 @@ const BusinessTree: React.FC<Props> = ({ selectedKeys, expandedKeys, onSelectNod
                         <EmptySearchResult onClearFilter={handleClearSearch} />
                     ) : (
                         <TopologyTree
-                            onSelectNode={onSelectNode}
-                            searchValue={searchValue}
-                            onSearchDataChange={onSearchDataChange}
+                            treeData={filteredTreeData}
                             selectedKeys={selectedKeys}
                             expandedKeys={expandedKeys}
+                            searchValue={searchValue}
+                            onNodeSelect={handleNodeSelect}
                         />
                     )}
                     {/* The dragger */}

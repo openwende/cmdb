@@ -7,7 +7,7 @@ import Process from './Process';
 import { DownOutlined } from '@ant-design/icons';
 
 interface Props {
-    selectedNodes: TreeData[];
+    selectedNode: TreeData;
     view?: 'instance' | 'process';
     setView?: (v: 'instance' | 'process') => void;
 }
@@ -20,13 +20,13 @@ const dropdownMenuItems = {
     ]
 };
 
-const ServiceInstance: React.FC<Props> = ({ selectedNodes, view = 'instance', setView }) => {
+const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', setView }) => {
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [expandAll, setExpandAll] = useState(false);
 
     const selectedNodeStatus = useMemo(() => {
-        return getSelectedNodeStatus(selectedNodes);
-    }, [selectedNodes]);
+        return getSelectedNodeStatus([selectedNode]);
+    }, [selectedNode]);
 
     const handleInstanceMenuClick = ({ key }: { key: string }) => {
         switch (key) {
@@ -94,7 +94,7 @@ const ServiceInstance: React.FC<Props> = ({ selectedNodes, view = 'instance', se
                         {/* Render the corresponding component based on the view type */}
                         {view === 'instance' ? (
                             <Instance
-                                selectedNode={selectedNodes[0]}
+                                selectedNode={selectedNode}
                                 selectedRowKeys={selectedRowKeys}
                                 setSelectedRowKeys={setSelectedRowKeys}
                                 expandAll={expandAll}
@@ -102,7 +102,7 @@ const ServiceInstance: React.FC<Props> = ({ selectedNodes, view = 'instance', se
                             />
                         ) : (
                             <Process
-                                selectedNode={selectedNodes[0]}
+                                selectedNode={selectedNode}
                                 selectedRowKeys={selectedRowKeys}
                                 setSelectedRowKeys={setSelectedRowKeys}
                                 expandAll={expandAll}

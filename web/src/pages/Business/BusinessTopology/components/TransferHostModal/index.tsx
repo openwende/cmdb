@@ -4,7 +4,7 @@ import { CloseOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import DragHandle from '@/components/common/DragHandle';
 import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
-import { findNodeAndParents, isHostAlreadyInTarget } from '@/pages/Business/utils';
+import { findNodeAndParents, isHostAlreadyInTarget, filterTree } from '@/pages/Business/utils';
 import {
   TailEleType,
   TopoTreeNodeType,
@@ -57,10 +57,16 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const transferStatus = useMemo(() => {
     return {
       isIdlePool: transferType === TransferMenuItemType.idlePool,
-      isBusinessModule: transferType === TransferMenuItemType.businessModule || transferType === AppendMenuItemKey.AppendToBusinessModule,
+      isBusinessModule: (
+        transferType === TransferMenuItemType.businessModule
+        || transferType === AppendMenuItemKey.AppendToBusinessModule
+      ),
       isOtherBusiness: transferType === TransferMenuItemType.otherBusiness,
       isAppendBusinessModule: transferType === AppendMenuItemKey.AppendToBusinessModule,
-      isSingleSelect: transferType === TransferMenuItemType.idlePool || transferType === TransferMenuItemType.otherBusiness
+      isSingleSelect: (
+        transferType === TransferMenuItemType.idlePool
+        || transferType === TransferMenuItemType.otherBusiness
+      )
     };
   }, [transferType]);
 
@@ -119,25 +125,33 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return [];
   }, [transferStatus, selectedBizId]);
 
+  // Filter tree data based on search value
+  const filteredTreeData: TreeData[] = useMemo(() => {
+    if (!searchValue || !searchValue.trim()) {
+      return customTreeData;
+    }
+    return filterTree(customTreeData, searchValue);
+  }, [customTreeData, searchValue]);
+
   useEffect(() => {
     if (!visible) return;
-    if (!customTreeData || customTreeData.length === 0) return;
+    if (!filteredTreeData || filteredTreeData.length === 0) return;
 
     let expandedKeys: string[] = [];
     if (initialExpandedKeys && initialExpandedKeys.length > 0) {
       const expandedSet = new Set<string>();
       initialExpandedKeys.forEach(key => {
-        const { parents } = findNodeAndParents(customTreeData, key);
+        const { parents } = findNodeAndParents(filteredTreeData, key);
         parents.forEach(p => expandedSet.add(p.key));
         expandedSet.add(key);
       });
       expandedKeys = Array.from(expandedSet);
     } else {
-      expandedKeys = [customTreeData[0].key];
+      expandedKeys = [filteredTreeData[0].key];
     }
 
     setExpandedKeys(expandedKeys);
-  }, [visible, customTreeData, initialExpandedKeys]);
+  }, [visible, filteredTreeData, initialExpandedKeys]);
 
   useEffect(() => {
     if (!visible) return;
@@ -161,10 +175,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   };
 
   useEffect(() => {
-    const selectedNodes = getSelectedNodes(selectedKeys, customTreeData);
+    const selectedNodes = getSelectedNodes(selectedKeys, filteredTreeData);
     const list = transferStatus.isSingleSelect ? selectedNodes.slice(0, 1) : selectedNodes;
     setPreviewList(list);
-  }, [selectedKeys, customTreeData, transferStatus]);
+  }, [selectedKeys, filteredTreeData, transferStatus]);
 
   // Handle node selection (single or multi based on transferType)
   const handleSelectNode = (node: TreeData) => {
@@ -216,7 +230,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           style={{ marginRight: 10 }}
         />
       );
-    } else if (transferStatus.isBusinessModule && node.type === TopoTreeNodeType.Module) {
+    } else if (
+      transferStatus.isBusinessModule
+      && node.type === TopoTreeNodeType.Module
+    ) {
       return (
         <Checkbox
           checked={selectedKeys.includes(node.key)}
@@ -235,6 +252,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   };
 
   const bizOptions = bizInfo.info.map((biz) => ({
+    key: biz.bk_biz_id,
     label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
     value: String(biz.bk_biz_id),
   }));
@@ -320,14 +338,14 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           )}
           {
             isShowTreeCom && <TopologyTree
-              customTreeData={customTreeData}
-              customTitlePrefix={renderCustomTitlePrefix}
+              treeData={filteredTreeData}
               onlyLeafSelectable={true}
               tailEleType={TailEleType.None}
               searchValue={searchValue}
               selectedKeys={selectedKeys}
-              onSelectNode={handleSelectNode}
               expandedKeys={expandedKeys}
+              onNodeSelect={handleSelectNode}
+              customTitlePrefix={renderCustomTitlePrefix}
             />
           }
           {/* The dragger */}
@@ -349,6 +367,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
             dataSource={previewList}
             renderItem={item => (
               <List.Item
+                key={item.key}
                 className="preview-item-bg"
                 onMouseEnter={() => setHoveredPreviewId(item.key)}
                 onMouseLeave={() => setHoveredPreviewId(null)}

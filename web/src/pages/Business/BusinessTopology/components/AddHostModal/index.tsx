@@ -1,11 +1,12 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
-import { allHosts2 } from '@/mock/business';
-import { TransferHostItem, TailEleType, TreeData, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
+import { allHosts2, businessData2, idleCluster2 } from '@/mock/business';
+import { TransferHostItem, TailEleType, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import { buildTreeData, filterTree } from '@/pages/Business/utils';
 import './style.css';
 
 const MIN_WIDTH = 280;
@@ -53,10 +54,21 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     // Search related states
     const [treeSearchValue, setTreeSearchValue] = useState<string>('');
     const [hostSearchValue, setHostSearchValue] = useState<string>('');
-    const [hasTreeSearchResults, setHasTreeSearchResults] = useState<boolean>(true);
     const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
-    const [searchTreeData, setSearchTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>();
+
+    // Build complete tree data
+    const fullTreeData = useMemo(() => {
+        return buildTreeData(businessData2, idleCluster2);
+    }, []);
+
+    // Filter tree data based on search value
+    const filteredTreeData = useMemo(() => {
+        if (!treeSearchValue || !treeSearchValue.trim()) {
+            return fullTreeData;
+        }
+        return filterTree(fullTreeData, treeSearchValue);
+    }, [fullTreeData, treeSearchValue]);
     // Result preview list items - independent of tab switching
     const [resultPreviewItems, setResultPreviewItems] = useState<TransferHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
@@ -75,15 +87,15 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     useEffect(() => {
         const prevVisible = prevVisibleRef.current;
         if (visible && !prevVisible) {
-            if (!searchTreeData || searchTreeData.length === 0) return;
+            if (!filteredTreeData || filteredTreeData.length === 0) return;
             setShouldInitializeKeys(true);
-            setExpandedKeys([searchTreeData[0].key]);
+            setExpandedKeys([filteredTreeData[0].key]);
         } else {
             setShouldInitializeKeys(false);
         }
         // Update previous visible status after initialization
         prevVisibleRef.current = visible;
-    }, [visible, searchTreeData]);
+    }, [visible, filteredTreeData]);
 
     useEffect(() => {
         if (visible && initialSelectedHosts && initialSelectedHosts.length > 0) {
@@ -269,25 +281,11 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     };
 
-    // Handle search popover result item click
-    // const handleSearchResultClick = (key: string) => {
-    //     setSelectedTreeKey(key);
-    //     setTreeSearchValue('');
-    //     setShowSearchPopover(false);
-    // };
-
     const handleTreeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setTreeSearchValue(value);
         setShowSearchPopover(!!value.trim());
     };
-
-    const handleSearchDataChange = useCallback((data: any[]) => {
-        setSearchTreeData(data);
-        setHasTreeSearchResults(data.length > 0);
-        const isSearching = !!(treeSearchValue && treeSearchValue.trim());
-        setShowSearchPopover(isSearching && data.length > 0);
-    }, [treeSearchValue])
 
     const handleNextStep = () => {
         let output = resultPreviewItems;
@@ -312,7 +310,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setHoveredHostId(null);
         setTreeSearchValue('');
         setHostSearchValue('');
-        setHasTreeSearchResults(true);
         setShowSearchPopover(false);
         setResultPreviewItems([]);
         setAllHostsMapping(new Map());
@@ -459,12 +456,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                 </Popover>
                 <TopologyTree
                     key={treeKey}
+                    treeData={filteredTreeData}
                     onlyLeafSelectable={true}
                     expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
                     tailEleType={TailEleType.Count}
                     searchValue={treeSearchValue}
-                    onSelectNode={handleNodeSelect}
-                    onSearchDataChange={handleSearchDataChange}
+                    onNodeSelect={handleNodeSelect}
                 />
                 {/* The dragger */}
                 <div

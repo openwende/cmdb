@@ -7,20 +7,29 @@ import ServiceInstance from './ServiceInstance';
 import NodeInfo from './NodeInfo';
 import './style.css';
 import { TreeData } from '../Types';
-import { findNodeAndParents } from '../utils';
-import { getBusinessTopologyPath, getTransferHostPath, getBusinessIdFromUrl } from '../../../utils/routes';
+import {
+    getBusinessTopologyPath,
+    getTransferHostPath,
+    getBusinessIdFromUrl
+} from '../../../utils/routes';
+
+const DEFAULT_SELECTION = {
+    selectedNode: null,
+    parentNodes: []
+};
+
+interface NodeSelection {
+    selectedNode: TreeData | null;
+    parentNodes: TreeData[];
+}
 
 const BusinessTopology: React.FC = () => {
-    const [searchParams, setSearchParams] = useSearchParams();
-    const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'hostList');
-    const [selectedNodes, setSelectedNodes] = useState<TreeData[]>([]);
-    const nodeKey = searchParams.get('node');
-    const [selectedKeys, setSelectedKeys] = useState<string[]>(nodeKey ? [nodeKey] : []);
-    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    const [treeData, setTreeData] = useState<TreeData[]>([]);
-    const [view, setView] = useState<'instance' | 'process'>(searchParams.get('view') === 'process' ? 'process' : 'instance');
-    const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
     const location = useLocation();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState('hostList');
+    const [nodeSelection, setNodeSelection] = useState<NodeSelection>(DEFAULT_SELECTION);
+    const [view, setView] = useState<'instance' | 'process'>('instance');
+    const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
     const businessId = getBusinessIdFromUrl();
     const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
     const currentTransferHostPath = businessId ? getTransferHostPath(businessId) : '';
@@ -50,32 +59,9 @@ const BusinessTopology: React.FC = () => {
             setView('instance');
         }
 
-        if (treeData.length === 0) return;
-        const nodeKey = searchParams.get('node');
-        if (nodeKey) {
-            const { node, parents } = findNodeAndParents(treeData, nodeKey);
-            const parentKeys = parents.map(p => p.key);
-            if (node) {
-                setSelectedKeys([nodeKey]);
-                setSelectedNodes([node]);
-                // On initial load, expand the selected node and its parents
-                setExpandedKeys([...parentKeys, nodeKey]);
-            }
-        } else {
-            const firstNode = treeData[0];
-            if (firstNode) {
-                setSelectedKeys([firstNode.key]);
-                setSelectedNodes([firstNode]);
-                setExpandedKeys([firstNode.key]);
-            }
-        }
         // Update previous pathname after initialization
         prevPathnameRef.current = location.pathname;
-    }, [treeData, searchParams, location.pathname]);
-
-    const handleTreeData = useCallback((data: TreeData[]) => {
-        setTreeData(data);
-    }, []);
+    }, [searchParams, location.pathname]);
 
     const handleTabChange = (key: string) => {
         setActiveTab(key);
@@ -87,12 +73,16 @@ const BusinessTopology: React.FC = () => {
         setSearchParams(params);
     };
 
-    const handleNodeSelect = useCallback((node: TreeData) => {
+    const handleNodeSelect = useCallback((selectedNode: TreeData, parentNodes: TreeData[]) => {
         const params = new URLSearchParams(searchParams);
-        params.set('node', node.key);
+        params.set('node', selectedNode.key);
         setSearchParams(params);
-        setSelectedNodes([node]);
-    }, [searchParams])
+
+        setNodeSelection({
+            selectedNode,
+            parentNodes
+        });
+    }, [searchParams, setSearchParams]);
 
     const handleViewChange = (v: 'instance' | 'process') => {
         setView(v);
@@ -101,23 +91,48 @@ const BusinessTopology: React.FC = () => {
         setSearchParams(params);
     };
 
+    const { selectedNode, parentNodes } = nodeSelection;
+
     const items = [
         {
             key: 'hostList',
             label: '主机列表',
-            children: <HostList selectedNodes={selectedNodes} treeData={treeData} />
+            children: (
+                selectedNode && (
+                    <HostList
+                        selectedNode={selectedNode}
+                        parentNodes={parentNodes}
+                    />
+                )
+            )
         },
         {
             key: 'serviceInstance',
             label: '服务实例',
-            children: <ServiceInstance selectedNodes={selectedNodes} view={view} setView={handleViewChange} />
+            children: (
+                selectedNode && (
+                    <ServiceInstance
+                        selectedNode={selectedNode}
+                        view={view}
+                        setView={handleViewChange}
+                    />
+                )
+            )
         },
         {
             key: 'nodeInfo',
             label: '节点信息',
-            children: <NodeInfo selectedNode={selectedNodes[0]} />
+            children: (
+                selectedNode && (
+                    <NodeInfo
+                        selectedNode={selectedNode}
+                    />
+                )
+            )
         }
     ];
+
+    const initialSelectedKey = shouldInitializeKeys ? searchParams.get('node') : null;
 
     return (
         <>
@@ -125,10 +140,9 @@ const BusinessTopology: React.FC = () => {
                 isTransferHostRoute ? <Outlet /> : (
                     <div className='topology-wrapper'>
                         <BusinessTree
-                            selectedKeys={shouldInitializeKeys ? selectedKeys : undefined}
-                            expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
-                            onSelectNode={handleNodeSelect}
-                            onSearchDataChange={handleTreeData}
+                            selectedNode={selectedNode}
+                            initialSelectedKey={initialSelectedKey}
+                            onNodeSelect={handleNodeSelect}
                         />
                         <Tabs
                             activeKey={activeTab}

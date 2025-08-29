@@ -1,39 +1,33 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
-import { businessData2, idleCluster2 } from '@/mock/business';
 import CreateNodeModal from '../CreateNodeModal';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import './style.css';
-import { useTransferHostStore } from '@/store/TransferHostStore';
-import { buildTreeData, filterTree, findNodeAndParents } from '@/pages/Business/utils';
+import { findNodeAndParents } from '@/pages/Business/utils';
 
 interface Props {
-    onSelectNode: (node: TreeData) => void;
+    treeData: TreeData[];
     tailEleType?: TailEleType;
     searchValue?: string;
-    onSearchDataChange?: (data: TreeData[]) => void;
     onlyLeafSelectable?: boolean;
     selectedKeys?: string[];
     expandedKeys?: string[];
-    customTreeData?: TreeData[];
+    onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
     customTitlePrefix?: (node: TreeData, isSelected: boolean) => React.ReactNode;
 }
 
 const TopologyTree: React.FC<Props> = ({
-    onSelectNode,
+    treeData,
     tailEleType = TailEleType.All,
     searchValue,
-    onSearchDataChange,
     onlyLeafSelectable = false,
     selectedKeys: controlledSelectedKeys,
     expandedKeys: controlledExpandedKeys,
-    customTreeData,
+    onNodeSelect,
     customTitlePrefix
 }) => {
-    const { setIdleSetID } = useTransferHostStore();
-    const [treeData, setTreeData] = useState<TreeData[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
-    const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
+    const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
     // State for creating node
     const [modalVisible, setModalVisible] = useState(false);
@@ -41,23 +35,15 @@ const TopologyTree: React.FC<Props> = ({
     const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null);
 
     useEffect(() => {
-        // TODO: get real data from service
-        const idleSetID = idleCluster2.bk_set_id;
-        setIdleSetID(idleSetID);
-        const baseTree = customTreeData || buildTreeData(businessData2, idleCluster2, searchValue);
-        const filtered = filterTree(baseTree, searchValue || '');
-        setTreeData(filtered);
-        if (onSearchDataChange) {
-            onSearchDataChange(filtered);
-        }
-
+        // Handle expanded keys logic
         if (controlledExpandedKeys && controlledExpandedKeys.length > 0) {
             setExpandedKeys(controlledExpandedKeys);
-        } else if (searchValue) {
-            const allKeys = filtered.map(node => node.key);
+        } else if (searchValue && treeData.length > 0) {
+            // Auto expand all nodes when searching
+            const allKeys = treeData.map(node => node.key);
             setExpandedKeys(allKeys);
         }
-    }, [customTreeData, searchValue, idleCluster2, controlledExpandedKeys, onSearchDataChange]);
+    }, [treeData, searchValue, controlledExpandedKeys]);
 
     useEffect(() => {
         if (controlledSelectedKeys) {
@@ -79,16 +65,19 @@ const TopologyTree: React.FC<Props> = ({
         const isExpanded = expandedKeys.includes(key);
         const isSelected = selectedKeys.includes(key);
 
+        // Prepare selection info with parent nodes
+        const { parents } = findNodeAndParents(treeData, key);
+
         if (!hasChildren) {
             // Leaf nodes: Select directly
             setSelectedKeys([key]);
-            onSelectNode(node);
+            onNodeSelect(node, parents);
             return;
         }
         if (!isExpanded) {
             // Select first
             setSelectedKeys([key]);
-            onSelectNode(node);
+            onNodeSelect(node, parents);
             // Expand on the next tick to ensure the DOM has rendered the selection changes
             setTimeout(() => toggleExpand(key), 0);
             return;
@@ -98,7 +87,7 @@ const TopologyTree: React.FC<Props> = ({
         }
 
         setSelectedKeys([key]);
-        onSelectNode(node);
+        onNodeSelect(node, parents);
     };
 
     const toggleExpand = (key: string) => {
@@ -131,10 +120,6 @@ const TopologyTree: React.FC<Props> = ({
     };
 
     const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
-        if (tailEleType === TailEleType.None) {
-            return null;
-        }
-
         if (tailEleType === TailEleType.Count) {
             return <span className="right-wrapper">
                 <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>0</span>
@@ -168,7 +153,11 @@ const TopologyTree: React.FC<Props> = ({
                 style={{ cursor: 'pointer' }}
             >
                 <span className="left-wrapper">
-                    {customTitlePrefix ? customTitlePrefix(node, isSelected) : renderTitlePrefix(isSelected, node.objName)}
+                    {
+                        customTitlePrefix
+                            ? customTitlePrefix(node, isSelected)
+                            : renderTitlePrefix(isSelected, node.objName)
+                    }
                     {node.title}
                 </span>
                 {renderTailElement(node, hoveredKey!, isSelected)}

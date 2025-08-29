@@ -22,17 +22,17 @@ import { getTransferHostPath, getBusinessIdFromUrl } from '../../../../utils/rou
 import TransferHostModal from '../components/TransferHostModal';
 import ReleaseHostModal from '../components/ReleaseHostModal';
 import './style.css';
-import { checkHostsInIdlePool, findNodeAndParents, getHostCopyValue, getSelectedNodeStatus } from '../../utils';
+import { checkHostsInIdlePool, getHostCopyValue, getSelectedNodeStatus } from '../../utils';
 import CreateNodeModal from '../components/CreateNodeModal';
 import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 
 interface Props {
-  selectedNodes: TreeData[];
-  treeData: TreeData[];
+  selectedNode: TreeData;
+  parentNodes: TreeData[];
 }
 
-const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
+const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
@@ -86,7 +86,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
       Object.values(TransferMenuItemType).includes(key as TransferMenuItemType)
       || key === AppendMenuItemKey.AppendToBusinessModule
     ) {
-      // Transfer and append menu item
+      // Transfer and append menu item/
       setTransferModalVisible(true);
       setTransferModalType(key as TransferHostType);
     } else if (key === RemoveMenuItemKey.CurrentModule) {
@@ -97,7 +97,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
         const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
         return { id, ip: hostInfo?.host.bk_host_innerip || '', cloudInfo: region } as TransferHostItem;
       });
-      setTransferHostData(enrichedHosts, selectedNodes, RemoveMenuItemKey.CurrentModule);
+      setTransferHostData(enrichedHosts, [selectedNode], RemoveMenuItemKey.CurrentModule);
       handleNavToTransferPage();
     }
   };
@@ -111,14 +111,17 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     const businessId = getBusinessIdFromUrl();
     if (businessId) {
       const transferPath = getTransferHostPath(businessId);
-      navigate(transferPath + '?' + searchParams.toString());
+      // Create fresh URL params with current selected node
+      const params = new URLSearchParams(searchParams);
+      params.set('node', selectedNode.key);
+      navigate(transferPath + '?' + params.toString());
     }
   }
 
   const handleConfirmAddHosts = useCallback((hosts: TransferHostItem[]) => {
-    if (selectedNodes.length > 0) setTransferHostData(hosts, selectedNodes);
+    setTransferHostData(hosts, [selectedNode]);
     handleNavToTransferPage();
-  }, [selectedNodes])
+  }, [selectedNode])
 
   const handleTransferHosts = useCallback((targetModules: TreeData[]) => {
     if (
@@ -222,22 +225,18 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
         { key: MoreMenuItemKey.ExportSelected, label: '导出选中', disabled: selectedRowKeys.length === 0 },
         { key: MoreMenuItemKey.ExportAll, label: '导出全部' },
         { key: MoreMenuItemKey.ImportExcel, label: '导入excel更新' }
-      )
+      );
     }
 
     return { items };
   };
 
   const selectedNodeStatus = useMemo(() => {
-    return getSelectedNodeStatus(selectedNodes);
-  }, [selectedNodes]);
+    return getSelectedNodeStatus([selectedNode]);
+  }, [selectedNode]);
 
   const isEmptySet = useMemo(() => {
-    if (!selectedNodes || selectedNodes.length === 0) {
-      return false;
-    }
-
-    const node = selectedNodes[0];
+    const node = selectedNode;
     // The key is formatted as "<type>-<id>" (e.g., "set-1")
     const keyParts = node.key.split('-');
     if (keyParts.length !== 2) {
@@ -247,14 +246,7 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
     const isSetType = keyParts[0] === TopoTreeNodeType.Set;
     const hasNoChildren = !node.children || node.children.length === 0;
     return isSetType && hasNoChildren;
-  }, [selectedNodes]);
-
-  const { node: targetNode, parents: parentNodes } = useMemo(() => {
-    if (!selectedNodes || selectedNodes.length === 0) {
-      return { node: null, parents: [] };
-    }
-    return findNodeAndParents(treeData, selectedNodes[0].key);
-  }, [selectedNodes, treeData]);
+  }, [selectedNode]);
 
   return (
     <>
@@ -417,15 +409,13 @@ const HostList: React.FC<Props> = ({ selectedNodes, treeData }) => {
       />
 
       {/* Creating set and module modal*/}
-      {targetNode && (
-        <CreateNodeModal
-          visible={createModalVisible}
-          type={TopoTreeNodeType.Module}
-          selectedNode={targetNode}
-          parentNodes={parentNodes}
-          onClose={() => setCreateModalVisible(false)}
-        />
-      )}
+      <CreateNodeModal
+        visible={createModalVisible}
+        type={TopoTreeNodeType.Module}
+        selectedNode={selectedNode}
+        parentNodes={parentNodes}
+        onClose={() => setCreateModalVisible(false)}
+      />
     </>
   );
 };
