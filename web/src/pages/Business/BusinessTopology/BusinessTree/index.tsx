@@ -23,26 +23,12 @@ interface Props {
 const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNodeSelect }) => {
     const { t } = useTranslation();
     const [searchValue, setSearchValue] = useState<string>("");
-    const [hasSearchResults, setHasSearchResults] = useState<boolean>(true);
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
-
-    // Build complete tree data
-    const fullTreeData = useMemo(() => {
-        return buildTreeData(businessData2, idleCluster2);
-    }, []);
-
-    // Filter tree data based on search value
-    const filteredTreeData = useMemo(() => {
-        if (!searchValue || !searchValue.trim()) {
-            return fullTreeData;
-        }
-        return filterTree(fullTreeData, searchValue);
-    }, [fullTreeData, searchValue]);
 
     useEffect(() => {
         if (initialSelectedKey) {
@@ -62,22 +48,29 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
         }
     }, [initialSelectedKey]);
 
-    // Handle node selection from TopologyTree
+    const fullTreeData = useMemo(() => {
+        // Build complete tree data
+        return buildTreeData(businessData2, idleCluster2);
+    }, []);
+
+    const filteredTreeData = useMemo(() => {
+        if (!searchValue.trim()) {
+            return fullTreeData;
+        }
+        // Filter tree data based on search value
+        return filterTree(fullTreeData, searchValue);
+    }, [fullTreeData, searchValue]);
+
     const handleNodeSelect = (selectedNode: TreeData, parentNodes: TreeData[]) => {
         setSelectedKeys([selectedNode.key]);
         onNodeSelect(selectedNode, parentNodes);
     };
 
-    // Update search results status and notify parent
-    useMemo(() => {
-        const hasResults = filteredTreeData.length > 0;
-        setHasSearchResults(hasResults);
-    }, [filteredTreeData]);
-
-    // Handle clear search
     const handleClearSearch = () => {
         setSearchValue('');
     };
+
+    const isEmptySearchResult = filteredTreeData.length === 0 && searchValue;
 
     return (
         <div className="tree-wrapper"
@@ -96,10 +89,11 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
                             placeholder={t("business.topology.tree.search")}
                             allowClear
                             value={searchValue}
-                            onChange={e => setSearchValue(e.target.value)}
+                            onChange={e => setSearchValue(e.target.value.trim())}
+                            onClear={() => setSearchValue('')}
                         />
                     </div>
-                    {!hasSearchResults && searchValue ? (
+                    {isEmptySearchResult ? (
                         <EmptySearchResult onClearFilter={handleClearSearch} />
                     ) : (
                         <TopologyTree

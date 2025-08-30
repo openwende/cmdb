@@ -373,19 +373,19 @@ function getNodeType(bkObjId?: string): TopoTreeNodeType {
 /**
  * Check if the host is already in the target module, set, or biz
  *
- * @param {*} HostList
+ * @param {*} hostList
  * @param {React.Key} hostId
  * @param {TreeData} moduleNode
  * @return {*} 
  */
-export const isHostAlreadyInTarget = (HostList: any, hostId: React.Key, moduleNode: TreeData) => {
+export const isHostAlreadyInTarget = (hostList: any, hostId: React.Key, moduleNode: TreeData) => {
     // The key is formatted as "<type>-<id>" (e.g., "set-1")
     const keyParts = moduleNode.key.split('-');
     if (keyParts.length !== 2) return false;
 
     const type = keyParts[0];
     const id = Number(keyParts[1]);
-    const hostInfo = HostList.find((h: any) => h.host.bk_host_id === Number(hostId));
+    const hostInfo = hostList.find((h: any) => h.host.bk_host_id === Number(hostId));
 
     if (!hostInfo) return false;
 
@@ -423,6 +423,27 @@ export function getSelectedNodeStatus(selectedNodes: TreeData[]) {
         isIdle: node.type === TopoTreeNodeType.Idle,
     };
 }
+
+/**
+ * Get selected nodes by their keys
+ *
+ * @param keys The keys of the selected nodes
+ * @param tree The tree data to search
+ * @returns {TreeData[]} The selected nodes
+ */
+export const getSelectedNodesByKeys = (keys: string[], tree: TreeData[]): TreeData[] => {
+    const result: TreeData[] = [];
+    const traverse = (nodes: TreeData[]) => {
+        nodes.forEach(node => {
+            if (node.type === TopoTreeNodeType.Module && keys.includes(node.key)) {
+                result.push(node);
+            }
+            if (node.children) traverse(node.children);
+        });
+    };
+    traverse(tree);
+    return result;
+};
 
 /**
  * Get the text of the host record based on the copied key.

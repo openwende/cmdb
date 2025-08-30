@@ -3,8 +3,9 @@ import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty, Tooltip } f
 import { CloseOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import DragHandle from '@/components/common/DragHandle';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
 import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
-import { findNodeAndParents, isHostAlreadyInTarget, filterTree } from '@/pages/Business/utils';
+import { findNodeAndParents, isHostAlreadyInTarget, filterTree, getSelectedNodesByKeys } from '@/pages/Business/utils';
 import {
   TailEleType,
   TopoTreeNodeType,
@@ -40,10 +41,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   visible,
   transferType,
   selectedHosts,
-  onClose,
-  onConfirm,
   initialSelectedKeys,
   initialExpandedKeys,
+  onClose,
+  onConfirm,
 }) => {
   const [searchValue, setSearchValue] = useState('');
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
@@ -51,7 +52,6 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [previewList, setPreviewList] = useState<TreeData[]>([]);
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
-  // State for sidebar
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
 
   const transferStatus = useMemo(() => {
@@ -127,7 +127,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   // Filter tree data based on search value
   const filteredTreeData: TreeData[] = useMemo(() => {
-    if (!searchValue || !searchValue.trim()) {
+    if (!searchValue) {
       return customTreeData;
     }
     return filterTree(customTreeData, searchValue);
@@ -160,22 +160,8 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     }
   }, [visible, initialSelectedKeys]);
 
-  const getSelectedNodes = (keys: string[], tree: TreeData[]): TreeData[] => {
-    const result: TreeData[] = [];
-    const traverse = (nodes: TreeData[]) => {
-      nodes.forEach(node => {
-        if (node.type === TopoTreeNodeType.Module && keys.includes(node.key)) {
-          result.push(node);
-        }
-        if (node.children) traverse(node.children);
-      });
-    };
-    traverse(tree);
-    return result;
-  };
-
   useEffect(() => {
-    const selectedNodes = getSelectedNodes(selectedKeys, filteredTreeData);
+    const selectedNodes = getSelectedNodesByKeys(selectedKeys, filteredTreeData);
     const list = transferStatus.isSingleSelect ? selectedNodes.slice(0, 1) : selectedNodes;
     setPreviewList(list);
   }, [selectedKeys, filteredTreeData, transferStatus]);
@@ -194,6 +180,12 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
         );
       }
     }
+  };
+
+  const handleBizChange = (bizId: string) => {
+    setSelectedBizId(bizId);
+    setSelectedKeys([]);
+    setPreviewList([]);
   };
 
   const handleRemove = (key: string) => {
@@ -251,13 +243,12 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return null;
   };
 
-  const bizOptions = bizInfo.info.map((biz) => ({
-    key: biz.bk_biz_id,
-    label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
-    value: String(biz.bk_biz_id),
-  }));
-
-  const isShowTreeCom = transferStatus.isOtherBusiness ? !!selectedBizId : true;
+  const bizOptions = bizInfo.info.filter((biz) => biz.bk_biz_id && biz.bk_biz_name)
+    .map((biz) => ({
+      key: biz.bk_biz_id,
+      label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
+      value: String(biz.bk_biz_id),
+    }));
 
   const confirmDisabled = useMemo(() => {
     if (previewList.length === 0) return true;
@@ -277,6 +268,10 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return '';
   }, [previewList, confirmDisabled]);
 
+  const shouldTreeComShow = transferStatus.isOtherBusiness ? !!selectedBizId : true;
+  const isEmptySearchResult = searchValue && filteredTreeData.length === 0;
+  const confirmBtnText = (initialSelectedKeys || transferStatus.isOtherBusiness) ? '确定' : '下一步';
+
   return (
     <Modal
       open={visible}
@@ -287,7 +282,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
         <Tooltip title={confirmTooltip}>
           <span key="next" className='next-btn-wrapper'>
             <Button type="primary" disabled={confirmDisabled} onClick={handleNextStep}>
-              {initialSelectedKeys ? '确定' : '下一步'}
+              {confirmBtnText}
             </Button>
           </span>
         </Tooltip>
@@ -299,6 +294,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
       destroyOnHidden={true}
     >
       <div className="transfer-host-modal-body">
+
         {/* Left side */}
         <div
           className="transfer-host-modal-left"
@@ -316,7 +312,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
                 placeholder="请选择业务"
                 style={{ width: '100%', marginBottom: 12 }}
                 value={selectedBizId}
-                onChange={v => setSelectedBizId(v)}
+                onChange={bizId => handleBizChange(bizId)}
                 options={bizOptions}
                 filterOption={(input, option) =>
                   (option?.label as string).toLowerCase().includes(input.toLowerCase())
@@ -329,25 +325,35 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           ) : (
             <>
               <Input.Search
+                allowClear
                 placeholder="请输入关键字"
                 style={{ marginBottom: 4 }}
                 value={searchValue}
-                onChange={e => setSearchValue(e.target.value)}
+                onChange={e => setSearchValue(e.target.value.trim())}
+                onClear={() => setSearchValue('')}
               />
             </>
           )}
+
           {
-            isShowTreeCom && <TopologyTree
-              treeData={filteredTreeData}
-              onlyLeafSelectable={true}
-              tailEleType={TailEleType.None}
-              searchValue={searchValue}
-              selectedKeys={selectedKeys}
-              expandedKeys={expandedKeys}
-              onNodeSelect={handleSelectNode}
-              customTitlePrefix={renderCustomTitlePrefix}
-            />
+            shouldTreeComShow && (
+              isEmptySearchResult ? (
+                <EmptySearchResult onClearFilter={() => setSearchValue('')} />
+              ) : (
+                <TopologyTree
+                  treeData={filteredTreeData}
+                  onlyLeafSelectable={true}
+                  tailEleType={TailEleType.None}
+                  searchValue={searchValue}
+                  selectedKeys={selectedKeys}
+                  expandedKeys={expandedKeys}
+                  onNodeSelect={handleSelectNode}
+                  customTitlePrefix={renderCustomTitlePrefix}
+                />
+              )
+            )
           }
+
           {/* The dragger */}
           <DragHandle
             minWidth={MIN_WIDTH}
@@ -356,6 +362,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
             onWidthChange={setSidebarWidth}
           />
         </div>
+
         {/* Right side */}
         <div className="transfer-host-modal-right">
           <div className="preview-title">结果预览</div>

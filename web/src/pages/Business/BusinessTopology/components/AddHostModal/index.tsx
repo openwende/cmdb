@@ -1,16 +1,55 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps, Popover } from 'antd';
+import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
-import TopologyTree from '../TopologyTree';
 import { allHosts2, businessData2, idleCluster2 } from '@/mock/business';
-import { TransferHostItem, TailEleType, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import DragHandle from '@/components/common/DragHandle';
+import TopologyTree from '../TopologyTree';
 import { buildTreeData, filterTree } from '@/pages/Business/utils';
+import { TransferHostItem, TailEleType, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
 import './style.css';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
+const columns = [
+    {
+        title: '内网IP',
+        dataIndex: 'bk_host_innerip',
+        key: 'bk_host_innerip'
+    },
+    {
+        title: '内网IPv6',
+        dataIndex: 'bk_host_innerip_v6',
+        key: 'bk_host_innerip_v6',
+        render: (text: string) => text || '--'
+    },
+    {
+        title: '管控区域',
+        dataIndex: 'bk_cloud_id',
+        key: 'bk_cloud_id',
+        render: (cloudInfo: any[]) => {
+            return cloudInfo.length > 0
+                ? `${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`
+                : '--';
+        }
+    }
+];
+const createNewHost = (ip: string, index: number) => {
+    return {
+        bk_host_id: Date.now() + index,
+        bk_host_innerip: ip,
+        bk_host_innerip_v6: '',
+        bk_cloud_id: [{
+            id: "90000001",
+            bk_obj_id: "plat",
+            bk_obj_icon: "",
+            bk_inst_id: 90000001,
+            bk_obj_name: "",
+            bk_inst_name: "未分配"
+        }]
+    };
+};
 
 interface Props {
     visible: boolean;
@@ -19,19 +58,16 @@ interface Props {
     onClose: () => void;
     onConfirm: (hosts: TransferHostItem[]) => void;
 }
-
 interface HostData {
     bk_host_id: number;
     bk_host_innerip: string;
     bk_host_innerip_v6?: string;
     bk_cloud_id: any[];
 }
-
 enum MenuItemKey {
     CopyIP = 'copyIP',
     RemoveAll = 'removeAll'
 }
-
 enum TabItemKey {
     StaticTopo = 'staticTopo',
     CustomInput = 'customInput'
@@ -42,11 +78,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    // The sidebar state
     const [sidebarWidth, setSidebarWidth] = useState<number>(320);
-    const [isDragging, setIsDragging] = useState<boolean>(false);
-    const [isDraggerHover, setDraggerHover] = useState<boolean>(false);
-    const dragging = useRef<boolean>(false);
     // Custom input states
     const [customInput, setCustomInput] = useState<string>('');
     const [customHosts, setCustomHosts] = useState<HostData[]>([]);
@@ -54,31 +86,29 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     // Search related states
     const [treeSearchValue, setTreeSearchValue] = useState<string>('');
     const [hostSearchValue, setHostSearchValue] = useState<string>('');
-    const [showSearchPopover, setShowSearchPopover] = useState<boolean>(false);
     const [expandedKeys, setExpandedKeys] = useState<string[]>();
-
-    // Build complete tree data
-    const fullTreeData = useMemo(() => {
-        return buildTreeData(businessData2, idleCluster2);
-    }, []);
-
-    // Filter tree data based on search value
-    const filteredTreeData = useMemo(() => {
-        if (!treeSearchValue || !treeSearchValue.trim()) {
-            return fullTreeData;
-        }
-        return filterTree(fullTreeData, treeSearchValue);
-    }, [fullTreeData, treeSearchValue]);
     // Result preview list items - independent of tab switching
     const [resultPreviewItems, setResultPreviewItems] = useState<TransferHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
-    const treeWrapperRef = useRef<HTMLDivElement>(null);
     const [treeKey, setTreeKey] = useState(0);
     // Track the previous visibility state of the modal
     const prevVisibleRef = useRef<boolean>();
     const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
+
+    const fullTreeData = useMemo(() => {
+        // Build complete tree data
+        return buildTreeData(businessData2, idleCluster2);
+    }, []);
+
+    const filteredTreeData = useMemo(() => {
+        // Filter tree data based on search value
+        if (!treeSearchValue) {
+            return fullTreeData;
+        }
+        return filterTree(fullTreeData, treeSearchValue);
+    }, [fullTreeData, treeSearchValue]);
 
     useEffect(() => {
         if (visible) setTreeKey(Date.now());
@@ -140,30 +170,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setResultPreviewItems(newResultItems);
     };
 
-    const columns = [
-        {
-            title: '内网IP',
-            dataIndex: 'bk_host_innerip',
-            key: 'bk_host_innerip'
-        },
-        {
-            title: '内网IPv6',
-            dataIndex: 'bk_host_innerip_v6',
-            key: 'bk_host_innerip_v6',
-            render: (text: string) => text || '--'
-        },
-        {
-            title: '管控区域',
-            dataIndex: 'bk_cloud_id',
-            key: 'bk_cloud_id',
-            render: (cloudInfo: any[]) => {
-                return cloudInfo.length > 0
-                    ? `${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`
-                    : '--';
-            }
-        }
-    ];
-
     const getCurrentHosts = () => {
         let hosts: any[] = [];
 
@@ -210,19 +216,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
             const trimmedIp = ip.trim();
             if (trimmedIp && !existingIps.has(trimmedIp)) {
                 // TODO: the default field name is what?
-                newHosts.push({
-                    bk_host_id: Date.now() + index,
-                    bk_host_innerip: trimmedIp,
-                    bk_host_innerip_v6: '',
-                    bk_cloud_id: [{
-                        id: "90000001",
-                        bk_obj_id: "plat",
-                        bk_obj_icon: "",
-                        bk_inst_id: 90000001,
-                        bk_obj_name: "",
-                        bk_inst_name: "未分配"
-                    }]
-                });
+                newHosts.push(createNewHost(trimmedIp, index));
             }
         });
 
@@ -259,32 +253,11 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
 
     const handleRemoveAll = () => {
         setSelectedHosts([]);
-        // Also clear result preview items
         setResultPreviewItems([]);
     };
 
-    // Clear tree search
-    // const handleClearTreeSearch = () => {
-    //     setTreeSearchValue('');
-    //     setShowSearchPopover(false);
-    // };
-
-    const handleClearHostSearch = () => {
-        setHostSearchValue('');
-    };
-
     const handleNodeSelect = () => {
-        // Dismiss search panel by clearing search when item is clicked
-        if (treeSearchValue) {
-            setTreeSearchValue('');
-            setShowSearchPopover(false);
-        }
-    };
-
-    const handleTreeSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setTreeSearchValue(value);
-        setShowSearchPopover(!!value.trim());
+       // do nothing
     };
 
     const handleNextStep = () => {
@@ -302,7 +275,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     const handleCancel = () => {
-        // Reset all states to initial values
         setActiveTab(TabItemKey.StaticTopo);
         setSelectedHosts([]);
         setCustomInput('');
@@ -310,7 +282,6 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setHoveredHostId(null);
         setTreeSearchValue('');
         setHostSearchValue('');
-        setShowSearchPopover(false);
         setResultPreviewItems([]);
         setAllHostsMapping(new Map());
         onClose();
@@ -325,71 +296,23 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         }
     }
 
-    const onMouseDown = (e: React.MouseEvent) => {
-        dragging.current = true;
-        setIsDragging(true);
-        const startX = e.clientX;
-        const startWidth = sidebarWidth;
-
-        const onMouseMove = (moveEvent: MouseEvent) => {
-            if (!dragging.current) return;
-            const delta = moveEvent.clientX - startX;
-            let newWidth = startWidth + delta;
-            if (newWidth < MIN_WIDTH) newWidth = MIN_WIDTH;
-            if (newWidth > MAX_WIDTH) newWidth = MAX_WIDTH;
-            setSidebarWidth(newWidth);
-        };
-
-        const onMouseUp = () => {
-            dragging.current = false;
-            setIsDragging(false);
-            document.removeEventListener("mousemove", onMouseMove);
-            document.removeEventListener("mouseup", onMouseUp);
-        };
-
-        document.addEventListener("mousemove", onMouseMove);
-        document.addEventListener("mouseup", onMouseUp);
-    };
-
-    const renderSearchPopoverContent = () => {
-        // TODO: how to show
-        return null;
-        // if (!hasTreeSearchResults) {
-        //     return <EmptySearchResult onClearFilter={handleClearTreeSearch} />;
-        // }
-
-        // return (
-        //     <div className="search-popover-content">
-        //         <Tree
-        //             treeData={searchTreeData}
-        //             blockNode={true}
-        //             onSelect={(keys) => {
-        //                 if (keys.length > 0) {
-        //                     handleSearchResultClick(keys[0] as string);
-        //                 }
-        //             }}
-        //             className="topology-tree"
-        //         />
-        //     </div>
-        // );
-    };
-
     const renderHostList = () => {
         const hosts = getCurrentHosts();
         const total = hosts.length;
-        const hasHostSearchResults = hostSearchValue ? hosts.length > 0 : true;
+        const isEmptySearchResult = hostSearchValue && hosts.length === 0;
 
         return (
             <div className='table-wrapper'>
                 <Input.Search
                     placeholder="请输入"
                     className='search-input'
-                    value={hostSearchValue}
-                    onChange={(e) => setHostSearchValue(e.target.value)}
                     allowClear
+                    value={hostSearchValue}
+                    onChange={(e) => setHostSearchValue(e.target.value.trim())}
+                    onClear={() => setHostSearchValue('')}
                 />
-                {!hasHostSearchResults ? (
-                    <EmptySearchResult onClearFilter={handleClearHostSearch} />
+                {isEmptySearchResult ? (
+                    <EmptySearchResult onClearFilter={() => setHostSearchValue('')} />
                 ) : (
                     <>
                         <Table
@@ -422,69 +345,51 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         )
     }
 
-    const renderStaticTopology = () => (
-        <div className='topology-wrapper'>
-            <div className='tree-wrapper'
-                style={{
-                    width: sidebarWidth,
-                    minWidth: MIN_WIDTH,
-                    maxWidth: MAX_WIDTH,
-                }}
-                ref={treeWrapperRef}
-            >
-                <Popover
-                    content={renderSearchPopoverContent()}
-                    title="搜索结果"
-                    trigger={[]}
-                    open={showSearchPopover}
-                    onOpenChange={setShowSearchPopover}
-                    placement="bottomLeft"
-                    overlayClassName="tree-search-popover"
-                    getPopupContainer={() => treeWrapperRef.current || document.body}
+    const renderStaticTopology = () => {
+        const isEmptySearchResult = treeSearchValue && filteredTreeData.length === 0;
+
+        return (
+            <div className='topology-wrapper'>
+                <div className='tree-wrapper'
+                    style={{
+                        width: sidebarWidth,
+                        minWidth: MIN_WIDTH,
+                        maxWidth: MAX_WIDTH,
+                    }}
                 >
                     <Input.Search
                         placeholder="搜索拓扑节点"
                         className='search-input'
-                        value={treeSearchValue}
-                        onChange={handleTreeSearchChange}
                         allowClear
-                        onClear={() => {
-                            setTreeSearchValue('');
-                            setShowSearchPopover(false);
-                        }}
+                        value={treeSearchValue}
+                        onChange={e => setTreeSearchValue(e.target.value.trim())}
+                        onClear={() => setTreeSearchValue('')}
                     />
-                </Popover>
-                <TopologyTree
-                    key={treeKey}
-                    treeData={filteredTreeData}
-                    onlyLeafSelectable={true}
-                    expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
-                    tailEleType={TailEleType.Count}
-                    searchValue={treeSearchValue}
-                    onNodeSelect={handleNodeSelect}
-                />
-                {/* The dragger */}
-                <div
-                    style={{
-                        position: "absolute",
-                        right: 0,
-                        top: 0,
-                        width: 2,
-                        height: "100%",
-                        cursor: "col-resize",
-                        zIndex: 10,
-                        background: isDragging || isDraggerHover ? "#1890ff" : "transparent",
-                        borderRadius: 3,
-                        transition: "background 0.2s"
-                    }}
-                    onMouseDown={onMouseDown}
-                    onMouseEnter={() => setDraggerHover(true)}
-                    onMouseLeave={() => setDraggerHover(false)}
-                />
+                    {isEmptySearchResult ? (
+                        <EmptySearchResult onClearFilter={() => setTreeSearchValue('')} />
+                    ) : (
+                        <TopologyTree
+                            key={treeKey}
+                            treeData={filteredTreeData}
+                            onlyLeafSelectable={true}
+                            expandedKeys={shouldInitializeKeys ? expandedKeys : undefined}
+                            tailEleType={TailEleType.Count}
+                            searchValue={treeSearchValue}
+                            onNodeSelect={handleNodeSelect}
+                        />
+                    )}
+                    {/* The dragger */}
+                    <DragHandle
+                        minWidth={MIN_WIDTH}
+                        maxWidth={MAX_WIDTH}
+                        currentWidth={sidebarWidth}
+                        onWidthChange={setSidebarWidth}
+                    />
+                </div>
+                {renderHostList()}
             </div>
-            {renderHostList()}
-        </div>
-    );
+        )
+    }
 
     const renderCustomInput = () => (
         <div className='custom-input-wrapper'>
