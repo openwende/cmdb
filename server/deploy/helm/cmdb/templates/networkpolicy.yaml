@@ -1,0 +1,75 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "cmdb.fullname" . }}
+  labels:
+    {{- include "cmdb.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "cmdb.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    {{- if .Values.networkPolicy.ingress.enabled }}
+    - Ingress
+    {{- end }}
+    {{- if .Values.networkPolicy.egress.enabled }}
+    - Egress
+    {{- end }}
+  {{- if .Values.networkPolicy.ingress.enabled }}
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.app.server.port }}
+        {{- if .Values.metricsService.enabled }}
+        - protocol: TCP
+          port: {{ .Values.metricsService.port }}
+        {{- end }}
+      {{- with .Values.networkPolicy.ingress.from }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- end }}
+  {{- if .Values.networkPolicy.egress.enabled }}
+  egress:
+    # Allow DNS resolution
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow access to PostgreSQL
+    {{- if .Values.postgresql.enabled }}
+    - ports:
+        - protocol: TCP
+          port: 5432
+      to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+              app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- else }}
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.app.database.port }}
+    {{- end }}
+    # Allow access to Redis
+    {{- if .Values.redis.enabled }}
+    - ports:
+        - protocol: TCP
+          port: 6379
+      to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis
+              app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- else }}
+    - ports:
+        - protocol: TCP
+          port: {{ .Values.app.redis.port }}
+    {{- end }}
+    {{- with .Values.networkPolicy.egress.to }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

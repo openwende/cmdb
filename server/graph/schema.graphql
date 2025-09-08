@@ -1,0 +1,472 @@
+# GraphQL Schema for CMDB
+
+scalar Time
+scalar JSON
+scalar UUID
+
+# Enums
+enum FieldType {
+  STRING
+  INTEGER
+  FLOAT
+  BOOLEAN
+  DATE
+  DATETIME
+  JSON
+  REFERENCE
+  ENUM
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+enum AuditAction {
+  CREATE
+  READ
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  IMPORT
+}
+
+# Input Types
+input FieldInput {
+  name: String!
+  displayName: String
+  type: FieldType!
+  required: Boolean
+  defaultValue: String
+  description: String
+  validation: JSON
+  enumValues: [String!]
+  referenceModel: String
+}
+
+input ModelInput {
+  name: String!
+  displayName: String
+  description: String
+  category: String
+  icon: String
+  fields: [FieldInput!]
+}
+
+input InstanceInput {
+  modelName: String!
+  data: JSON!
+}
+
+input QueryConditionInput {
+  field: String!
+  operator: String!
+  value: JSON!
+  logicalOperator: String
+}
+
+input QueryJoinInput {
+  model: String!
+  joinField: String!
+  type: String
+  alias: String
+}
+
+input QueryGroupByInput {
+  field: String!
+  function: String
+}
+
+input QueryOrderByInput {
+  field: String!
+  direction: SortOrder!
+}
+
+input DynamicQueryInput {
+  model: String!
+  fields: [String!]
+  conditions: [QueryConditionInput!]
+  joins: [QueryJoinInput!]
+  groupBy: [QueryGroupByInput!]
+  orderBy: [QueryOrderByInput!]
+  limit: Int
+  offset: Int
+}
+
+input PaginationInput {
+  page: Int = 1
+  pageSize: Int = 20
+}
+
+# Types
+type Field {
+  id: UUID!
+  name: String!
+  displayName: String
+  type: FieldType!
+  required: Boolean!
+  defaultValue: String
+  description: String
+  validation: JSON
+  enumValues: [String!]
+  referenceModel: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Model {
+  id: UUID!
+  name: String!
+  displayName: String
+  description: String
+  category: String
+  icon: String
+  fields: [Field!]!
+  instanceCount: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Instance {
+  id: UUID!
+  modelId: UUID!
+  modelName: String!
+  data: JSON!
+  createdAt: Time!
+  updatedAt: Time!
+  createdBy: UUID
+  updatedBy: UUID
+}
+
+type Relationship {
+  id: UUID!
+  name: String!
+  sourceModel: String!
+  targetModel: String!
+  sourceField: String!
+  targetField: String!
+  type: String!
+  description: String
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type BusinessTree {
+  id: UUID!
+  name: String!
+  description: String
+  rootNode: BusinessNode
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type BusinessNode {
+  id: UUID!
+  name: String!
+  type: String!
+  description: String
+  parentId: UUID
+  parent: BusinessNode
+  children: [BusinessNode!]!
+  instances: [Instance!]!
+  path: String!
+  level: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type User {
+  id: UUID!
+  username: String!
+  email: String!
+  name: String
+  status: String!
+  roles: [Role!]!
+  lastLoginAt: Time
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Role {
+  id: UUID!
+  name: String!
+  displayName: String
+  description: String
+  permissions: [Permission!]!
+  userCount: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Permission {
+  id: UUID!
+  name: String!
+  resource: String!
+  action: String!
+  description: String
+}
+
+type AuditLog {
+  id: UUID!
+  action: AuditAction!
+  resourceType: String
+  resourceId: UUID
+  resourceName: String
+  userId: UUID
+  user: User
+  tenantId: UUID!
+  success: Boolean!
+  errorMessage: String
+  clientIp: String
+  userAgent: String
+  requestId: String
+  metadata: JSON
+  createdAt: Time!
+}
+
+type QueryResult {
+  data: [JSON!]!
+  total: Int!
+  aggregations: JSON
+  executionTime: Int!
+}
+
+type Pagination {
+  page: Int!
+  pageSize: Int!
+  total: Int!
+  totalPages: Int!
+}
+
+type ModelList {
+  items: [Model!]!
+  pagination: Pagination!
+}
+
+type InstanceList {
+  items: [Instance!]!
+  pagination: Pagination!
+}
+
+type UserList {
+  items: [User!]!
+  pagination: Pagination!
+}
+
+type AuditLogList {
+  items: [AuditLog!]!
+  pagination: Pagination!
+}
+
+# Topology Types
+type TopologyNode {
+  id: UUID!
+  modelName: String!
+  instanceId: UUID!
+  instanceData: JSON!
+  relationships: [TopologyEdge!]!
+}
+
+type TopologyEdge {
+  id: UUID!
+  relationshipName: String!
+  sourceNode: UUID!
+  targetNode: UUID!
+  direction: String!
+  metadata: JSON
+}
+
+type TopologyGraph {
+  nodes: [TopologyNode!]!
+  edges: [TopologyEdge!]!
+  metadata: JSON
+}
+
+# Query Root
+type Query {
+  # Model Queries
+  models(
+    page: Int = 1
+    pageSize: Int = 20
+    category: String
+    search: String
+  ): ModelList!
+  
+  model(id: UUID, name: String): Model
+  
+  modelFields(modelId: UUID, modelName: String): [Field!]!
+  
+  # Instance Queries
+  instances(
+    modelName: String!
+    page: Int = 1
+    pageSize: Int = 20
+    search: String
+    filters: JSON
+  ): InstanceList!
+  
+  instance(
+    modelName: String!
+    id: UUID!
+  ): Instance
+  
+  # Dynamic Query
+  executeQuery(query: DynamicQueryInput!): QueryResult!
+  
+  # Business Topology
+  businessTrees(
+    page: Int = 1
+    pageSize: Int = 20
+    search: String
+  ): [BusinessTree!]!
+  
+  businessTree(id: UUID!): BusinessTree
+  
+  businessNodes(
+    treeId: UUID!
+    parentId: UUID
+  ): [BusinessNode!]!
+  
+  # Topology Analysis
+  topology(
+    modelName: String!
+    instanceId: UUID!
+    depth: Int = 2
+    direction: String = "both"
+  ): TopologyGraph!
+  
+  # User Management
+  users(
+    page: Int = 1
+    pageSize: Int = 20
+    search: String
+    status: String
+  ): UserList!
+  
+  user(id: UUID!): User
+  
+  currentUser: User
+  
+  roles: [Role!]!
+  
+  role(id: UUID!): Role
+  
+  # Audit Logs
+  auditLogs(
+    page: Int = 1
+    pageSize: Int = 20
+    userId: UUID
+    action: AuditAction
+    resourceType: String
+    resourceId: UUID
+    success: Boolean
+    dateFrom: Time
+    dateTo: Time
+    search: String
+  ): AuditLogList!
+  
+  auditLog(id: UUID!): AuditLog
+  
+  # Statistics
+  modelStatistics: JSON!
+  
+  instanceStatistics(modelName: String): JSON!
+  
+  systemHealth: JSON!
+}
+
+# Mutation Root
+type Mutation {
+  # Model Mutations
+  createModel(input: ModelInput!): Model!
+  
+  updateModel(id: UUID!, input: ModelInput!): Model!
+  
+  deleteModel(id: UUID!): Boolean!
+  
+  # Instance Mutations
+  createInstance(input: InstanceInput!): Instance!
+  
+  updateInstance(
+    modelName: String!
+    id: UUID!
+    data: JSON!
+  ): Instance!
+  
+  deleteInstance(
+    modelName: String!
+    id: UUID!
+  ): Boolean!
+  
+  # Business Topology Mutations
+  createBusinessTree(
+    name: String!
+    description: String
+  ): BusinessTree!
+  
+  createBusinessNode(
+    treeId: UUID!
+    name: String!
+    type: String!
+    parentId: UUID
+    description: String
+  ): BusinessNode!
+  
+  assignInstancesToNode(
+    treeId: UUID!
+    nodeId: UUID!
+    modelName: String!
+    instanceIds: [UUID!]!
+  ): Boolean!
+  
+  # User Mutations
+  createUser(
+    username: String!
+    email: String!
+    name: String
+    password: String!
+    roleIds: [UUID!]
+  ): User!
+  
+  updateUser(
+    id: UUID!
+    email: String
+    name: String
+    status: String
+  ): User!
+  
+  assignRoleToUser(
+    userId: UUID!
+    roleId: UUID!
+  ): Boolean!
+  
+  revokeRoleFromUser(
+    userId: UUID!
+    roleId: UUID!
+  ): Boolean!
+  
+  # Authentication
+  login(username: String!, password: String!): String!
+  
+  refreshToken(refreshToken: String!): String!
+  
+  logout: Boolean!
+}
+
+# Subscription Root
+type Subscription {
+  # Real-time updates for instances
+  instanceUpdated(modelName: String): Instance!
+  
+  instanceCreated(modelName: String): Instance!
+  
+  instanceDeleted(modelName: String): UUID!
+  
+  # Real-time audit logs
+  auditLogCreated: AuditLog!
+  
+  # System notifications
+  systemNotification: JSON!
+}

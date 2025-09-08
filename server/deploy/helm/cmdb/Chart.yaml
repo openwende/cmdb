@@ -1,0 +1,36 @@
+apiVersion: v2
+name: cmdb
+description: A Helm chart for WEND CMDB Backend
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - cmdb
+  - configuration-management
+  - database
+  - api
+home: https://github.com/wend/cmdb-backend
+sources:
+  - https://github.com/wend/cmdb-backend
+maintainers:
+  - name: WEND Team
+    email: team@wend.com
+dependencies:
+  - name: postgresql
+    version: 12.1.9
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 17.4.0
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: prometheus
+    version: 15.18.0
+    repository: https://prometheus-community.github.io/helm-charts
+    condition: monitoring.prometheus.enabled
+  - name: grafana
+    version: 6.50.7
+    repository: https://grafana.github.io/helm-charts
+    condition: monitoring.grafana.enabled
+annotations:
+  category: Database

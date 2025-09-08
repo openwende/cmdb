@@ -1,0 +1,95 @@
+id: "csv-exporter"
+name: "CSV Data Exporter"
+version: "1.0.0"
+description: "Exports data to CSV format with customizable options"
+author: "WEND CMDB Team"
+homepage: "https://github.com/wend/cmdb-plugins/csv-exporter"
+license: "MIT"
+type: "exporter"
+tags:
+  - "export"
+  - "csv"
+  - "data"
+keywords:
+  - "csv"
+  - "export"
+  - "data"
+  - "format"
+
+dependencies:
+  cmdb: ">=1.0.0"
+
+config:
+  schema:
+    type: "object"
+    properties:
+      delimiter:
+        type: "string"
+        default: ","
+        description: "CSV field delimiter"
+      quote_char:
+        type: "string"
+        default: "\""
+        description: "CSV quote character"
+      escape_char:
+        type: "string"
+        default: "\\"
+        description: "CSV escape character"
+      include_headers:
+        type: "boolean"
+        default: true
+        description: "Include column headers in output"
+      encoding:
+        type: "string"
+        default: "utf-8"
+        description: "File encoding"
+        enum: ["utf-8", "utf-16", "iso-8859-1"]
+      date_format:
+        type: "string"
+        default: "YYYY-MM-DD"
+        description: "Date format for date fields"
+      datetime_format:
+        type: "string"
+        default: "YYYY-MM-DD HH:mm:ss"
+        description: "DateTime format for datetime fields"
+  default:
+    delimiter: ","
+    quote_char: "\""
+    escape_char: "\\"
+    include_headers: true
+    encoding: "utf-8"
+    date_format: "YYYY-MM-DD"
+    datetime_format: "YYYY-MM-DD HH:mm:ss"
+  required:
+    - "delimiter"
+    - "include_headers"
+  properties:
+    supported_formats:
+      - "csv"
+      - "tsv"
+
+permissions:
+  - "data:export"
+  - "file:write"
+
+resources:
+  memory: "256MB"
+  cpu: "0.2"
+  disk: "100MB"
+  timeout: "5m"
+
+hooks:
+  - "export"
+  - "export_stream"
+  - "get_supported_formats"
+  - "get_format_options"
+
+events:
+  - "data.exported"
+  - "export.started"
+  - "export.completed"
+
+entrypoint: "main.py"
+
+created_at: "2024-01-01T00:00:00Z"
+updated_at: "2024-01-01T00:00:00Z"

@@ -1,0 +1,170 @@
+# Wend CMDB Configuration Example
+# Copy this file to config.yaml and modify as needed
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  mode: "release"  # debug, release, test
+  read_timeout: "10s"
+  write_timeout: "10s"
+  idle_timeout: "60s"
+  
+  cors:
+    enabled: true
+    allow_origins:
+      - "*"
+    allow_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    allow_headers:
+      - "*"
+    allow_credentials: true
+    max_age: 86400
+  
+  tls:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "cmdb"
+  password: "password"
+  name: "cmdb"
+  ssl_mode: "disable"
+  timezone: "UTC"
+  
+  # Connection pool settings
+  max_open_conns: 100
+  max_idle_conns: 10
+  conn_max_lifetime: "1h"
+  conn_max_idle_time: "15m"
+  
+  # Migration settings
+  migrations_path: "./migrations"
+  auto_migrate: false
+
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  password: ""
+  db: 0
+  pool_size: 10
+  min_idle_conns: 2
+  max_retries: 3
+  dial_timeout: "5s"
+  read_timeout: "3s"
+  write_timeout: "3s"
+  idle_timeout: "5m"
+
+auth:
+  jwt:
+    secret: "your-super-secret-jwt-key-at-least-32-characters-long"
+    issuer: "wend-cmdb"
+    access_token_expiry: "24h"
+    refresh_token_expiry: "168h"  # 7 days
+    refresh_token_enabled: true
+  
+  password:
+    algorithm: "bcrypt"  # bcrypt, argon2id
+    cost: 12
+  
+  session:
+    timeout: "24h"
+    max_sessions: 5
+
+log:
+  level: "info"        # debug, info, warn, error
+  format: "json"       # json, text
+  output: "stdout"     # stdout, stderr, file
+  filename: ""         # required if output is file
+  max_size: 100        # MB
+  max_backups: 3
+  max_age: 7           # days
+  compress: true
+
+plugins:
+  enabled: false
+  dir: "./plugins"
+  timeout: "30s"
+  
+  # Plugin configurations
+  plugins:
+    # Example auth plugin
+    ldap_auth:
+      enabled: false
+      path: "./plugins/auth/ldap"
+      args: []
+      env:
+        LDAP_URL: "ldap://localhost:389"
+      config:
+        base_dn: "dc=example,dc=com"
+        bind_dn: "cn=admin,dc=example,dc=com"
+        bind_password: "password"
+      health_check:
+        enabled: true
+        interval: "30s"
+        timeout: "5s"
+        retries: 3
+    
+    # Example notification plugin
+    email_notify:
+      enabled: false
+      path: "./plugins/notify/email"
+      config:
+        smtp_host: "smtp.gmail.com"
+        smtp_port: 587
+        username: "your-email@gmail.com"
+        password: "your-app-password"
+
+events:
+  enabled: true
+  queue_size: 1000
+  workers: 4
+  retry_attempts: 3
+  retry_delay: "5s"
+  batch_size: 10
+  batch_timeout: "5s"
+  dead_letter_queue: true
+  
+  # Message broker configurations
+  brokers:
+    # In-memory broker (default)
+    memory:
+      type: "memory"
+      enabled: true
+      config: {}
+    
+    # Redis broker
+    redis:
+      type: "redis"
+      enabled: false
+      config:
+        stream_name: "cmdb_events"
+        consumer_group: "cmdb_workers"
+        consumer_name: "worker"
+    
+    # Kafka broker
+    kafka:
+      type: "kafka"
+      enabled: false
+      config:
+        brokers:
+          - "localhost:9092"
+        topic: "cmdb_events"
+        partition: 0
+        consumer_group: "cmdb_workers"
+    
+    # NATS broker
+    nats:
+      type: "nats"
+      enabled: false
+      config:
+        url: "nats://localhost:4222"
+        subject: "cmdb.events"
+        queue_group: "cmdb_workers"

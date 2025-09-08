@@ -1,0 +1,220 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Vet examines Go source code
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Go static analysis
+    - typecheck     # Parse and type-check Go code
+    - unused        # Check for unused constants, variables, functions and types
+    - gofmt         # Check whether code was gofmt-ed
+    - goimports     # Check import formatting
+    - misspell      # Find commonly misspelled English words
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Report unused function parameters
+    - gosec         # Security audit
+    - bodyclose     # Check whether HTTP response body is closed successfully
+    - noctx         # Find sending http request without context.Context
+    - rowserrcheck  # Check whether Err of rows is checked successfully
+    - sqlclosecheck # Check that sql.Rows and sql.Stmt are closed
+    - asciicheck    # Check for non-ASCII identifiers
+    - bidichk       # Check for dangerous unicode character sequences
+    - cyclop        # Check cyclomatic complexity
+    - dupl          # Tool for code clone detection
+    - durationcheck # Check for two durations multiplied together
+    - errorlint     # Find code that will cause problems with the error wrapping scheme
+    - exhaustive    # Check exhaustiveness of enum switch statements
+    - exportloopref # Check for pointers to enclosing loop variables
+    - forbidigo     # Forbid identifiers
+    - forcetypeassert # Find forced type assertions
+    - goconst       # Find repeated strings that could be replaced by a constant
+    - gocritic      # Provides diagnostics that check for bugs, performance and style issues
+    - gocyclo       # Computes and checks the cyclomatic complexity of functions
+    - godot         # Check if comments end in a period
+    - gofumpt       # Stricter gofmt
+    - goheader      # Check file header
+    - gomodguard    # Allow and block list linter for direct Go module dependencies
+    - goprintffuncname # Check that printf-like functions are named with f at the end
+    - lll           # Report long lines
+    - makezero      # Find slice declarations with non-zero initial length
+    - nakedret      # Find naked returns in functions greater than a specified function length
+    - nestif        # Report deeply nested if statements
+    - nilerr        # Find the code that returns nil even if it checks that the error is not nil
+    - nilnil        # Check that there is no simultaneous return of nil error and an invalid value
+    - nlreturn      # Require a new line before return and branch statements
+    - nolintlint    # Report ill-formed or insufficient nolint directives
+    - prealloc      # Find slice declarations that could potentially be preallocated
+    - predeclared   # Find code that shadows one of Go's predeclared identifiers
+    - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - tagliatelle   # Check the struct tags
+    - testpackage   # Make sure that separate _test packages are used
+    - thelper       # Detect golang test helpers without t.Helper() call
+    - varnamelen    # Check that the length of a variable's name matches its scope
+    - wastedassign  # Find wasted assignment statements
+    - whitespace    # Tool for detection of leading and trailing whitespace
+    - wrapcheck     # Check that errors returned from external packages are wrapped
+
+  disable:
+    - deadcode      # Deprecated
+    - exhaustivestruct # Deprecated
+    - golint        # Deprecated
+    - ifshort       # Deprecated
+    - interfacer    # Deprecated
+    - maligned      # Deprecated
+    - nosnakecase   # Deprecated
+    - scopelint     # Deprecated
+    - structcheck   # Deprecated
+    - varcheck      # Deprecated
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+    exclude-functions:
+      - (*os.File).Close
+      - (*database/sql.Rows).Close
+
+  gosec:
+    excludes:
+      - G101 # Look for hard coded credentials (too many false positives)
+      - G104 # Audit errors not checked (covered by errcheck)
+
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment # Too strict for our use case
+
+  staticcheck:
+    checks: ["all"]
+
+  revive:
+    rules:
+      - name: exported
+        arguments: ["checkPrivateReceivers", "sayRepetitiveInsteadOfStutters"]
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    disabled-checks:
+      - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - ifElseChain
+      - octalLiteral
+      - whyNoLint
+
+  gocyclo:
+    min-complexity: 15
+
+  cyclop:
+    max-complexity: 15
+    package-average: 10.0
+
+  lll:
+    line-length: 140
+
+  misspell:
+    locale: US
+    ignore-words:
+      - cancelled
+
+  nakedret:
+    max-func-lines: 30
+
+  nestif:
+    min-complexity: 4
+
+  nolintlint:
+    allow-leading-space: true
+    allow-unused: false
+    require-explanation: false
+    require-specific: false
+
+  prealloc:
+    simple: true
+    range-loops: true
+    for-loops: false
+
+  varnamelen:
+    min-name-length: 2
+    ignore-names:
+      - err
+      - id
+      - db
+      - tx
+      - ok
+      - i
+      - j
+      - k
+      - v
+
+  whitespace:
+    multi-if: false
+    multi-func: false
+
+  wrapcheck:
+    ignoreSigs:
+      - .Errorf(
+      - errors.New(
+      - errors.Unwrap(
+      - .Wrap(
+      - .Wrapf(
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - cyclop
+        - lll
+        - varnamelen
+        - goconst
+        - wrapcheck
+
+    # Exclude some linters from running on example files
+    - path: examples/
+      linters:
+        - errcheck
+        - gosec
+        - goconst
+        - wrapcheck
+
+    # Exclude some linters from running on generated files
+    - path: internal/graphql/generated/
+      linters:
+        - all
+
+    # Allow long lines in generated files
+    - path: \.(pb|gen)\.go
+      linters:
+        - lll
+
+    # Ignore certain security issues in test files
+    - path: _test\.go
+      text: "G404:" # Use of weak random number generator
+
+    # Ignore certain issues in main functions
+    - path: cmd/
+      text: "G104:" # Audit errors not checked
+      linters:
+        - gosec
+
+  # Maximum issues count per one linter
+  max-issues-per-linter: 0
+
+  # Maximum count of issues with the same text
+  max-same-issues: 0
+
+  # Show only new issues created after git revision
+  new-from-rev: HEAD~1
