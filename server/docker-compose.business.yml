@@ -8,8 +8,6 @@ networks:
 volumes:
   postgres_data:
     name: cmdb_postgres_data
-  redis_data:
-    name: cmdb_redis_data
 
 services:
   # PostgreSQL数据库
@@ -36,30 +34,14 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # Redis缓存
-  redis:
-    image: redis:7-alpine
-    container_name: cmdb-redis
-    command: redis-server --appendonly yes --requirepass cmdb123
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    networks:
-      - cmdb-business-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
 
   # Business Topology Server (新架构)
   business-server:
     build:
       context: .
       dockerfile: Dockerfile.business
+      args:
+        GOPROXY: "https://goproxy.cn,direct"
     container_name: cmdb-business-server
     environment:
       GIN_MODE: release
@@ -71,8 +53,6 @@ services:
       - cmdb-business-network
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
@@ -89,39 +69,3 @@ services:
         reservations:
           cpus: '0.1'
           memory: 128M
-
-  # 数据库管理工具 (可选)
-  adminer:
-    image: adminer:4.8.1
-    container_name: cmdb-adminer
-    ports:
-      - "8081:8080"
-    networks:
-      - cmdb-business-network
-    environment:
-      ADMINER_DEFAULT_SERVER: postgres
-      ADMINER_DEFAULT_USERNAME: cmdb
-      ADMINER_DEFAULT_DATABASE: cmdb
-    depends_on:
-      - postgres
-    restart: unless-stopped
-    profiles:
-      - tools
-
-  # Redis管理工具 (可选)
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: cmdb-redis-commander
-    ports:
-      - "8082:8081"
-    networks:
-      - cmdb-business-network
-    environment:
-      REDIS_HOSTS: "local:redis:6379:0:cmdb123"
-      HTTP_USER: admin
-      HTTP_PASSWORD: admin
-    depends_on:
-      - redis
-    restart: unless-stopped
-    profiles:
-      - tools
