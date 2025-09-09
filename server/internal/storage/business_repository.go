@@ -2,6 +2,7 @@ package storage
 
 import (
     "context"
+    "encoding/json"
     "errors"
     "fmt"
     "time"
@@ -32,6 +33,15 @@ func NewBusinessRepository(db *gorm.DB) BusinessRepository {
 
 func (r *businessRepository) CreateBusiness(ctx context.Context, business *types.Business) error {
 	// 使用纯 ORM：通过 Table + Create(map) 显式列出字段，避免零值被忽略
+    // Dialect-aware maintainers serialization
+    maint := interface{}(nil)
+    switch r.db.Dialector.Name() {
+    case "sqlite":
+        if b, err := json.Marshal(business.Maintainers); err == nil { maint = string(b) } else { maint = "[]" }
+    default:
+        maint = pq.Array(business.Maintainers)
+    }
+
     res := r.db.WithContext(ctx).Table("businesses").Create(map[string]interface{}{
         "id":          business.ID,
         "created_at":  business.CreatedAt,
@@ -43,12 +53,8 @@ func (r *businessRepository) CreateBusiness(ctx context.Context, business *types
         "lifecycle":   business.Lifecycle,
         "timezone":    business.Timezone,
         "language":    business.Language,
-        "maintainers": pq.Array(business.Maintainers),
+        "maintainers": maint,
         "is_built_in": business.IsBuiltIn,
-        "sres":        business.Sres,
-        "developers":  business.Developers,
-        "testers":     business.Testers,
-        "bizops":      business.Bizops,
     })
 	if err := res.Error; err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
@@ -60,10 +66,11 @@ func (r *businessRepository) CreateBusiness(ctx context.Context, business *types
 }
 
 func (r *businessRepository) GetBusinessByID(ctx context.Context, tenantID, id string) (*types.Business, error) {
-	var business types.Business
-	db := r.db.WithContext(ctx).Table("businesses").
-		Where("id = ? AND tenant_id = ? AND deleted_at IS NULL", id, tenantID).
-		Take(&business)
+    var business types.Business
+    db := r.db.WithContext(ctx).Table("businesses").
+        Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "is_built_in").
+        Where("id = ? AND tenant_id = ? AND deleted_at IS NULL", id, tenantID).
+        Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("business with id '%s' not found", id)
 	}
@@ -75,10 +82,11 @@ func (r *businessRepository) GetBusinessByID(ctx context.Context, tenantID, id s
 }
 
 func (r *businessRepository) GetBusinessByIdentifier(ctx context.Context, tenantID, identifier string) (*types.Business, error) {
-	var business types.Business
-	db := r.db.WithContext(ctx).Table("businesses").
-		Where("identifier = ? AND tenant_id = ? AND deleted_at IS NULL", identifier, tenantID).
-		Take(&business)
+    var business types.Business
+    db := r.db.WithContext(ctx).Table("businesses").
+        Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "is_built_in").
+        Where("identifier = ? AND tenant_id = ? AND deleted_at IS NULL", identifier, tenantID).
+        Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("business with identifier '%s' not found", identifier)
 	}
@@ -90,6 +98,15 @@ func (r *businessRepository) GetBusinessByIdentifier(ctx context.Context, tenant
 }
 
 func (r *businessRepository) UpdateBusiness(ctx context.Context, business *types.Business) error {
+    // Dialect-aware maintainers for update
+    maintUpd := interface{}(nil)
+    switch r.db.Dialector.Name() {
+    case "sqlite":
+        if b, err := json.Marshal(business.Maintainers); err == nil { maintUpd = string(b) } else { maintUpd = "[]" }
+    default:
+        maintUpd = pq.Array(business.Maintainers)
+    }
+
     result := r.db.WithContext(ctx).
         Table("businesses").
         Where("id = ? AND tenant_id = ? AND deleted_at IS NULL", business.ID, business.TenantID).
@@ -100,11 +117,7 @@ func (r *businessRepository) UpdateBusiness(ctx context.Context, business *types
             "lifecycle":   business.Lifecycle,
             "timezone":    business.Timezone,
             "language":    business.Language,
-            "maintainers": pq.Array(business.Maintainers),
-            "sres":        business.Sres,
-            "developers":  business.Developers,
-            "testers":     business.Testers,
-            "bizops":      business.Bizops,
+            "maintainers": maintUpd,
         })
 	if result.Error != nil {
 		return fmt.Errorf("failed to update business: %w", result.Error)
@@ -160,9 +173,9 @@ func (r *businessRepository) ListBusinesses(ctx context.Context, tenantID string
 	}
 
 	// pagination + query
-	if err := tx.Order("created_at DESC").Limit(limit).Offset(offset).Find(&businesses).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to list businesses: %w", err)
-	}
+    if err := tx.Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "is_built_in").Order("created_at DESC").Limit(limit).Offset(offset).Find(&businesses).Error; err != nil {
+        return nil, 0, fmt.Errorf("failed to list businesses: %w", err)
+    }
 
 	return businesses, int(total), nil
 }

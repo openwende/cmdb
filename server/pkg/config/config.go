@@ -51,13 +51,14 @@ type TLSConfig struct {
 
 // DatabaseConfig represents database configuration
 type DatabaseConfig struct {
-	Host     string `yaml:"host" env:"DB_HOST"`
-	Port     int    `yaml:"port" env:"DB_PORT"`
-	User     string `yaml:"user" env:"DB_USER"`
-	Password string `yaml:"password" env:"DB_PASSWORD"`
-	Name     string `yaml:"name" env:"DB_NAME"`
-	SSLMode  string `yaml:"ssl_mode" env:"DB_SSL_MODE"`
-	Timezone string `yaml:"timezone" env:"DB_TIMEZONE"`
+    Driver   string `yaml:"driver" env:"DB_DRIVER"` // postgres | sqlite
+    Host     string `yaml:"host" env:"DB_HOST"`
+    Port     int    `yaml:"port" env:"DB_PORT"`
+    User     string `yaml:"user" env:"DB_USER"`
+    Password string `yaml:"password" env:"DB_PASSWORD"`
+    Name     string `yaml:"name" env:"DB_NAME"`
+    SSLMode  string `yaml:"ssl_mode" env:"DB_SSL_MODE"`
+    Timezone string `yaml:"timezone" env:"DB_TIMEZONE"`
 	
 	// Connection pool settings
 	MaxOpenConns    int           `yaml:"max_open_conns" env:"DB_MAX_OPEN_CONNS"`
@@ -217,7 +218,7 @@ func Load(configPath string) (*Config, error) {
 
 // setDefaults sets default configuration values
 func setDefaults(v *viper.Viper) {
-	// Server defaults
+    // Server defaults
 	v.SetDefault("server.host", "0.0.0.0")
 	v.SetDefault("server.port", 8080)
 	v.SetDefault("server.mode", "release")
@@ -236,12 +237,13 @@ func setDefaults(v *viper.Viper) {
 	// TLS defaults
 	v.SetDefault("server.tls.enabled", false)
 	
-	// Database defaults
-	v.SetDefault("database.host", "localhost")
-	v.SetDefault("database.port", 5432)
-	v.SetDefault("database.user", "cmdb")
-	v.SetDefault("database.name", "cmdb")
-	v.SetDefault("database.ssl_mode", "disable")
+    // Database defaults
+    v.SetDefault("database.driver", "postgres")
+    v.SetDefault("database.host", "localhost")
+    v.SetDefault("database.port", 5432)
+    v.SetDefault("database.user", "cmdb")
+    v.SetDefault("database.name", "cmdb")
+    v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
 	v.SetDefault("database.max_open_conns", 100)
 	v.SetDefault("database.max_idle_conns", 10)
@@ -352,8 +354,18 @@ func validate(config *Config) error {
 
 // GetDSN returns the database DSN string
 func (c *DatabaseConfig) GetDSN() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
-		c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode, c.Timezone)
+    return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=%s",
+        c.Host, c.Port, c.User, c.Password, c.Name, c.SSLMode, c.Timezone)
+}
+
+// GetSQLiteDSN builds a SQLite DSN from config. Uses Name as file path when driver=sqlite.
+func (c *DatabaseConfig) GetSQLiteDSN() string {
+    path := c.Name
+    if path == "" {
+        path = "./data/cmdb.db"
+    }
+    // shared cache, WAL, foreign keys on
+    return fmt.Sprintf("file:%s?cache=shared&_journal_mode=WAL&_foreign_keys=on", path)
 }
 
 // GetAddress returns the server address

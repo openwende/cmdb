@@ -11,7 +11,6 @@ import (
     itypes "github.com/wend/cmdb-backend/internal/types"
 
     "github.com/google/uuid"
-    "github.com/lib/pq"
 )
 
 // mockService provides an in-memory implementation of the Service interface for development without a DB.
@@ -68,10 +67,6 @@ func (m *mockService) CreateBusiness(ctx context.Context, req *itypes.CreateBusi
         Language:    "en",
         Maintainers: []uuid.UUID{},
         IsBuiltIn:   false,
-        Sres:        pq.StringArray(req.Sres),
-        Developers:  pq.StringArray(req.Developers),
-        Testers:     pq.StringArray(req.Testers),
-        Bizops:      pq.StringArray(req.Bizops),
     }
 
     m.businesses[biz.ID] = biz
@@ -134,18 +129,7 @@ func (m *mockService) UpdateBusiness(ctx context.Context, tenantID, id string, r
     if req.Maintainers != nil {
         b.Maintainers = *req.Maintainers
     }
-    if req.Sres != nil {
-        b.Sres = *req.Sres
-    }
-    if req.Developers != nil {
-        b.Developers = *req.Developers
-    }
-    if req.Testers != nil {
-        b.Testers = *req.Testers
-    }
-    if req.Bizops != nil {
-        b.Bizops = *req.Bizops
-    }
+    // Personnel arrays no longer part of Business; normalized to business_personnel table
     return b, nil
 }
 

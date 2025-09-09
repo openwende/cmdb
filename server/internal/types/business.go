@@ -4,7 +4,6 @@ import (
     "time"
 
     "github.com/google/uuid"
-    "github.com/lib/pq"
 )
 
 // Business 业务实体 - Aligned with the database schema
@@ -24,21 +23,24 @@ type Business struct {
     Language    string         `json:"language" db:"language"`
     Maintainers []uuid.UUID    `json:"maintainers" db:"maintainers"`
     IsBuiltIn   bool           `json:"is_built_in" db:"is_built_in"`
-    Sres        pq.StringArray `json:"sres" db:"sres"`
-    Developers  pq.StringArray `json:"developers" db:"developers"`
-    Testers     pq.StringArray `json:"testers" db:"testers"`
-    Bizops      pq.StringArray `json:"bizops" db:"bizops"`
 }
+
+// Table names for GORM AutoMigrate (SQLite mode)
+func (Business) TableName() string           { return "businesses" }
+func (BusinessSet) TableName() string        { return "business_sets" }
+func (BusinessSetMember) TableName() string  { return "business_set_members" }
+func (BusinessPersonnel) TableName() string  { return "business_personnel" }
 
 // CreateBusinessRequest - Aligned with the database schema
 type CreateBusinessRequest struct {
-	Name        string   `json:"name" validate:"required"`
-	Description *string  `json:"description"`
-	Identifier  string   `json:"identifier"` // Optional, can be generated from name
-	Sres        []string `json:"sres"`
-	Developers  []string `json:"developers"`
-	Testers     []string `json:"testers"`
-	Bizops      []string `json:"bizops"`
+    Name        string   `json:"name" validate:"required"`
+    Description *string  `json:"description"`
+    Identifier  string   `json:"identifier"` // Optional, can be generated from name
+    // Optional initial personnel identities by role (e.g., emails/usernames)
+    Sres        []string `json:"sres"`
+    Developers  []string `json:"developers"`
+    Testers     []string `json:"testers"`
+    Bizops      []string `json:"bizops"`
 }
 
 // UpdateBusinessRequest - For updating business information
@@ -50,10 +52,17 @@ type UpdateBusinessRequest struct {
     Timezone    *string         `json:"timezone"`
     Language    *string         `json:"language"`
     Maintainers *[]uuid.UUID    `json:"maintainers"`
-    Sres        *pq.StringArray `json:"sres"`
-    Developers  *pq.StringArray `json:"developers"`
-    Testers     *pq.StringArray `json:"testers"`
-    Bizops      *pq.StringArray `json:"bizops"`
+}
+
+// BusinessPersonnel represents normalized personnel of a business
+type BusinessPersonnel struct {
+    ID         uuid.UUID `db:"id" json:"id"`
+    CreatedAt  time.Time `db:"created_at" json:"created_at"`
+    BusinessID uuid.UUID `db:"business_id" json:"business_id"`
+    // Optional user reference (if you have users table); keep identity fallback for PoC
+    UserID     *uuid.UUID `db:"user_id" json:"user_id,omitempty"`
+    Identity   string     `db:"identity" json:"identity"` // email/username
+    Role       string     `db:"role" json:"role"`         // sre|developer|tester|bizops|maintainer
 }
 
 // BusinessSet 业务集实体 - Aligned with the database schema

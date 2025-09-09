@@ -40,9 +40,10 @@ func main() {
 		defer func() { _ = database.Close() }()
 		// 初始化仓储层和核心服务
 		gormDB := database.DB()
-		businessRepo := storage.NewBusinessRepository(gormDB)
-		businessSetRepo := storage.NewBusinessSetRepository(gormDB)
-		businessService = business.NewService(businessRepo, businessSetRepo)
+        businessRepo := storage.NewBusinessRepository(gormDB)
+        businessSetRepo := storage.NewBusinessSetRepository(gormDB)
+        personnelRepo := storage.NewBusinessPersonnelRepository(gormDB)
+        businessService = business.NewService(businessRepo, businessSetRepo, personnelRepo)
 	}
 
 	server := &BusinessServer{

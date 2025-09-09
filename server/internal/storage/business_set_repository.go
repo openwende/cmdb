@@ -2,6 +2,7 @@ package storage
 
 import (
     "context"
+    "encoding/json"
     "fmt"
 
     "github.com/wend/cmdb-backend/internal/types"
@@ -25,6 +26,14 @@ func NewBusinessSetRepository(db *gorm.DB) BusinessSetRepository {
 }
 
 func (r *businessSetRepository) CreateBusinessSet(ctx context.Context, businessSet *types.BusinessSet) error {
+    maint := interface{}(nil)
+    switch r.db.Dialector.Name() {
+    case "sqlite":
+        if b, err := json.Marshal(businessSet.Maintainers); err == nil { maint = string(b) } else { maint = "[]" }
+    default:
+        maint = pq.Array(businessSet.Maintainers)
+    }
+
     err := r.db.WithContext(ctx).Table("business_sets").Create(map[string]interface{}{
         "id":          businessSet.ID,
         "created_at":  businessSet.CreatedAt,
@@ -34,7 +43,7 @@ func (r *businessSetRepository) CreateBusinessSet(ctx context.Context, businessS
         "identifier":  businessSet.Identifier,
         "description": businessSet.Description,
         "scope":       businessSet.Scope,
-        "maintainers": pq.Array(businessSet.Maintainers),
+        "maintainers": maint,
     }).Error
     if err != nil {
         if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
@@ -56,6 +65,14 @@ func (r *businessSetRepository) CreateBusinessSetMember(ctx context.Context, mem
 
 func (r *businessSetRepository) CreateBusinessSetWithMember(ctx context.Context, businessSet *types.BusinessSet, member *types.BusinessSetMember) error {
     return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        maintTx := interface{}(nil)
+        switch r.db.Dialector.Name() {
+        case "sqlite":
+            if b, err := json.Marshal(businessSet.Maintainers); err == nil { maintTx = string(b) } else { maintTx = "[]" }
+        default:
+            maintTx = pq.Array(businessSet.Maintainers)
+        }
+
         if err := tx.Table("business_sets").Create(map[string]interface{}{
             "id":          businessSet.ID,
             "created_at":  businessSet.CreatedAt,
@@ -65,7 +82,7 @@ func (r *businessSetRepository) CreateBusinessSetWithMember(ctx context.Context,
             "identifier":  businessSet.Identifier,
             "description": businessSet.Description,
             "scope":       businessSet.Scope,
-            "maintainers": pq.Array(businessSet.Maintainers),
+            "maintainers": maintTx,
         }).Error; err != nil {
             if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
                 return fmt.Errorf("business set with identifier '%s' already exists", businessSet.Identifier)

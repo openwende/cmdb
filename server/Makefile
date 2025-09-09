@@ -11,6 +11,7 @@ GOMOD=$(GOCMD) mod
 # Binary names
 SERVER_BINARY=bin/cmdb-server
 DIST_DIR=dist
+DB_FILE?=./data/cmdb.db
 
 # Build info
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -21,6 +22,7 @@ BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildTime=$(BUILD_TIME)"
 
 .PHONY: all build clean test deps dev server help fmt vet lint
+.PHONY: sqlite-dev sqlite-build sqlite-run sqlite-build-all
 
 # Default target
 all: clean deps build
@@ -48,6 +50,33 @@ dev: deps
 server: build-server
 	@echo "Starting server..."
 	./$(SERVER_BINARY)
+
+# SQLite (no Docker): run directly
+sqlite-dev: deps
+	@echo "Starting server in SQLite mode..."
+	@mkdir -p $(dir $(DB_FILE)) bin
+	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOCMD) run ./cmd/business-server
+
+sqlite-build: deps
+	@echo "Building server binary for SQLite..."
+	@mkdir -p bin $(dir $(DB_FILE))
+	# go-sqlite3 requires CGO. Ensure a C toolchain is available on your OS.
+	CGO_ENABLED?=1
+	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) CGO_ENABLED=$(CGO_ENABLED) $(GOBUILD) $(LDFLAGS) -o $(SERVER_BINARY) ./cmd/business-server
+
+sqlite-run: sqlite-build
+	@echo "Running server binary (SQLite mode)..."
+	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) ./$(SERVER_BINARY)
+
+# Cross build for common OS/ARCH (requires CGO toolchains per target)
+sqlite-build-all: deps
+	@echo "Cross building server binaries for SQLite (requires CGO toolchains) ..."
+	@mkdir -p $(DIST_DIR) $(dir $(DB_FILE))
+	CGO_ENABLED=1 GOOS=linux  GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-linux-amd64-sqlite ./cmd/business-server
+	CGO_ENABLED=1 GOOS=linux  GOARCH=arm64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-linux-arm64-sqlite ./cmd/business-server
+	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-darwin-amd64-sqlite ./cmd/business-server
+	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-darwin-arm64-sqlite ./cmd/business-server
+	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-windows-amd64-sqlite.exe ./cmd/business-server
 
 # Run CLI
 # Testing
@@ -126,6 +155,10 @@ help:
 	@echo "  clean         - Clean build artifacts"
 	@echo "  deps          - Install dependencies"
 	@echo "  dev           - Start development server"
+	@echo "  sqlite-dev    - Start dev server with SQLite (no Docker)"
+	@echo "  sqlite-build  - Build server binary for SQLite"
+	@echo "  sqlite-run    - Run built binary with SQLite"
+	@echo "  sqlite-build-all - Cross-build binaries for Linux/Darwin/Windows (CGO toolchains required)"
 	@echo "  fmt           - Format source code"
 	@echo "  generate      - Run go generate"
 	@echo "  lint          - Run linters"

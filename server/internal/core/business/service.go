@@ -13,7 +13,7 @@ import (
 )
 
 type Service interface {
-	CreateBusiness(ctx context.Context, req *types.CreateBusinessRequest) (*types.Business, error)
+    CreateBusiness(ctx context.Context, req *types.CreateBusinessRequest) (*types.Business, error)
 	GetBusiness(ctx context.Context, tenantID, id string) (*types.Business, error)
 	UpdateBusiness(ctx context.Context, tenantID, id string, req *types.UpdateBusinessRequest) (*types.Business, error)
 	DeleteBusiness(ctx context.Context, tenantID, id string) error
@@ -22,12 +22,13 @@ type Service interface {
 }
 
 type service struct {
-	businessRepo    storage.BusinessRepository
-	businessSetRepo storage.BusinessSetRepository
+    businessRepo    storage.BusinessRepository
+    businessSetRepo storage.BusinessSetRepository
+    personnelRepo   storage.BusinessPersonnelRepository
 }
 
-func NewService(businessRepo storage.BusinessRepository, businessSetRepo storage.BusinessSetRepository) Service {
-	return &service{businessRepo: businessRepo, businessSetRepo: businessSetRepo}
+func NewService(businessRepo storage.BusinessRepository, businessSetRepo storage.BusinessSetRepository, personnelRepo storage.BusinessPersonnelRepository) Service {
+    return &service{businessRepo: businessRepo, businessSetRepo: businessSetRepo, personnelRepo: personnelRepo}
 }
 
 func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessRequest) (*types.Business, error) {
@@ -54,17 +55,32 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
         Language:    "en",             // Default value
         Maintainers: []uuid.UUID{}, // Default to an empty array
         IsBuiltIn:   false,
-        Sres:        req.Sres,
-        Developers:  req.Developers,
-        Testers:     req.Testers,
-        Bizops:      req.Bizops,
     }
 
-	err := s.businessRepo.CreateBusiness(ctx, business)
-	if err != nil {
-		return nil, err
-	}
-	return business, nil
+    err := s.businessRepo.CreateBusiness(ctx, business)
+    if err != nil {
+        return nil, err
+    }
+
+    // Insert initial personnel if provided (normalized table)
+    if s.personnelRepo != nil {
+        addRole := func(idents []string, role string) {
+            for _, idt := range idents {
+                idt = strings.TrimSpace(idt)
+                if idt == "" { continue }
+                _ = s.personnelRepo.Add(ctx, &types.BusinessPersonnel{
+                    BusinessID: business.ID,
+                    Identity:   idt,
+                    Role:       role,
+                })
+            }
+        }
+        addRole(req.Sres, "sre")
+        addRole(req.Developers, "developer")
+        addRole(req.Testers, "tester")
+        addRole(req.Bizops, "bizops")
+    }
+    return business, nil
 }
 
 func (s *service) GetBusiness(ctx context.Context, tenantID, id string) (*types.Business, error) {
@@ -110,18 +126,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 	if req.Maintainers != nil {
 		business.Maintainers = *req.Maintainers
 	}
-	if req.Sres != nil {
-		business.Sres = *req.Sres
-	}
-	if req.Developers != nil {
-		business.Developers = *req.Developers
-	}
-	if req.Testers != nil {
-		business.Testers = *req.Testers
-	}
-	if req.Bizops != nil {
-		business.Bizops = *req.Bizops
-	}
+    // Personnel arrays are normalized to business_personnel table (not part of Business fields)
 
 	err = s.businessRepo.UpdateBusiness(ctx, business)
 	if err != nil {
