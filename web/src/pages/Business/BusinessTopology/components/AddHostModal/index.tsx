@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps } from 'antd';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import { allHosts2, businessData2, idleCluster2 } from '@/mock/business';
@@ -6,7 +6,7 @@ import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import DragHandle from '@/components/common/DragHandle';
 import TopologyTree from '../TopologyTree';
-import { buildTreeData, filterTree } from '@/pages/Business/utils';
+import { buildTreeData, filterTree, collectAllKeys } from '@/pages/Business/utils';
 import { TransferHostItem, TailEleType, TransferHostType, RemoveMenuItemKey } from '@/pages/Business/Types';
 import './style.css';
 
@@ -86,15 +86,13 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     // Search related states
     const [treeSearchValue, setTreeSearchValue] = useState<string>('');
     const [hostSearchValue, setHostSearchValue] = useState<string>('');
-    const [expandedKeys, setExpandedKeys] = useState<string[]>();
+    const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     // Result preview list items - independent of tab switching
     const [resultPreviewItems, setResultPreviewItems] = useState<TransferHostItem[]>([]);
     const [hoveredHostId, setHoveredHostId] = useState<React.Key | null>(null);
     const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(new Map());
     // Ref for tree wrapper to control popover container
     const [treeKey, setTreeKey] = useState(0);
-    // Track the previous visibility state of the modal
-    const prevVisibleRef = useRef<boolean>();
     const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
 
     const fullTreeData = useMemo(() => {
@@ -110,22 +108,33 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         return filterTree(fullTreeData, treeSearchValue);
     }, [fullTreeData, treeSearchValue]);
 
+    // Generate expanded keys based on search results
+    const expandedKeysForSearch = useMemo(() => {
+        if (!treeSearchValue || filteredTreeData.length === 0) {
+            return [];
+        }
+
+        return collectAllKeys(filteredTreeData);
+    }, [treeSearchValue, filteredTreeData]);
+
     useEffect(() => {
         if (visible) setTreeKey(Date.now());
     }, [visible]);
 
     useEffect(() => {
-        const prevVisible = prevVisibleRef.current;
-        if (visible && !prevVisible) {
-            if (!filteredTreeData || filteredTreeData.length === 0) return;
+        if (visible) {
+            if (filteredTreeData.length === 0) return;
             setShouldInitializeKeys(true);
-            setExpandedKeys([filteredTreeData[0].key]);
+            // Expand if there are search results
+            if (expandedKeysForSearch.length > 0) {
+                setExpandedKeys(expandedKeysForSearch);
+            } else if (expandedKeys.length === 0) {
+                setExpandedKeys([filteredTreeData[0].key]);
+            }
         } else {
             setShouldInitializeKeys(false);
         }
-        // Update previous visible status after initialization
-        prevVisibleRef.current = visible;
-    }, [visible, filteredTreeData]);
+    }, [visible, filteredTreeData, expandedKeysForSearch, treeSearchValue]);
 
     useEffect(() => {
         if (visible && initialSelectedHosts && initialSelectedHosts.length > 0) {
@@ -257,7 +266,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     };
 
     const handleNodeSelect = () => {
-       // do nothing
+        // do nothing
     };
 
     const handleNextStep = () => {
@@ -284,6 +293,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         setHostSearchValue('');
         setResultPreviewItems([]);
         setAllHostsMapping(new Map());
+        setExpandedKeys([filteredTreeData[0].key]);
         onClose();
     };
 

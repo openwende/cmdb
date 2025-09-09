@@ -6,7 +6,7 @@ import TopologyTree from "../components/TopologyTree";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import DragHandle from "@/components/common/DragHandle";
 import { TreeData } from "../../Types";
-import { buildTreeData, filterTree, findNodeAndParents } from "../../utils";
+import { buildTreeData, filterTree, findNodeAndParents, collectAllKeys } from "../../utils";
 import { businessData2, idleCluster2 } from "@/mock/business";
 import "./style.css";
 
@@ -30,7 +30,36 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
     // The collapsed state
     const [collapsed, setCollapsed] = useState<boolean>(false);
 
+    const fullTreeData = useMemo(() => {
+        // Build complete tree data
+        return buildTreeData(businessData2, idleCluster2);
+    }, []);
+
+    const filteredTreeData = useMemo(() => {
+        if (!searchValue.trim()) {
+            return fullTreeData;
+        }
+        // Filter tree data based on search value
+        return filterTree(fullTreeData, searchValue);
+    }, [fullTreeData, searchValue]);
+
+    // Generate expanded keys based on search results
+    const searchExpandedKeys = useMemo(() => {
+        if (!searchValue || filteredTreeData.length === 0) {
+            return [];
+        }
+        return collectAllKeys(filteredTreeData);
+    }, [searchValue, filteredTreeData]);
+
     useEffect(() => {
+        // Handle search-based expansion
+        if (searchExpandedKeys.length > 0) {
+            // When searching, expand all matching nodes
+            setExpandedKeys(searchExpandedKeys);
+            return;
+        }
+
+        // Handle initial selection
         if (initialSelectedKey) {
             const { node, parents } = findNodeAndParents(fullTreeData, initialSelectedKey);
             if (node) {
@@ -46,20 +75,7 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
             setExpandedKeys([firstNode.key]);
             onNodeSelect(firstNode, []);
         }
-    }, [initialSelectedKey]);
-
-    const fullTreeData = useMemo(() => {
-        // Build complete tree data
-        return buildTreeData(businessData2, idleCluster2);
-    }, []);
-
-    const filteredTreeData = useMemo(() => {
-        if (!searchValue.trim()) {
-            return fullTreeData;
-        }
-        // Filter tree data based on search value
-        return filterTree(fullTreeData, searchValue);
-    }, [fullTreeData, searchValue]);
+    }, [initialSelectedKey, searchExpandedKeys]);
 
     const handleNodeSelect = (selectedNode: TreeData, parentNodes: TreeData[]) => {
         setSelectedKeys([selectedNode.key]);

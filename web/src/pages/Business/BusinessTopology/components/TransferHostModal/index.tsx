@@ -5,7 +5,7 @@ import TopologyTree from '../TopologyTree';
 import DragHandle from '@/components/common/DragHandle';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
-import { findNodeAndParents, isHostAlreadyInTarget, filterTree, getSelectedNodesByKeys } from '@/pages/Business/utils';
+import { findNodeAndParents, isHostAlreadyInTarget, filterTree, getSelectedNodesByKeys, collectAllKeys } from '@/pages/Business/utils';
 import {
   TailEleType,
   TopoTreeNodeType,
@@ -71,9 +71,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   }, [transferType]);
 
   // Helper to build idlePool/otherBusiness tree structure (biz idle pool)
-  const buildIdlePoolTree = (bizName: string): TreeData[] => ([{
+  const buildIdlePoolTree = (bizName: string, bizId?: number): TreeData[] => ([{
     title: bizName,
-    key: bizName,
+    key: bizId ? `biz-${bizId}` : bizName,
     type: TopoTreeNodeType.Biz,
     objName: '业务',
     children: [
@@ -96,7 +96,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const customTreeData: TreeData[] = useMemo(() => {
     if (transferStatus.isIdlePool) {
       // idlePool: for each business, build idlePool tree
-      return businessData2.map(biz => buildIdlePoolTree(biz.bk_inst_name)[0]);
+      return businessData2.map(biz => buildIdlePoolTree(biz.bk_inst_name, biz.bk_inst_id)[0]);
     } else if (transferStatus.isBusinessModule) {
       return businessData2.map(biz => ({
         title: biz.bk_inst_name,
@@ -120,7 +120,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     } else if (transferStatus.isOtherBusiness && selectedBizId) {
       const biz = bizInfo.info.find((b) => String(b.bk_biz_id) === selectedBizId);
       if (!biz) return [];
-      return buildIdlePoolTree(biz.bk_biz_name!);
+      return buildIdlePoolTree(biz.bk_biz_name!, biz.bk_biz_id);
     }
     return [];
   }, [transferStatus, selectedBizId]);
@@ -133,11 +133,20 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return filterTree(customTreeData, searchValue);
   }, [customTreeData, searchValue]);
 
-  useEffect(() => {
-    if (!visible) return;
-    if (!filteredTreeData || filteredTreeData.length === 0) return;
+  // Generate expanded keys for search results
+  const expandedKeysForSearch = useMemo(() => {
+    if (!searchValue || filteredTreeData.length === 0) {
+      return [];
+    }
+    return collectAllKeys(filteredTreeData);
+  }, [searchValue, filteredTreeData]);
 
-    let expandedKeys: string[] = [];
+  const keysToExpand = useMemo(() => {
+    if (filteredTreeData.length === 0) {
+      return [];
+    }
+
+    // If initialExpandedKeys provided, expand those and their parents
     if (initialExpandedKeys && initialExpandedKeys.length > 0) {
       const expandedSet = new Set<string>();
       initialExpandedKeys.forEach(key => {
@@ -145,13 +154,36 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
         parents.forEach(p => expandedSet.add(p.key));
         expandedSet.add(key);
       });
-      expandedKeys = Array.from(expandedSet);
-    } else {
-      expandedKeys = [filteredTreeData[0].key];
+      return Array.from(expandedSet);
     }
 
-    setExpandedKeys(expandedKeys);
-  }, [visible, filteredTreeData, initialExpandedKeys]);
+    // If idlePool/otherBusiness, expand all nodes
+    if (transferStatus.isIdlePool || transferStatus.isOtherBusiness) {
+      const getAllKeys = (nodes: TreeData[]): string[] => {
+        return nodes.flatMap(node => [
+          node.key,
+          ...(node.children ? getAllKeys(node.children) : [])
+        ]);
+      };
+      return getAllKeys(filteredTreeData);
+    }
+
+    // Expand the first root node by default
+    return [filteredTreeData[0].key];
+
+  }, [filteredTreeData, initialExpandedKeys, transferStatus]);
+
+  useEffect(() => {
+    if (visible) {
+      // If search is active, expand search result nodes
+      if (expandedKeysForSearch.length > 0) {
+        setExpandedKeys(expandedKeysForSearch);
+        // Clear search, keep current expanded state
+      } else if (expandedKeys.length === 0) {
+        setExpandedKeys(keysToExpand);
+      }
+    }
+  }, [visible, expandedKeys, keysToExpand, expandedKeysForSearch]);
 
   useEffect(() => {
     if (!visible) return;
@@ -159,6 +191,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
       setSelectedKeys(initialSelectedKeys);
     }
   }, [visible, initialSelectedKeys]);
+
 
   useEffect(() => {
     const selectedNodes = getSelectedNodesByKeys(selectedKeys, filteredTreeData);
@@ -203,6 +236,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   const handleClose = () => {
     setSelectedKeys([]);
+    setExpandedKeys([]);
     setPreviewList([]);
     setSearchValue('');
     setSelectedBizId(undefined);
@@ -245,7 +279,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   const bizOptions = bizInfo.info.filter((biz) => biz.bk_biz_id && biz.bk_biz_name)
     .map((biz) => ({
-      key: biz.bk_biz_id,
+      key: String(biz.bk_biz_id),
       label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
       value: String(biz.bk_biz_id),
     }));
@@ -279,8 +313,8 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
       onCancel={handleClose}
       footer={[
         <Button key="cancel" onClick={handleClose}>取消</Button>,
-        <Tooltip title={confirmTooltip}>
-          <span key="next" className='next-btn-wrapper'>
+        <Tooltip key="next" title={confirmTooltip}>
+          <span className='next-btn-wrapper'>
             <Button type="primary" disabled={confirmDisabled} onClick={handleNextStep}>
               {confirmBtnText}
             </Button>

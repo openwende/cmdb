@@ -177,6 +177,29 @@ export function findNodeAndParents(nodes: TreeData[], key: string, parents: Tree
 }
 
 /**
+ * Collect all keys from tree nodes recursively
+ *
+ * @export
+ * @param {TreeData[]} nodes
+ * @return {*}  {string[]}
+ */
+export function collectAllKeys(nodes: TreeData[]): string[] {
+    const keys: string[] = [];
+    
+    const traverse = (treeNodes: TreeData[]): void => {
+        treeNodes.forEach(node => {
+            keys.push(node.key);
+            if (node.children && node.children.length > 0) {
+                traverse(node.children);
+            }
+        });
+    };
+    
+    traverse(nodes);
+    return keys;
+}
+
+/**
  * Build the tree data from the source data and the searchValue
  *
  * @export
