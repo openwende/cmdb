@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Table, DatePicker, Input } from 'antd';
 import dayjs, { Dayjs } from 'dayjs';
 import type { RangePickerProps } from 'antd/es/date-picker';
+import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import { deleteHistoryMock } from '@/mock/resource';
 import OperationDetails from '../OperationDetails';
@@ -20,6 +21,7 @@ export interface DeleteHistoryItem {
 const PAGE_SIZE = 20;
 
 const DeleteHistory: React.FC = () => {
+    const { t } = useTranslation();
     const [deleteList, setDeleteList] = useState<DeleteHistoryItem[]>([]);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
@@ -70,11 +72,11 @@ const DeleteHistory: React.FC = () => {
             width: 500,
         },
         {
-            title: '更新时间',
+            title: t('resource.host.deleteHistory.columns.updateTime'),
             dataIndex: 'operation_time',
         },
         {
-            title: '操作账号',
+            title: t('resource.host.deleteHistory.columns.operationAccount'),
             dataIndex: 'user',
         },
     ];
@@ -97,7 +99,7 @@ const DeleteHistory: React.FC = () => {
                     onChange={handleDateChange}
                 />
                 <Input.Search
-                    placeholder="请输入IP"
+                    placeholder={t('resource.host.deleteHistory.search.placeholder')}
                     allowClear
                     onSearch={(val) => {
                         setKeyword(val);

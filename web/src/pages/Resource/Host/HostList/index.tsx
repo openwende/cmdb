@@ -111,26 +111,26 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
         const text = selectedHosts.map((rec: any) => getHostCopyValue(rec, copyKey)).join('\n');
         if (!text) {
-            message.warning('无可复制内容');
+            message.warning(t('resource.host.messages.no_copy_content'));
             return;
         }
         navigator.clipboard?.writeText(text).then(() => {
-            message.success('复制成功');
+            message.success(t('resource.host.messages.copy_success'));
         }).catch(() => {
-            message.error('复制失败');
+            message.error(t('resource.host.messages.copy_failed'));
         });
     }, [hostsList, selectedRowKeys]);
 
     const handleMoreMenuClick = (key: ResourceMoreKey) => {
         if (key === ResourceMoreKey.Delete) {
             confirm({
-                title: '确定删除选中的主机？',
+                title: t('resource.host.messages.confirm_delete'),
                 icon: <ExclamationCircleFilled />,
                 okText: t("common.confirm"),
                 cancelText: t("common.cancel"),
                 onOk() {
                     // TODO: api
-                    message.success('删除成功');
+                    message.success(t('resource.host.messages.delete_success'));
                 },
                 onCancel() { },
             });
@@ -152,6 +152,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
     }, [transferModalType, hostsNotInIdlePool, hostIdleStatuses])
 
     const handleReleaseHosts = useCallback((dirId: number) => {
+        console.log('Release to directory:', dirId);
         // TODO: api
         // params: selectedRowKeys, dirId
         setReleaseModalVisible(false);
@@ -167,7 +168,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
     const columns = [
         {
-            title: "ID",
+            title: t('resource.host.columns.id'),
             sorter: true,
             width: 80,
             render: (_: any, record: any) => {
@@ -175,21 +176,21 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             }
         },
         {
-            title: "内网IPv4",
+            title: t('resource.host.columns.inner_ipv4'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_host_innerip;
             }
         },
         {
-            title: "内网IPv6",
+            title: t('resource.host.columns.inner_ipv6'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_host_innerip_v6 || "--";
             }
         },
         {
-            title: "管控区域",
+            title: t('resource.host.columns.cloud_area'),
             render: (_: any, record: any) => {
                 const cloudInfo = record.host.bk_cloud_id;
                 const region = cloudInfo.length > 0
@@ -199,14 +200,14 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             }
         },
         {
-            title: "业务拓扑",
+            title: t('resource.host.columns.business_topology'),
             render: (_: any, record: any) => {
                 const topo = record.module.length > 0 ? record.module[0].topo_module_name : "";
                 return topo.replace(/##/g, "/");
             }
         },
         {
-            title: "云主机状态",
+            title: t('resource.host.columns.cloud_host_status'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_cloud_host_status || "--";
@@ -224,8 +225,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
                 disabled = hostsNotInIdlePool;
                 tip = base.key === TransferMenuItemType.hostPool
-                    ? '仅允许业务下空闲机转移至主机池'
-                    : '仅允许业务下空闲机跨业务转移';
+                    ? t('resource.host.tooltips.only_idle_hosts_to_host_pool')
+                    : t('resource.host.tooltips.only_idle_hosts_cross_business');
             }
 
             if (disabled) {
@@ -256,7 +257,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 type="primary"
                                 onClick={() => setImportModalVisible(true)}
                             >
-                                导入主机
+                                {t('resource.host.actions.import_host')}
                             </Button>
                         )
                     }
@@ -265,18 +266,21 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                         tabKey !== TabsKey.Assigned && (
                             <Dropdown
                                 menu={{
-                                    items: resourceAssignMenuItems,
+                                    items: resourceAssignMenuItems.map(item => ({
+                                        ...item,
+                                        label: t(item.label)
+                                    })),
                                     onClick: (e) => setAssignType(e.key as AssignType)
                                 }}
                                 trigger={['click']}
                             >
                                 <Tooltip
-                                    title={isHostPoolHost ? '仅主机池主机可进行此操作' : undefined}
+                                    title={isHostPoolHost ? t('resource.host.tooltips.only_host_pool_hosts') : undefined}
                                 >
                                     <Button
                                         disabled={selectedRowKeys.length === 0 || isHostPoolHost}
                                     >
-                                        分配到 <DownOutlined />
+                                        {t('resource.host.actions.assign_to')} <DownOutlined />
                                     </Button>
                                 </Tooltip>
                             </Dropdown>
@@ -293,10 +297,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 trigger={['click']}
                             >
                                 <Tooltip
-                                    title={hostsNotAllInBizPool ? '仅业务下主机可进行此操作' : undefined}
+                                    title={hostsNotAllInBizPool ? t('resource.host.tooltips.only_business_hosts') : undefined}
                                 >
                                     <Button disabled={selectedRowKeys.length === 0 || hostsNotAllInBizPool}>
-                                        转移到 <DownOutlined />
+                                        {t('resource.host.actions.transfer_to')} <DownOutlined />
                                     </Button>
                                 </Tooltip>
                             </Dropdown>
@@ -305,14 +309,21 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
                     <Dropdown
                         menu={{
-                            items: resourceCopyMenuItems.map(it => ({ ...it })),
+                            items: resourceCopyMenuItems.map((item: any) => ({
+                                ...item,
+                                label: t(item.label),
+                                children: item.children?.map((child: any) => ({
+                                    ...child,
+                                    label: t(child.label)
+                                }))
+                            })),
                             onClick: ({ key }) => handleCopyMenuClick(key as ResourceCopyKey)
                         }}
                         trigger={['click']}
                         overlayStyle={{ width: 190 }}
                     >
                         <Button disabled={selectedRowKeys.length === 0}>
-                            复制 <DownOutlined />
+                            {t('resource.host.actions.copy')} <DownOutlined />
                         </Button>
                     </Dropdown>
 
@@ -320,8 +331,9 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                         tabKey === TabsKey.Unassigned && (
                             <Dropdown
                                 menu={{
-                                    items: resourceMoreMenuItems.map(it => ({
-                                        ...it,
+                                    items: resourceMoreMenuItems.map(item => ({
+                                        ...item,
+                                        label: t(item.label),
                                         disabled: selectedRowKeys.length === 0
                                     })),
                                     onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey)
@@ -329,7 +341,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 trigger={['click']}
                             >
                                 <Button>
-                                    更多 <DownOutlined />
+                                    {t('resource.host.actions.more')} <DownOutlined />
                                 </Button>
                             </Dropdown>
                         )
@@ -338,10 +350,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
                 <div className="header-right">
                     <Input.Search
-                        placeholder="请输入IP或固资编号"
+                        placeholder={t('resource.host.search.placeholder')}
                         style={{ width: 300, marginRight: 8 }}
                     />
-                    <Tooltip title="查看删除历史">
+                    <Tooltip title={t('resource.host.tooltips.view_delete_history')}>
                         <Button icon={<HistoryOutlined />} onClick={handleDeleteHistory} />
                     </Tooltip>
                 </div>

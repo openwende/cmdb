@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Drawer, Steps, Alert, Upload, Typography, Button, Checkbox, Select, Table, Empty, Result } from 'antd';
 import { InboxOutlined, CloseOutlined, VerticalAlignBottomOutlined, FileExcelOutlined, HddOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { hostUniqueOptions } from '@/pages/Resource/constants';
 import { hostImportStatus1, hostImportStatus2, modelListMock } from '@/mock/resource';
 import hostImportTemplateUrl from '@/assets/templates/host_import_template.xlsx';
@@ -8,11 +9,6 @@ import './style.css';
 
 const { Dragger } = Upload;
 const { Link, Text } = Typography;
-
-const columns = [
-    { title: '关联的模型', dataIndex: 'name' },
-    { title: '唯一校验标识', dataIndex: 'unique' }
-];
 
 interface ImportHostProps {
     visible: boolean;
@@ -32,6 +28,7 @@ enum ImportStatus {
 }
 
 const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose, onImportSuccess }) => {
+    const { t } = useTranslation();
     const [fileList, setFileList] = useState<any[]>([]);
     // Step2 states
     const [step, setStep] = useState(Step.One);
@@ -41,6 +38,11 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
     const [modelList, setModelList] = useState<any[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
     const [importStatus, setImportStatus] = useState<ImportStatus>(ImportStatus.None);
+
+    const columns = [
+        { title: t('resource.import.columns.related_model'), dataIndex: 'name' },
+        { title: t('resource.import.columns.unique_identifier'), dataIndex: 'unique' }
+    ];
 
     useEffect(() => {
         if (step === Step.Two && modelList.length === 0) {
@@ -110,7 +112,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                 <Alert
                     type="warning"
                     showIcon
-                    message="说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作"
+                    message={t('resource.import.messages.import_info')}
                     className="import-tip"
                 />
 
@@ -118,7 +120,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                 {fileList.length === 0 ? (
                     <Dragger className="import-uploader" {...uploadProps}>
                         <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-                        <p className="ant-upload-text">将文件拖到此处或 <Link>点击上传</Link></p>
+                        <p className="ant-upload-text">{t('resource.import.upload.dragText')} <Link>{t('resource.import.upload.clickText')}</Link></p>
                     </Dragger>
                 ) : (
                     <div className="file-card">
@@ -131,10 +133,10 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
 
                 {/* hint & download */}
                 <div className="bottom-hint">
-                    <Text>20M 以内的 xlsx 文件 </Text>
+                    <Text>{t('resource.import.upload.fileHint')} </Text>
                     <Link href={hostImportTemplateUrl} download="host_import_template.xlsx">
                         <VerticalAlignBottomOutlined />
-                        下载模板
+                        {t('resource.import.upload.downloadTemplate')}
                     </Link>
                 </div>
             </>
@@ -149,7 +151,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                     checked={importRelated}
                     onChange={e => setImportRelated(e.target.checked)}
                 >
-                    是否导入关联的模型实例
+                    {t('resource.import.steps.import_related_models')}
                 </Checkbox>
 
                 {importRelated && (
@@ -158,15 +160,15 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                         <div className="host-info-card">
                             <span className='host-info'>
                                 <span className="host-label"><HddOutlined /></span>
-                                <span className="host-text">主机
-                                    <span className='host-model-text'>(模型本身)</span>
+                                <span className="host-text">{t('resource.import.host.label')}
+                                    <span className='host-model-text'>{t('resource.import.host.model_text')}</span>
                                 </span>
                             </span>
                             <span>
-                                <span>唯一校验标识：</span>
+                                <span>{t('resource.import.host.unique_label')}</span>
                                 <Select
                                     size="small"
-                                    options={hostUniqueOptions.map(v => ({ label: v, value: v }))}
+                                    options={hostUniqueOptions.map(v => ({ label: t(v), value: v }))}
                                     value={uniqueKey}
                                     onChange={setUniqueKey}
                                     style={{ width: 180, fontSize: 12 }}
@@ -188,7 +190,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                             locale={{
                                 emptyText: (
                                     <Empty
-                                        description="暂无关联模型，无需选择"
+                                        description={t('resource.import.messages.no_related_models')}
                                         className="empty-text"
                                     />
                                 )
@@ -205,13 +207,13 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
         return (
             <Result
                 status={isSuccess ? 'success' : 'error'}
-                title={isSuccess ? '导入成功' : '导入失败'}
+                title={isSuccess ? t('resource.import.result.success') : t('resource.import.result.failed')}
                 extra={
                     <Button
                         type="primary"
                         onClick={isSuccess ? handleClose : resetAll}
                     >
-                        {isSuccess ? '关闭' : '重新导入'}
+                        {isSuccess ? t('resource.import.result.close') : t('resource.import.result.retry')}
                     </Button>
                 }
             >
@@ -233,7 +235,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
     return (
         <Drawer
             open={visible}
-            title="导入主机"
+            title={t('resource.import.title')}
             width={720}
             onClose={handleClose}
             destroyOnHidden={true}
@@ -247,8 +249,8 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                             size="small"
                             current={step}
                             items={[
-                                { title: '上传文件' },
-                                { title: '选择关联模型' }
+                                { title: t('resource.import.steps.upload') },
+                                { title: t('resource.import.steps.select_models') }
                             ]}
                         />
                     </div>
@@ -270,25 +272,25 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                                     disabled={fileList.length === 0}
                                     onClick={handleNext}
                                 >
-                                    下一步
+                                    {t('common.next')}
                                 </Button>
                             )
                         }
                         {
                             step === Step.Two && (
                                 <>
-                                    <Button onClick={handlePrev}>上一步</Button>
+                                    <Button onClick={handlePrev}>{t('common.previous')}</Button>
                                     <Button
                                         type="primary"
                                         onClick={handleImport}
                                         disabled={importRelated && selectedKeys.length === 0}
                                     >
-                                        开始导入
+                                        {t('resource.import.actions.start_import')}
                                     </Button>
                                 </>
                             )
                         }
-                        <Button onClick={handleClose}>取消</Button>
+                        <Button onClick={handleClose}>{t('common.cancel')}</Button>
                     </div>
                 )
             }

@@ -4,6 +4,16 @@
     "delete": "删除",
     "confirm": "确定",
     "cancel": "取消",
+    "submit": "提交",
+    "next": "下一步",
+    "previous": "上一步",
+    "confirmLeave": "确认离开当前页？",
+    "unsavedChanges": "离开将会导致未保存信息丢失",
+    "pleaseEnter": "请输入",
+    "noMatch": "无匹配人员",
+    "validation": {
+      "required": "该字段为必填项"
+    },
     "form": {
       "rules_message": "该字段是必填项"
     }
@@ -35,6 +45,305 @@
           "directMode": "直接新建",
           "selected": "已选择"
         }
+      }
+    }
+  },
+  "resource": {
+    "host": {
+      "tabs": {
+        "unassigned": "未分配",
+        "assigned": "已分配",
+        "all": "全部"
+      },
+      "columns": {
+        "id": "ID",
+        "inner_ipv4": "内网IPv4",
+        "inner_ipv6": "内网IPv6",
+        "cloud_area": "管控区域",
+        "business_topology": "业务拓扑",
+        "cloud_host_status": "云主机状态"
+      },
+      "actions": {
+        "import_host": "导入主机",
+        "assign_to": "分配到",
+        "transfer_to": "转移到", 
+        "copy": "复制",
+        "more": "更多"
+      },
+      "search": {
+        "placeholder": "请输入IP或固资编号"
+      },
+      "tooltips": {
+        "view_delete_history": "查看删除历史",
+        "only_host_pool_hosts": "仅主机池主机可进行此操作",
+        "only_idle_hosts_to_host_pool": "仅允许业务下空闲机转移至主机池",
+        "only_idle_hosts_cross_business": "仅允许业务下空闲机跨业务转移",
+        "only_business_hosts": "仅业务下主机可进行此操作"
+      },
+      "messages": {
+        "no_copy_content": "无可复制内容",
+        "copy_success": "复制成功",
+        "copy_failed": "复制失败",
+        "delete_success": "删除成功",
+        "confirm_delete": "确定删除选中的主机？"
+      },
+      "copy": {
+        "id": "ID",
+        "inner_ipv4": "内网IPv4",
+        "inner_ipv6": "内网IPv6",
+        "cloud_area_id_ip": "管控区域ID:IP",
+        "cloud_area_id_ipv4": "管控区域ID:IPv4",
+        "cloud_area_id_ipv6": "管控区域ID:IPv6",
+        "cloud_area_id_ip_ipv4_first": "管控区域ID:IP(IPv4优先)",
+        "cloud_area_id_ip_ipv6_first": "管控区域ID:IP(IPv6优先)",
+        "cloud_area": "管控区域",
+        "topo_path": "业务拓扑",
+        "cloud_host_status": "云主机状态"
+      },
+      "assign": {
+        "business_idle_pool": "业务空闲机池",
+        "host_pool_other_directory": "主机池其他目录"
+      },
+      "more": {
+        "delete": "删除"
+      },
+      "deleteHistory": {
+        "columns": {
+          "updateTime": "更新时间",
+          "operationAccount": "操作账号"
+        },
+        "search": {
+          "placeholder": "请输入IP"
+        }
+      }
+    },
+    "import": {
+      "title": "导入主机",
+      "columns": {
+        "related_model": "关联的模型",
+        "unique_identifier": "唯一校验标识"
+      },
+      "upload": {
+        "dragText": "将文件拖到此处或",
+        "clickText": "点击上传",
+        "fileHint": "20M 以内的 xlsx 文件",
+        "downloadTemplate": "下载模板"
+      },
+      "steps": {
+        "upload": "上传文件",
+        "configure": "导入配置",
+        "select_models": "选择关联模型",
+        "result": "导入结果",
+        "import_related_models": "是否导入关联的模型实例"
+      },
+      "actions": {
+        "start_import": "开始导入"
+      },
+      "unique_options": {
+        "cloud_area_ipv4": "管控区域 + 内网IPv4",
+        "outer_ipv4": "外网IPv4",
+        "cloud_instance_vendor": "云主机实例ID + 云厂商",
+        "ipv6_cloud_area": "内网IPv6 + 管控区域",
+        "gse_agent_id": "GSE Agent ID"
+      },
+      "messages": {
+        "import_info": "说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作",
+        "no_related_models": "暂无关联模型，无需选择"
+      },
+      "host": {
+        "label": "主机",
+        "model_text": "(模型本身)",
+        "unique_label": "唯一校验标识："
+      },
+      "result": {
+        "success": "导入成功",
+        "failed": "导入失败",
+        "close": "关闭",
+        "retry": "重新导入"
+      }
+    },
+    "business": {
+      "columns": {
+        "id": "ID",
+        "name": "业务名",
+        "maintainer": "运维人员",
+        "created_at": "创建时间",
+        "created_by": "创建人",
+        "updated_at": "更新时间",
+        "actions": "操作"
+      },
+      "search": {
+        "fields": {
+          "id": "ID",
+          "name": "业务名",
+          "maintainer": "运维人员",
+          "created_at": "创建时间",
+          "created_by": "创建人",
+          "updated_at": "更新时间"
+        },
+        "placeholder": "请输入{{field}}",
+        "date_range": {
+          "start_placeholder": "开始时间",
+          "end_placeholder": "结束时间"
+        }
+      },
+      "actions": {
+        "create": "新建",
+        "batch_edit": "批量编辑",
+        "archive": "归档"
+      },
+      "tooltips": {
+        "view_archived": "查看已归档业务"
+      },
+      "messages": {
+        "archive_success": "归档成功",
+        "confirm_archive_title": "确认要归档{{name}}",
+        "confirm_archive_description": "归档后SaaS将不可访问其下资源，包括作业任务、监控配置等，是否确认不再使用此业务？"
+      },
+      "modify": {
+        "title": {
+          "create": "创建业务",
+          "edit": "批量编辑业务"
+        },
+        "sections": {
+          "basic": "基础信息",
+          "roles": "角色"
+        },
+        "fields": {
+          "businessName": "业务名",
+          "lifecycle": "生命周期",
+          "timeZone": "时区",
+          "language": "语言",
+          "operators": "运维人员",
+          "productManagers": "产品人员",
+          "testers": "测试人员",
+          "developers": "开发人员",
+          "administrators": "操作人员"
+        },
+        "placeholders": {
+          "businessName": "请输入业务名",
+          "lifecycle": "请选择生命周期",
+          "timeZone": "请选择时区",
+          "language": "请选择语言"
+        },
+        "options": {
+          "lifecycle": {
+            "testing": "测试中",
+            "online": "已上线",
+            "offline": "停运"
+          },
+          "language": {
+            "chinese": "中文",
+            "english": "English"
+          }
+        },
+        "buttons": {
+          "save": "保存"
+        },
+        "confirm_leave": {
+          "title": "确认离开当前页？",
+          "description": "离开将会导致未保存信息丢失"
+        }
+      },
+      "archived": {
+        "columns": {
+          "id": "ID",
+          "name": "业务名",
+          "maintainer": "运维人员",
+          "created_at": "创建时间",
+          "created_by": "创建人",
+          "updated_at": "更新时间",
+          "updated_by": "更新人",
+          "archived_at": "归档时间",
+          "actions": "操作"
+        },
+        "actions": {
+          "restore": "恢复",
+          "delete": "删除"
+        },
+        "messages": {
+          "restore_success": "业务恢复成功",
+          "delete_success": "业务已彻底删除",
+          "required_field": "该字段为必填项"
+        },
+        "search": {
+          "placeholder": "请输入业务名"
+        },
+        "restore_modal": {
+          "title": "恢复业务",
+          "name_label": "业务名",
+          "name_placeholder": "请输入业务名"
+        },
+        "delete_confirm": {
+          "title": "确认彻底删除该业务？",
+          "description": "清除后将无法再恢复，请谨慎操作！"
+        }
+      }
+    },
+    "operation": {
+      "title": "操作详情",
+      "meta": {
+        "business": "所属业务",
+        "object": "操作对象",
+        "action": "动作",
+        "model_type": "模型类型",
+        "instance": "操作实例",
+        "description": "操作描述",
+        "time": "操作时间",
+        "user": "操作账号"
+      },
+      "values": {
+        "host": "主机",
+        "delete": "删除",
+        "no_business": "--",
+        "delete_description": "删除{{name}}"
+      },
+      "columns": {
+        "attribute": "属性",
+        "before": "变更前"
+      },
+      "attributes": {
+        "addressing_method": "寻址方式",
+        "gse_agent_id": "GSE Agent ID",
+        "asset_number": "固资编号",
+        "backup_maintainer": "备份维护人",
+        "cloud_host_status": "云主机状态",
+        "cloud_area": "管控区域",
+        "cloud_instance_id": "云主机实例ID",
+        "cloud_region": "云地域 (Region)",
+        "cloud_vendor": "云厂商",
+        "cloud_zone": "云可用区 (Zone)",
+        "remark": "备注",
+        "cpu_logical_cores": "CPU逻辑核数",
+        "cpu_architecture": "CPU架构",
+        "cpu_model": "CPU型号",
+        "created_time": "创建时间",
+        "created_by": "创建人",
+        "disk_capacity": "磁盘容量(GB)",
+        "inner_ipv4": "内网IPv4",
+        "inner_ipv6": "内网IPv6",
+        "hostname": "主机名称",
+        "outer_ipv4": "公网IPv4",
+        "outer_ipv6": "公网IPv6",
+        "isp": "所属运营商",
+        "inner_mac": "内网MAC地址",
+        "memory_capacity": "内存容量(MB)",
+        "os_bit": "操作系统位数",
+        "os_name": "操作系统名称",
+        "os_type": "操作系统类型",
+        "os_version": "操作系统版本",
+        "outer_mac": "公网MAC地址",
+        "province": "所在省份",
+        "warranty_years": "质保年限",
+        "sla_level": "SLA级别",
+        "device_sn": "设备SN",
+        "current_status": "当前状态",
+        "country": "所在国家",
+        "updated_time": "更新时间",
+        "updated_by": "更新人",
+        "import_time": "录入时间",
+        "import_method": "录入方式",
+        "main_maintainer": "主要维护人"
       }
     }
   },

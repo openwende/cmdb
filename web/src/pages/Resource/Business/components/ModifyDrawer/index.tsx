@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Drawer, Form, Input, Select, Button, Collapse } from "antd";
+import { useTranslation } from "react-i18next";
 import { userListMock } from '@/mock/resource';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import {
@@ -12,9 +13,6 @@ import {
 import "./style.css";
 
 const { Panel } = Collapse;
-
-const lifecycleOptions = ['测试中', '已上线', '停运'];
-const languageOptions = ['中文', 'English'];
 
 // Get IANA time zones
 const defaultTimeZone = 'Asia/Shanghai';
@@ -29,7 +27,8 @@ interface DrawerProps {
 }
 
 const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
-    const [lang, setLang] = useState<string>(languageOptions[0]);
+    const { t } = useTranslation();
+    const [lang, setLang] = useState<string>('chinese');
     const [searchOptions, setSearchOptions] = useState<{ value: string, label: string }[]>([]);
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const searchTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -38,6 +37,17 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
     // Using in edit mode
     const [selectedFields, setSelectedFields] = useState<FormFieldName[]>([]);
     const [isFormChanged, setIsFormChanged] = useState<boolean>(false);
+
+    // Lifecycle and language options
+    const lifecycleOptions = [
+        { label: t('resource.business.modify.options.lifecycle.testing'), value: 'testing' },
+        { label: t('resource.business.modify.options.lifecycle.online'), value: 'online' },
+        { label: t('resource.business.modify.options.lifecycle.offline'), value: 'offline' },
+    ];
+    const languageOptions = [
+        { label: t('resource.business.modify.options.language.chinese'), value: 'chinese' },
+        { label: t('resource.business.modify.options.language.english'), value: 'english' },
+    ];
 
     // Utility function to determine if a field should be disabled
     const isFieldDisabled = (fieldName: FormFieldName): boolean => {
@@ -63,7 +73,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
     const buildUserOptions = (keyword: string, lang: string) => {
         if (!keyword) return [];
 
-        const isChineseLang = lang === languageOptions[0];
+        const isChineseLang = lang === languageOptions[0].value;
 
         return userListMock
             .filter(u => {
@@ -169,7 +179,11 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
     return (
         <Drawer
-            title={isCreateMode(type) ? "创建业务" : "批量编辑业务"}
+            title={
+                isCreateMode(type)
+                ? t('resource.business.modify.title.create')
+                : t('resource.business.modify.title.edit')
+            }
             width={800}
             onClose={handleClose}
             open={visible}
@@ -178,30 +192,30 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
         >
             <Form form={form} layout="vertical" onValuesChange={handleFormValueChange}>
                 <Collapse defaultActiveKey={["base", "role"]} ghost>
-                    <Panel header="基础信息" key="base">
+                    <Panel header={t('resource.business.modify.sections.basic')} key="base">
                         <div className="form-grid">
                             <FormFieldItem
                                 fieldName="businessName"
-                                label="业务名"
+                                label={t('resource.business.modify.fields.businessName')}
                                 required={true}
                                 type={type}
                                 handleFieldChange={handleFieldChange}
                                 selectedFields={selectedFields}
                             >                                <Input
-                                    placeholder="请输入业务名"
+                                    placeholder={t('resource.business.modify.placeholders.businessName')}
                                     disabled={isFieldDisabled('businessName')}
                                     className="select-input"
                                 />
                             </FormFieldItem>
                             <FormFieldItem
                                 fieldName="lifecycle"
-                                label="生命周期"
+                                label={t('resource.business.modify.fields.lifecycle')}
                                 type={type}
                                 handleFieldChange={handleFieldChange}
                                 selectedFields={selectedFields}
                             >                                <Select
-                                    placeholder="请选择生命周期"
-                                    options={lifecycleOptions.map(v => ({ label: v, value: v }))}
+                                    placeholder={t('resource.business.modify.placeholders.lifecycle')}
+                                    options={lifecycleOptions}
                                     disabled={isFieldDisabled('lifecycle')}
                                     className="select-input"
                                 />
@@ -210,7 +224,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                             {isCreateMode(type) && (
                                 <FormFieldItem
                                     fieldName="timeZone"
-                                    label="时区"
+                                    label={t('resource.business.modify.fields.timeZone')}
                                     required={true}
                                     type={type}
                                     handleFieldChange={handleFieldChange}
@@ -218,7 +232,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                                 >
                                     <Select
                                         showSearch
-                                        placeholder="请选择时区"
+                                        placeholder={t('resource.business.modify.placeholders.timeZone')}
                                         filterOption={(input, option) => (option?.value as string).toLowerCase().includes(input.toLowerCase())}
                                         options={timeZoneOptions.map(tz => ({ value: tz, label: tz }))}
                                         className="select-input"
@@ -226,27 +240,27 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                                 </FormFieldItem>)}
                             <FormFieldItem
                                 fieldName="language"
-                                label="语言"
+                                label={t('resource.business.modify.fields.language')}
                                 required={true}
                                 type={type}
                                 handleFieldChange={handleFieldChange}
                                 selectedFields={selectedFields}
                             >
                                 <Select
-                                    placeholder="请选择语言"
+                                    placeholder={t('resource.business.modify.placeholders.language')}
                                     onChange={setLang}
-                                    options={languageOptions.map(v => ({ label: v, value: v }))}
+                                    options={languageOptions}
                                     disabled={isFieldDisabled('language')}
                                     className="select-input"
                                 />
                             </FormFieldItem>
                         </div>
                     </Panel>
-                    <Panel header="角色" key="role">
+                    <Panel header={t('resource.business.modify.sections.roles')} key="role">
                         <div className="form-grid">
                             <PersonnelSelectItem
                                 fieldName="operators"
-                                label="运维人员"
+                                label={t('resource.business.modify.fields.operators')}
                                 required={true}
                                 type={type}
                                 isSearching={isSearching}
@@ -259,7 +273,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
                             <PersonnelSelectItem
                                 fieldName="productManagers"
-                                label="产品人员"
+                                label={t('resource.business.modify.fields.productManagers')}
                                 type={type}
                                 isSearching={isSearching}
                                 searchOptions={searchOptions}
@@ -271,7 +285,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
                             <PersonnelSelectItem
                                 fieldName="testers"
-                                label="测试人员"
+                                label={t('resource.business.modify.fields.testers')}
                                 type={type}
                                 isSearching={isSearching}
                                 searchOptions={searchOptions}
@@ -283,7 +297,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
                             <PersonnelSelectItem
                                 fieldName="developers"
-                                label="开发人员"
+                                label={t('resource.business.modify.fields.developers')}
                                 type={type}
                                 isSearching={isSearching}
                                 searchOptions={searchOptions}
@@ -295,7 +309,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
                             <PersonnelSelectItem
                                 fieldName="administrators"
-                                label="操作人员"
+                                label={t('resource.business.modify.fields.administrators')}
                                 type={type}
                                 isSearching={isSearching}
                                 searchOptions={searchOptions}
@@ -316,17 +330,17 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                     className="submit-button"
                     disabled={!isCreateMode(type) && !isFormChanged}
                 >
-                    提交
+                    {t('common.submit')}
                 </Button>
-                <Button onClick={handleClose}>取消</Button>
+                <Button onClick={handleClose}>{t('common.cancel')}</Button>
             </div>
 
             <ConfirmModal
                 visible={showModal}
                 onOk={handleConfirmClose}
                 onCancel={() => setShowModal(false)}
-                title="确认离开当前页？"
-                description="离开将会导致未保存信息丢失"
+                title={t('common.confirmLeave')}
+                description={t('common.unsavedChanges')}
             />
         </Drawer>
     );

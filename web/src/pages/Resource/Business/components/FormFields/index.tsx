@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Select, Spin, Checkbox } from 'antd';
+import { useTranslation } from 'react-i18next';
 import "./style.css";
 
 // Define form field types
@@ -7,7 +8,7 @@ export type FormFieldName = 'businessName' | 'lifecycle' | 'timeZone' | 'languag
     'productManagers' | 'testers' | 'developers' | 'administrators';
 
 // Form validation rule constants
-export const REQUIRED_RULE = [{ required: true, message: '该字段为必填项' }];
+export const createRequiredRule = (t: (key: string) => string) => [{ required: true, message: t('common.validation.required') }];
 
 // Utility functions for determining drawer type
 export const isCreateMode = (type: "create" | "edit"): boolean => type === "create";
@@ -35,6 +36,8 @@ export const FormFieldItem: React.FC<FormFieldItemProps> = ({
     handleFieldChange,
     selectedFields = [],
 }) => {
+    const { t } = useTranslation();
+    
     return (
         <div className="form-field-item">
             <div className="item-header" style={{ marginBottom: 8 }}>
@@ -49,7 +52,7 @@ export const FormFieldItem: React.FC<FormFieldItemProps> = ({
             </div>
             <Form.Item
                 name={fieldName}
-                rules={required && isCreateMode(type) ? REQUIRED_RULE : []}
+                rules={required && isCreateMode(type) ? createRequiredRule(t) : []}
                 initialValue={initialValue}
             >
                 {children}
@@ -84,6 +87,8 @@ export const PersonnelSelectItem: React.FC<PersonnelSelectItemProps> = ({
     isFieldDisabled,
     selectedFields = []
 }) => {
+    const { t } = useTranslation();
+    
     return (
         <FormFieldItem
             fieldName={fieldName}
@@ -95,12 +100,12 @@ export const PersonnelSelectItem: React.FC<PersonnelSelectItemProps> = ({
         >
             <Select
                 mode="multiple"
-                placeholder={`请输入${label}`}
+                placeholder={`${t('common.pleaseEnter')}${label}`}
                 showSearch
                 filterOption={false}
                 onSearch={handleSearch}
                 options={searchOptions}
-                notFoundContent={isSearching ? <Spin size="small" /> : "无匹配人员"}
+                notFoundContent={isSearching ? <Spin size="small" /> : t('common.noMatch')}
                 disabled={isFieldDisabled(fieldName)}
                 className="select-input"
             />

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Table, Button, Input, Select, Tooltip, Space, message } from "antd";
 import { DatePicker } from "antd";
+import { useTranslation } from "react-i18next";
 import Pagination from "@/components/common/Pagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
@@ -19,6 +20,7 @@ const { Option } = Select;
 const PAGE_SIZE = 10;
 
 const BusinessList: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const location = useLocation();
     const [page, setPage] = useState(1);
@@ -43,48 +45,48 @@ const BusinessList: React.FC = () => {
 
     const columns = [
         {
-            title: "ID",
+            title: t('resource.business.columns.id'),
             dataIndex: "bk_biz_id",
             sorter: true,
             width: 300,
         },
         {
-            title: "业务名",
+            title: t('resource.business.columns.name'),
             dataIndex: "bk_biz_name",
             sorter: true,
             width: 300,
         },
         {
-            title: "运维人员",
+            title: t('resource.business.columns.maintainer'),
             dataIndex: "bk_biz_maintainer",
             sorter: true,
             width: 300,
         },
         {
-            title: "创建时间",
+            title: t('resource.business.columns.created_at'),
             dataIndex: "bk_created_at",
             sorter: true,
             width: 300,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "创建人",
+            title: t('resource.business.columns.created_by'),
             dataIndex: "bk_created_by",
             sorter: true,
             width: 300,
         },
         {
-            title: "更新时间",
+            title: t('resource.business.columns.updated_at'),
             dataIndex: "bk_updated_at",
             sorter: true,
             width: 300,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "操作",
+            title: t('resource.business.columns.actions'),
             dataIndex: "action",
             render: (_: string, record: any) => (
-                <a onClick={() => handleArchive(record)}>归档</a>
+                <a onClick={() => handleArchive(record)}>{t('resource.business.actions.archive')}</a>
             ),
         },
     ];
@@ -146,7 +148,7 @@ const BusinessList: React.FC = () => {
     const confirmArchive = () => {
         console.log('Archiving business:', archivingBusiness);
         // API call to archive the business would go here
-        message.success('归档成功');
+        message.success(t('resource.business.messages.archive_success'));
 
         // Add the business ID to the archived list
         setArchivedBusinessIds(prev => [...prev, archivingBusiness.bk_biz_id]);
@@ -196,11 +198,11 @@ const BusinessList: React.FC = () => {
                     <Button
                         type="primary"
                         onClick={handleCreate}
-                    >新建</Button>
+                    >{t('resource.business.actions.create')}</Button>
                     <Button
                         disabled={selectedRowKeys.length === 0}
                         onClick={handleEdit}
-                    >批量编辑</Button>
+                    >{t('resource.business.actions.batch_edit')}</Button>
                 </div>
                 <div className="list-search">
                     <Space.Compact>
@@ -211,13 +213,16 @@ const BusinessList: React.FC = () => {
                             value={searchField}
                         >
                             {searchFieldOptions.map(option => (
-                                <Option key={option.value} value={option.value}>{option.label}</Option>
+                                <Option key={option.value} value={option.value}>{t(option.label)}</Option>
                             ))}
                         </Select>
                         {isDateField ? (
                             <DatePicker.RangePicker
                                 className="search-date-picker"
-                                placeholder={['开始时间', '结束时间']}
+                                placeholder={[
+                                    t('resource.business.search.date_range.start_placeholder'),
+                                    t('resource.business.search.date_range.end_placeholder')
+                                ]}
                                 allowClear
                                 value={searchDateRange}
                                 onChange={handleDateRangeSearch}
@@ -225,7 +230,10 @@ const BusinessList: React.FC = () => {
                         ) : (
                             <Input.Search
                                 className="search-input"
-                                placeholder={`请输入${currentFieldOption?.label}`}
+                                placeholder={
+                                    t('resource.business.search.placeholder',
+                                        { field: currentFieldOption ? t(currentFieldOption.label) : '' }
+                                    )}
                                 allowClear
                                 value={searchText}
                                 onChange={(e) => setSearchText(e.target.value)}
@@ -233,7 +241,7 @@ const BusinessList: React.FC = () => {
                             />
                         )}
                     </Space.Compact>
-                    <Tooltip title="查看已归档业务">
+                    <Tooltip title={t('resource.business.tooltips.view_archived')}>
                         <Button icon={<HistoryOutlined />} onClick={handleArchivedBusiness} />
                     </Tooltip>
                 </div>
@@ -278,8 +286,8 @@ const BusinessList: React.FC = () => {
             {/* Archive confirmation modal */}
             <ConfirmModal
                 visible={archiveModalVisible}
-                title={`确认要归档${archivingBusiness?.bk_biz_name || ''}`}
-                description="归档后SaaS将不可访问其下资源，包括作业任务、监控配置等，是否确认不再使用此业务？"
+                title={t('resource.business.messages.confirm_archive_title', { name: archivingBusiness?.bk_biz_name || '' })}
+                description={t('resource.business.messages.confirm_archive_description')}
                 onOk={confirmArchive}
                 onCancel={() => setArchiveModalVisible(false)}
             />

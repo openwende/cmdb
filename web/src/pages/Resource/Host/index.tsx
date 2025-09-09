@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { Outlet, useMatch } from "react-router-dom";
 import { Tabs } from "antd";
+import { useTranslation } from "react-i18next";
 import Directory, { unmodifiableDirIds } from "./Directory";
 import HostList, { deleteHistoryPath } from "./HostList";
 import { TabsKey, TabsProps } from "../Types";
 import "./style.css";
 
 const HostPage: React.FC = () => {
+    const { t } = useTranslation();
     const isDeleteHistoryRoute = useMatch(deleteHistoryPath);
     const [tab, setTab] = useState(TabsKey.Unassigned);
     const [selectedId, setSelectedId] = useState<number>(unmodifiableDirIds[0]);
@@ -14,7 +16,7 @@ const HostPage: React.FC = () => {
     const items: TabsProps[] = [
         {
             key: TabsKey.Unassigned,
-            label: '未分配',
+            label: t('resource.host.tabs.unassigned'),
             children: <div className="unassigned-wrapper">
                 <Directory selectedId={selectedId} onSelect={setSelectedId} />
                 <div style={{ flex: 1 }}>
@@ -24,12 +26,12 @@ const HostPage: React.FC = () => {
         },
         {
             key: TabsKey.Assigned,
-            label: '已分配',
+            label: t('resource.host.tabs.assigned'),
             children: <HostList tabKey={TabsKey.Assigned} />,
         },
         {
             key: TabsKey.All,
-            label: '全部',
+            label: t('resource.host.tabs.all'),
             children: <HostList tabKey={TabsKey.All} />,
         },
     ];

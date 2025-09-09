@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Drawer, Table } from 'antd';
+import { useTranslation } from 'react-i18next';
 import './style.css';
 import { hostDetailAttrs } from '@/pages/Resource/constants';
 import { DeleteHistoryItem } from '../DeleteHistory';
@@ -17,6 +18,7 @@ interface OperationDetailsProps {
 }
 
 const OperationDetails: React.FC<OperationDetailsProps> = ({ visible, onClose, data }) => {
+    const { t } = useTranslation();
     // table scroll height: window height - 292
     const [tableY, setTableY] = React.useState<number>(() => window.innerHeight - 292);
 
@@ -32,32 +34,32 @@ const OperationDetails: React.FC<OperationDetailsProps> = ({ visible, onClose, d
 
     // Top meta info blocks
     const metaList = [
-        { label: '所属业务', value: '--' },
-        { label: '操作对象', value: '主机' },
-        { label: '动作', value: '删除' },
-        { label: '模型类型', value: '主机' },
-        { label: '操作实例', value: data.resource_name },
-        { label: '操作描述', value: `删除${data.resource_name}` },
-        { label: '操作时间', value: data.operation_time },
-        { label: '操作账号', value: data.user },
+        { label: t('resource.operation.meta.business'), value: t('resource.operation.values.no_business') },
+        { label: t('resource.operation.meta.object'), value: t('resource.operation.values.host') },
+        { label: t('resource.operation.meta.action'), value: t('resource.operation.values.delete') },
+        { label: t('resource.operation.meta.model_type'), value: t('resource.operation.values.host') },
+        { label: t('resource.operation.meta.instance'), value: data.resource_name },
+        { label: t('resource.operation.meta.description'), value: t('resource.operation.values.delete_description', { name: data.resource_name }) },
+        { label: t('resource.operation.meta.time'), value: data.operation_time },
+        { label: t('resource.operation.meta.user'), value: data.user },
     ];
 
     const detailRows: DetailRow[] = hostDetailAttrs.map((attr, idx) => ({
         key: `${idx}`,
-        attr,
+        attr: t(attr),
         before: '--',
     }));
 
     const columns = [
-        { title: '属性', dataIndex: 'attr', width: '50%', align: 'right' as const },
-        { title: '变更前', dataIndex: 'before', width: '50%', align: 'left' as const },
+        { title: t('resource.operation.columns.attribute'), dataIndex: 'attr', width: '50%', align: 'right' as const },
+        { title: t('resource.operation.columns.before'), dataIndex: 'before', width: '50%', align: 'left' as const },
     ];
 
     return (
         <Drawer
             open={visible}
             width={760}
-            title={<span className="drawer-title">操作详情</span>}
+            title={<span className="drawer-title">{t('resource.operation.title')}</span>}
             onClose={onClose}
             className="operation-details-drawer"
         >

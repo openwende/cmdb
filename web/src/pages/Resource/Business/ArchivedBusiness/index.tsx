@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, Input, Space, message, Popconfirm, Modal, Form } from "antd";
+import { useTranslation } from "react-i18next";
 import Pagination from "@/components/common/Pagination";
 import { archivedBusinessListMock } from "@/mock/resource";
 import dayjs from 'dayjs';
@@ -8,6 +9,7 @@ import "./style.css";
 const PAGE_SIZE = 20;
 
 const ArchivedBusiness: React.FC = () => {
+    const { t } = useTranslation();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
     const [businessCount, setBusinessCount] = useState(0);
@@ -19,70 +21,70 @@ const ArchivedBusiness: React.FC = () => {
 
     const columns = [
         {
-            title: "ID",
+            title: t('resource.business.archived.columns.id'),
             dataIndex: "bk_biz_id",
             sorter: true,
             width: 100,
         },
         {
-            title: "业务名",
+            title: t('resource.business.archived.columns.name'),
             dataIndex: "bk_biz_name",
             sorter: true,
             width: 300,
         },
         {
-            title: "运维人员",
+            title: t('resource.business.archived.columns.maintainer'),
             dataIndex: "bk_biz_maintainer",
             sorter: true,
             width: 240,
         },
         {
-            title: "创建时间",
+            title: t('resource.business.archived.columns.created_at'),
             dataIndex: "bk_created_at",
             sorter: true,
             width: 240,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "创建人",
+            title: t('resource.business.archived.columns.created_by'),
             dataIndex: "bk_created_by",
             sorter: true,
             width: 240,
         },
         {
-            title: "更新时间",
+            title: t('resource.business.archived.columns.updated_at'),
             dataIndex: "bk_updated_at",
             sorter: true,
             width: 240,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "更新人",
+            title: t('resource.business.archived.columns.updated_by'),
             dataIndex: "bk_updated_by",
             sorter: true,
             width: 240,
         },
         {
-            title: "归档时间",
+            title: t('resource.business.archived.columns.archived_at'),
             dataIndex: "archived_at",
             sorter: true,
             width: 240,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "操作",
+            title: t('resource.business.archived.columns.actions'),
             dataIndex: "action",
             render: (_: string, record: any) => (
                 <Space>
-                    <a onClick={() => handleRestore(record)}>恢复业务</a>
+                    <a onClick={() => handleRestore(record)}>{t('resource.business.archived.actions.restore')}</a>
                     <Popconfirm
-                        title="确认彻底删除该业务？"
-                        description="清除后将无法再恢复，请谨慎操作！"
+                        title={t('resource.business.archived.delete_confirm.title')}
+                        description={t('resource.business.archived.delete_confirm.description')}
                         onConfirm={() => confirmDelete(record)}
-                        okText="确定"
-                        cancelText="取消"
+                        okText={t("common.confirm")}
+                        cancelText={t("common.cancel")}
                     >
-                        <a className="delete-link">彻底删除</a>
+                        <a className="delete-link">{t('resource.business.archived.actions.delete')}</a>
                     </Popconfirm>
                 </Space>
             ),
@@ -114,9 +116,9 @@ const ArchivedBusiness: React.FC = () => {
     };
 
     const confirmRestore = () => {
-        form.validateFields().then(values => {
+        form.validateFields().then(() => {
             // API call to restore the business would go here
-            message.success('业务恢复成功');
+            message.success(t('resource.business.archived.messages.restore_success'));
 
             // Remove the business from the list
             const updatedList = businessList.filter(
@@ -133,7 +135,7 @@ const ArchivedBusiness: React.FC = () => {
 
     const confirmDelete = (business: any) => {
         // API call to permanently delete the business would go here
-        message.success('业务已彻底删除');
+        message.success(t('resource.business.archived.messages.delete_success'));
 
         // Remove the business from the list
         const updatedList = businessList.filter(
@@ -153,7 +155,7 @@ const ArchivedBusiness: React.FC = () => {
                 <div className="list-search">
                     <Input.Search
                         style={{ width: 240 }}
-                        placeholder="请输入业务名"
+                        placeholder={t('resource.business.archived.search.placeholder')}
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}
                     />
@@ -182,12 +184,12 @@ const ArchivedBusiness: React.FC = () => {
 
             {/* Restore business modal */}
             <Modal
-                title="恢复业务"
+                title={t('resource.business.archived.restore_modal.title')}
                 open={restoreModalVisible}
                 onOk={confirmRestore}
                 onCancel={() => { setRestoreModalVisible(false) }}
-                okText="确定"
-                cancelText="取消"
+                okText={t("common.confirm")}
+                cancelText={t("common.cancel")}
                 maskClosable={false}
                 width={400}
             >
@@ -197,10 +199,10 @@ const ArchivedBusiness: React.FC = () => {
                 >
                     <Form.Item
                         name="businessName"
-                        label="业务名"
-                        rules={[{ required: true, message: '该字段为必填项' }]}
+                        label={t('resource.business.archived.restore_modal.name_label')}
+                        rules={[{ required: true, message: t('resource.business.archived.messages.required_field') }]}
                     >
-                        <Input placeholder="请输入业务名" />
+                        <Input placeholder={t('resource.business.archived.restore_modal.name_placeholder')} />
                     </Form.Item>
                 </Form>
             </Modal>
