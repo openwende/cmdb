@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Modal, Select, Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { resourceDir } from '@/mock/business';
 import './style.css';
 
@@ -11,6 +12,7 @@ interface ReleaseHostModalProps {
 }
 
 const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCount, onClose, onConfirm }) => {
+    const { t } = useTranslation();
     const [selectedDir, setSelectedDir] = useState<number | null>(null);
 
     const handleChange = (value: number) => {
@@ -31,7 +33,7 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
     return (
         <Modal
             open={visible}
-            title={<div className="release-modal-title">确认归还主机池</div>}
+            title={<div className="release-modal-title">{t('business.topology.releaseHostModal.title')}</div>}
             onCancel={handleClose}
             footer={null}
             centered
@@ -40,14 +42,14 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
             className="release-host-modal"
         >
             <div className="release-modal-desc">
-                确认将 <span className="release-modal-count">{selectedCount}</span> 台空闲机池转移到主机池？<br />
-                请务必确认业务进程已停止或主机处于关机状态
+                {t('business.topology.releaseHostModal.confirmMessage', { count: selectedCount })}<br />
+                {t('business.topology.releaseHostModal.warning')}
             </div>
             <div className="release-modal-select-wrapper">
-                <div className="release-modal-select-label">归还至目录</div>
+                <div className="release-modal-select-label">{t('business.topology.releaseHostModal.selectDirectory')}</div>
                 <Select
                     className="release-modal-select"
-                    placeholder="请选择"
+                    placeholder={t('common.pleaseSelect')}
                     style={{ width: 310 }}
                     value={selectedDir}
                     onChange={handleChange}
@@ -59,10 +61,10 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
             </div>
             <div className="release-modal-footer">
                 <Button onClick={handleClose} style={{ marginRight: 8 }}>
-                    取消
+                    {t('common.cancel')}
                 </Button>
                 <Button type="primary" onClick={handleOk} disabled={selectedDir === null}>
-                    确定
+                    {t('common.confirm')}
                 </Button>
             </div>
         </Modal>

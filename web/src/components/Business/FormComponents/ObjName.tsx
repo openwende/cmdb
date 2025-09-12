@@ -6,6 +6,7 @@
 
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Select, Spin, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { FormComponentProps, SelectOption } from './index';
 import { Property, OperatorType } from '../../../pages/Business/Types';
 import { QUERY_OPERATOR } from '../../../pages/Business/constants';
@@ -37,6 +38,7 @@ const ObjName: React.FC<ObjNameProps> = ({
 }) => {
   const [searchOptions, setSearchOptions] = useState<Array<SelectOption>>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const { t } = useTranslation();
 
   const isInputMode = useMemo(() => {
     return operator === QUERY_OPERATOR.LIKE;
@@ -136,7 +138,11 @@ const ObjName: React.FC<ObjNameProps> = ({
       options={displayOptions}
       disabled={disabled}
       style={{ width: '100%' }}
-      notFoundContent={isSearching ? <Spin size="small" /> : `无匹配数据`}
+      notFoundContent={
+        isSearching
+          ? <Spin size="small" />
+          : t('common.components.formComponents.noMatchData')
+      }
     />
   );
 };

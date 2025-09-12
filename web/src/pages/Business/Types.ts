@@ -174,10 +174,6 @@ export enum ConditionType {
   IMMUTABLE = 'condition',
   VARIABLE = 'varCondition'
 }
-export enum ConditionName {
-  IMMUTABLE = '锁定条件',
-  VARIABLE = '可变条件'
-}
 export interface Property {
   id: number;
   bk_obj_id: string;

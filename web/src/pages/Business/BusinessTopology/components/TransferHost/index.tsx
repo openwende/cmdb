@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
 import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip, Popconfirm } from 'antd';
 import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useTransferHostStore } from '@/store/TransferHostStore';
 import AddHostModal from '../AddHostModal';
 import AddProcessModal, { ListenInfo } from '../AddProcessModal';
@@ -23,6 +24,7 @@ export interface ProcessItem {
 }
 
 const TransferHost: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { selectedHosts, targetModules, transferHostType, setTransferHostData } = useTransferHostStore();
     const [showEditHostModal, setShowEditHostModal] = useState(false);
@@ -192,17 +194,17 @@ const TransferHost: React.FC = () => {
 
     const columns = [
         {
-            title: '进程名称',
+            title: t('business.topology.transferHost.columns.processName'),
             dataIndex: 'processName',
             key: 'processName',
         },
         {
-            title: '进程别名',
+            title: t('business.topology.transferHost.columns.processAlias'),
             dataIndex: 'processAlias',
             key: 'processAlias',
         },
         {
-            title: '进程启动参数',
+            title: t('business.topology.transferHost.columns.startupParams'),
             dataIndex: 'startupParams',
             key: 'startupParams',
             render: (val: string) => {
@@ -210,7 +212,7 @@ const TransferHost: React.FC = () => {
             }
         },
         {
-            title: '绑定信息',
+            title: t('business.topology.transferHost.columns.bindInfo'),
             dataIndex: 'bindInfo',
             key: 'bindInfo',
             render: (bindInfo: ListenInfo[]) => {
@@ -233,7 +235,7 @@ const TransferHost: React.FC = () => {
             },
         },
         {
-            title: '操作',
+            title: t('business.topology.transferHost.columns.action'),
             key: 'action'
         },
     ];
@@ -243,7 +245,7 @@ const TransferHost: React.FC = () => {
             <div className="add-inst-wrapper">
                 <Space className="tip-text">
                     <InfoCircleOutlined />
-                    主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例
+                    {t('business.topology.transferHost.tips.addInstanceTip')}
                 </Space>
                 {
                     targetModules
@@ -263,7 +265,11 @@ const TransferHost: React.FC = () => {
                                                     <div className="host-header">
                                                         <span>{host.ip}</span>
                                                         <span className="status-text">
-                                                            {(hostProcessMap[getProcessKey(module.key, String(host.id))]?.length || 0) === 0 ? '（未添加进程）' : null}
+                                                            {
+                                                                (hostProcessMap[getProcessKey(module.key, String(host.id))]?.length || 0) === 0
+                                                                    ? t('business.topology.transferHost.status.noProcessAdded')
+                                                                    : null
+                                                            }
                                                         </span>
                                                     </div>
                                                 ),
@@ -282,15 +288,15 @@ const TransferHost: React.FC = () => {
                                                                                     size="small"
                                                                                     onClick={() => handleEditProcess(module.key, String(host.id), record)}
                                                                                 >
-                                                                                    编辑
+                                                                                    {t('common.edit')}
                                                                                 </Button>
                                                                                 <Popconfirm
-                                                                                    title="确定删除该进程?"
+                                                                                    title={t('business.topology.transferHost.confirmDelete.title')}
                                                                                     onConfirm={() => handleDeleteProcess(module.key, String(host.id), record)}
-                                                                                    okText="确定"
-                                                                                    cancelText="取消"
+                                                                                    okText={t('common.confirm')}
+                                                                                    cancelText={t('common.cancel')}
                                                                                 >
-                                                                                    <Button type="link" danger size="small">删除</Button>
+                                                                                    <Button type="link" danger size="small">{t('common.delete')}</Button>
                                                                                 </Popconfirm>
                                                                             </>
                                                                         )
@@ -307,7 +313,7 @@ const TransferHost: React.FC = () => {
                                                                 type="link"
                                                                 onClick={() => handleAddProcess(module.key, String(host.id))}
                                                             >
-                                                                + 添加进程
+                                                                + {t('business.topology.transferHost.buttons.addProcess')}
                                                             </Button>
                                                         </div>
                                                     </div>
@@ -318,7 +324,7 @@ const TransferHost: React.FC = () => {
                                 </div>
                             );
                         }
-                    )
+                        )
                 }
             </div>
         );
@@ -345,13 +351,17 @@ const TransferHost: React.FC = () => {
             <>
                 <Space className='tip-text'>
                     <InfoCircleOutlined />
-                    移出当前模块，主机的服务实例信息也一同被删除
+                    {t('business.topology.transferHost.tips.deleteInstanceTip')}
                 </Space>
                 <Table
                     columns={[
-                        { title: '操作', dataIndex: 'action', render: () => <span className='del-action'>删除</span> },
-                        { title: '服务实例', dataIndex: 'name' },
-                        { title: '所属模块', dataIndex: 'module' },
+                        {
+                            title: t('business.topology.transferHost.columns.action'),
+                            dataIndex: 'action',
+                            render: () => <span className='del-action'>{t('common.delete')}</span>
+                        },
+                        { title: t('business.topology.transferHost.columns.serviceInstance'), dataIndex: 'name' },
+                        { title: t('business.topology.transferHost.columns.belongingModule'), dataIndex: 'module' },
                     ]}
                     dataSource={tableData}
                     rowKey="id"
@@ -371,13 +381,17 @@ const TransferHost: React.FC = () => {
             <>
                 <Space className='tip-text'>
                     <InfoCircleOutlined />
-                    当主机仅属于当前模块时，移除后将主机会默认放置于空闲机中
+                    {t('business.topology.transferHost.tips.moveToIdleTip')}
                 </Space>
                 <Table
                     columns={[
-                        { title: '操作', dataIndex: 'action', render: () => <span>转移到空闲机的主机</span> },
+                        {
+                            title: t('business.topology.transferHost.columns.action'),
+                            dataIndex: 'action',
+                            render: () => <span>{t('business.topology.transferHost.actions.moveToIdle')}</span>
+                        },
                         { title: 'IP', dataIndex: 'ip' },
-                        { title: '管控区域', dataIndex: 'region' },
+                        { title: t('business.topology.transferHost.columns.cloudArea'), dataIndex: 'region' },
                     ]}
                     dataSource={tableData}
                     rowKey="id"
@@ -391,7 +405,9 @@ const TransferHost: React.FC = () => {
     const renderEmpty = () => {
         return <div className="empty-wrapper">
             <Space className='tip-text'>
-                <InfoCircleOutlined /> 目标模块为源模块，无变更信息
+                <InfoCircleOutlined />
+                &nbsp;
+                {t('business.topology.transferHost.messages.noChangeInfo')}
             </Space>
         </div>
     }
@@ -400,7 +416,7 @@ const TransferHost: React.FC = () => {
         {
             key: 'delInst',
             label: <span className='del-label'>
-                删除服务实例
+                {t('business.topology.transferHost.tabs.deleteServiceInstance')}
                 <span className='inst-count'>
                     {handleServiceInstances().length}
                 </span>
@@ -411,7 +427,7 @@ const TransferHost: React.FC = () => {
             {
                 key: 'moveIdle',
                 label: <span className='del-label'>
-                    移动到空闲机的主机
+                    {t('business.topology.transferHost.tabs.moveToIdleHost')}
                     <span className={`inst-count red-count`}>
                         {hostsCanMoveToIdle.length}
                     </span>
@@ -424,7 +440,7 @@ const TransferHost: React.FC = () => {
     const addTabItems: TabsProps['items'] = [
         {
             key: 'addInst',
-            label: '新增服务实例',
+            label: t('business.topology.transferHost.tabs.addServiceInstance'),
             children: hasChanges ? renderAddInst() : renderEmpty(),
         },
         ...(shouldShowDelTab ? delTabItems : [])
@@ -443,10 +459,12 @@ const TransferHost: React.FC = () => {
         <div className="transfer-container">
             <div className='info-item'>
                 <label className='info-label'>
-                    已选主机：
+                    {t('business.topology.transferHost.labels.selectedHosts')}：
                 </label>
                 <div className='info-content'>
-                    <span className='info-number'>{selectedHosts.length}</span> 台
+                    <span className='info-number'>{selectedHosts.length}</span>
+                    &nbsp;
+                    {t('business.topology.transferHost.labels.units')}
                     <EditOutlined
                         className="edit-icon"
                         onClick={handleEditHosts}
@@ -457,7 +475,7 @@ const TransferHost: React.FC = () => {
             {
                 !isRemoveFromCurrent && <div className='info-item'>
                     <label className='info-label'>
-                        转移到：
+                        {t('business.topology.transferHost.labels.transferTo')}：
                     </label>
                     <div className='info-content'>
                         {targetModules.map((module, idx) => (
@@ -483,7 +501,7 @@ const TransferHost: React.FC = () => {
 
             <div className='info-item'>
                 <label className='info-label'>
-                    变更确认：
+                    {t('business.topology.transferHost.labels.changeConfirmation')}：
                 </label>
                 <div className='info-content'>
                     <Tabs defaultActiveKey="1" items={tabItems} />
@@ -496,10 +514,10 @@ const TransferHost: React.FC = () => {
                             onClick={handleConfirm}
                             disabled={!isConfirmBtnAvailable}
                         >
-                            确认变更
+                            {t('business.topology.transferHost.buttons.confirmChange')}
                         </Button>
                         <Button onClick={handleCancel}>
-                            取消
+                            {t('common.cancel')}
                         </Button>
                     </div>
                     <div ref={sentinelRef} style={{ height: 1 }} />

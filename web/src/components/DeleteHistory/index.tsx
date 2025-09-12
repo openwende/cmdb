@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Table, DatePicker, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import { deleteHistoryMock } from '@/mock/resource';
 import './style.css';
@@ -22,13 +23,12 @@ const DeleteHistory: React.FC = () => {
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [keyword, setKeyword] = useState<string>('');
   const [timeRange, setTimeRange] = useState<[Date, Date] | null>(null);
+  const { t } = useTranslation();
 
-  // init mock
   useEffect(() => {
     setData(deleteHistoryMock.info as DeleteHistoryItem[]);
   }, []);
 
-  // filtered data
   const filtered = useMemo(() => {
     return data.filter(item => {
       let ok = true;
@@ -61,18 +61,18 @@ const DeleteHistory: React.FC = () => {
       dataIndex: 'resource_name',
     },
     {
-      title: '更新时间',
+      title: t('common.components.deleteHistory.columns.updateTime'),
       dataIndex: 'operation_time',
     },
     {
-      title: '操作账号',
+      title: t('common.components.deleteHistory.columns.operatorAccount'),
       dataIndex: 'user',
     },
   ];
 
   return (
     <div className="delete-history-wrapper">
-      {/* 操作栏 */}
+      {/* The toolbar */}
       <div className="toolbar">
         <RangePicker
           style={{ marginRight: 16, width: 240 }}
@@ -87,7 +87,7 @@ const DeleteHistory: React.FC = () => {
           }}
         />
         <Input.Search
-          placeholder="请输入IP"
+          placeholder={t('common.components.deleteHistory.placeholder.searchIp')}
           allowClear
           style={{ width: 200 }}
           onSearch={(val) => {
@@ -97,7 +97,7 @@ const DeleteHistory: React.FC = () => {
         />
       </div>
 
-      {/* 表格 */}
+      {/* The table */}
       <Table
         columns={columns}
         dataSource={pageData}
@@ -106,7 +106,7 @@ const DeleteHistory: React.FC = () => {
         style={{ marginTop: 12 }}
       />
 
-      {/* 分页器 */}
+      {/* The pagination */}
       <Pagination
         total={filtered.length}
         current={page}

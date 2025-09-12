@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Alert } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { TreeData, TopoTreeNodeType } from '../../Types';
 import { 
     BusinessNodeInfo, 
@@ -14,6 +15,8 @@ interface Props {
 }
 
 const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
+    const { t } = useTranslation();
+    
     // Get current node type
     const nodeType = useMemo(() => {
         if (!selectedNode) return null;
@@ -22,7 +25,7 @@ const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
     // If no node is selected
     if (!nodeType) {
-        return <Alert message="请选择一个节点查看详情" type="info" />;
+        return <Alert message={t('business.topology.nodeInfo.selectNodeMessage')} type="info" />;
     }
 
     // Render appropriate node info based on type

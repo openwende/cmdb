@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Modal, Input, List, Button, Checkbox, Radio, Select, Empty, Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { CloseOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import DragHandle from '@/components/common/DragHandle';
@@ -20,13 +21,6 @@ import './style.css';
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
 
-export const typeTitleMap: Partial<Record<TransferHostType, string>> = {
-  idlePool: '转移主机到空闲机池',
-  businessModule: '转移主机到业务模块',
-  otherBusiness: '转移主机到其他业务',
-  [AppendMenuItemKey.AppendToBusinessModule]: '追加主机到业务模块',
-};
-
 interface TransferHostModalProps {
   visible: boolean;
   transferType?: TransferHostType;
@@ -46,6 +40,15 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   onClose,
   onConfirm,
 }) => {
+  const { t } = useTranslation();
+
+  const typeTitleMap: Partial<Record<TransferHostType, string>> = {
+    idlePool: t('business.topology.transferHostModal.titles.idlePool'),
+    businessModule: t('business.topology.transferHostModal.titles.businessModule'),
+    otherBusiness: t('business.topology.transferHostModal.titles.otherBusiness'),
+    [AppendMenuItemKey.AppendToBusinessModule]: t('business.topology.transferHostModal.titles.appendToBusiness'),
+  };
+
   const [searchValue, setSearchValue] = useState('');
   const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
@@ -75,18 +78,18 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     title: bizName,
     key: bizId ? `biz-${bizId}` : bizName,
     type: TopoTreeNodeType.Biz,
-    objName: '业务',
+    objName: t('business.topology.transferHostModal.objectNames.business'),
     children: [
       {
         title: idleCluster2.bk_set_name,
         key: `set-${idleCluster2.bk_set_id}`,
         type: TopoTreeNodeType.Set,
-        objName: '集群',
+        objName: t('business.topology.transferHostModal.objectNames.cluster'),
         children: idleCluster2.module.map(mod => ({
           title: mod.bk_module_name,
           key: `module-${mod.bk_module_id}`,
           type: TopoTreeNodeType.Module,
-          objName: '模块',
+          objName: t('business.topology.transferHostModal.objectNames.module'),
           parentPath: [bizName, idleCluster2.bk_set_name],
         }))
       }
@@ -295,16 +298,18 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
   const confirmTooltip = useMemo(() => {
     if (previewList.length === 0) {
-      return '请先选择业务模块';
+      return t('business.topology.transferHostModal.tooltips.selectModuleFirst');
     } else if (confirmDisabled) {
-      return '主机所属模块未发生改变';
+      return t('business.topology.transferHostModal.tooltips.hostModuleUnchanged');
     }
     return '';
-  }, [previewList, confirmDisabled]);
+  }, [previewList, confirmDisabled, t]);
 
   const shouldTreeComShow = transferStatus.isOtherBusiness ? !!selectedBizId : true;
   const isEmptySearchResult = searchValue && filteredTreeData.length === 0;
-  const confirmBtnText = (initialSelectedKeys || transferStatus.isOtherBusiness) ? '确定' : '下一步';
+  const confirmBtnText = (initialSelectedKeys || transferStatus.isOtherBusiness)
+    ? t('business.topology.transferHostModal.buttons.confirm')
+    : t('business.topology.transferHostModal.buttons.nextStep');
 
   return (
     <Modal
@@ -312,7 +317,9 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
       title={typeTitleMap[transferType!] || ''}
       onCancel={handleClose}
       footer={[
-        <Button key="cancel" onClick={handleClose}>取消</Button>,
+        <Button key="cancel" onClick={handleClose}>
+          {t('common.cancel')}
+        </Button>,
         <Tooltip key="next" title={confirmTooltip}>
           <span className='next-btn-wrapper'>
             <Button type="primary" disabled={confirmDisabled} onClick={handleNextStep}>
@@ -343,7 +350,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
               <Select
                 showSearch
                 allowClear
-                placeholder="请选择业务"
+                placeholder={t('business.topology.transferHostModal.placeholders.selectBusiness')}
                 style={{ width: '100%', marginBottom: 12 }}
                 value={selectedBizId}
                 onChange={bizId => handleBizChange(bizId)}
@@ -353,14 +360,17 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
                 }
               />
               {!selectedBizId && (
-                <Empty description="请先选择业务" style={{ marginTop: '40%' }} />
+                <Empty
+                  description={t('business.topology.transferHostModal.empty.selectBusinessFirst')}
+                  style={{ marginTop: '40%' }}
+                />
               )}
             </>
           ) : (
             <>
               <Input.Search
                 allowClear
-                placeholder="请输入关键字"
+                placeholder={t('business.topology.transferHostModal.placeholders.searchKeyword')}
                 style={{ marginBottom: 4 }}
                 value={searchValue}
                 onChange={e => setSearchValue(e.target.value.trim())}
@@ -399,10 +409,21 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
 
         {/* Right side */}
         <div className="transfer-host-modal-right">
-          <div className="preview-title">结果预览</div>
+          <div className="preview-title">
+            {t('business.topology.transferHostModal.preview.title')}
+          </div>
           <div className="preview-header">
-            <span>已选择 <span className='preview-count'>{previewList.length}</span> 个模块</span>
-            <Button type="link" onClick={handleClear} disabled={previewList.length === 0}>清空</Button>
+            <span>
+              {t('business.topology.transferHostModal.preview.selectedText')}
+              &nbsp;<span className='preview-count'>{previewList.length}</span>
+              &nbsp;{t('business.topology.transferHostModal.preview.moduleCountSuffix')}
+            </span>
+            <Button
+              type="link"
+              onClick={handleClear}
+              disabled={previewList.length === 0}>
+              {t('business.topology.transferHostModal.buttons.clear')}
+            </Button>
           </div>
           <List
             dataSource={previewList}
@@ -428,7 +449,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
                 )}
               </List.Item>
             )}
-            locale={{ emptyText: '暂无模块选中' }}
+            locale={{ emptyText: t('business.topology.transferHostModal.empty.noModuleSelected') }}
           />
         </div>
       </div>

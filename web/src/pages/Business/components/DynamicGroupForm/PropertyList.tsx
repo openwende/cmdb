@@ -1,11 +1,12 @@
 import React, { useMemo, useEffect, useState } from 'react';
 import { Tooltip } from 'antd';
 import { CloseOutlined, SwapOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './OperatorSelector';
 import FormComponent from './FormComponent';
-import { ConditionType, Property, Condition, ObjectMainLine, ConditionName, OperatorType } from '../../Types';
+import { ConditionType, Property, Condition, ObjectMainLine, OperatorType } from '../../Types';
 import { QUERY_OPERATOR, DEFAULT_CONDITIONS_DATA, PROPERTY_TYPES } from '../../constants';
-import { isValidCondition } from '../../utils';
+import { isValidCondition, getConditionName } from '../../utils';
 import './style.css';
 
 const WITHOUT_OPERATOR = [
@@ -14,10 +15,7 @@ const WITHOUT_OPERATOR = [
   PROPERTY_TYPES.BOOL,
   PROPERTY_TYPES.SERVICE_TEMPLATE
 ];
-const EXCHANGE_NAME = {
-  [ConditionType.VARIABLE]: ConditionName.IMMUTABLE,
-  [ConditionType.IMMUTABLE]: ConditionName.VARIABLE
-}
+
 const EXCHANGE_TYPE = {
     [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
     [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
@@ -58,6 +56,7 @@ const PropertyList: React.FC<ListProps> = ({
   onConditionChange,
   onUpdateErrors
 }) => {
+  const { t } = useTranslation();
   const [hoveredProperty, setHoveredProperty] = useState<number | null>(null);
 
   const properties = useMemo(() => {
@@ -173,7 +172,9 @@ const PropertyList: React.FC<ListProps> = ({
             </div>
             {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
-                <Tooltip title={`切换为${EXCHANGE_NAME[conditionType]}`}>
+                <Tooltip title={t('business.topology.dynamicGroupForm.propertyList.toggleTooltip', {
+                  typeName: getConditionName(EXCHANGE_TYPE[conditionType], t)
+                })}>
                   <SwapOutlined
                     className="item-toggle"
                     onClick={() => onToggle(property, EXCHANGE_TYPE[conditionType])}
@@ -214,7 +215,7 @@ const PropertyList: React.FC<ListProps> = ({
           {/* Error message */}
           {errors.has(property.id) && (
             <div className="form-error">
-              该字段是必填项
+              {t('business.topology.dynamicGroupForm.propertyList.requiredFieldError')}
             </div>
           )}
         </div>

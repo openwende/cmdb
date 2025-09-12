@@ -1,7 +1,15 @@
 import { CopyMenuItemKey, TransferMenuItemType } from "./Types";
 
+// Note: This file contains static constants with hardcoded Chinese text.
+// For dynamic internationalization in components:
+// - hostCopyMenuItems & transferBaseMenuItems: Use translation keys in components (see HostList.tsx example)
+//   Translation keys: business.topology.constants.copyMenu.* and business.topology.constants.transferMenu.*
+// - QUERY_OPERATOR_DESC: Use getQueryOperatorDesc() function from utils.ts
+//   Translation keys: business.topology.constants.queryOperatorDesc.*
+
 /**
  * "Copy" dropdown menu items
+ * Note: Labels are hardcoded for static structure. Use translation keys in components for i18n.
  */
 export const hostCopyMenuItems = [
   { key: CopyMenuItemKey.Id, label: 'ID' },
@@ -31,6 +39,7 @@ export const hostCopyKeys: CopyMenuItemKey[] = hostCopyMenuItems.flatMap((item: 
 
 /**
  * "Move to" dropdown menu items
+ * Note: Labels are hardcoded for static structure. Use translation keys in components for i18n.
  */
 export const transferBaseMenuItems = [
   { key: TransferMenuItemType.idlePool, label: '空闲机池' },
@@ -70,6 +79,11 @@ export const QUERY_OPERATOR_SYMBOL = {
   [QUERY_OPERATOR.CONTAINS]: 'contains',
   [QUERY_OPERATOR.CONTAINS_CS]: 'contains(CS)',
 }
+/**
+ * Query operator descriptions in Chinese
+ * Note: For internationalization, use getQueryOperatorDesc() function from utils.ts instead
+ * @deprecated Use getQueryOperatorDesc() for i18n support
+ */
 export const QUERY_OPERATOR_DESC = {
   [QUERY_OPERATOR.EQ]: '等于',
   [QUERY_OPERATOR.NE]: '不等于',

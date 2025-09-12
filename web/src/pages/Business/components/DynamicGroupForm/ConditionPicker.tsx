@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Button, Popover, Input, Checkbox, Tooltip } from 'antd';
 import { PlusCircleOutlined, SearchOutlined, CheckOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { ObjectMainLine, PropertyMap, Property, ConditionType } from '../../Types';
+import { getConditionName } from '../../utils';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
 
@@ -17,7 +19,7 @@ interface ConditionPickerProps {
 }
 
 const ConditionPicker: React.FC<ConditionPickerProps> = ({
-  text = '添加',
+  text,
   placement = 'bottom',
   selected,
   propertyMap,
@@ -26,8 +28,10 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
   conditionType,
   onPropertyChange
 }) => {
+  const { t } = useTranslation();
   const [isShow, setIsShow] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const addText = text || t('business.topology.dynamicGroupForm.conditionPicker.addText');
 
   // Check if a property is selected in other condition types
   const isSelectedInOtherType = (property: Property) => {
@@ -48,10 +52,8 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
       p.id === property.id && p.conditionType !== conditionType
     );
     if (otherProperty) {
-      const typeName = otherProperty.conditionType === ConditionType.VARIABLE
-        ? '可变条件'
-        : '锁定条件';
-      return `已在${typeName}中添加`;
+      const typeName = getConditionName(otherProperty.conditionType!, t);
+      return t('business.topology.dynamicGroupForm.conditionPicker.alreadyAdded', { typeName });
     }
     return '';
   };
@@ -147,7 +149,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
                   indeterminate={selectState.indeterminate}
                   onChange={(e) => handleCategorySelectAll(modelId, e.target.checked)}
                 />
-                全选
+                {t('business.topology.dynamicGroupForm.conditionPicker.selectAll')}
               </div>
             </div>
 
@@ -194,7 +196,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
       {/* Search section */}
       <div className="search-section">
         <Input.Search
-          placeholder="请输入字段名称或唯一标识"
+          placeholder={t('business.topology.dynamicGroupForm.conditionPicker.searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={searchText}
           allowClear
@@ -236,7 +238,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
           e.stopPropagation();
         }}
       >
-        {text}
+        {addText}
       </Button>
     </Popover>
   );

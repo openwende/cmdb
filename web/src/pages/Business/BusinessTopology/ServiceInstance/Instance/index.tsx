@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Drawer, Form, Input, Modal, message, Popconfirm, Tag } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, MinusOutlined } from '@ant-design/icons';
 import { serviceInst, processInst } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
@@ -12,11 +13,12 @@ interface Props {
     setExpandAll: (expand: boolean) => void;
 }
 
-const Instance: React.FC<Props> = ({ 
-    selectedRowKeys, 
-    setSelectedRowKeys, 
+const Instance: React.FC<Props> = ({
+    selectedRowKeys,
+    setSelectedRowKeys,
     expandAll
 }) => {
+    const { t } = useTranslation();
     const [current, setCurrent] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [drawerVisible, setDrawerVisible] = useState(false);
@@ -27,7 +29,6 @@ const Instance: React.FC<Props> = ({
     const [labelModalVisible, setLabelModalVisible] = useState(false);
     const [labelList, setLabelList] = useState<Array<{ key: string, value: string }>>([]);
 
-    // 监听expandAll变化
     useEffect(() => {
         if (expandAll) {
             const allKeys = serviceInst.map(item => item.id);
@@ -37,10 +38,9 @@ const Instance: React.FC<Props> = ({
         }
     }, [expandAll]);
 
-    // 实例表格列
     const instanceColumns = [
         {
-            title: '实例名称',
+            title: t('business.topology.serviceInstance.instance.columns.instanceName'),
             dataIndex: 'name',
             key: 'name',
             render: (text: string, record: any) => (
@@ -50,7 +50,7 @@ const Instance: React.FC<Props> = ({
                             value={editingInstanceName}
                             onChange={(e) => setEditingInstanceName(e.target.value)}
                             onPressEnter={() => {
-                                message.success('实例名称修改成功');
+                                message.success(t('business.topology.serviceInstance.instance.messages.instanceNameUpdateSuccess'));
                                 setEditingInstance(null);
                             }}
                             onBlur={() => setEditingInstance(null)}
@@ -72,12 +72,12 @@ const Instance: React.FC<Props> = ({
             )
         },
         {
-            title: '进程数量',
+            title: t('business.topology.serviceInstance.instance.columns.processCount'),
             dataIndex: 'process_count',
             key: 'process_count'
         },
         {
-            title: '标签',
+            title: t('business.topology.serviceInstance.instance.columns.labels'),
             dataIndex: 'labels',
             key: 'labels',
             render: (labels: any, record: any) => (
@@ -97,7 +97,7 @@ const Instance: React.FC<Props> = ({
             )
         },
         {
-            title: '操作',
+            title: t('business.topology.serviceInstance.instance.columns.action'),
             key: 'action',
             render: (record: any) => (
                 <Space>
@@ -105,32 +105,31 @@ const Instance: React.FC<Props> = ({
                         type="link"
                         onClick={() => handleAddProcess(record)}
                     >
-                        添加进程
+                        {t('business.topology.serviceInstance.instance.actions.addProcess')}
                     </Button>
                     <Button
                         type="link"
                         onClick={() => handleCloneInstance(record)}
                     >
-                        克隆
+                        {t('business.topology.serviceInstance.instance.actions.clone')}
                     </Button>
                     <Popconfirm
-                        title="确定删除该实例?"
+                        title={t('business.topology.serviceInstance.instance.confirm.deleteInstance')}
                         onConfirm={() => handleDeleteInstance(record)}
-                        okText="确定"
-                        cancelText="取消"
+                        okText={t('common.confirm')}
+                        cancelText={t('common.cancel')}
                     >
-                        <Button type="link" danger>删除</Button>
+                        <Button type="link" danger>{t('common.delete')}</Button>
                     </Popconfirm>
                 </Space>
             )
         }
     ];
 
-    // 展开的进程实例列
     const expandedRowRender = () => {
         const columns = [
             {
-                title: '进程名称',
+                title: t('business.topology.serviceInstance.instance.columns.processName'),
                 dataIndex: ['property', 'bk_process_name'],
                 key: 'process_name',
                 render: (text: string, processRecord: any) => (
@@ -142,11 +141,24 @@ const Instance: React.FC<Props> = ({
                     </Button>
                 )
             },
-            { title: '进程启动', dataIndex: ['property', 'bk_func_name'], key: 'func_name' },
-            { title: '进程启动参数', dataIndex: ['property', 'bk_start_param_regex'], key: 'start_param' },
-            { title: '绑定信息', dataIndex: ['property', 'bind_info'], key: 'bind_info', render: () => '--' },
             {
-                title: '操作',
+                title: t('business.topology.serviceInstance.instance.columns.processStart'),
+                dataIndex: ['property', 'bk_func_name'],
+                key: 'func_name'
+            },
+            {
+                title: t('business.topology.serviceInstance.instance.columns.startupParams'),
+                dataIndex: ['property', 'bk_start_param_regex'],
+                key: 'start_param'
+            },
+            {
+                title: t('business.topology.serviceInstance.instance.columns.bindInfo'),
+                dataIndex: ['property', 'bind_info'],
+                key: 'bind_info',
+                render: () => '--'
+            },
+            {
+                title: t('business.topology.serviceInstance.instance.columns.action'),
                 key: 'action',
                 render: (processRecord: any) => (
                     <Space>
@@ -154,15 +166,15 @@ const Instance: React.FC<Props> = ({
                             type="link"
                             onClick={() => handleEditProcess(processRecord)}
                         >
-                            编辑
+                            {t('common.edit')}
                         </Button>
                         <Popconfirm
-                            title="确定删除该进程?"
+                            title={t('business.topology.serviceInstance.instance.confirm.deleteProcess')}
                             onConfirm={() => handleDeleteProcess(processRecord)}
-                            okText="确定"
-                            cancelText="取消"
+                            okText={t('common.confirm')}
+                            cancelText={t('common.cancel')}
                         >
-                            <Button type="link" danger>删除</Button>
+                            <Button type="link" danger>{t('common.delete')}</Button>
                         </Popconfirm>
                     </Space>
                 )
@@ -205,7 +217,7 @@ const Instance: React.FC<Props> = ({
     };
 
     const handleSaveLabels = () => {
-        message.success('标签保存成功');
+        message.success(t('business.topology.serviceInstance.instance.messages.labelSaveSuccess'));
         setLabelModalVisible(false);
     };
 
@@ -225,35 +237,32 @@ const Instance: React.FC<Props> = ({
     };
 
     const handleCloneInstance = (record: any) => {
-        console.log('克隆实例:', record);
-        message.info('克隆实例功能');
+        message.info(t('business.topology.serviceInstance.instance.messages.cloneInstanceInfo'));
     };
 
     const handleDeleteInstance = (record: any) => {
-        console.log('删除实例:', record);
-        message.success('删除实例成功');
+        message.success(t('business.topology.serviceInstance.instance.messages.deleteInstanceSuccess'));
     };
 
     const handleDeleteProcess = (record: any) => {
-        console.log('删除进程:', record);
-        message.success('删除进程成功');
+        message.success(t('business.topology.serviceInstance.instance.messages.deleteProcessSuccess'));
     };
 
     const renderDrawerContent = () => {
         if (drawerType === 'view') {
             return (
                 <div>
-                    <h3>基础信息</h3>
+                    <h3>{t('business.topology.serviceInstance.process.sections.basicInfo')}</h3>
                     <div style={{ marginBottom: 16 }}>
-                        <div>创建时间：2025-05-27 14:52:15</div>
-                        <div>创建人：bk-cmdb</div>
-                        <div>进程名称：devTest</div>
-                        <div>更新时间：2025-05-27 14:52:15</div>
-                        <div>进程别名：devTest</div>
-                        <div>备注：--</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.createTime')}：2025-05-27 14:52:15</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.creator')}：bk-cmdb</div>
+                        <div>{t('business.topology.serviceInstance.process.form.processName')}：devTest</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.updateTime')}：2025-05-27 14:52:15</div>
+                        <div>{t('business.topology.serviceInstance.process.form.processAlias')}：devTest</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.description')}：--</div>
                     </div>
 
-                    <h3>监听信息</h3>
+                    <h3>{t('business.topology.serviceInstance.process.sections.listenInfo')}</h3>
                     <Table
                         columns={[
                             { title: 'IP', dataIndex: 'ip', key: 'ip' },
@@ -265,11 +274,11 @@ const Instance: React.FC<Props> = ({
                         dataSource={[]}
                         pagination={false}
                         size="small"
-                        locale={{ emptyText: '暂无数据' }}
+                        locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
                     />
 
                     <div style={{ marginTop: 16 }}>
-                        <Button type="primary">编辑</Button>
+                        <Button type="primary">{t('common.edit')}</Button>
                     </div>
                 </div>
             );
@@ -277,27 +286,27 @@ const Instance: React.FC<Props> = ({
 
         return (
             <Form layout="vertical">
-                <h3>基础信息</h3>
+                <h3>{t('business.topology.serviceInstance.process.sections.basicInfo')}</h3>
                 <div style={{ display: 'flex', gap: 16 }}>
-                    <Form.Item label="进程名称" style={{ flex: 1 }}>
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.processName')} style={{ flex: 1 }}>
                         <Input defaultValue="devTest" />
                     </Form.Item>
-                    <Form.Item label="进程别名" style={{ flex: 1 }}>
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.processAlias')} style={{ flex: 1 }}>
                         <Input defaultValue="devTest" />
                     </Form.Item>
                 </div>
                 <div style={{ display: 'flex', gap: 16 }}>
-                    <Form.Item label="进程启动参数" style={{ flex: 1 }}>
-                        <Input placeholder="请输入进程启动参数" />
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.startupParams')} style={{ flex: 1 }}>
+                        <Input placeholder={t('business.topology.serviceInstance.process.form.placeholders.startupParams')} />
                     </Form.Item>
-                    <Form.Item label="备注" style={{ flex: 1 }}>
-                        <Input placeholder="请输入备注" />
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.description')} style={{ flex: 1 }}>
+                        <Input placeholder={t('business.topology.serviceInstance.process.form.placeholders.description')} />
                     </Form.Item>
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                    <Button type="primary" style={{ marginRight: 8 }}>保存</Button>
-                    <Button onClick={() => setDrawerVisible(false)}>取消</Button>
+                    <Button type="primary" style={{ marginRight: 8 }}>{t('common.save')}</Button>
+                    <Button onClick={() => setDrawerVisible(false)}>{t('common.cancel')}</Button>
                 </div>
             </Form>
         );
@@ -305,7 +314,7 @@ const Instance: React.FC<Props> = ({
 
     return (
         <div>
-            {/* 表格 */}
+            {/* The table */}
             <Table
                 rowSelection={{
                     selectedRowKeys,
@@ -324,9 +333,13 @@ const Instance: React.FC<Props> = ({
                 bordered
             />
 
-            {/* 分页 */}
+            {/* The pagination */}
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>已选择 {selectedRowKeys.length} 条</span>
+                <span>
+                    {t('business.topology.serviceInstance.instance.pagination.selected')}
+                    &nbsp;{selectedRowKeys.length}
+                    &nbsp;{t('business.topology.serviceInstance.instance.pagination.items')}
+                </span>
                 <Pagination
                     total={serviceInst.length}
                     pageSize={pageSize}
@@ -342,28 +355,28 @@ const Instance: React.FC<Props> = ({
                 />
             </div>
 
-            {/* 编辑标签弹窗 */}
+            {/* The edit tag modal */}
             <Modal
-                title="编辑标签"
+                title={t('business.topology.serviceInstance.instance.modal.editLabel')}
                 open={labelModalVisible}
                 onOk={handleSaveLabels}
                 onCancel={() => setLabelModalVisible(false)}
-                okText="确定"
-                cancelText="取消"
+                okText={t('common.confirm')}
+                cancelText={t('common.cancel')}
                 width={600}
             >
                 <div style={{ marginBottom: 16 }}>
                     {labelList.map((label, index) => (
                         <div key={index} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'center' }}>
                             <Input
-                                placeholder="键"
+                                placeholder={t('business.topology.serviceInstance.instance.form.placeholders.key')}
                                 value={label.key}
                                 onChange={(e) => handleLabelChange(index, 'key', e.target.value)}
                                 style={{ flex: 1 }}
                             />
                             <span>:</span>
                             <Input
-                                placeholder="值"
+                                placeholder={t('business.topology.serviceInstance.instance.form.placeholders.value')}
                                 value={label.value}
                                 onChange={(e) => handleLabelChange(index, 'value', e.target.value)}
                                 style={{ flex: 1 }}
@@ -391,9 +404,15 @@ const Instance: React.FC<Props> = ({
                 </div>
             </Modal>
 
-            {/* 抽屉 */}
+            {/* The drawer */}
             <Drawer
-                title={drawerType === 'view' ? '查看进程' : drawerType === 'add' ? '添加进程' : '编辑进程'}
+                title={
+                    drawerType === 'view'
+                        ? t('business.topology.serviceInstance.instance.drawer.viewProcess')
+                        : drawerType === 'add'
+                            ? t('business.topology.serviceInstance.instance.drawer.addProcess')
+                            : t('business.topology.serviceInstance.instance.drawer.editProcess')
+                }
                 placement="right"
                 width={800}
                 open={drawerVisible}

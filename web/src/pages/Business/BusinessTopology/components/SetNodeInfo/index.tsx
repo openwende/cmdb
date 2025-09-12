@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Collapse, Button, message, Form, Input, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { setNodeInfo } from '@/mock/business';
 import InfoItem from '../InfoItem';
 import { TreeData } from '../../../Types';
@@ -13,6 +14,7 @@ interface Props {
 }
 
 const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
     const [formChanged, setFormChanged] = useState(false);
@@ -39,7 +41,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
     const confirmDelete = () => {
         // TODO: api
-        message.success('删除集群节点成功');
+        message.success(t('business.topology.setNodeInfo.deleteSuccess'));
         setIsDeleteModalVisible(false);
     };
 
@@ -52,7 +54,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
             };
 
             console.log(setProcessedValues);
-            message.success('保存成功');
+            message.success(t('business.topology.setNodeInfo.saveSuccess'));
             setIsEditing(false);
         } catch (error) {
             console.error('Form validation failed:', error);
@@ -72,77 +74,77 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     ghost
                     items={[{
                         key: '1',
-                        label: <span className="basic-info">基础信息</span>,
+                        label: <span className="basic-info">{t('business.topology.setNodeInfo.basicInfo')}</span>,
                         children: (
                             <Form form={form} layout="vertical">
                                 <div className="form-row">
                                     <Form.Item
-                                        label="集群名称"
+                                        label={t('business.topology.setNodeInfo.setName')}
                                         name="bkSetName"
-                                        rules={[{ required: true, message: '请输入集群名称' }]}
+                                        rules={[{ required: true, message: t('common.form.rules_message') }]}
                                         className="flex-item"
                                     >
                                         <Input
-                                            placeholder="请输入集群名称"
+                                            placeholder={t('business.topology.setNodeInfo.setNamePlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
                                     <Form.Item
-                                        label="集群描述"
+                                        label={t('business.topology.setNodeInfo.setDescription')}
                                         name="setDesc"
                                         className="flex-item"
                                     >
                                         <Input
-                                            placeholder="请输入集群描述"
+                                            placeholder={t('business.topology.setNodeInfo.setDescriptionPlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
                                     <Form.Item
-                                        label="环境类型"
+                                        label={t('business.topology.setNodeInfo.environmentType')}
                                         name="bkSetEnv"
                                         className="flex-item"
                                     >
                                         <Select
-                                            placeholder="请选择环境类型"
+                                            placeholder={t('business.topology.setNodeInfo.environmentTypePlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         >
-                                            <Option value="1">测试</Option>
-                                            <Option value="2">体验</Option>
-                                            <Option value="3">正式</Option>
+                                            <Option value="1">{t('business.topology.setNodeInfo.environment.test')}</Option>
+                                            <Option value="2">{t('business.topology.setNodeInfo.environment.experience')}</Option>
+                                            <Option value="3">{t('business.topology.setNodeInfo.environment.production')}</Option>
                                         </Select>
                                     </Form.Item>
                                 </div>
                                 <div className="form-row">
                                     <Form.Item
-                                        label="服务状态"
+                                        label={t('business.topology.setNodeInfo.serviceStatus')}
                                         name="bkServiceStatus"
                                         className="flex-item"
                                     >
                                         <Select
-                                            placeholder="请选择服务状态"
+                                            placeholder={t('business.topology.setNodeInfo.serviceStatusPlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         >
-                                            <Option value="1">开放</Option>
-                                            <Option value="2">关闭</Option>
+                                            <Option value="1">{t('business.topology.setNodeInfo.status.open')}</Option>
+                                            <Option value="2">{t('business.topology.setNodeInfo.status.closed')}</Option>
                                         </Select>
                                     </Form.Item>
                                     <Form.Item
-                                        label="设计容量"
+                                        label={t('business.topology.setNodeInfo.designCapacity')}
                                         name="bkCapacity"
                                         className="flex-item"
                                     >
                                         <Input
-                                            placeholder="请输入设计容量"
+                                            placeholder={t('business.topology.setNodeInfo.designCapacityPlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
                                     <Form.Item
-                                        label="备注"
+                                        label={t('business.topology.setNodeInfo.remarks')}
                                         name="bkSetDesc"
                                         className="description-item"
                                     >
                                         <Input.TextArea
-                                            placeholder="请输入备注"
+                                            placeholder={t('business.topology.setNodeInfo.remarksPlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
@@ -158,10 +160,10 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                         onClick={handleSave}
                         disabled={!formChanged}
                     >
-                        保存
+                        {t('common.submit')}
                     </Button>
                     <Button onClick={handleCancel}>
-                        取消
+                        {t('common.cancel')}
                     </Button>
                 </div>
             </>
@@ -180,11 +182,18 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 visible={isDeleteModalVisible}
                 onOk={confirmDelete}
                 onCancel={() => setIsDeleteModalVisible(false)}
-                title="确定删除 set?"
+                title={t('business.topology.setNodeInfo.confirmDeleteTitle')}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
 
             <div className="info-header">
-                <div><span className="header-label">集群模板：</span>无</div>
+                <div>
+                    <span className="header-label">
+                        {t('business.topology.setNodeInfo.clusterTemplate')}：
+                    </span>
+                    {t('business.topology.setNodeInfo.none')}
+                </div>
             </div>
 
             <Collapse
@@ -193,20 +202,34 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 items={[
                     {
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>基础信息</span>,
+                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>
+                            {t('business.topology.setNodeInfo.basicInfo')}
+                        </span>,
                         children: (
                             <div className="info-grid">
-                                <InfoItem label="创建时间" value={new Date(setData.create_time).toLocaleString()} />
-                                <InfoItem label="创建人" value={setData.bk_created_by} />
-                                <InfoItem label="更新时间" value={new Date(setData.last_time).toLocaleString()} />
-                                <InfoItem label="更新人" value={setData.bk_updated_by} />
+                                <InfoItem label={t('business.topology.setNodeInfo.createTime')} value={new Date(setData.create_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.setNodeInfo.creator')} value={setData.bk_created_by} />
+                                <InfoItem label={t('business.topology.setNodeInfo.updateTime')} value={new Date(setData.last_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.setNodeInfo.updater')} value={setData.bk_updated_by} />
                                 <InfoItem label="ID" value={setData.bk_set_id} />
-                                <InfoItem label="集群名" value={setData.bk_set_name} />
-                                <InfoItem label="集群描述" value={setData.bk_set_desc} />
-                                <InfoItem label="环境类型" value={setData.bk_set_env === "3" ? "正式" : "测试"} />
-                                <InfoItem label="服务状态" value={setData.bk_service_status === "1" ? "开放" : "关闭"} />
-                                <InfoItem label="备注" value={setData.description} />
-                                <InfoItem label="设计容量" value={setData.bk_capacity} />
+                                <InfoItem label={t('business.topology.setNodeInfo.setName')} value={setData.bk_set_name} />
+                                <InfoItem label={t('business.topology.setNodeInfo.setDescription')} value={setData.bk_set_desc} />
+                                <InfoItem
+                                    label={t('business.topology.setNodeInfo.environmentType')}
+                                    value={
+                                        setData.bk_set_env === "3"
+                                            ? t('business.topology.setNodeInfo.environment.production')
+                                            : t('business.topology.setNodeInfo.environment.test')}
+                                />
+                                <InfoItem
+                                    label={t('business.topology.setNodeInfo.serviceStatus')}
+                                    value={
+                                        setData.bk_service_status === "1"
+                                            ? t('business.topology.setNodeInfo.status.open')
+                                            : t('business.topology.setNodeInfo.status.closed')}
+                                />
+                                <InfoItem label={t('business.topology.setNodeInfo.remarks')} value={setData.description} />
+                                <InfoItem label={t('business.topology.setNodeInfo.designCapacity')} value={setData.bk_capacity} />
                             </div>
                         )
                     }
@@ -215,10 +238,10 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
             <div className="action-buttons">
                 <Button type="primary" onClick={handleEdit}>
-                    编辑
+                    {t('common.edit')}
                 </Button>
                 <Button type="primary" danger onClick={handleDelete}>
-                    删除节点
+                    {t('business.topology.setNodeInfo.deleteNode')}
                 </Button>
             </div>
         </>

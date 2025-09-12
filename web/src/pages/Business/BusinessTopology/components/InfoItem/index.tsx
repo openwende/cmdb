@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { message } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import './style.css';
 
 interface Props {
@@ -9,14 +10,15 @@ interface Props {
 }
 
 const InfoItem: React.FC<Props> = ({ label, value }) => {
+    const { t } = useTranslation();
     const [isHovered, setIsHovered] = useState(false);
 
     const handleCopy = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);
-            message.success('复制成功');
+            message.success(t('resource.host.messages.copy_success'));
         } catch (error) {
-            message.error('复制失败');
+            message.error(t('resource.host.messages.copy_failed'));
         }
     };
 

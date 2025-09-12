@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tabs } from 'antd';
 import { Outlet, useMatch, useSearchParams, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import BusinessTree from './BusinessTree';
 import HostList from './HostList';
 import ServiceInstance from './ServiceInstance';
@@ -24,6 +25,7 @@ interface NodeSelection {
 }
 
 const BusinessTopology: React.FC = () => {
+    const { t } = useTranslation();
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState('hostList');
@@ -96,7 +98,7 @@ const BusinessTopology: React.FC = () => {
     const items = [
         {
             key: 'hostList',
-            label: '主机列表',
+            label: t('business.topology.tabs.hostList'),
             children: (
                 selectedNode && (
                     <HostList
@@ -108,7 +110,7 @@ const BusinessTopology: React.FC = () => {
         },
         {
             key: 'serviceInstance',
-            label: '服务实例',
+            label: t('business.topology.tabs.serviceInstance'),
             children: (
                 selectedNode && (
                     <ServiceInstance
@@ -121,7 +123,7 @@ const BusinessTopology: React.FC = () => {
         },
         {
             key: 'nodeInfo',
-            label: '节点信息',
+            label: t('business.topology.tabs.nodeInfo'),
             children: (
                 selectedNode && (
                     <NodeInfo

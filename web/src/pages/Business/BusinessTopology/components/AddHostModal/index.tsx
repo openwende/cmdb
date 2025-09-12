@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Modal, Tabs, Table, Button, Input, Collapse, List, message, TabsProps, CollapseProps, Dropdown, MenuProps } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import { allHosts2, businessData2, idleCluster2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
@@ -12,30 +13,8 @@ import './style.css';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
-const columns = [
-    {
-        title: '内网IP',
-        dataIndex: 'bk_host_innerip',
-        key: 'bk_host_innerip'
-    },
-    {
-        title: '内网IPv6',
-        dataIndex: 'bk_host_innerip_v6',
-        key: 'bk_host_innerip_v6',
-        render: (text: string) => text || '--'
-    },
-    {
-        title: '管控区域',
-        dataIndex: 'bk_cloud_id',
-        key: 'bk_cloud_id',
-        render: (cloudInfo: any[]) => {
-            return cloudInfo.length > 0
-                ? `${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`
-                : '--';
-        }
-    }
-];
-const createNewHost = (ip: string, index: number) => {
+
+const createNewHost = (ip: string, index: number, t: any) => {
     return {
         bk_host_id: Date.now() + index,
         bk_host_innerip: ip,
@@ -46,7 +25,7 @@ const createNewHost = (ip: string, index: number) => {
             bk_obj_icon: "",
             bk_inst_id: 90000001,
             bk_obj_name: "",
-            bk_inst_name: "未分配"
+            bk_inst_name: t('business.topology.addHostModal.unassigned')
         }]
     };
 };
@@ -74,6 +53,32 @@ enum TabItemKey {
 }
 
 const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSelectedHosts, transferHostType }) => {
+    const { t } = useTranslation();
+
+    const columns = [
+        {
+            title: t('business.topology.addHostModal.columns.innerIP'),
+            dataIndex: 'bk_host_innerip',
+            key: 'bk_host_innerip'
+        },
+        {
+            title: t('business.topology.addHostModal.columns.innerIPv6'),
+            dataIndex: 'bk_host_innerip_v6',
+            key: 'bk_host_innerip_v6',
+            render: (text: string) => text || '--'
+        },
+        {
+            title: t('business.topology.addHostModal.columns.cloudArea'),
+            dataIndex: 'bk_cloud_id',
+            key: 'bk_cloud_id',
+            render: (cloudInfo: any[]) => {
+                return cloudInfo.length > 0
+                    ? `${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`
+                    : '--';
+            }
+        }
+    ];
+
     const [activeTab, setActiveTab] = useState<string>(TabItemKey.StaticTopo);
     const [selectedHosts, setSelectedHosts] = useState<React.Key[]>([]);
     const [page, setPage] = useState(1);
@@ -208,7 +213,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
 
     const handleAddCustomHosts = () => {
         if (!customInput.trim()) {
-            message.warning('请输入IP');
+            message.warning(t('business.topology.addHostModal.messages.pleaseInputIP'));
             return;
         }
 
@@ -225,7 +230,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
             const trimmedIp = ip.trim();
             if (trimmedIp && !existingIps.has(trimmedIp)) {
                 // TODO: the default field name is what?
-                newHosts.push(createNewHost(trimmedIp, index));
+                newHosts.push(createNewHost(trimmedIp, index, t));
             }
         });
 
@@ -233,9 +238,9 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
             const updatedHosts = [...customHosts, ...newHosts];
             setCustomHosts(updatedHosts);
             setCustomInput('');
-            message.success(`成功添加 ${newHosts.length} 台主机`);
+            message.success(t('business.topology.addHostModal.messages.addSuccess', { count: newHosts.length }));
         } else {
-            message.warning('没有新的主机可添加');
+            message.warning(t('business.topology.addHostModal.messages.noNewHosts'));
         }
     };
 
@@ -254,9 +259,9 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
 
         try {
             await navigator.clipboard.writeText(selectedIPs);
-            message.success('复制成功');
+            message.success(t('business.topology.addHostModal.messages.copySuccess'));
         } catch (error) {
-            message.error('复制失败');
+            message.error(t('business.topology.addHostModal.messages.copyFailed'));
         }
     };
 
@@ -314,7 +319,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
         return (
             <div className='table-wrapper'>
                 <Input.Search
-                    placeholder="请输入"
+                    placeholder={t('business.topology.addHostModal.placeholders.pleaseInput')}
                     className='search-input'
                     allowClear
                     value={hostSearchValue}
@@ -368,7 +373,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                     }}
                 >
                     <Input.Search
-                        placeholder="搜索拓扑节点"
+                        placeholder={t('business.topology.addHostModal.placeholders.searchTopologyNode')}
                         className='search-input'
                         allowClear
                         value={treeSearchValue}
@@ -411,12 +416,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                             setCustomInput(e.target.value);
                             setInputError(false);
                         }}
-                        placeholder="请输入IP，换行分隔"
+                        placeholder={t('business.topology.addHostModal.placeholders.inputIPNewline')}
                         className='text-area'
                     />
                     {
                         inputError && <div className='error-text'>
-                            IP不正确或主机不存在
+                            {t('business.topology.addHostModal.messages.ipIncorrectOrNotExists')}
                         </div>
                     }
                 </>
@@ -425,7 +430,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                     color="primary"
                     variant="outlined"
                 >
-                    添加至列表
+                    {t('business.topology.addHostModal.buttons.addToList')}
                 </Button>
             </div>
             {renderHostList()}
@@ -454,7 +459,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
                         </div>
                     </List.Item>
                 )}
-                locale={{ emptyText: '暂无主机选中' }}
+                locale={{ emptyText: t('business.topology.addHostModal.messages.noHostSelected') }}
             />
         </>
     );
@@ -462,12 +467,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const inputTabItems: TabsProps['items'] = [
         {
             key: TabItemKey.StaticTopo,
-            label: '静态拓扑',
+            label: t('business.topology.addHostModal.tabs.staticTopology'),
             children: renderStaticTopology(),
         },
         {
             key: TabItemKey.CustomInput,
-            label: '自定义输入',
+            label: t('business.topology.addHostModal.tabs.customInput'),
             children: renderCustomInput(),
         }
     ]
@@ -475,12 +480,12 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const menuItems: MenuProps['items'] = [
         {
             key: MenuItemKey.CopyIP,
-            label: '复制IP',
+            label: t('business.topology.addHostModal.menu.copyIP'),
             disabled: resultPreviewItems.length === 0
         },
         {
             key: MenuItemKey.RemoveAll,
-            label: '移除所有',
+            label: t('business.topology.addHostModal.menu.removeAll'),
             disabled: resultPreviewItems.length === 0
         }
     ]
@@ -488,7 +493,9 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const collapseItems: CollapseProps['items'] = [
         {
             key: 'result',
-            label: <span>已选择 <span className="selected-count">{resultPreviewItems.length}</span> 台主机</span>,
+            label: <span>{t('business.topology.addHostModal.labels.selectedCount', {
+                count: resultPreviewItems.length
+            })}</span>,
             children: renderResultPreview(),
             extra: <Dropdown menu={{
                 items: menuItems,
@@ -507,7 +514,7 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     const resultTabItems: TabsProps['items'] = [
         {
             key: 'result',
-            label: '结果预览',
+            label: t('business.topology.addHostModal.tabs.resultPreview'),
             children: <Collapse
                 ghost
                 defaultActiveKey={['result']}
@@ -519,16 +526,24 @@ const AddHostModal: React.FC<Props> = ({ visible, onClose, onConfirm, initialSel
     return (
         <>
             <Modal
-                title={initialSelectedHosts ? '选择主机' : '新增主机到模块'}
+                title={
+                    initialSelectedHosts
+                        ? t('business.topology.addHostModal.titles.selectHost')
+                        : t('business.topology.addHostModal.titles.addHostToModule')
+                }
                 open={visible}
                 onCancel={handleCancel}
                 width={1200}
                 footer={[
                     <Button key="cancel" onClick={handleCancel}>
-                        取消
+                        {t('business.topology.addHostModal.buttons.cancel')}
                     </Button>,
                     <Button key="confirm" type="primary" disabled={!resultPreviewItems.length} onClick={handleNextStep}>
-                        {initialSelectedHosts ? '确定' : '下一步'}
+                        {
+                            initialSelectedHosts
+                                ? t('business.topology.addHostModal.buttons.confirm')
+                                : t('business.topology.addHostModal.buttons.nextStep')
+                        }
                     </Button>
                 ]}
                 maskClosable={false}

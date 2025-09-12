@@ -341,6 +341,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                 onCancel={() => setShowModal(false)}
                 title={t('common.confirmLeave')}
                 description={t('common.unsavedChanges')}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
         </Drawer>
     );

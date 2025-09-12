@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import {
@@ -33,6 +34,7 @@ interface Props {
 }
 
 const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
@@ -62,13 +64,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
 
     const text = selectedHosts.map(rec => getHostCopyValue(rec, copyKey)).join('\n');
     if (!text) {
-      message.warning('无可复制内容');
+      message.warning(t('resource.host.messages.no_copy_content'));
       return;
     }
     navigator.clipboard?.writeText(text).then(() => {
-      message.success('复制成功');
+      message.success(t('resource.host.messages.copy_success'));
     }).catch(() => {
-      message.error('复制失败');
+      message.error(t('resource.host.messages.copy_failed'));
     });
   }, [selectedRowKeys]);
 
@@ -158,16 +160,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       render: (id: number) => <a>{id}</a>
     },
     {
-      title: '内网IPv4',
+      title: t('resource.host.columns.inner_ipv4'),
       dataIndex: ['host', 'bk_host_innerip'],
     },
     {
-      title: '内网IPv6',
+      title: t('resource.host.columns.inner_ipv6'),
       dataIndex: ['host', 'bk_host_innerip_v6'],
       render: (text: string) => text || '--'
     },
     {
-      title: "管控区域",
+      title: t('resource.host.columns.cloud_area'),
       render: (_: any, record: any) => {
         const cloudInfo = record.host.bk_cloud_id;
         const region = cloudInfo.length > 0
@@ -177,14 +179,14 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       }
     },
     {
-      title: '模块名（模块）',
+      title: t('business.topology.hostList.columns.moduleName'),
       render: (_: any, record: any) => {
         const moduleInfo = record.module;
         return moduleInfo.length > 0 ? <span>{moduleInfo[0].bk_module_name}</span> : '--';
       }
     },
     {
-      title: '集群名（集群）',
+      title: t('business.topology.hostList.columns.clusterName'),
       render: (_: any, record: any) => {
         const setInfo = record.set;
         return setInfo.length > 0 ? <span>{setInfo[0].bk_set_name}</span> : '--';
@@ -198,33 +200,107 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
 
     if (type === DropdownMenuType.Transfer) {
       transferBaseMenuItems.forEach(base => {
-        if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
+        const translatedLabel = base.key === TransferMenuItemType.idlePool
+          ? t('business.topology.constants.transferMenu.idlePool')
+          : base.key === TransferMenuItemType.businessModule
+            ? t('business.topology.constants.transferMenu.businessModule')
+            : base.key === TransferMenuItemType.hostPool
+              ? t('business.topology.constants.transferMenu.hostPool')
+              : t('business.topology.constants.transferMenu.otherBusiness');
+
+        if (
+          base.key === TransferMenuItemType.hostPool
+          || base.key === TransferMenuItemType.otherBusiness
+        ) {
           const disabled = hostsNotInIdlePool;
           const tip = base.key === TransferMenuItemType.hostPool
-            ? '主机需在"空闲机池"下才允许转移至主机池'
-            : '主机需在"空闲机池"下才允许转移至其他业务';
+            ? t('business.topology.hostList.transfer.hostPoolTip')
+            : t('business.topology.hostList.transfer.otherBusinessTip');
+          items.push(
+            {
+              ...base,
+              label: disabled
+                ? <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
+                  {translatedLabel}
+                </Tooltip>
+                : translatedLabel,
+              disabled
+            }
+          );
+        } else {
           items.push({
             ...base,
-            label: disabled
-              ? <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>{base.label}</Tooltip>
-              : base.label,
-            disabled
-          });
-        } else {
-          items.push(base as any);
+            label: translatedLabel
+          } as any);
         }
       });
     } else if (type === DropdownMenuType.Append) {
-      items.push({ key: AppendMenuItemKey.AppendToBusinessModule, label: '业务模块' });
+      items.push(
+        {
+          key: AppendMenuItemKey.AppendToBusinessModule,
+          label: t('business.topology.hostList.menus.businessModule')
+        }
+      );
     } else if (type === DropdownMenuType.Remove) {
-      items.push({ key: RemoveMenuItemKey.CurrentModule, label: '当前模块' });
+      items.push(
+        {
+          key: RemoveMenuItemKey.CurrentModule,
+          label: t('business.topology.hostList.menus.currentModule')
+        }
+      );
     } else if (type === DropdownMenuType.Copy) {
-      items.push(...hostCopyMenuItems);
+      // Map copy menu items to use translations
+      const translatedCopyItems = hostCopyMenuItems.map(item => {
+        if ('children' in item && item.children) {
+          return {
+            ...item,
+            label: t('business.topology.constants.copyMenu.cloudIdGroup'),
+            children: item.children.map(child => ({
+              ...child,
+              label: child.key === HostCopyKey.CloudIdIPv4
+                ? t('business.topology.constants.copyMenu.cloudIdIPv4')
+                : child.key === HostCopyKey.CloudIdIPv6
+                  ? t('business.topology.constants.copyMenu.cloudIdIPv6')
+                  : child.key === HostCopyKey.CloudIdIPIPv4First
+                    ? t('business.topology.constants.copyMenu.cloudIdIPIPv4First')
+                    : t('business.topology.constants.copyMenu.cloudIdIPIPv6First')
+            }))
+          };
+        } else {
+          const translatedLabel = item.key === HostCopyKey.Id
+            ? 'ID'
+            : item.key === HostCopyKey.IPv4
+              ? t('business.topology.constants.copyMenu.ipv4')
+              : item.key === HostCopyKey.IPv6
+                ? t('business.topology.constants.copyMenu.ipv6')
+                : item.key === HostCopyKey.CloudRegion
+                  ? t('business.topology.constants.copyMenu.cloudRegion')
+                  : item.key === HostCopyKey.ModuleName
+                    ? t('business.topology.constants.copyMenu.moduleName')
+                    : t('business.topology.constants.copyMenu.setName');
+
+          return {
+            ...item,
+            label: translatedLabel
+          };
+        }
+      });
+      items.push(...translatedCopyItems);
     } else if (type === DropdownMenuType.More) {
       items.push(
-        { key: MoreMenuItemKey.ExportSelected, label: '导出选中', disabled: selectedRowKeys.length === 0 },
-        { key: MoreMenuItemKey.ExportAll, label: '导出全部' },
-        { key: MoreMenuItemKey.ImportExcel, label: '导入excel更新' }
+        {
+          key: MoreMenuItemKey.ExportSelected,
+          label: t('business.topology.hostList.menus.exportSelected'),
+          disabled: selectedRowKeys.length === 0
+        },
+        {
+          key: MoreMenuItemKey.ExportAll,
+          label: t('business.topology.hostList.menus.exportAll')
+        },
+        {
+          key: MoreMenuItemKey.ImportExcel,
+          label: t('business.topology.hostList.menus.importExcel')
+        }
       );
     }
 
@@ -253,21 +329,33 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       {
         isEmptySet ? <Empty
           className='empty-wrapper'
-          description={<Typography.Text>该集群尚未创建模块</Typography.Text>}
+          description={<Typography.Text>
+            {t('business.topology.hostList.empty.noModuleCreated')}
+          </Typography.Text>}
         >
-          <Button type="primary" onClick={() => setCreateModalVisible(true)}>立即创建</Button>
+          <Button
+            type="primary"
+            onClick={() => setCreateModalVisible(true)}>
+            {t('business.topology.hostList.empty.createNow')}
+          </Button>
         </Empty> : <div className='list-wrapper'>
           {/* The operation botton bar */}
           <div className='operation-bar'>
             {selectedNodeStatus.isModule ? (
-              <Button type="primary" onClick={handleAddHosts}>新增</Button>
+              <Button type="primary" onClick={handleAddHosts}>
+                {t('business.topology.hostList.buttons.add')}
+              </Button>
             ) : (
-              <Tooltip title="仅能在业务模块下新增">
-                <Button type="primary" disabled>新增</Button>
+              <Tooltip title={t('business.topology.hostList.tooltips.onlyModuleCanAdd')}>
+                <Button type="primary" disabled>
+                  {t('business.topology.hostList.buttons.add')}
+                </Button>
               </Tooltip>
             )}
 
-            <Button disabled={selectedRowKeys.length === 0}>编辑</Button>
+            <Button disabled={selectedRowKeys.length === 0}>
+              {t('business.topology.hostList.buttons.edit')}
+            </Button>
 
             <Dropdown
               menu={{
@@ -277,7 +365,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               trigger={['click']}
             >
               <Button disabled={selectedRowKeys.length === 0}>
-                转移至 <DownOutlined />
+                {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
               </Button>
             </Dropdown>
 
@@ -290,7 +378,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
                 trigger={['click']}
               >
                 <Button disabled={selectedRowKeys.length === 0}>
-                  追加至 <DownOutlined />
+                  {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
                 </Button>
               </Dropdown>
             }
@@ -305,7 +393,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
                 trigger={['click']}
               >
                 <Button disabled={selectedRowKeys.length === 0}>
-                  移出 <DownOutlined />
+                  {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
                 </Button>
               </Dropdown>
             }
@@ -319,7 +407,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               trigger={['click']}
             >
               <Button disabled={selectedRowKeys.length === 0}>
-                复制 <DownOutlined />
+                {t('business.topology.hostList.buttons.copy')} <DownOutlined />
               </Button>
             </Dropdown>
 
@@ -331,13 +419,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               trigger={['click']}
             >
               <Button>
-                更多 <DownOutlined />
+                {t('business.topology.hostList.buttons.more')} <DownOutlined />
               </Button>
             </Dropdown>
 
             <div className='search-bar'>
               <Input.Search
-                placeholder="请输入IP或固资编号"
+                placeholder={t('business.topology.hostList.search.placeholder')}
                 style={{ width: 300 }}
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
@@ -365,7 +453,12 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
 
           {
             hostsList.length > 0 && <div className='pagination-wrapper'>
-              <span>已选择 <span className='selected-count'>{selectedRowKeys.length}</span> 条</span>
+              <span>
+                {t('business.topology.hostList.pagination.selected')}
+                &nbsp;<span className='selected-count'>{selectedRowKeys.length}
+                </span>
+                &nbsp;{t('business.topology.hostList.pagination.items')}
+              </span>
               <Pagination
                 total={hostsList.length}
                 pageSize={pageSize}

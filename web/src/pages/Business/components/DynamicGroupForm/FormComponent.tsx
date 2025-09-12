@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Property, ConditionType, OperatorType } from '../../Types';
 import { QUERY_OPERATOR, PROPERTY_TYPES } from '../../constants';
 import DynamicComponent from '@/components/Business/FormComponents/DynamicComponent';
@@ -46,6 +47,7 @@ const FormComponent: React.FC<ComponentProps> = ({
     onChange,
     disabled
 }) => {
+    const { t } = useTranslation();
     const { propertyType, options, isSetName, isModuleName } = usePropertyInfo(property);
 
     // Component type determination
@@ -74,13 +76,15 @@ const FormComponent: React.FC<ComponentProps> = ({
 
     const placeholder = useMemo(() => {
         const name = conditionType === ConditionType.IMMUTABLE
-            ? '条件值'
-            : '默认值';
+            ? t('business.topology.dynamicGroupForm.formComponent.placeholders.immutableValue')
+            : t('business.topology.dynamicGroupForm.formComponent.placeholders.variableValue');
         if (SELECT_TYPES.includes(propertyType as PROPERTY_TYPES)) {
-            return `请选择${name}`;
+            return conditionType === ConditionType.IMMUTABLE
+                ? t('business.topology.dynamicGroupForm.formComponent.placeholders.immutableSelect')
+                : t('business.topology.dynamicGroupForm.formComponent.placeholders.variableSelect');
         }
-        return `请输入${name}`;
-    }, [property, conditionType]);
+        return name;
+    }, [property, conditionType, t]);
 
     return (
         <DynamicComponent

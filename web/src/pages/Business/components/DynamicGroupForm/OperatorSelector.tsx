@@ -1,7 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { Property, OperatorType } from '../../Types';
-import { QUERY_OPERATOR_SYMBOL, QUERY_OPERATOR_DESC, DEFAULT_OPERATOR_MAP } from '../../constants';
+import { QUERY_OPERATOR_SYMBOL, DEFAULT_OPERATOR_MAP } from '../../constants';
+import { getQueryOperatorDesc } from '../../utils';
 import './style.css';
 
 type OperatorMapKey = keyof typeof DEFAULT_OPERATOR_MAP;
@@ -26,6 +28,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
   onChange
 }) => {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
+  const { t } = useTranslation();
 
   const options = useMemo(() => {
     const { bk_property_type: propertyType } = property;
@@ -33,9 +36,9 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
     return operators.map((operator) => ({
       id: operator,
       name: QUERY_OPERATOR_SYMBOL[operator],
-      title: QUERY_OPERATOR_DESC[operator]
+      title: getQueryOperatorDesc(operator, t)
     }))
-  }, [property])
+  }, [property, t])
 
   return (
     <Select

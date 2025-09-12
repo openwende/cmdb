@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { Select, Spin, Divider, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useBusinessStore, BusinessType } from '../../../store/BusinessStore';
 import {
     getBusinessTopologyPath,
@@ -24,6 +25,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     const navigate = useNavigate();
     const location = useLocation();
     const containerRef = useRef<HTMLDivElement>(null);
+    const { t } = useTranslation();
 
     const {
         currentBusiness,
@@ -100,7 +102,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                     onClick={handleCreateBusiness}
                     className="create-business-button"
                 >
-                    新建业务
+                    {t('common.components.businessSelector.createBusiness')}
                 </Button>
             </div>
         </>
@@ -121,12 +123,12 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                 popupRender={renderPopup}
                 loading={loading}
                 notFoundContent={loading ? <Spin size="small" /> : null}
-                placeholder="请选择业务或业务集"
+                placeholder={t('common.components.businessSelector.placeholder')}
                 getPopupContainer={() => containerRef.current!}
                 styles={{ root: { width: collapsed ? SELECTOR_COLLAPSED_WIDTH : undefined } }}
             >
                 {businessList.length > 0 && (
-                    <OptGroup label="业务">
+                    <OptGroup label={t('common.components.businessSelector.businessGroup')}>
                         {businessList.map((business) => (
                             <Option
                                 key={`${BusinessType.Business}:${business.id}`}
@@ -140,7 +142,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                 )}
 
                 {businessSetList.length > 0 && (
-                    <OptGroup label="业务集">
+                    <OptGroup label={t('common.components.businessSelector.businessSetGroup')}>
                         {businessSetList.map((businessSet) => (
                             <Option
                                 key={`${BusinessType.BusinessSet}:${businessSet.id}`}

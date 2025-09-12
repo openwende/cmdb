@@ -1,5 +1,6 @@
 import React from 'react';
 import { Collapse } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { bizNodeInfo } from '@/mock/business';
 import InfoItem from '../InfoItem';
 import { TreeData } from '../../../Types';
@@ -10,6 +11,7 @@ interface Props {
 }
 
 const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
+    const { t } = useTranslation();
     const bizData = bizNodeInfo[0];
 
     return (
@@ -20,31 +22,31 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 items={[
                     {
                         key: '1',
-                        label: <span className='basic-info'>基础信息</span>,
+                        label: <span className='basic-info'>{t('business.topology.businessNodeInfo.basicInfo')}</span>,
                         children: (
                             <div className="info-grid">
                                 <InfoItem label="ID" value={bizData.bk_biz_id} />
-                                <InfoItem label="业务名" value={bizData.bk_biz_name} />
-                                <InfoItem label="创建时间" value={new Date(bizData.create_time).toLocaleString()} />
-                                <InfoItem label="创建人" value={bizData.bk_created_by} />
-                                <InfoItem label="更新时间" value={new Date(bizData.last_time).toLocaleString()} />
-                                <InfoItem label="更新人" value={bizData.bk_updated_by} />
-                                <InfoItem label="生命周期" value={bizData.life_cycle === "2" ? "已上线" : "测试中"} />
-                                <InfoItem label="时区" value={bizData.time_zone} />
-                                <InfoItem label="语言" value={bizData.language === "1" ? "中文" : "英文"} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.businessName')} value={bizData.bk_biz_name} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.createTime')} value={new Date(bizData.create_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.creator')} value={bizData.bk_created_by} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.updateTime')} value={new Date(bizData.last_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.updater')} value={bizData.bk_updated_by} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.lifecycle')} value={bizData.life_cycle === "2" ? t('business.topology.businessNodeInfo.online') : t('business.topology.businessNodeInfo.testing')} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.timezone')} value={bizData.time_zone} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.language')} value={bizData.language === "1" ? t('business.topology.businessNodeInfo.chinese') : t('business.topology.businessNodeInfo.english')} />
                             </div>
                         )
                     },
                     {
                         key: '2',
-                        label: <span className='basic-info'>角色</span>,
+                        label: <span className='basic-info'>{t('business.topology.businessNodeInfo.roles')}</span>,
                         children: (
                             <div className="info-grid">
-                                <InfoItem label="运维人员" value={bizData.bk_biz_maintainer} />
-                                <InfoItem label="产品人员" value={bizData.bk_biz_productor} />
-                                <InfoItem label="测试人员" value={bizData.bk_biz_tester} />
-                                <InfoItem label="开发人员" value={bizData.bk_biz_developer} />
-                                <InfoItem label="操作人员" value={bizData.operator} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.maintainer')} value={bizData.bk_biz_maintainer} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.productor')} value={bizData.bk_biz_productor} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.tester')} value={bizData.bk_biz_tester} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.developer')} value={bizData.bk_biz_developer} />
+                                <InfoItem label={t('business.topology.businessNodeInfo.operator')} value={bizData.operator} />
                             </div>
                         )
                     }

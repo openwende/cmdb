@@ -110,7 +110,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                 <Select
                     value={value}
                     style={{ width: '100%' }}
-                    placeholder="请选择或输入IP"
+                    placeholder={t('business.topology.addProcessModal.placeholders.selectOrInputIP')}
                     onChange={val => handleUpdateListenInfo(record.id, 'ip', val)}
                 >
                     {
@@ -128,7 +128,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
             width: 180,
             render: (value: string, record: ListenInfo) => (
                 <Input
-                    placeholder="请输入Port"
+                    placeholder={t('business.topology.addProcessModal.placeholders.inputPort')}
                     value={value}
                     onChange={e => handleUpdateListenInfo(record.id, 'port', e.target.value)}
                 />
@@ -143,7 +143,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                 <Select
                     value={value}
                     style={{ width: '100%' }}
-                    placeholder="请选择Protocol"
+                    placeholder={t('business.topology.addProcessModal.placeholders.selectProtocol')}
                     onChange={val => handleUpdateListenInfo(record.id, 'protocol', val)}
                 >
                     {
@@ -167,19 +167,19 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
             )
         },
         {
-            title: '操作',
+            title: t('business.topology.addProcessModal.columns.actions'),
             key: 'action',
             render: (_: any, record: ListenInfo) => (
                 <Space>
                     <Button type="link" onClick={handleAddListenInfo}>
-                        添加
+                        {t('business.topology.addProcessModal.buttons.add')}
                     </Button>
                     <Button
                         type="link"
                         danger
                         onClick={() => handleDeleteListenInfo(record.id)}
                     >
-                        删除
+                        {t('business.topology.addProcessModal.buttons.delete')}
                     </Button>
                 </Space>
             )
@@ -219,17 +219,26 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
     return (
         <>
             <Drawer
-                title={mode === 'edit' ? '编辑进程' : '添加进程'}
+                title={
+                    mode === 'edit'
+                        ? t('business.topology.addProcessModal.titles.edit')
+                        : t('business.topology.addProcessModal.titles.add')
+                }
                 open={visible}
                 onClose={handleClose}
                 width={1000}
                 footer={
                     <div className='footer-wrapper'>
-                        <Button key="confirm" type="primary" onClick={handleSubmitProcess} disabled={mode === 'edit' && !isChanged}>
-                            提交
+                        <Button
+                            key="confirm"
+                            type="primary"
+                            onClick={handleSubmitProcess}
+                            disabled={mode === 'edit' && !isChanged}
+                        >
+                            {t('business.topology.addProcessModal.buttons.submit')}
                         </Button>
                         <Button key="cancel" onClick={handleClose}>
-                            取消
+                            {t('business.topology.addProcessModal.buttons.cancel')}
                         </Button>
                     </div>
                 }
@@ -243,14 +252,14 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                     >
                         {/* Basic Info */}
                         <Collapse defaultActiveKey={['basic']} ghost>
-                            <Panel header="基础信息" key="basic">
+                            <Panel header={t('business.topology.addProcessModal.sections.basicInfo')} key="basic">
                                 <div className='form-row'>
                                     <Form.Item
                                         name="processName"
-                                        label={<span>进程名称
+                                        label={<span>{t('business.topology.addProcessModal.fields.processName')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    程序的二进制名称（比如zookeeper的二进制名称是java，则填java）
+                                                    {t('business.topology.addProcessModal.tooltips.processName')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -261,14 +270,14 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                         rules={[{ required: true, message: t("common.form.rules_message") }]}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入进程名称" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.processName')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="processAlias"
-                                        label={<span>进程别名
+                                        label={<span>{t('business.topology.addProcessModal.fields.processAlias')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    对外显示的服务名（比如程序的二进制名称为java的服务zookeeper，则填zookeeper）
+                                                    {t('business.topology.addProcessModal.tooltips.processAlias')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -279,16 +288,16 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                         rules={[{ required: true, message: t("common.form.rules_message") }]}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入进程别名" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.processAlias')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="startupParams"
-                                        label={<span>进程启动参数
+                                        label={<span>{t('business.topology.addProcessModal.fields.startupParams')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    程序启动参数，用于唯一识别一个进程（例如 -cp zookeeper）
+                                                    {t('business.topology.addProcessModal.tooltips.startupParams')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -299,17 +308,17 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                         style={{ flex: 1 }}
                                     >
                                         <Input.TextArea
-                                            placeholder="请输入进程启动参数"
+                                            placeholder={t('business.topology.addProcessModal.placeholders.startupParams')}
                                             rows={3}
                                         />
                                     </Form.Item>
                                     <Form.Item
                                         name="description"
-                                        label="备注"
+                                        label={t('business.topology.addProcessModal.fields.description')}
                                         style={{ flex: 1 }}
                                     >
                                         <Input.TextArea
-                                            placeholder="请输入备注"
+                                            placeholder={t('business.topology.addProcessModal.placeholders.description')}
                                             rows={3}
                                         />
                                     </Form.Item>
@@ -319,7 +328,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
 
                         {/* Listen Info */}
                         <Collapse defaultActiveKey={['listen']} ghost>
-                            <Panel header="监听信息" key="listen">
+                            <Panel header={t('business.topology.addProcessModal.sections.listenInfo')} key="listen">
                                 <div className="listen-content">
                                     <Table
                                         dataSource={listenInfoList}
@@ -335,7 +344,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                                     type="link"
                                                     onClick={handleAddListenInfo}
                                                 >
-                                                    + 立即添加
+                                                    + {t('business.topology.addProcessModal.buttons.addImmediately')}
                                                 </Button>
                                             </div>
                                         )
@@ -346,14 +355,14 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
 
                         {/* Process Management Info */}
                         <Collapse ghost>
-                            <Panel header="进程管理信息" key="management">
+                            <Panel header={t('business.topology.addProcessModal.sections.processManagementInfo')} key="processManagement">
                                 <div className='form-row'>
                                     <Form.Item
                                         name="workPath"
-                                        label={<span>工作路径
+                                        label={<span>{t('business.topology.addProcessModal.fields.workPath')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    执行进程启停等操作的工作路径
+                                                    {t('business.topology.addProcessModal.tooltips.workPath')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -364,39 +373,39 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                         }
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入工作路径" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.workPath')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="pidFile"
-                                        label="PID文件路径"
+                                        label={t('business.topology.addProcessModal.fields.pidFile')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入PID文件路径" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.pidFile')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="startUser"
-                                        label="启动用户"
+                                        label={t('business.topology.addProcessModal.fields.startUser')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入启动用户" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.startUser')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="startCount"
-                                        label="启动数量"
+                                        label={t('business.topology.addProcessModal.fields.startCount')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input type='number' placeholder="请输入启动数量" />
+                                        <Input type='number' placeholder={t('business.topology.addProcessModal.placeholders.startCount')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="priority"
-                                        label={<span>启动优先级
+                                        label={<span>{t('business.topology.addProcessModal.fields.priority')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    批量启动进程依据优先级从小到大排序操作，停止进程按反序操作。优先级数值范围支持输入 [ -100 ~ 10000 ]
+                                                    {t('business.topology.addProcessModal.tooltips.priority')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -406,55 +415,55 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                         </span>}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入启动优先级" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.priority')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="startCommand"
-                                        label="启动命令"
+                                        label={t('business.topology.addProcessModal.fields.startCommand')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入启动命令" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.startCommand')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="stopCommand"
-                                        label="停止命令"
+                                        label={t('business.topology.addProcessModal.fields.stopCommand')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入停止命令" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.stopCommand')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="restartCommand"
-                                        label="重启命令"
+                                        label={t('business.topology.addProcessModal.fields.restartCommand')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入重启命令" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.restartCommand')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="forceStopCommand"
-                                        label="强制停止命令"
+                                        label={t('business.topology.addProcessModal.fields.forceStopCommand')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入强制停止命令" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.forceStopCommand')} />
                                     </Form.Item>
                                     <Form.Item
                                         name="reloadCommand"
-                                        label="进程重载命令"
+                                        label={t('business.topology.addProcessModal.fields.reloadCommand')}
                                         style={{ flex: 1 }}
                                     >
-                                        <Input placeholder="请输入进程重载命令" />
+                                        <Input placeholder={t('business.topology.addProcessModal.placeholders.reloadCommand')} />
                                     </Form.Item>
                                 </div>
                                 <div className='form-row'>
                                     <Form.Item
                                         name="startWaitTime"
-                                        label={<span>启动等待时长
+                                        label={<span>{t('business.topology.addProcessModal.fields.startWaitTime')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    在执行启动命令后，等待多久检查PID存活的状态
+                                                    {t('business.topology.addProcessModal.tooltips.startWaitTime')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -466,16 +475,16 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                     >
                                         <Input
                                             type='number'
-                                            placeholder="请输入启动等待时长"
+                                            placeholder={t('business.topology.addProcessModal.placeholders.startWaitTime')}
                                             suffix="s"
                                         />
                                     </Form.Item>
                                     <Form.Item
                                         name="operationTimeout"
-                                        label={<span>操作超时时长
+                                        label={<span>{t('business.topology.addProcessModal.fields.operationTimeout')}
                                             <Tooltip
                                                 title={<span style={{ whiteSpace: 'nowrap' }}>
-                                                    执行命令的超时时长
+                                                    {t('business.topology.addProcessModal.tooltips.operationTimeout')}
                                                 </span>}
                                                 styles={{ root: { maxWidth: 'none' } }}
                                                 className='label-tip'
@@ -487,7 +496,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                     >
                                         <Input
                                             type='number'
-                                            placeholder="请输入操作超时时长"
+                                            placeholder={t('business.topology.addProcessModal.placeholders.operationTimeout')}
                                             suffix="s"
                                         />
                                     </Form.Item>
@@ -496,13 +505,15 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                         </Collapse>
                     </Form>
                 </div>
-            </Drawer>              
+            </Drawer>
             <ConfirmModal
                 visible={showModal}
                 onOk={handleConfirmClose}
                 onCancel={() => setShowModal(false)}
-                title="确认离开当前页？"
-                description="离开将会导致未保存信息丢失"
+                title={t('business.topology.addProcessModal.confirmModal.title')}
+                description={t('business.topology.addProcessModal.confirmModal.description')}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
         </>
     );

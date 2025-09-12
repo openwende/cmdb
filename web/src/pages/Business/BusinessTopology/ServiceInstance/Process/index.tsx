@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Drawer, Form, Input, message, Popconfirm } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { processInfo, processInstanceDetail } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 
@@ -11,18 +12,18 @@ interface Props {
     setExpandAll: (expand: boolean) => void;
 }
 
-const Process: React.FC<Props> = ({ 
-    selectedRowKeys, 
-    setSelectedRowKeys, 
+const Process: React.FC<Props> = ({
+    selectedRowKeys,
+    setSelectedRowKeys,
     expandAll
 }) => {
+    const { t } = useTranslation();
     const [current, setCurrent] = useState(1);
     const [pageSize, setPageSize] = useState(20);
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [drawerType, setDrawerType] = useState<'view' | 'edit'>('view');
     const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
 
-    // 监听expandAll变化
     useEffect(() => {
         if (expandAll) {
             const allKeys = processInfo.map((_, index) => index);
@@ -32,26 +33,24 @@ const Process: React.FC<Props> = ({
         }
     }, [expandAll]);
 
-    // 进程表格列
     const processColumns = [
         {
-            title: '进程别名',
+            title: t('business.topology.serviceInstance.process.columns.processAlias'),
             dataIndex: 'bk_process_name',
             key: 'bk_process_name'
         },
         {
-            title: '实例数量',
+            title: t('business.topology.serviceInstance.process.columns.instanceCount'),
             dataIndex: 'process_ids',
             key: 'process_ids',
             render: (ids: number[]) => ids?.join(', ') || '--'
         }
     ];
 
-    // 进程视图的展开行渲染
     const processExpandedRowRender = () => {
         const columns = [
             {
-                title: '所属实例',
+                title: t('business.topology.serviceInstance.process.columns.serviceInstance'),
                 dataIndex: 'service_instance_name',
                 key: 'service_instance_name',
                 render: (value: string, record: any) => (
@@ -64,24 +63,24 @@ const Process: React.FC<Props> = ({
                 )
             },
             {
-                title: '进程名称',
+                title: t('business.topology.serviceInstance.process.columns.processName'),
                 dataIndex: ['property', 'bk_func_name'],
                 key: 'func_name'
             },
             {
-                title: '进程启动参数',
+                title: t('business.topology.serviceInstance.process.columns.startupParams'),
                 dataIndex: ['property', 'bk_start_param_regex'],
                 key: 'start_param',
                 render: (value: string) => value || '--'
             },
             {
-                title: '绑定信息',
+                title: t('business.topology.serviceInstance.process.columns.bindInfo'),
                 dataIndex: ['property', 'bind_info'],
                 key: 'bind_info',
                 render: (value: []) => value.length > 0 ? value : '--'
             },
             {
-                title: '操作',
+                title: t('business.topology.serviceInstance.process.columns.action'),
                 key: 'action',
                 render: (processRecord: any) => (
                     <Space>
@@ -89,15 +88,17 @@ const Process: React.FC<Props> = ({
                             type="link"
                             onClick={() => handleEditProcess(processRecord)}
                         >
-                            编辑
+                            {t('common.edit')}
                         </Button>
                         <Popconfirm
-                            title="确定删除该进程?"
+                            title={t('business.topology.serviceInstance.process.confirm.deleteProcess')}
                             onConfirm={() => handleDeleteProcess(processRecord)}
-                            okText="确定"
-                            cancelText="取消"
+                            okText={t('common.confirm')}
+                            cancelText={t('common.cancel')}
                         >
-                            <Button type="link" danger>删除</Button>
+                            <Button type="link" danger>
+                                {t('common.delete')}
+                            </Button>
                         </Popconfirm>
                     </Space>
                 )
@@ -126,25 +127,24 @@ const Process: React.FC<Props> = ({
     };
 
     const handleDeleteProcess = (record: any) => {
-        console.log('删除进程:', record);
-        message.success('删除进程成功');
+        message.success(t('business.topology.serviceInstance.process.messages.deleteSuccess'));
     };
 
     const renderDrawerContent = () => {
         if (drawerType === 'view') {
             return (
                 <div>
-                    <h3>基础信息</h3>
+                    <h3>{t('business.topology.serviceInstance.process.sections.basicInfo')}</h3>
                     <div style={{ marginBottom: 16 }}>
-                        <div>创建时间：2025-05-27 14:52:15</div>
-                        <div>创建人：bk-cmdb</div>
-                        <div>进程名称：devTest</div>
-                        <div>更新时间：2025-05-27 14:52:15</div>
-                        <div>进程别名：devTest</div>
-                        <div>备注：--</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.createTime')}：2025-05-27 14:52:15</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.creator')}：bk-cmdb</div>
+                        <div>{t('business.topology.serviceInstance.process.form.processName')}：devTest</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.updateTime')}：2025-05-27 14:52:15</div>
+                        <div>{t('business.topology.serviceInstance.process.form.processAlias')}：devTest</div>
+                        <div>{t('business.topology.serviceInstance.process.fields.description')}：--</div>
                     </div>
 
-                    <h3>监听信息</h3>
+                    <h3>{t('business.topology.serviceInstance.process.sections.listenInfo')}</h3>
                     <Table
                         columns={[
                             { title: 'IP', dataIndex: 'ip', key: 'ip' },
@@ -156,11 +156,13 @@ const Process: React.FC<Props> = ({
                         dataSource={[]}
                         pagination={false}
                         size="small"
-                        locale={{ emptyText: '暂无数据' }}
+                        locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
                     />
 
                     <div style={{ marginTop: 16 }}>
-                        <Button type="primary">编辑</Button>
+                        <Button type="primary">
+                            {t('common.edit')}
+                        </Button>
                     </div>
                 </div>
             );
@@ -168,27 +170,31 @@ const Process: React.FC<Props> = ({
 
         return (
             <Form layout="vertical">
-                <h3>基础信息</h3>
+                <h3>{t('business.topology.serviceInstance.process.sections.basicInfo')}</h3>
                 <div style={{ display: 'flex', gap: 16 }}>
-                    <Form.Item label="进程名称" style={{ flex: 1 }}>
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.processName')} style={{ flex: 1 }}>
                         <Input defaultValue="devTest" />
                     </Form.Item>
-                    <Form.Item label="进程别名" style={{ flex: 1 }}>
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.processAlias')} style={{ flex: 1 }}>
                         <Input defaultValue="devTest" />
                     </Form.Item>
                 </div>
                 <div style={{ display: 'flex', gap: 16 }}>
-                    <Form.Item label="进程启动参数" style={{ flex: 1 }}>
-                        <Input placeholder="请输入进程启动参数" />
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.startupParams')} style={{ flex: 1 }}>
+                        <Input placeholder={t('business.topology.serviceInstance.process.form.placeholders.startupParams')} />
                     </Form.Item>
-                    <Form.Item label="备注" style={{ flex: 1 }}>
-                        <Input placeholder="请输入备注" />
+                    <Form.Item label={t('business.topology.serviceInstance.process.form.description')} style={{ flex: 1 }}>
+                        <Input placeholder={t('business.topology.serviceInstance.process.form.placeholders.description')} />
                     </Form.Item>
                 </div>
 
                 <div style={{ marginTop: 16 }}>
-                    <Button type="primary" style={{ marginRight: 8 }}>保存</Button>
-                    <Button onClick={() => setDrawerVisible(false)}>取消</Button>
+                    <Button type="primary" style={{ marginRight: 8 }}>
+                        {t('common.save')}
+                    </Button>
+                    <Button onClick={() => setDrawerVisible(false)}>
+                        {t('common.cancel')}
+                    </Button>
                 </div>
             </Form>
         );
@@ -196,13 +202,13 @@ const Process: React.FC<Props> = ({
 
     return (
         <div>
-            {/* 表格 */}
+            {/* Table */}
             <Table
                 rowSelection={{
                     selectedRowKeys,
                     onChange: setSelectedRowKeys,
                     getCheckboxProps: () => ({
-                        disabled: true // 进程视图中只有"所属实例"列可以选择
+                        disabled: true
                     })
                 }}
                 columns={processColumns}
@@ -218,9 +224,13 @@ const Process: React.FC<Props> = ({
                 bordered
             />
 
-            {/* 分页 */}
+            {/* Pagination */}
             <div style={{ marginTop: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>已选择 {selectedRowKeys.length} 条</span>
+                <span>
+                    {t('business.topology.serviceInstance.process.pagination.selected')}
+                    &nbsp;{selectedRowKeys.length}
+                    &nbsp;{t('business.topology.serviceInstance.process.pagination.items')}
+                </span>
                 <Pagination
                     total={processInfo.length}
                     pageSize={pageSize}
@@ -236,9 +246,13 @@ const Process: React.FC<Props> = ({
                 />
             </div>
 
-            {/* 抽屉 */}
+            {/* Drawer */}
             <Drawer
-                title={drawerType === 'view' ? '查看进程' : '编辑进程'}
+                title={
+                    drawerType === 'view'
+                        ? t('business.topology.serviceInstance.process.drawer.viewTitle')
+                        : t('business.topology.serviceInstance.process.drawer.editTitle')
+                }
                 placement="right"
                 width={800}
                 open={drawerVisible}

@@ -1,26 +1,15 @@
 import React from 'react';
 import { Radio } from 'antd';
 import { RadioChangeEvent } from 'antd/es/radio';
+import { useTranslation } from 'react-i18next';
 import { BUILTIN_MODELS } from '../../constants';
-
-const list: TargetItem[] = [
-  {
-    id: BUILTIN_MODELS.HOST,
-    name: '主机',
-    desc: '目标为主机列表'
-  },
-  {
-    id: BUILTIN_MODELS.SET,
-    name: '集群',
-    desc: '目标为集群列表'
-  }
-];
 
 interface TargetItem {
   id: string;
   name: string;
   desc: string;
 }
+
 interface SearchTargetProps {
   value?: BUILTIN_MODELS;
   disabled?: boolean;
@@ -36,6 +25,20 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
   onChange,
   onShowModal
 }) => {
+  const { t } = useTranslation();
+
+  const list: TargetItem[] = [
+    {
+      id: BUILTIN_MODELS.HOST,
+      name: t('business.topology.dynamicGroupForm.searchTarget.host.name'),
+      desc: t('business.topology.dynamicGroupForm.searchTarget.host.desc')
+    },
+    {
+      id: BUILTIN_MODELS.SET,
+      name: t('business.topology.dynamicGroupForm.searchTarget.set.name'),
+      desc: t('business.topology.dynamicGroupForm.searchTarget.set.desc')
+    }
+  ];
   const handleChange = (e: RadioChangeEvent) => {
     const newValue = e.target.value;
     const oldValue = value;

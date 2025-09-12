@@ -20,8 +20,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
     width = 400,
     title,
     description,
-    okText = '确定',
-    cancelText = '取消'
+    okText,
+    cancelText
 }) => {
     return (
         <Modal

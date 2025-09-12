@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
-import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, ConditionName, Condition } from '../../Types';
+import { useTranslation } from 'react-i18next';
+import { DynamicGroupFormData, ObjectMainLine, PropertyMap, Property, ConditionType, Condition } from '../../Types';
 import { availableModelIds, requestConfig, BUILTIN_MODELS } from '../../constants';
-import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition, processConditionGroups } from '../../utils';
+import { createServiceTemplateProperty, formatDynamicConditions, isValidCondition, processConditionGroups, getConditionName } from '../../utils';
 import SearchTarget from './SearchTarget';
 import ConditionPicker from './ConditionPicker';
 import PropertyList from './PropertyList';
@@ -19,19 +20,6 @@ const DRAWER_WIDTH = 1200;
 const MIN_WIDTH = 400;
 const MAX_WIDTH = 500;
 const PADDING = 24;
-
-export const conditionTypes = [
-    {
-        key: ConditionType.VARIABLE,
-        title: ConditionName.VARIABLE,
-        desc: '在使用动态分组时，操作符和条件值可修改'
-    },
-    {
-        key: ConditionType.IMMUTABLE,
-        title: ConditionName.IMMUTABLE,
-        desc: '在使用动态分组时，条件及条件值均不可修改'
-    }
-];
 
 export enum FormMode {
     CREATE = 'create',
@@ -58,6 +46,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     onModeChange
 }) => {
     const { currentBusiness } = useBusinessStore();
+    const { t } = useTranslation();
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [groupObject, setGroupObject] = useState<BUILTIN_MODELS>(BUILTIN_MODELS.HOST);
@@ -79,6 +68,19 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     const [previewData, setPreviewData] = useState<any[]>([]);
     const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
     const disabled = mode === FormMode.PREVIEW;
+
+    const conditionTypes = [
+        {
+            key: ConditionType.VARIABLE,
+            title: getConditionName(ConditionType.VARIABLE, t),
+            desc: t('business.topology.dynamicGroupForm.conditionTypes.variable.desc')
+        },
+        {
+            key: ConditionType.IMMUTABLE,
+            title: getConditionName(ConditionType.IMMUTABLE, t),
+            desc: t('business.topology.dynamicGroupForm.conditionTypes.immutable.desc')
+        }
+    ];
 
     useEffect(() => {
         getMainLineModels();
@@ -142,7 +144,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                     fromCache: true
                 }
             })
-            propertyMap.module.unshift(createServiceTemplateProperty());
+            propertyMap.module.unshift(createServiceTemplateProperty(t));
             setPropertyMap(Object.freeze(propertyMap));
         } catch (error) {
             console.error(error)
@@ -314,7 +316,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                 condition,
                 variable_condition
             };
-            console.log('提交数据:', formData);
 
             // Call service to get group data
             onDataChange();
@@ -347,7 +348,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                 condition,
                 variable_condition
             };
-            console.log('预览数据:', previewData);
             // TODO: API
             setPreviewData(dynamicGroupPreviewResult);
             setLastUpdateTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
@@ -435,20 +435,25 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                 groupObject
                             }}
                         >
-                            <div className="section-title">基础信息</div>
+                            <div className="section-title">
+                                {t('business.topology.dynamicGroupForm.sections.basicInfo')}
+                                </div>
                             <Form.Item
-                                label="分组名称"
+                                label={t('business.topology.dynamicGroupForm.form.groupName.label')}
                                 name="groupName"
                                 rules={[
-                                    { required: true, message: '该字段是必填项' },
+                                    { required: true, message: t('common.form.rules_message') },
                                     { max: 256 }
                                 ]}
                             >
-                                <Input placeholder="请输入分组名称" disabled={disabled} />
+                                <Input
+                                placeholder={t('business.topology.dynamicGroupForm.form.groupName.placeholder')}
+                                disabled={disabled}
+                                />
                             </Form.Item>
 
                             <Form.Item
-                                label="查询对象"
+                                label={t('business.topology.dynamicGroupForm.form.groupObject.label')}
                                 name="groupObject"
                                 rules={[{ required: true }]}
                             >
@@ -512,7 +517,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                     type="primary"
                                     onClick={() => onModeChange(FormMode.EDIT)}
                                 >
-                                    编辑
+                                    {t('common.edit')}
                                 </Button>
                             ) : (
                                 <>
@@ -522,7 +527,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                         loading={loading}
                                         disabled={disabled || selectedProperties.length === 0}
                                     >
-                                        {mode === FormMode.CREATE ? "提交" : "保存"}
+                                        {mode === FormMode.CREATE ? t('common.submit') : t('common.save')}
                                     </Button>
                                     <Button
                                         onClick={handlePreview}
@@ -530,22 +535,22 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                         color="primary"
                                         variant="outlined"
                                     >
-                                        预览
+                                        {t('business.topology.dynamicGroupForm.buttons.preview')}
                                     </Button>
                                     <Popconfirm
-                                        title="确认清空当前的分组条件？"
+                                        title={t('business.topology.dynamicGroupForm.confirm.clearConditions')}
                                         onConfirm={handleClearConditions}
-                                        okText="确认"
-                                        cancelText="取消"
+                                        okText={t('common.confirm')}
+                                        cancelText={t('common.cancel')}
                                     >
                                         <Button disabled={disabled || selectedProperties.length === 0}>
-                                            清空条件
+                                            {t('business.topology.dynamicGroupForm.buttons.clearConditions')}
                                         </Button>
                                     </Popconfirm>
                                 </>
                             )}
                             <Button onClick={handleClose}>
-                                取消
+                                {t('common.cancel')}
                             </Button>
                         </Space>
                     </div>
@@ -575,19 +580,23 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             {/* Toggle Confirm Modal */}
             <ConfirmModal
                 visible={showConfirmModal}
-                title="确认切换？"
-                description="填写内容会清空，确认切换？"
+                title={t('business.topology.dynamicGroupForm.confirm.toggleConfirm')}
+                description={t('business.topology.dynamicGroupForm.confirm.toggleDescription')}
                 onOk={handleConfirmOk}
                 onCancel={handleConfirmCancel}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
 
             {/* Leave Confirm Modal */}
             <ConfirmModal
                 visible={showLeaveConfirmModal}
-                title="确认离开当前页？"
-                description="离开将会导致未保存信息丢失"
+                title={t('business.topology.dynamicGroupForm.confirm.leaveConfirm')}
+                description={t('business.topology.dynamicGroupForm.confirm.leaveDescription')}
                 onOk={handleLeaveConfirmOk}
                 onCancel={handleLeaveConfirmCancel}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
         </Drawer>
     );

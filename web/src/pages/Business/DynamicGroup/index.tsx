@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Input, Select, Alert, Space, message } from "antd";
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import Pagination from "@/components/common/Pagination";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
@@ -12,20 +13,13 @@ const { Option } = Select;
 
 const PAGE_SIZE = 20;
 
-// Search field options for dynamic groups
-const searchFieldOptions = [
-    { value: "id", label: "ID" },
-    { value: "name", label: "分组名称" },
-    { value: "bk_obj_id", label: "查询对象" },
-    { value: "modify_user", label: "修改人" }
-];
-
 const DynamicGroup: React.FC = () => {
+    const { t } = useTranslation();
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(PAGE_SIZE);
     const [groupCount, setGroupCount] = useState(0);
     const [groupList, setGroupList] = useState<any>([]);
-    const [searchField, setSearchField] = useState<string>(searchFieldOptions[0].value);
+    const [searchField, setSearchField] = useState<string>("id");
     const [searchText, setSearchText] = useState<string>("");
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [alertVisible, setAlertVisible] = useState(true);
@@ -35,12 +29,20 @@ const DynamicGroup: React.FC = () => {
     const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
     const [deletingGroup, setDeletingGroup] = useState<{ id: string; name: string } | null>(null);
 
+    // Search field options for dynamic groups
+    const searchFieldOptions = [
+        { value: "id", label: t('business.topology.dynamicGroup.searchFields.id') },
+        { value: "name", label: t('business.topology.dynamicGroup.searchFields.name') },
+        { value: "bk_obj_id", label: t('business.topology.dynamicGroup.searchFields.bk_obj_id') },
+        { value: "modify_user", label: t('business.topology.dynamicGroup.searchFields.modify_user') }
+    ];
+
     // Find current field option
     const currentFieldOption = searchFieldOptions.find(option => option.value === searchField);
 
     const columns = [
         {
-            title: "分组名称",
+            title: t('business.topology.dynamicGroup.columns.name'),
             dataIndex: "name",
             sorter: true,
             width: 200,
@@ -51,40 +53,44 @@ const DynamicGroup: React.FC = () => {
             width: 300,
         },
         {
-            title: "查询对象",
+            title: t('business.topology.dynamicGroup.columns.bk_obj_id'),
             dataIndex: "bk_obj_id",
             sorter: true,
             width: 150,
-            render: (val: string) => val === 'host' ? '主机' : val
+            render: (val: string) => (
+                val === 'host' ?
+                    t('business.topology.dynamicGroup.objectTypes.host')
+                    : val
+            )
         },
         {
-            title: "创建用户",
+            title: t('business.topology.dynamicGroup.columns.create_user'),
             dataIndex: "create_user",
             sorter: true,
             width: 150,
         },
         {
-            title: "创建时间",
+            title: t('business.topology.dynamicGroup.columns.create_time'),
             dataIndex: "create_time",
             sorter: true,
             width: 180,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "修改人",
+            title: t('business.topology.dynamicGroup.columns.modify_user'),
             dataIndex: "modify_user",
             sorter: true,
             width: 150,
         },
         {
-            title: "修改时间",
+            title: t('business.topology.dynamicGroup.columns.last_time'),
             dataIndex: "last_time",
             sorter: true,
             width: 180,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: "操作",
+            title: t('business.topology.dynamicGroup.columns.action'),
             dataIndex: "action",
             width: 150,
             render: (_: string, record: any) => (
@@ -94,14 +100,14 @@ const DynamicGroup: React.FC = () => {
                         size="small"
                         onClick={() => handlePreview(record)}
                     >
-                        预览
+                        {t('business.topology.dynamicGroup.actions.preview')}
                     </Button>
                     <Button
                         type="link"
                         size="small"
                         onClick={() => handleEdit(record)}
                     >
-                        编辑
+                        {t('common.edit')}
                     </Button>
                     <Button
                         type="link"
@@ -109,7 +115,7 @@ const DynamicGroup: React.FC = () => {
                         danger
                         onClick={() => handleDeleteClick(record)}
                     >
-                        删除
+                        {t('common.delete')}
                     </Button>
                 </Space>
             ),
@@ -180,7 +186,7 @@ const DynamicGroup: React.FC = () => {
 
         setShowConfirmModal(false);
         setDeletingGroup(null);
-        message.success('删除成功');
+        message.success(t('business.topology.dynamicGroup.messages.deleteSuccess'));
     };
 
     const handleDeleteCancel = () => {
@@ -212,12 +218,12 @@ const DynamicGroup: React.FC = () => {
     const getFormTitle = () => {
         switch (formMode) {
             case FormMode.PREVIEW:
-                return '动态分组详情';
+                return t('business.topology.dynamicGroup.titles.preview');
             case FormMode.EDIT:
-                return '编辑动态分组';
+                return t('business.topology.dynamicGroup.titles.edit');
             case FormMode.CREATE:
             default:
-                return '创建动态分组';
+                return t('business.topology.dynamicGroup.titles.create');
         }
     };
 
@@ -228,8 +234,10 @@ const DynamicGroup: React.FC = () => {
                 <Alert
                     message={
                         <span>
-                            动态分组目前仅提供主机文档的操作条件，在编辑SaaS中可以访问其下资源，包括作业任务、监控配置等。
-                            <a href="#" style={{ marginLeft: 8 }}>查看详情 &gt;</a>
+                            {t('business.topology.dynamicGroup.alert.message')}
+                            <a href="#" style={{ marginLeft: 8 }}>
+                                {t('business.topology.dynamicGroup.alert.linkText')} &gt;
+                            </a>
                         </span>
                     }
                     type="info"
@@ -247,7 +255,7 @@ const DynamicGroup: React.FC = () => {
                         type="primary"
                         onClick={handleCreate}
                     >
-                        新建
+                        {t('business.topology.dynamicGroup.actions.create')}
                     </Button>
                 </div>
                 <div className="header-search">
@@ -263,7 +271,9 @@ const DynamicGroup: React.FC = () => {
                         </Select>
                         <Input.Search
                             className="search-input"
-                            placeholder={`请输入${currentFieldOption?.label}`}
+                            placeholder={t('business.topology.dynamicGroup.searchPlaceholder', {
+                                field: currentFieldOption?.label
+                            })}
                             allowClear
                             value={searchText}
                             onChange={(e) => setSearchText(e.target.value)}
@@ -316,8 +326,12 @@ const DynamicGroup: React.FC = () => {
                 visible={showConfirmModal}
                 onOk={handleDelete}
                 onCancel={handleDeleteCancel}
-                title="确定删除"
-                description={`确认要删除"${deletingGroup?.name}"分组?`}
+                title={t('business.topology.dynamicGroup.confirm.deleteTitle')}
+                description={t('business.topology.dynamicGroup.confirm.deleteDescription', {
+                    name: deletingGroup?.name
+                })}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
         </div>
     );

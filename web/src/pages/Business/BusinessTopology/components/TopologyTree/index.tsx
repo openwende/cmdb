@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
+import { useTranslation } from 'react-i18next';
 import CreateNodeModal from '../CreateNodeModal';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import './style.css';
@@ -26,6 +27,7 @@ const TopologyTree: React.FC<Props> = ({
     onNodeSelect,
     customTitlePrefix
 }) => {
+    const { t } = useTranslation();
     const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
     const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
     const [hoveredKey, setHoveredKey] = useState<string | null>(null);
@@ -131,7 +133,9 @@ const TopologyTree: React.FC<Props> = ({
             return (
                 <span className="right-wrapper">
                     {isHovered && node.type !== TopoTreeNodeType.Idle && node.type !== TopoTreeNodeType.Module
-                        ? <Button type="primary" size="small" onClick={e => handleCreate(e, node)}>新建</Button>
+                        ? <Button type="primary" size="small" onClick={e => handleCreate(e, node)}>
+                            {t('resource.business.actions.create')}
+                        </Button>
                         : <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
                     }
                 </span>

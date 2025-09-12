@@ -290,6 +290,8 @@ const BusinessList: React.FC = () => {
                 description={t('resource.business.messages.confirm_archive_description')}
                 onOk={confirmArchive}
                 onCancel={() => setArchiveModalVisible(false)}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
         </div>
     );

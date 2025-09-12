@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Collapse, Button, message, Form, Input, Select, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { moduleNodeInfo } from '@/mock/business';
 import { userListMock } from '@/mock/resource';
 import ServiceCategorySelector from '../../components/ServiceCategory';
@@ -16,6 +17,7 @@ interface Props {
 }
 
 const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
+    const { t } = useTranslation();
     const [isEditing, setIsEditing] = useState(false);
     const [form] = Form.useForm();
     const [serviceCategory, setServiceCategory] = useState<number[]>([1, 2]); // Default -> Default
@@ -25,7 +27,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
     // Initialize form when editing starts
-    const moduleData = moduleNodeInfo[0];    
+    const moduleData = moduleNodeInfo[0];
     const handleEdit = () => {
         // Convert operator strings to arrays for Select components
         let operators: string[] = [];
@@ -59,7 +61,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
     const confirmDelete = () => {
         // TODO: api
-        message.success('删除模块节点成功');
+        message.success(t('business.topology.moduleNodeInfo.deleteSuccess'));
         setIsDeleteModalVisible(false);
     };
 
@@ -106,7 +108,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
             };
 
             console.log(values, processedValues);
-            message.success('保存成功');
+            message.success(t('business.topology.moduleNodeInfo.saveSuccess'));
             setIsEditing(false);
         } catch (error) {
             console.error('Form validation failed:', error);
@@ -123,7 +125,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
             <>
                 <div className="edit-info-header">
                     <div className="service-category-wrapper">
-                        <div className="category-label">服务分类</div>
+                        <div className="category-label">{t('business.topology.moduleNodeInfo.serviceCategory')}</div>
                         <ServiceCategorySelector
                             value={serviceCategory}
                             onChange={(value: number[]) => {
@@ -140,42 +142,42 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     ghost
                     items={[{
                         key: '1',
-                        label: <span className="basic-info">基础信息</span>,
+                        label: <span className="basic-info">{t('business.topology.moduleNodeInfo.basicInfo')}</span>,
                         children: (
                             <Form form={form} layout="vertical">
                                 <div className="form-row">
                                     <Form.Item
-                                        label="模块名称"
+                                        label={t('business.topology.moduleNodeInfo.moduleName')}
                                         name="bkModuleName"
-                                        rules={[{ required: true, message: '请输入模块名称' }]}
+                                        rules={[{ required: true, message: t('common.form.rules_message') }]}
                                         className="flex-item"
                                     >
                                         <Input
-                                            placeholder="请输入模块名称"
+                                            placeholder={t('business.topology.moduleNodeInfo.moduleNamePlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         />
                                     </Form.Item>
                                     <Form.Item
-                                        label="模块类型"
+                                        label={t('business.topology.moduleNodeInfo.moduleType')}
                                         name="bkModuleType"
                                         className="flex-item"
                                     >
                                         <Select
-                                            placeholder="请选择模块类型"
+                                            placeholder={t('business.topology.moduleNodeInfo.moduleTypePlaceholder')}
                                             onChange={() => setFormChanged(true)}
                                         >
-                                            <Option value="1">普通</Option>
-                                            <Option value="2">数据库</Option>
+                                            <Option value="1">{t('business.topology.moduleNodeInfo.moduleTypeOptions.normal')}</Option>
+                                            <Option value="2">{t('business.topology.moduleNodeInfo.moduleTypeOptions.database')}</Option>
                                         </Select>
                                     </Form.Item>
                                     <Form.Item
-                                        label="主要维护人"
+                                        label={t('business.topology.moduleNodeInfo.mainOperator')}
                                         name="operator"
                                         className="flex-item"
                                     >
                                         <Select
                                             mode="multiple"
-                                            placeholder="请输入主要维护人"
+                                            placeholder={t('business.topology.moduleNodeInfo.mainOperatorPlaceholder')}
                                             options={userOptions}
                                             filterOption={false}
                                             showSearch
@@ -188,13 +190,13 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                 </div>
                                 <div className="form-row">
                                     <Form.Item
-                                        label="备份维护人"
+                                        label={t('business.topology.moduleNodeInfo.backupOperator')}
                                         name="bkBakOperator"
                                         className="flex-item"
                                     >
                                         <Select
                                             mode="multiple"
-                                            placeholder="请输入备份维护人"
+                                            placeholder={t('business.topology.moduleNodeInfo.backupOperatorPlaceholder')}
                                             options={userOptions}
                                             filterOption={false}
                                             showSearch
@@ -216,10 +218,10 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                         onClick={handleSave}
                         disabled={!formChanged}
                     >
-                        保存
+                        {t('common.submit')}
                     </Button>
                     <Button onClick={handleCancel}>
-                        取消
+                        {t('common.cancel')}
                     </Button>
                 </div>
             </>
@@ -238,15 +240,31 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 visible={isDeleteModalVisible}
                 onOk={confirmDelete}
                 onCancel={() => setIsDeleteModalVisible(false)}
-                title="确定删除 module?"
+                title={t('business.topology.moduleNodeInfo.confirmDeleteTitle')}
+                okText={t('common.components.confirmModal.confirm')}
+                cancelText={t('common.components.confirmModal.cancel')}
             />
 
             <div className="info-header">
-                <div><span className="header-label">服务模板：</span>无</div>
-                <div><span className="header-label">服务分类：</span>Default / Default</div>
                 <div>
-                    <span className="header-label">主机属性自动应用：</span>
-                    <Button type="link" className="disabled-link">未启用</Button>
+                    <span className="header-label">
+                        {t('business.topology.moduleNodeInfo.serviceTemplate')}：
+                    </span>
+                    {t('business.topology.moduleNodeInfo.none')}
+                </div>
+                <div>
+                    <span className="header-label">
+                        {t('business.topology.moduleNodeInfo.serviceCategory')}：
+                    </span>
+                    Default / Default
+                </div>
+                <div>
+                    <span className="header-label">
+                        {t('business.topology.moduleNodeInfo.hostAttributeAutoApply')}：
+                    </span>
+                    <Button type="link" className="disabled-link">
+                        {t('business.topology.moduleNodeInfo.notEnabled')}
+                    </Button>
                 </div>
             </div>
 
@@ -256,18 +274,24 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 items={[
                     {
                         key: '1',
-                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>基础信息</span>,
+                        label: <span style={{ fontWeight: 'bold', color: '#000' }}>{t('business.topology.moduleNodeInfo.basicInfo')}</span>,
                         children: (
                             <div className="info-grid">
-                                <InfoItem label="创建时间" value={new Date(moduleData.create_time).toLocaleString()} />
-                                <InfoItem label="创建人" value={moduleData.bk_created_by} />
-                                <InfoItem label="更新时间" value={new Date(moduleData.last_time).toLocaleString()} />
-                                <InfoItem label="更新人" value={moduleData.bk_updated_by} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.createTime')} value={new Date(moduleData.create_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.creator')} value={moduleData.bk_created_by} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.updateTime')} value={new Date(moduleData.last_time).toLocaleString()} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.updater')} value={moduleData.bk_updated_by} />
                                 <InfoItem label="ID" value={moduleData.bk_module_id} />
-                                <InfoItem label="模块名" value={moduleData.bk_module_name} />
-                                <InfoItem label="模块类型" value={moduleData.bk_module_type === "1" ? "普通" : "数据库"} />
-                                <InfoItem label="主要维护人" value={moduleData.operator} />
-                                <InfoItem label="备份维护人" value={moduleData.bk_bak_operator} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.moduleName')} value={moduleData.bk_module_name} />
+                                <InfoItem
+                                    label={t('business.topology.moduleNodeInfo.moduleType')}
+                                    value={
+                                        moduleData.bk_module_type === "1"
+                                            ? t('business.topology.moduleNodeInfo.moduleTypeOptions.normal')
+                                            : t('business.topology.moduleNodeInfo.moduleTypeOptions.database')}
+                                />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.mainOperator')} value={moduleData.operator} />
+                                <InfoItem label={t('business.topology.moduleNodeInfo.backupOperator')} value={moduleData.bk_bak_operator} />
                             </div>
                         )
                     }
@@ -276,10 +300,10 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
             <div className="action-buttons">
                 <Button type="primary" onClick={handleEdit}>
-                    编辑
+                    {t('common.edit')}
                 </Button>
                 <Button type="primary" danger onClick={handleDelete}>
-                    删除节点
+                    {t('business.topology.moduleNodeInfo.deleteNode')}
                 </Button>
             </div>
         </>

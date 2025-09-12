@@ -200,7 +200,7 @@ const ArchivedBusiness: React.FC = () => {
                     <Form.Item
                         name="businessName"
                         label={t('resource.business.archived.restore_modal.name_label')}
-                        rules={[{ required: true, message: t('resource.business.archived.messages.required_field') }]}
+                        rules={[{ required: true, message: t('common.form.rules_message') }]}
                     >
                         <Input placeholder={t('resource.business.archived.restore_modal.name_placeholder')} />
                     </Form.Item>

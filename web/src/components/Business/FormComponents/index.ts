@@ -49,7 +49,8 @@ class ComponentFactory {
         // Lazy-load component
         const LazyComponent = LAZY_COMPONENTS[type as keyof typeof LAZY_COMPONENTS];
         if (!LazyComponent) {
-            throw new Error(`组件类型 ${type} 不存在`);
+            // Note: For i18n error messages, handle in the calling component where t() is available
+            throw new Error(`Component type ${type} not found`);
         }
 
         // Directly return lazy-loaded component

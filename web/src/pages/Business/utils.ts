@@ -12,6 +12,7 @@ import {
     CopyMenuItemKey as HostCopyKey
 } from "./Types";
 import { QUERY_OPERATOR, BUILTIN_MODELS, BUILTIN_MODEL_PROPERTY_KEYS } from './constants';
+import { TFunction } from 'i18next';
 
 /**
  * Transter the input data into the format which Cascader need
@@ -33,6 +34,71 @@ export function buildCascaderOptions(serviceCategory: any[]) {
                 }))
         }));
 }
+
+/**
+ * Create the property for service template
+ */
+export const createServiceTemplateProperty = (t: TFunction): Property => {
+    return {
+        id: Date.now(),
+        bk_obj_id: 'module',
+        bk_property_id: 'service_template_id',
+        bk_property_name: t('business.topology.utils.serviceTemplate'),
+        bk_property_index: -1,
+        bk_property_type: 'service-template',
+        isonly: true,
+        ispre: true,
+        option: '',
+        bk_property_group: null,
+        bk_property_group_name: '',
+        unit: '',
+        placeholder: '',
+        bk_isapi: true,
+        bk_issystem: true,
+        editable: false,
+        bk_asst_obj_id: '',
+        _is_inject_: true
+    };
+};
+
+/**
+ * Get the translated condition name
+ * @param conditionType - The condition type enum value
+ * @param t - The translation function
+ * @returns The translated condition name
+ */
+export const getConditionName = (conditionType: ConditionType, t: TFunction): string => {
+    return conditionType === ConditionType.IMMUTABLE
+        ? t('business.topology.constants.conditionNames.immutable')
+        : t('business.topology.constants.conditionNames.variable');
+};
+
+/**
+ * Get the translated query operator description
+ * @param operator - The query operator value
+ * @param t - The translation function
+ * @returns The translated operator description
+ */
+export const getQueryOperatorDesc = (operator: string, t: TFunction): string => {
+    const operatorKey = operator.replace('$', '');
+    const keyMap: Record<string, string> = {
+        'eq': 'eq',
+        'ne': 'ne', 
+        'lt': 'lt',
+        'gt': 'gt',
+        'in': 'in',
+        'nin': 'nin',
+        'range': 'range',
+        'lte': 'lte',
+        'gte': 'gte',
+        'regex': 'like',
+        'contains': 'contains',
+        'contains_s': 'containsCs'
+    };
+    
+    const translationKey = keyMap[operatorKey] || operatorKey;
+    return t(`business.topology.constants.queryOperatorDesc.${translationKey}`);
+};
 
 /**
  * Get the formatted topo_path for the selected node
@@ -185,7 +251,7 @@ export function findNodeAndParents(nodes: TreeData[], key: string, parents: Tree
  */
 export function collectAllKeys(nodes: TreeData[]): string[] {
     const keys: string[] = [];
-    
+
     const traverse = (treeNodes: TreeData[]): void => {
         treeNodes.forEach(node => {
             keys.push(node.key);
@@ -194,7 +260,7 @@ export function collectAllKeys(nodes: TreeData[]): string[] {
             }
         });
     };
-    
+
     traverse(nodes);
     return keys;
 }
@@ -265,7 +331,9 @@ export function buildTreeData(businessTopoData: any, idleClusterData: any, searc
             const bizMatches = nodeMatches(biz, searchTerm);
 
             const idleMatches = nodeMatches(idleClusterData, searchTerm);
-            const idleHasMatchingModules = idleClusterData.module ? idleClusterData.module.some((mod: RawNodeData) => nodeMatches(mod, searchTerm)) : false;
+            const idleHasMatchingModules = idleClusterData.module
+                ? idleClusterData.module.some((mod: RawNodeData) => nodeMatches(mod, searchTerm))
+                : false;
 
             if (idleMatches || idleHasMatchingModules) {
                 const idleModules = idleMatches
@@ -564,28 +632,6 @@ export function createIdProperty(objId: string) {
         _is_inject_: true
     }
 }
-
-/**
- * Create a default service template property
- */
-export const createServiceTemplateProperty = (): Property => {
-    return {
-        id: Date.now(),
-        bk_obj_id: 'module',
-        bk_property_id: 'service_template_id',
-        bk_property_name: '服务模板',
-        bk_property_index: -1,
-        bk_property_type: 'service-template',
-        isonly: true,
-        ispre: true,
-        bk_isapi: true,
-        bk_issystem: true,
-        isreadonly: true,
-        editable: false,
-        bk_property_group: null,
-        _is_inject_: true
-    };
-};
 
 /**
  * Compare two arrays of selected properties and determine which properties were added or removed.

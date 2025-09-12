@@ -5,6 +5,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Select, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { FormComponentProps, SelectOption } from './index';
 import { userListMock } from '@/mock/resource';
 import './styles.css';
@@ -17,6 +18,7 @@ const ObjUser: React.FC<FormComponentProps> = ({
 }) => {
   const [searchOptions, setSearchOptions] = useState<Array<SelectOption>>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const { t } = useTranslation();
 
   // Handle search when user types
   const handleSearch = useCallback(async (searchValue: string) => {
@@ -28,9 +30,9 @@ const ObjUser: React.FC<FormComponentProps> = ({
     setIsSearching(true);
     try {
       // await new Promise(resolve => setTimeout(resolve, 300));
-      
+
       // Filter users based on search value (search both chinese and english names)
-      const filteredUsers = userListMock.filter(user => 
+      const filteredUsers = userListMock.filter(user =>
         user.chinese_name.toLowerCase().includes(searchValue.toLowerCase()) ||
         user.english_name.toLowerCase().includes(searchValue.toLowerCase())
       );
@@ -39,7 +41,7 @@ const ObjUser: React.FC<FormComponentProps> = ({
         label: user.chinese_name,
         value: user.chinese_name
       }));
-      
+
       setSearchOptions(options);
     } catch (error) {
       console.error(error);
@@ -61,7 +63,11 @@ const ObjUser: React.FC<FormComponentProps> = ({
       options={searchOptions}
       disabled={disabled}
       style={{ width: '100%' }}
-      notFoundContent={isSearching ? <Spin size="small" /> : '无匹配数据'}
+      notFoundContent={
+        isSearching
+          ? <Spin size="small" />
+          : t('common.components.formComponents.noMatchPersonnel')
+      }
     />
   );
 };

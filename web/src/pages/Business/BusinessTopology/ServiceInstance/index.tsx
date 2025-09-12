@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Radio, Button, Dropdown, Checkbox, Input, message, Empty, Typography } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { InstanceMenuItemKey, TreeData } from '../../Types';
 import { getSelectedNodeStatus } from '../../utils';
 import Instance from './Instance';
@@ -12,17 +13,27 @@ interface Props {
     setView?: (v: 'instance' | 'process') => void;
 }
 
-const dropdownMenuItems = {
-    items: [
-        { key: InstanceMenuItemKey.BatchDelete, label: '批量删除' },
-        { key: InstanceMenuItemKey.CopyIP, label: '复制IP' },
-        { key: InstanceMenuItemKey.EditLabel, label: '编辑标签' }
-    ]
-};
-
 const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', setView }) => {
+    const { t } = useTranslation();
     const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
     const [expandAll, setExpandAll] = useState(false);
+
+    const dropdownMenuItems = {
+        items: [
+            {
+                key: InstanceMenuItemKey.BatchDelete,
+                label: t('business.topology.serviceInstance.menu.batchDelete')
+            },
+            {
+                key: InstanceMenuItemKey.CopyIP,
+                label: t('business.topology.serviceInstance.menu.copyIP')
+            },
+            {
+                key: InstanceMenuItemKey.EditLabel,
+                label: t('business.topology.serviceInstance.menu.editLabel')
+            }
+        ]
+    };
 
     const selectedNodeStatus = useMemo(() => {
         return getSelectedNodeStatus([selectedNode]);
@@ -31,13 +42,13 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
     const handleInstanceMenuClick = ({ key }: { key: string }) => {
         switch (key) {
             case InstanceMenuItemKey.BatchDelete:
-                message.info('批量删除功能');
+                message.info(t('business.topology.serviceInstance.messages.batchDelete'));
                 break;
             case InstanceMenuItemKey.CopyIP:
-                message.info('复制IP功能');
+                message.info(t('business.topology.serviceInstance.messages.copyIP'));
                 break;
             case InstanceMenuItemKey.EditLabel:
-                message.info('编辑标签功能');
+                message.info(t('business.topology.serviceInstance.messages.editLabel'));
                 break;
         }
     };
@@ -49,10 +60,11 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
                     <div style={{ background: '#fff', padding: 16 }}>
                         {/* Top action bar */}
                         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
                             {view === 'instance' ? (
                                 <div style={{ display: 'flex', gap: 8 }}>
-                                    <Button type="primary">新增</Button>
+                                    <Button type="primary">
+                                        {t('business.topology.serviceInstance.buttons.add')}
+                                    </Button>
                                     <Dropdown
                                         menu={{
                                             ...dropdownMenuItems,
@@ -62,13 +74,17 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
                                         trigger={['click']}
                                     >
                                         <Button>
-                                            实例操作 <DownOutlined />
+                                            {t('business.topology.serviceInstance.buttons.instanceOperation')} <DownOutlined />
                                         </Button>
                                     </Dropdown>
                                 </div>) : (
                                 <div style={{ display: 'flex', gap: 8 }}>
-                                    <Button type="primary" disabled={selectedRowKeys.length === 0}>编辑</Button>
-                                    <Button type="primary" disabled={selectedRowKeys.length === 0}>删除</Button>
+                                    <Button type="primary" disabled={selectedRowKeys.length === 0}>
+                                        {t('business.topology.serviceInstance.buttons.edit')}
+                                    </Button>
+                                    <Button type="primary" disabled={selectedRowKeys.length === 0}>
+                                        {t('business.topology.serviceInstance.buttons.delete')}
+                                    </Button>
                                 </div>
                             )}
 
@@ -77,16 +93,23 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
                                     checked={expandAll}
                                     onChange={(e) => setExpandAll(e.target.checked)}
                                 >
-                                    全部展开
+                                    {t('business.topology.serviceInstance.controls.expandAll')}
                                 </Checkbox>
                                 <Input.Search
-                                    placeholder="请输入关键字"
+                                    placeholder={t('business.topology.serviceInstance.controls.searchPlaceholder')}
                                     style={{ width: 200 }}
-                                    onSearch={(value) => message.info(`搜索: ${value}`)}
+                                    onSearch={
+                                        (value) => message.info(t('business.topology.serviceInstance.messages.searchKeyword',
+                                            { keyword: value }))
+                                    }
                                 />
                                 <Radio.Group value={view} onChange={(e) => setView && setView(e.target.value)}>
-                                    <Radio.Button value="instance">实例</Radio.Button>
-                                    <Radio.Button value="process">进程</Radio.Button>
+                                    <Radio.Button value="instance">
+                                        {t('business.topology.serviceInstance.views.instance')}
+                                    </Radio.Button>
+                                    <Radio.Button value="process">
+                                        {t('business.topology.serviceInstance.views.process')}
+                                    </Radio.Button>
                                 </Radio.Group>
                             </div>
                         </div>
@@ -113,7 +136,11 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
                 ) : (
                     <Empty
                         className='empty-wrapper'
-                        description={<Typography.Text>非业务模块，无服务实例，请选择业务模块查看</Typography.Text>}
+                        description={
+                            <Typography.Text>
+                                {t('business.topology.serviceInstance.empty.nonBusinessModule')}
+                            </Typography.Text>
+                        }
                     />
                 )
             }
