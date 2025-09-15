@@ -172,7 +172,7 @@ const PropertyList: React.FC<ListProps> = ({
             </div>
             {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
-                <Tooltip title={t('business.topology.dynamicGroupForm.propertyList.toggleTooltip', {
+                <Tooltip title={t('business.dynamicGroupForm.propertyList.toggleTooltip', {
                   typeName: getConditionName(EXCHANGE_TYPE[conditionType], t)
                 })}>
                   <SwapOutlined
@@ -215,7 +215,7 @@ const PropertyList: React.FC<ListProps> = ({
           {/* Error message */}
           {errors.has(property.id) && (
             <div className="form-error">
-              {t('business.topology.dynamicGroupForm.propertyList.requiredFieldError')}
+              {t('business.dynamicGroupForm.propertyList.requiredFieldError')}
             </div>
           )}
         </div>

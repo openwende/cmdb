@@ -73,12 +73,12 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         {
             key: ConditionType.VARIABLE,
             title: getConditionName(ConditionType.VARIABLE, t),
-            desc: t('business.topology.dynamicGroupForm.conditionTypes.variable.desc')
+            desc: t('business.dynamicGroupForm.conditionTypes.variable.desc')
         },
         {
             key: ConditionType.IMMUTABLE,
             title: getConditionName(ConditionType.IMMUTABLE, t),
-            desc: t('business.topology.dynamicGroupForm.conditionTypes.immutable.desc')
+            desc: t('business.dynamicGroupForm.conditionTypes.immutable.desc')
         }
     ];
 
@@ -436,10 +436,10 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                             }}
                         >
                             <div className="section-title">
-                                {t('business.topology.dynamicGroupForm.sections.basicInfo')}
+                                {t('business.dynamicGroupForm.sections.basicInfo')}
                                 </div>
                             <Form.Item
-                                label={t('business.topology.dynamicGroupForm.form.groupName.label')}
+                                label={t('business.dynamicGroupForm.form.groupName.label')}
                                 name="groupName"
                                 rules={[
                                     { required: true, message: t('common.form.rules_message') },
@@ -447,13 +447,13 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                 ]}
                             >
                                 <Input
-                                placeholder={t('business.topology.dynamicGroupForm.form.groupName.placeholder')}
+                                placeholder={t('business.dynamicGroupForm.form.groupName.placeholder')}
                                 disabled={disabled}
                                 />
                             </Form.Item>
 
                             <Form.Item
-                                label={t('business.topology.dynamicGroupForm.form.groupObject.label')}
+                                label={t('business.dynamicGroupForm.form.groupObject.label')}
                                 name="groupObject"
                                 rules={[{ required: true }]}
                             >
@@ -535,16 +535,16 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                         color="primary"
                                         variant="outlined"
                                     >
-                                        {t('business.topology.dynamicGroupForm.buttons.preview')}
+                                        {t('business.dynamicGroupForm.buttons.preview')}
                                     </Button>
                                     <Popconfirm
-                                        title={t('business.topology.dynamicGroupForm.confirm.clearConditions')}
+                                        title={t('business.dynamicGroupForm.confirm.clearConditions')}
                                         onConfirm={handleClearConditions}
                                         okText={t('common.confirm')}
                                         cancelText={t('common.cancel')}
                                     >
                                         <Button disabled={disabled || selectedProperties.length === 0}>
-                                            {t('business.topology.dynamicGroupForm.buttons.clearConditions')}
+                                            {t('business.dynamicGroupForm.buttons.clearConditions')}
                                         </Button>
                                     </Popconfirm>
                                 </>
@@ -580,8 +580,8 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             {/* Toggle Confirm Modal */}
             <ConfirmModal
                 visible={showConfirmModal}
-                title={t('business.topology.dynamicGroupForm.confirm.toggleConfirm')}
-                description={t('business.topology.dynamicGroupForm.confirm.toggleDescription')}
+                title={t('business.dynamicGroupForm.confirm.toggleConfirm')}
+                description={t('business.dynamicGroupForm.confirm.toggleDescription')}
                 onOk={handleConfirmOk}
                 onCancel={handleConfirmCancel}
                 okText={t('common.components.confirmModal.confirm')}
@@ -591,8 +591,8 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
             {/* Leave Confirm Modal */}
             <ConfirmModal
                 visible={showLeaveConfirmModal}
-                title={t('business.topology.dynamicGroupForm.confirm.leaveConfirm')}
-                description={t('business.topology.dynamicGroupForm.confirm.leaveDescription')}
+                title={t('business.dynamicGroupForm.confirm.leaveConfirm')}
+                description={t('business.dynamicGroupForm.confirm.leaveDescription')}
                 onOk={handleLeaveConfirmOk}
                 onCancel={handleLeaveConfirmCancel}
                 okText={t('common.components.confirmModal.confirm')}

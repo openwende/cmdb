@@ -1,12 +1,5 @@
 import { CopyMenuItemKey, TransferMenuItemType } from "./Types";
 
-// Note: This file contains static constants with hardcoded Chinese text.
-// For dynamic internationalization in components:
-// - hostCopyMenuItems & transferBaseMenuItems: Use translation keys in components (see HostList.tsx example)
-//   Translation keys: business.topology.constants.copyMenu.* and business.topology.constants.transferMenu.*
-// - QUERY_OPERATOR_DESC: Use getQueryOperatorDesc() function from utils.ts
-//   Translation keys: business.topology.constants.queryOperatorDesc.*
-
 /**
  * "Copy" dropdown menu items
  * Note: Labels are hardcoded for static structure. Use translation keys in components for i18n.

@@ -30,13 +30,13 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
   const list: TargetItem[] = [
     {
       id: BUILTIN_MODELS.HOST,
-      name: t('business.topology.dynamicGroupForm.searchTarget.host.name'),
-      desc: t('business.topology.dynamicGroupForm.searchTarget.host.desc')
+      name: t('business.dynamicGroupForm.searchTarget.host.name'),
+      desc: t('business.dynamicGroupForm.searchTarget.host.desc')
     },
     {
       id: BUILTIN_MODELS.SET,
-      name: t('business.topology.dynamicGroupForm.searchTarget.set.name'),
-      desc: t('business.topology.dynamicGroupForm.searchTarget.set.desc')
+      name: t('business.dynamicGroupForm.searchTarget.set.name'),
+      desc: t('business.dynamicGroupForm.searchTarget.set.desc')
     }
   ];
   const handleChange = (e: RadioChangeEvent) => {

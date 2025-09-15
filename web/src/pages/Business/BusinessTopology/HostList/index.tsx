@@ -201,12 +201,12 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     if (type === DropdownMenuType.Transfer) {
       transferBaseMenuItems.forEach(base => {
         const translatedLabel = base.key === TransferMenuItemType.idlePool
-          ? t('business.topology.constants.transferMenu.idlePool')
+          ? t('business.topology.transferMenu.idlePool')
           : base.key === TransferMenuItemType.businessModule
-            ? t('business.topology.constants.transferMenu.businessModule')
+            ? t('business.topology.transferMenu.businessModule')
             : base.key === TransferMenuItemType.hostPool
-              ? t('business.topology.constants.transferMenu.hostPool')
-              : t('business.topology.constants.transferMenu.otherBusiness');
+              ? t('business.topology.transferMenu.hostPool')
+              : t('business.topology.transferMenu.otherBusiness');
 
         if (
           base.key === TransferMenuItemType.hostPool
@@ -254,30 +254,30 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
         if ('children' in item && item.children) {
           return {
             ...item,
-            label: t('business.topology.constants.copyMenu.cloudIdGroup'),
+            label: t('business.topology.copyMenu.cloudIdGroup'),
             children: item.children.map(child => ({
               ...child,
               label: child.key === HostCopyKey.CloudIdIPv4
-                ? t('business.topology.constants.copyMenu.cloudIdIPv4')
+                ? t('business.topology.copyMenu.cloudIdIPv4')
                 : child.key === HostCopyKey.CloudIdIPv6
-                  ? t('business.topology.constants.copyMenu.cloudIdIPv6')
+                  ? t('business.topology.copyMenu.cloudIdIPv6')
                   : child.key === HostCopyKey.CloudIdIPIPv4First
-                    ? t('business.topology.constants.copyMenu.cloudIdIPIPv4First')
-                    : t('business.topology.constants.copyMenu.cloudIdIPIPv6First')
+                    ? t('business.topology.copyMenu.cloudIdIPIPv4First')
+                    : t('business.topology.copyMenu.cloudIdIPIPv6First')
             }))
           };
         } else {
           const translatedLabel = item.key === HostCopyKey.Id
             ? 'ID'
             : item.key === HostCopyKey.IPv4
-              ? t('business.topology.constants.copyMenu.ipv4')
+              ? t('business.topology.copyMenu.ipv4')
               : item.key === HostCopyKey.IPv6
-                ? t('business.topology.constants.copyMenu.ipv6')
+                ? t('business.topology.copyMenu.ipv6')
                 : item.key === HostCopyKey.CloudRegion
-                  ? t('business.topology.constants.copyMenu.cloudRegion')
+                  ? t('business.topology.copyMenu.cloudRegion')
                   : item.key === HostCopyKey.ModuleName
-                    ? t('business.topology.constants.copyMenu.moduleName')
-                    : t('business.topology.constants.copyMenu.setName');
+                    ? t('business.topology.copyMenu.moduleName')
+                    : t('business.topology.copyMenu.setName');
 
           return {
             ...item,

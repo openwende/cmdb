@@ -31,7 +31,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
   const { t } = useTranslation();
   const [isShow, setIsShow] = useState(false);
   const [searchText, setSearchText] = useState('');
-  const addText = text || t('business.topology.dynamicGroupForm.conditionPicker.addText');
+  const addText = text || t('business.dynamicGroupForm.conditionPicker.addText');
 
   // Check if a property is selected in other condition types
   const isSelectedInOtherType = (property: Property) => {
@@ -53,7 +53,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
     );
     if (otherProperty) {
       const typeName = getConditionName(otherProperty.conditionType!, t);
-      return t('business.topology.dynamicGroupForm.conditionPicker.alreadyAdded', { typeName });
+      return t('business.dynamicGroupForm.conditionPicker.alreadyAdded', { typeName });
     }
     return '';
   };
@@ -149,7 +149,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
                   indeterminate={selectState.indeterminate}
                   onChange={(e) => handleCategorySelectAll(modelId, e.target.checked)}
                 />
-                {t('business.topology.dynamicGroupForm.conditionPicker.selectAll')}
+                {t('business.dynamicGroupForm.conditionPicker.selectAll')}
               </div>
             </div>
 
@@ -196,7 +196,7 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
       {/* Search section */}
       <div className="search-section">
         <Input.Search
-          placeholder={t('business.topology.dynamicGroupForm.conditionPicker.searchPlaceholder')}
+          placeholder={t('business.dynamicGroupForm.conditionPicker.searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={searchText}
           allowClear

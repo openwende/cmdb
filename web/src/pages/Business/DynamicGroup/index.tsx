@@ -31,10 +31,10 @@ const DynamicGroup: React.FC = () => {
 
     // Search field options for dynamic groups
     const searchFieldOptions = [
-        { value: "id", label: t('business.topology.dynamicGroup.searchFields.id') },
-        { value: "name", label: t('business.topology.dynamicGroup.searchFields.name') },
-        { value: "bk_obj_id", label: t('business.topology.dynamicGroup.searchFields.bk_obj_id') },
-        { value: "modify_user", label: t('business.topology.dynamicGroup.searchFields.modify_user') }
+        { value: "id", label: t('business.dynamicGroup.searchFields.id') },
+        { value: "name", label: t('business.dynamicGroup.searchFields.name') },
+        { value: "bk_obj_id", label: t('business.dynamicGroup.searchFields.bk_obj_id') },
+        { value: "modify_user", label: t('business.dynamicGroup.searchFields.modify_user') }
     ];
 
     // Find current field option
@@ -42,7 +42,7 @@ const DynamicGroup: React.FC = () => {
 
     const columns = [
         {
-            title: t('business.topology.dynamicGroup.columns.name'),
+            title: t('business.dynamicGroup.columns.name'),
             dataIndex: "name",
             sorter: true,
             width: 200,
@@ -53,44 +53,44 @@ const DynamicGroup: React.FC = () => {
             width: 300,
         },
         {
-            title: t('business.topology.dynamicGroup.columns.bk_obj_id'),
+            title: t('business.dynamicGroup.columns.bk_obj_id'),
             dataIndex: "bk_obj_id",
             sorter: true,
             width: 150,
             render: (val: string) => (
                 val === 'host' ?
-                    t('business.topology.dynamicGroup.objectTypes.host')
+                    t('business.dynamicGroup.objectTypes.host')
                     : val
             )
         },
         {
-            title: t('business.topology.dynamicGroup.columns.create_user'),
+            title: t('business.dynamicGroup.columns.create_user'),
             dataIndex: "create_user",
             sorter: true,
             width: 150,
         },
         {
-            title: t('business.topology.dynamicGroup.columns.create_time'),
+            title: t('business.dynamicGroup.columns.create_time'),
             dataIndex: "create_time",
             sorter: true,
             width: 180,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: t('business.topology.dynamicGroup.columns.modify_user'),
+            title: t('business.dynamicGroup.columns.modify_user'),
             dataIndex: "modify_user",
             sorter: true,
             width: 150,
         },
         {
-            title: t('business.topology.dynamicGroup.columns.last_time'),
+            title: t('business.dynamicGroup.columns.last_time'),
             dataIndex: "last_time",
             sorter: true,
             width: 180,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: t('business.topology.dynamicGroup.columns.action'),
+            title: t('business.dynamicGroup.columns.action'),
             dataIndex: "action",
             width: 150,
             render: (_: string, record: any) => (
@@ -100,7 +100,7 @@ const DynamicGroup: React.FC = () => {
                         size="small"
                         onClick={() => handlePreview(record)}
                     >
-                        {t('business.topology.dynamicGroup.actions.preview')}
+                        {t('business.dynamicGroup.actions.preview')}
                     </Button>
                     <Button
                         type="link"
@@ -186,7 +186,7 @@ const DynamicGroup: React.FC = () => {
 
         setShowConfirmModal(false);
         setDeletingGroup(null);
-        message.success(t('business.topology.dynamicGroup.messages.deleteSuccess'));
+        message.success(t('business.dynamicGroup.messages.deleteSuccess'));
     };
 
     const handleDeleteCancel = () => {
@@ -218,12 +218,12 @@ const DynamicGroup: React.FC = () => {
     const getFormTitle = () => {
         switch (formMode) {
             case FormMode.PREVIEW:
-                return t('business.topology.dynamicGroup.titles.preview');
+                return t('business.dynamicGroup.titles.preview');
             case FormMode.EDIT:
-                return t('business.topology.dynamicGroup.titles.edit');
+                return t('business.dynamicGroup.titles.edit');
             case FormMode.CREATE:
             default:
-                return t('business.topology.dynamicGroup.titles.create');
+                return t('business.dynamicGroup.titles.create');
         }
     };
 
@@ -234,9 +234,9 @@ const DynamicGroup: React.FC = () => {
                 <Alert
                     message={
                         <span>
-                            {t('business.topology.dynamicGroup.alert.message')}
+                            {t('business.dynamicGroup.alert.message')}
                             <a href="#" style={{ marginLeft: 8 }}>
-                                {t('business.topology.dynamicGroup.alert.linkText')} &gt;
+                                {t('business.dynamicGroup.alert.linkText')} &gt;
                             </a>
                         </span>
                     }
@@ -255,7 +255,7 @@ const DynamicGroup: React.FC = () => {
                         type="primary"
                         onClick={handleCreate}
                     >
-                        {t('business.topology.dynamicGroup.actions.create')}
+                        {t('business.dynamicGroup.actions.create')}
                     </Button>
                 </div>
                 <div className="header-search">
@@ -271,7 +271,7 @@ const DynamicGroup: React.FC = () => {
                         </Select>
                         <Input.Search
                             className="search-input"
-                            placeholder={t('business.topology.dynamicGroup.searchPlaceholder', {
+                            placeholder={t('business.dynamicGroup.searchPlaceholder', {
                                 field: currentFieldOption?.label
                             })}
                             allowClear
@@ -326,8 +326,8 @@ const DynamicGroup: React.FC = () => {
                 visible={showConfirmModal}
                 onOk={handleDelete}
                 onCancel={handleDeleteCancel}
-                title={t('business.topology.dynamicGroup.confirm.deleteTitle')}
-                description={t('business.topology.dynamicGroup.confirm.deleteDescription', {
+                title={t('business.dynamicGroup.confirm.deleteTitle')}
+                description={t('business.dynamicGroup.confirm.deleteDescription', {
                     name: deletingGroup?.name
                 })}
                 okText={t('common.components.confirmModal.confirm')}

@@ -33,7 +33,11 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
     return (
         <Modal
             open={visible}
-            title={<div className="release-modal-title">{t('business.topology.releaseHostModal.title')}</div>}
+            title={(
+                <div className="release-modal-title">
+                    {t('business.topology.releaseHostModal.title')}
+                </div>
+            )}
             onCancel={handleClose}
             footer={null}
             centered
@@ -46,7 +50,9 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
                 {t('business.topology.releaseHostModal.warning')}
             </div>
             <div className="release-modal-select-wrapper">
-                <div className="release-modal-select-label">{t('business.topology.releaseHostModal.selectDirectory')}</div>
+                <div className="release-modal-select-label">
+                    {t('business.topology.releaseHostModal.selectDirectory')}
+                </div>
                 <Select
                     className="release-modal-select"
                     placeholder={t('common.pleaseSelect')}

@@ -76,12 +76,12 @@ const FormComponent: React.FC<ComponentProps> = ({
 
     const placeholder = useMemo(() => {
         const name = conditionType === ConditionType.IMMUTABLE
-            ? t('business.topology.dynamicGroupForm.formComponent.placeholders.immutableValue')
-            : t('business.topology.dynamicGroupForm.formComponent.placeholders.variableValue');
+            ? t('business.dynamicGroupForm.formComponent.placeholders.immutableValue')
+            : t('business.dynamicGroupForm.formComponent.placeholders.variableValue');
         if (SELECT_TYPES.includes(propertyType as PROPERTY_TYPES)) {
             return conditionType === ConditionType.IMMUTABLE
-                ? t('business.topology.dynamicGroupForm.formComponent.placeholders.immutableSelect')
-                : t('business.topology.dynamicGroupForm.formComponent.placeholders.variableSelect');
+                ? t('business.dynamicGroupForm.formComponent.placeholders.immutableSelect')
+                : t('business.dynamicGroupForm.formComponent.placeholders.variableSelect');
         }
         return name;
     }, [property, conditionType, t]);

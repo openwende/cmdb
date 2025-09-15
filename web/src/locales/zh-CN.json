@@ -59,6 +59,90 @@
         "serviceInstance": "服务实例",
         "nodeInfo": "节点信息"
       },
+      "hostList": {
+        "columns": {
+          "moduleName": "模块名",
+          "clusterName": "集群名"
+        },
+        "transfer": {
+          "hostPoolTip": "主机需在空闲机池下才允许转移至主机池",
+          "otherBusinessTip": "主机需在空闲机池下才允许转移至其他业务"
+        },
+        "menus": {
+          "businessModule": "业务模块",
+          "currentModule": "当前模块",
+          "exportSelected": "导出选中",
+          "exportAll": "导出全部",
+          "importExcel": "导入excel更新"
+        },
+        "empty": {
+          "noModuleCreated": "该集群尚未创建模块",
+          "createNow": "立即创建"
+        },
+        "buttons": {
+          "add": "新增",
+          "edit": "编辑",
+          "transferTo": "转移至",
+          "appendTo": "追加至",
+          "removeFrom": "移出",
+          "copy": "复制",
+          "more": "更多"
+        },
+        "tooltips": {
+          "onlyModuleCanAdd": "仅能在业务模块下新增"
+        },
+        "search": {
+          "placeholder": "请输入IP或固资编号"
+        },
+        "pagination": {
+          "selected": "已选择",
+          "items": "条"
+        }
+      },
+      "addHostModal": {
+        "columns": {
+          "innerIP": "内网IP",
+          "innerIPv6": "内网IPv6",
+          "cloudArea": "管控区域"
+        },
+        "unassigned": "未分配",
+        "messages": {
+          "pleaseInputIP": "请输入IP",
+          "addSuccess": "成功添加 {{count}} 台主机",
+          "noNewHosts": "没有新的主机可添加",
+          "copySuccess": "复制成功",
+          "copyFailed": "复制失败",
+          "ipIncorrectOrNotExists": "IP不正确或主机不存在",
+          "noHostSelected": "暂无主机选中"
+        },
+        "placeholders": {
+          "pleaseInput": "请输入",
+          "searchTopologyNode": "搜索拓扑节点",
+          "inputIPNewline": "请输入IP，换行分隔"
+        },
+        "buttons": {
+          "addToList": "添加至列表",
+          "cancel": "取消",
+          "confirm": "确定",
+          "nextStep": "下一步"
+        },
+        "tabs": {
+          "staticTopology": "静态拓扑",
+          "customInput": "自定义输入",
+          "resultPreview": "结果预览"
+        },
+        "menu": {
+          "copyIP": "复制IP",
+          "removeAll": "移除所有"
+        },
+        "labels": {
+          "selectedCount": "已选择 {{count}} 台主机"
+        },
+        "titles": {
+          "selectHost": "选择主机",
+          "addHostToModule": "新增主机到模块"
+        }
+      },
       "tree": {
         "search": "请输入关键词",
         "create": {
@@ -84,6 +168,436 @@
           "directMode": "直接新建",
           "selected": "已选择"
         }
+      },
+      "copyMenu": {
+        "ipv4": "内网IPv4",
+        "ipv6": "内网IPv6",
+        "cloudIdGroup": "管控区域ID:IP",
+        "cloudIdIPv4": "管控区域ID:IPv4",
+        "cloudIdIPv6": "管控区域ID:IPv6",
+        "cloudIdIPIPv4First": "管控区域ID:IP(IPv4优先)",
+        "cloudIdIPIPv6First": "管控区域ID:IP(IPv6优先)",
+        "cloudRegion": "管控区域",
+        "moduleName": "模块名",
+        "setName": "集群名"
+      },
+      "transferMenu": {
+        "idlePool": "空闲机池",
+        "businessModule": "业务模块",
+        "hostPool": "主机池",
+        "otherBusiness": "其他业务"
+      },
+      "transferHostModal": {
+        "titles": {
+          "idlePool": "转移主机到空闲机池",
+          "businessModule": "转移主机到业务模块",
+          "otherBusiness": "转移主机到其他业务",
+          "appendToBusiness": "追加主机到业务模块"
+        },
+        "objectNames": {
+          "business": "业务",
+          "cluster": "集群",
+          "module": "模块"
+        },
+        "tooltips": {
+          "selectModuleFirst": "请先选择业务模块",
+          "hostModuleUnchanged": "主机所属模块未发生改变"
+        },
+        "buttons": {
+          "confirm": "确定",
+          "nextStep": "下一步",
+          "cancel": "取消",
+          "clear": "清空"
+        },
+        "placeholders": {
+          "selectBusiness": "请选择业务",
+          "searchKeyword": "请输入关键字"
+        },
+        "empty": {
+          "selectBusinessFirst": "请先选择业务",
+          "noModuleSelected": "暂无模块选中"
+        },
+        "preview": {
+          "title": "结果预览",
+          "selectedText": "已选择",
+          "moduleCountSuffix": "个模块"
+        }
+      },
+      "releaseHostModal": {
+        "title": "确认归还主机池",
+        "confirmMessage": "确认将 {{count}} 台空闲机池转移到主机池？",
+        "warning": "请务必确认业务进程已停止或主机处于关机状态",
+        "selectDirectory": "归还至目录"
+      },
+      "transferHost": {
+        "columns": {
+          "processName": "进程名称",
+          "processAlias": "进程别名",
+          "startupParams": "进程启动参数",
+          "bindInfo": "绑定信息",
+          "action": "操作",
+          "serviceInstance": "服务实例",
+          "belongingModule": "所属模块",
+          "cloudArea": "管控区域"
+        },
+        "tips": {
+          "addInstanceTip": "主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例",
+          "deleteInstanceTip": "移出当前模块，主机的服务实例信息也一同被删除",
+          "moveToIdleTip": "当主机仅属于当前模块时，移除后将主机会默认放置于空闲机中"
+        },
+        "status": {
+          "noProcessAdded": "（未添加进程）"
+        },
+        "buttons": {
+          "addProcess": "添加进程",
+          "confirmChange": "确认变更"
+        },
+        "actions": {
+          "moveToIdle": "转移到空闲机的主机"
+        },
+        "confirmDelete": {
+          "title": "确定删除该进程?"
+        },
+        "messages": {
+          "noChangeInfo": "目标模块为源模块，无变更信息"
+        },
+        "tabs": {
+          "deleteServiceInstance": "删除服务实例",
+          "moveToIdleHost": "移动到空闲机的主机",
+          "addServiceInstance": "新增服务实例"
+        },
+        "labels": {
+          "selectedHosts": "已选主机",
+          "units": "台",
+          "transferTo": "转移到",
+          "changeConfirmation": "变更确认"
+        }
+      },
+      "serviceInstance": {
+        "menu": {
+          "batchDelete": "批量删除",
+          "copyIP": "复制IP",
+          "editLabel": "编辑标签"
+        },
+        "messages": {
+          "batchDelete": "批量删除功能",
+          "copyIP": "复制IP功能",
+          "editLabel": "编辑标签功能",
+          "searchKeyword": "搜索: {{keyword}}"
+        },
+        "buttons": {
+          "add": "新增",
+          "edit": "编辑",
+          "delete": "删除",
+          "instanceOperation": "实例操作"
+        },
+        "views": {
+          "instance": "实例",
+          "process": "进程"
+        },
+        "controls": {
+          "expandAll": "全部展开",
+          "searchPlaceholder": "请输入关键字"
+        },
+        "empty": {
+          "nonBusinessModule": "非业务模块，无服务实例，请选择业务模块查看"
+        },
+        "instance": {
+          "columns": {
+            "instanceName": "实例名称",
+            "processCount": "进程数量",
+            "labels": "标签",
+            "action": "操作",
+            "processName": "进程名称",
+            "processStart": "进程启动",
+            "startupParams": "进程启动参数",
+            "bindInfo": "绑定信息"
+          },
+          "actions": {
+            "addProcess": "添加进程",
+            "clone": "克隆"
+          },
+          "messages": {
+            "instanceNameUpdateSuccess": "实例名称修改成功",
+            "labelSaveSuccess": "标签保存成功",
+            "cloneInstanceInfo": "克隆实例功能",
+            "deleteInstanceSuccess": "删除实例成功",
+            "deleteProcessSuccess": "删除进程成功"
+          },
+          "modal": {
+            "editLabel": "编辑标签"
+          },
+          "form": {
+            "placeholders": {
+              "key": "键",
+              "value": "值"
+            }
+          },
+          "drawer": {
+            "viewProcess": "查看进程",
+            "addProcess": "添加进程",
+            "editProcess": "编辑进程"
+          },
+          "pagination": {
+            "selected": "已选择",
+            "items": "条"
+          },
+          "confirm": {
+            "deleteInstance": "确定删除该实例?"
+          }
+        },
+        "process": {
+          "columns": {
+            "processAlias": "进程别名",
+            "instanceCount": "实例数量",
+            "serviceInstance": "所属实例",
+            "processName": "进程名称",
+            "startupParams": "进程启动参数",
+            "bindInfo": "绑定信息",
+            "action": "操作"
+          },
+          "sections": {
+            "basicInfo": "基础信息",
+            "listenInfo": "监听信息"
+          },
+          "form": {
+            "processName": "进程名称",
+            "processAlias": "进程别名",
+            "startupParams": "进程启动参数",
+            "description": "备注",
+            "placeholders": {
+              "startupParams": "请输入进程启动参数",
+              "description": "请输入备注"
+            }
+          },
+          "messages": {
+            "deleteSuccess": "删除进程成功",
+            "deleteAction": "删除进程:"
+          },
+          "drawer": {
+            "viewTitle": "查看进程",
+            "editTitle": "编辑进程"
+          },
+          "table": {
+            "noData": "暂无数据"
+          },
+          "pagination": {
+            "selected": "已选择",
+            "items": "条"
+          },
+          "fields": {
+            "createTime": "创建时间",
+            "creator": "创建人",
+            "updateTime": "更新时间",
+            "description": "备注"
+          },
+          "confirm": {
+            "deleteProcess": "确定删除该进程?"
+          }
+        }
+      },
+      "moduleNodeInfo": {
+        "deleteSuccess": "删除模块节点成功",
+        "saveSuccess": "保存成功",
+        "serviceCategory": "服务分类",
+        "basicInfo": "基础信息",
+        "moduleName": "模块名称",
+        "moduleNamePlaceholder": "请输入模块名称",
+        "moduleType": "模块类型",
+        "moduleTypePlaceholder": "请选择模块类型",
+        "moduleTypeOptions": {
+          "normal": "普通",
+          "database": "数据库"
+        },
+        "mainOperator": "主要维护人",
+        "mainOperatorPlaceholder": "请输入主要维护人",
+        "backupOperator": "备份维护人",
+        "backupOperatorPlaceholder": "请输入备份维护人",
+        "confirmDeleteTitle": "确定删除 module?",
+        "serviceTemplate": "服务模板",
+        "none": "无",
+        "hostAttributeAutoApply": "主机属性自动应用",
+        "notEnabled": "未启用",
+        "createTime": "创建时间",
+        "creator": "创建人",
+        "updateTime": "更新时间",
+        "updater": "更新人",
+        "deleteNode": "删除节点"
+      },
+      "setNodeInfo": {
+        "deleteSuccess": "删除集群节点成功",
+        "saveSuccess": "保存成功",
+        "basicInfo": "基础信息",
+        "setName": "集群名称",
+        "setNamePlaceholder": "请输入集群名称",
+        "setDescription": "集群描述",
+        "setDescriptionPlaceholder": "请输入集群描述",
+        "environmentType": "环境类型",
+        "environmentTypePlaceholder": "请选择环境类型",
+        "environment": {
+          "test": "测试",
+          "experience": "体验",
+          "production": "正式"
+        },
+        "serviceStatus": "服务状态",
+        "serviceStatusPlaceholder": "请选择服务状态",
+        "status": {
+          "open": "开放",
+          "closed": "关闭"
+        },
+        "designCapacity": "设计容量",
+        "designCapacityPlaceholder": "请输入设计容量",
+        "remarks": "备注",
+        "remarksPlaceholder": "请输入备注",
+        "confirmDeleteTitle": "确定删除 set?",
+        "clusterTemplate": "集群模板",
+        "none": "无",
+        "createTime": "创建时间",
+        "creator": "创建人",
+        "updateTime": "更新时间",
+        "updater": "更新人",
+        "deleteNode": "删除节点"
+      }
+    },
+    "dynamicGroupForm": {
+      "conditionTypes": {
+        "variable": {
+          "title": "可变条件",
+          "desc": "在使用动态分组时，操作符和条件值可修改"
+        },
+        "immutable": {
+          "title": "锁定条件",
+          "desc": "在使用动态分组时，条件及条件值均不可修改"
+        }
+      },
+      "conditionNames": {
+        "immutable": "锁定条件",
+        "variable": "可变条件"
+      },
+      "sections": {
+        "basicInfo": "基础信息",
+        "resultPreview": "结果预览"
+      },
+      "form": {
+        "groupName": {
+          "label": "分组名称",
+          "placeholder": "请输入分组名称"
+        },
+        "groupObject": {
+          "label": "查询对象"
+        }
+      },
+      "searchTarget": {
+        "host": {
+          "name": "主机",
+          "desc": "目标为主机列表"
+        },
+        "set": {
+          "name": "集群",
+          "desc": "目标为集群列表"
+        }
+      },
+      "conditionPicker": {
+        "addText": "添加",
+        "searchPlaceholder": "请输入字段名称或唯一标识",
+        "selectAll": "全选",
+        "alreadyAdded": "已在{{typeName}}中添加",
+        "serviceTemplate": "服务模板"
+      },
+      "propertyList": {
+        "toggleTooltip": "切换为{{typeName}}",
+        "requiredFieldError": "该字段是必填项"
+      },
+      "queryOperatorDesc": {
+        "eq": "等于",
+        "ne": "不等于",
+        "lt": "小于",
+        "gt": "大于",
+        "in": "精确",
+        "nin": "精确",
+        "range": "范围",
+        "lte": "小于等于",
+        "gte": "大于等于",
+        "like": "模糊",
+        "contains": "匹配(大小写不敏感)",
+        "containsCs": "匹配(大小写敏感)"
+      },
+      "formComponent": {
+        "placeholders": {
+          "immutableValue": "请输入条件值",
+          "immutableSelect": "请选择条件值",
+          "variableValue": "请输入默认值",
+          "variableSelect": "请选择默认值"
+        }
+      },
+      "previewResult": {
+        "title": "结果预览",
+        "updateTime": "（生成时间：{{time}}）",
+        "refresh": "刷新",
+        "emptyTip": "请先在左侧设置分组条件",
+        "columns": {
+          "internalIPv4": "内网IPv4",
+          "region": "管控区域",
+          "cloudVendor": "云主机状态",
+          "cloudVendorID": "云主机实例ID",
+          "cloudBusiness": "云厂商",
+          "createTime": "创建时间",
+          "creator": "创建人"
+        }
+      },
+      "buttons": {
+        "edit": "编辑",
+        "submit": "提交",
+        "preview": "预览",
+        "clearConditions": "清空条件"
+      },
+      "confirm": {
+        "clearConditions": "确认清空当前的分组条件？",
+        "toggleConfirm": "确认切换？",
+        "toggleDescription": "填写内容会清空，确认切换？",
+        "leaveConfirm": "确认离开当前页？",
+        "leaveDescription": "离开将会导致未保存信息丢失"
+      }
+    },
+    "dynamicGroup": {
+      "searchFields": {
+        "id": "ID",
+        "name": "分组名称",
+        "bk_obj_id": "查询对象",
+        "modify_user": "修改人"
+      },
+      "columns": {
+        "name": "分组名称",
+        "bk_obj_id": "查询对象",
+        "create_user": "创建用户",
+        "create_time": "创建时间",
+        "modify_user": "修改人",
+        "last_time": "修改时间",
+        "action": "操作"
+      },
+      "actions": {
+        "preview": "预览",
+        "create": "新建"
+      },
+      "titles": {
+        "preview": "动态分组详情",
+        "edit": "编辑动态分组",
+        "create": "创建动态分组"
+      },
+      "searchPlaceholder": "请输入{{field}}",
+      "messages": {
+        "deleteSuccess": "删除成功"
+      },
+      "confirm": {
+        "deleteTitle": "确定删除",
+        "deleteDescription": "确认要删除\"{{name}}\"分组?"
+      },
+      "alert": {
+        "message": "动态分组目前仅提供主机文档的操作条件，在编辑SaaS中可以访问其下资源，包括作业任务、监控配置等。",
+        "linkText": "查看详情"
+      },
+      "objectTypes": {
+        "host": "主机"
       }
     }
   },
@@ -105,7 +619,7 @@
       "actions": {
         "import_host": "导入主机",
         "assign_to": "分配到",
-        "transfer_to": "转移到", 
+        "transfer_to": "转移到",
         "copy": "复制",
         "more": "更多"
       },
@@ -321,12 +835,12 @@
         },
         "hostList": {
           "columns": {
-            "moduleName": "模块名（模块）",
-            "clusterName": "集群名（集群）"
+            "moduleName": "模块名",
+            "clusterName": "集群名"
           },
           "transfer": {
-            "hostPoolTip": "主机需在\"空闲机池\"下才允许转移至主机池",
-            "otherBusinessTip": "主机需在\"空闲机池\"下才允许转移至其他业务"
+            "hostPoolTip": "主机需在空闲机池下才允许转移至主机池",
+            "otherBusinessTip": "主机需在空闲机池下才允许转移至其他业务"
           },
           "menus": {
             "businessModule": "业务模块",
@@ -357,127 +871,6 @@
           "pagination": {
             "selected": "已选择",
             "items": "条"
-          }
-        },
-        "serviceInstance": {
-          "menu": {
-            "batchDelete": "批量删除",
-            "copyIP": "复制IP",
-            "editLabel": "编辑标签"
-          },
-          "messages": {
-            "batchDelete": "批量删除功能",
-            "copyIP": "复制IP功能",
-            "editLabel": "编辑标签功能",
-            "searchKeyword": "搜索: {{keyword}}"
-          },
-          "buttons": {
-            "add": "新增",
-            "edit": "编辑",
-            "delete": "删除",
-            "instanceOperation": "实例操作"
-          },
-          "views": {
-            "instance": "实例",
-            "process": "进程"
-          },
-          "controls": {
-            "expandAll": "全部展开",
-            "searchPlaceholder": "请输入关键字"
-          },
-          "empty": {
-            "nonBusinessModule": "非业务模块，无服务实例，请选择业务模块查看"
-          },
-          "instance": {
-            "columns": {
-              "instanceName": "实例名称",
-              "processCount": "进程数量",
-              "labels": "标签",
-              "action": "操作",
-              "processName": "进程名称",
-              "processStart": "进程启动",
-              "startupParams": "进程启动参数",
-              "bindInfo": "绑定信息"
-            },
-            "actions": {
-              "addProcess": "添加进程",
-              "clone": "克隆"
-            },
-            "messages": {
-              "instanceNameUpdateSuccess": "实例名称修改成功",
-              "labelSaveSuccess": "标签保存成功",
-              "cloneInstanceInfo": "克隆实例功能",
-              "deleteInstanceSuccess": "删除实例成功",
-              "deleteProcessSuccess": "删除进程成功"
-            },
-            "confirm": {
-              "deleteInstance": "确定删除该实例?",
-              "deleteProcess": "确定删除该进程?"
-            },
-            "modal": {
-              "editLabel": "编辑标签"
-            },
-            "form": {
-              "placeholders": {
-                "key": "键",
-                "value": "值"
-              }
-            },
-            "drawer": {
-              "viewProcess": "查看进程",
-              "addProcess": "添加进程",
-              "editProcess": "编辑进程"
-            },
-            "pagination": {
-              "selected": "已选择",
-              "items": "条"
-            }
-          },
-          "process": {
-            "columns": {
-              "processAlias": "进程别名",
-              "instanceCount": "实例数量",
-              "serviceInstance": "所属实例",
-              "processName": "进程名称",
-              "startupParams": "进程启动参数",
-              "bindInfo": "绑定信息",
-              "action": "操作"
-            },
-            "sections": {
-              "basicInfo": "基础信息",
-              "listenInfo": "监听信息"
-            },
-            "form": {
-              "processName": "进程名称",
-              "processAlias": "进程别名",
-              "startupParams": "进程启动参数",
-              "description": "备注",
-              "placeholders": {
-                "startupParams": "请输入进程启动参数",
-                "description": "请输入备注"
-              }
-            },
-            "messages": {
-              "deleteSuccess": "删除进程成功",
-              "deleteAction": "删除进程:"
-            },
-            "drawer": {
-              "viewTitle": "查看进程",
-              "editTitle": "编辑进程"
-            },
-            "table": {
-              "noData": "暂无数据"
-            },
-            "pagination": {
-              "selected": "已选择",
-              "items": "条"
-            },
-            "fields": {
-              "createTime": "创建时间",
-              "creator": "创建人",
-              "updateTime": "更新时间",
-              "description": "备注"
-            }
           }
         },
         "nodeInfo": {
@@ -530,42 +923,6 @@
         "idleNodeInfo": {
           "alertMessage": "容器集群节点（Node）上没有运行任何Pod，都会归于 \\\"空Pod节点\\\"",
           "nodeName": "节点名称"
-        },
-        "transferHostModal": {
-          "titles": {
-            "idlePool": "转移主机到空闲机池",
-            "businessModule": "转移主机到业务模块",
-            "otherBusiness": "转移主机到其他业务",
-            "appendToBusiness": "追加主机到业务模块"
-          },
-          "objectNames": {
-            "business": "业务",
-            "cluster": "集群",
-            "module": "模块"
-          },
-          "tooltips": {
-            "selectModuleFirst": "请先选择业务模块",
-            "hostModuleUnchanged": "主机所属模块未发生改变"
-          },
-          "buttons": {
-            "confirm": "确定",
-            "nextStep": "下一步",
-            "cancel": "取消",
-            "clear": "清空"
-          },
-          "placeholders": {
-            "selectBusiness": "请选择业务",
-            "searchKeyword": "请输入关键字"
-          },
-          "empty": {
-            "selectBusinessFirst": "请先选择业务",
-            "noModuleSelected": "暂无模块选中"
-          },
-          "preview": {
-            "title": "结果预览",
-            "selectedText": "已选择",
-            "moduleCountSuffix": "个模块"
-          }
         },
         "addProcessModal": {
           "title": "添加进程",
@@ -660,281 +1017,6 @@
           "tester": "测试人员",
           "developer": "开发人员",
           "operator": "操作人员"
-        },
-        "moduleNodeInfo": {
-          "deleteSuccess": "删除模块节点成功",
-          "saveSuccess": "保存成功",
-          "serviceCategory": "服务分类",
-          "basicInfo": "基础信息",
-          "moduleName": "模块名称",
-          "moduleNamePlaceholder": "请输入模块名称",
-          "moduleType": "模块类型",
-          "moduleTypePlaceholder": "请选择模块类型",
-          "moduleTypeOptions": {
-            "normal": "普通",
-            "database": "数据库"
-          },
-          "mainOperator": "主要维护人",
-          "mainOperatorPlaceholder": "请输入主要维护人",
-          "backupOperator": "备份维护人",
-          "backupOperatorPlaceholder": "请输入备份维护人",
-          "confirmDeleteTitle": "确定删除 module?",
-          "serviceTemplate": "服务模板",
-          "none": "无",
-          "hostAttributeAutoApply": "主机属性自动应用",
-          "notEnabled": "未启用",
-          "createTime": "创建时间",
-          "creator": "创建人",
-          "updateTime": "更新时间",
-          "updater": "更新人",
-          "deleteNode": "删除节点"
-        },
-        "releaseHostModal": {
-          "title": "确认归还主机池",
-          "confirmMessage": "确认将 {{count}} 台空闲机池转移到主机池？",
-          "warning": "请务必确认业务进程已停止或主机处于关机状态",
-          "selectDirectory": "归还至目录"
-        },
-        "setNodeInfo": {
-          "deleteSuccess": "删除集群节点成功",
-          "saveSuccess": "保存成功",
-          "basicInfo": "基础信息",
-          "setName": "集群名称",
-          "setNamePlaceholder": "请输入集群名称",
-          "setDescription": "集群描述",
-          "setDescriptionPlaceholder": "请输入集群描述",
-          "environmentType": "环境类型",
-          "environmentTypePlaceholder": "请选择环境类型",
-          "environment": {
-            "test": "测试",
-            "experience": "体验",
-            "production": "正式"
-          },
-          "serviceStatus": "服务状态",
-          "serviceStatusPlaceholder": "请选择服务状态",
-          "status": {
-            "open": "开放",
-            "closed": "关闭"
-          },
-          "designCapacity": "设计容量",
-          "designCapacityPlaceholder": "请输入设计容量",
-          "remarks": "备注",
-          "remarksPlaceholder": "请输入备注",
-          "confirmDeleteTitle": "确定删除 set?",
-          "clusterTemplate": "集群模板",
-          "none": "无",
-          "createTime": "创建时间",
-          "creator": "创建人",
-          "updateTime": "更新时间",
-          "updater": "更新人",
-          "deleteNode": "删除节点"
-        },
-        "transferHost": {
-          "columns": {
-            "processName": "进程名称",
-            "processAlias": "进程别名",
-            "startupParams": "进程启动参数",
-            "bindInfo": "绑定信息",
-            "action": "操作",
-            "serviceInstance": "服务实例",
-            "belongingModule": "所属模块",
-            "cloudArea": "管控区域"
-          },
-          "tips": {
-            "addInstanceTip": "主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例",
-            "deleteInstanceTip": "移出当前模块，主机的服务实例信息也一同被删除",
-            "moveToIdleTip": "当主机仅属于当前模块时，移除后将主机会默认放置于空闲机中"
-          },
-          "status": {
-            "noProcessAdded": "（未添加进程）"
-          },
-          "buttons": {
-            "addProcess": "添加进程",
-            "confirmChange": "确认变更"
-          },
-          "actions": {
-            "moveToIdle": "转移到空闲机的主机"
-          },
-          "confirmDelete": {
-            "title": "确定删除该进程?"
-          },
-          "messages": {
-            "noChangeInfo": "目标模块为源模块，无变更信息"
-          },
-          "tabs": {
-            "deleteServiceInstance": "删除服务实例",
-            "moveToIdleHost": "移动到空闲机的主机",
-            "addServiceInstance": "新增服务实例"
-          },
-          "labels": {
-            "selectedHosts": "已选主机",
-            "units": "台",
-            "transferTo": "转移到",
-            "changeConfirmation": "变更确认"
-          }
-        },
-        "dynamicGroupForm": {
-          "conditionTypes": {
-            "variable": {
-              "title": "可变条件",
-              "desc": "在使用动态分组时，操作符和条件值可修改"
-            },
-            "immutable": {
-              "title": "锁定条件", 
-              "desc": "在使用动态分组时，条件及条件值均不可修改"
-            }
-          },
-          "sections": {
-            "basicInfo": "基础信息",
-            "resultPreview": "结果预览"
-          },
-          "form": {
-            "groupName": {
-              "label": "分组名称",
-              "placeholder": "请输入分组名称"
-            },
-            "groupObject": {
-              "label": "查询对象"
-            }
-          },
-          "searchTarget": {
-            "host": {
-              "name": "主机",
-              "desc": "目标为主机列表"
-            },
-            "set": {
-              "name": "集群",
-              "desc": "目标为集群列表"
-            }
-          },
-          "conditionPicker": {
-            "addText": "添加",
-            "searchPlaceholder": "请输入字段名称或唯一标识",
-            "selectAll": "全选",
-            "alreadyAdded": "已在{{typeName}}中添加"
-          },
-          "propertyList": {
-            "toggleTooltip": "切换为{{typeName}}",
-            "requiredFieldError": "该字段是必填项"
-          },
-          "formComponent": {
-            "placeholders": {
-              "immutableValue": "请输入条件值",
-              "immutableSelect": "请选择条件值", 
-              "variableValue": "请输入默认值",
-              "variableSelect": "请选择默认值"
-            }
-          },
-          "previewResult": {
-            "title": "结果预览",
-            "updateTime": "（生成时间：{{time}}）",
-            "refresh": "刷新",
-            "emptyTip": "请先在左侧设置分组条件",
-            "columns": {
-              "internalIPv4": "内网IPv4",
-              "region": "管控区域",
-              "cloudVendor": "云主机状态",
-              "cloudVendorID": "云主机实例ID", 
-              "cloudBusiness": "云厂商",
-              "createTime": "创建时间",
-              "creator": "创建人"
-            }
-          },
-          "buttons": {
-            "edit": "编辑",
-            "submit": "提交",
-            "preview": "预览",
-            "clearConditions": "清空条件"
-          },
-          "confirm": {
-            "clearConditions": "确认清空当前的分组条件？",
-            "toggleConfirm": "确认切换？",
-            "toggleDescription": "填写内容会清空，确认切换？",
-            "leaveConfirm": "确认离开当前页？",
-            "leaveDescription": "离开将会导致未保存信息丢失"
-          }
-        },
-        "dynamicGroup": {
-          "searchFields": {
-            "id": "ID",
-            "name": "分组名称",
-            "bk_obj_id": "查询对象",
-            "modify_user": "修改人"
-          },
-          "columns": {
-            "name": "分组名称",
-            "bk_obj_id": "查询对象",
-            "create_user": "创建用户",
-            "create_time": "创建时间",
-            "modify_user": "修改人",
-            "last_time": "修改时间",
-            "action": "操作"
-          },
-          "actions": {
-            "preview": "预览",
-            "create": "新建"
-          },
-          "titles": {
-            "preview": "动态分组详情",
-            "edit": "编辑动态分组",
-            "create": "创建动态分组"
-          },
-          "searchPlaceholder": "请输入{{field}}",
-          "messages": {
-            "deleteSuccess": "删除成功"
-          },
-          "confirm": {
-            "deleteTitle": "确定删除",
-            "deleteDescription": "确认要删除\"{{name}}\"分组?"
-          },
-          "alert": {
-            "message": "动态分组目前仅提供主机文档的操作条件，在编辑SaaS中可以访问其下资源，包括作业任务、监控配置等。",
-            "linkText": "查看详情"
-          },
-          "objectTypes": {
-            "host": "主机"
-          }
-        },
-        "constants": {
-          "copyMenu": {
-            "ipv4": "内网IPv4",
-            "ipv6": "内网IPv6",
-            "cloudIdGroup": "管控区域ID:IP",
-            "cloudIdIPv4": "管控区域ID:IPv4",
-            "cloudIdIPv6": "管控区域ID:IPv6",
-            "cloudIdIPIPv4First": "管控区域ID:IP(IPv4优先)",
-            "cloudIdIPIPv6First": "管控区域ID:IP(IPv6优先)",
-            "cloudRegion": "管控区域",
-            "moduleName": "模块名",
-            "setName": "集群名"
-          },
-          "transferMenu": {
-            "idlePool": "空闲机池",
-            "businessModule": "业务模块",
-            "hostPool": "主机池",
-            "otherBusiness": "其他业务"
-          },
-          "queryOperatorDesc": {
-            "eq": "等于",
-            "ne": "不等于",
-            "lt": "小于",
-            "gt": "大于",
-            "in": "精确",
-            "nin": "精确",
-            "range": "范围",
-            "lte": "小于等于",
-            "gte": "大于等于",
-            "like": "模糊",
-            "contains": "匹配(大小写不敏感)",
-            "containsCs": "匹配(大小写敏感)"
-          },
-          "conditionNames": {
-            "immutable": "锁定条件",
-            "variable": "可变条件"
-          }
-        },
-        "utils": {
-          "serviceTemplate": "服务模板"
         }
       }
     },

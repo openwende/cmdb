@@ -43,7 +43,7 @@ export const createServiceTemplateProperty = (t: TFunction): Property => {
         id: Date.now(),
         bk_obj_id: 'module',
         bk_property_id: 'service_template_id',
-        bk_property_name: t('business.topology.utils.serviceTemplate'),
+        bk_property_name: t('business.dynamicGroupForm.conditionPicker.serviceTemplate'),
         bk_property_index: -1,
         bk_property_type: 'service-template',
         isonly: true,
@@ -69,8 +69,8 @@ export const createServiceTemplateProperty = (t: TFunction): Property => {
  */
 export const getConditionName = (conditionType: ConditionType, t: TFunction): string => {
     return conditionType === ConditionType.IMMUTABLE
-        ? t('business.topology.constants.conditionNames.immutable')
-        : t('business.topology.constants.conditionNames.variable');
+        ? t('business.dynamicGroupForm.conditionNames.immutable')
+        : t('business.dynamicGroupForm.conditionNames.variable');
 };
 
 /**
@@ -83,7 +83,7 @@ export const getQueryOperatorDesc = (operator: string, t: TFunction): string => 
     const operatorKey = operator.replace('$', '');
     const keyMap: Record<string, string> = {
         'eq': 'eq',
-        'ne': 'ne', 
+        'ne': 'ne',
         'lt': 'lt',
         'gt': 'gt',
         'in': 'in',
@@ -95,9 +95,9 @@ export const getQueryOperatorDesc = (operator: string, t: TFunction): string => 
         'contains': 'contains',
         'contains_s': 'containsCs'
     };
-    
+
     const translationKey = keyMap[operatorKey] || operatorKey;
-    return t(`business.topology.constants.queryOperatorDesc.${translationKey}`);
+    return t(`business.dynamicGroupForm.queryOperatorDesc.${translationKey}`);
 };
 
 /**
