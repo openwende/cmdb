@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import Pagination from "@/components/common/Pagination";
 import EmptySearchResult from "@/components/common/EmptySearchResult";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import DynamicGroupForm, { FormMode } from "../components/DynamicGroupForm";
+import DynamicGroupForm, { FormMode } from "./components";
 import { dynamicGroupList } from "@/mock/business";
 import "./style.css";
 
