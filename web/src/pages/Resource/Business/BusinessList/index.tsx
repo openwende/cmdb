@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Table, Button, Input, Select, Tooltip, Space, message } from "antd";
-import { DatePicker } from "antd";
+import { Table, Button, Input, Select, Tooltip, Space, message, DatePicker, Spin, Empty } from "antd";
+import { HistoryOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import Pagination from "@/components/common/Pagination";
 import ConfirmModal from "@/components/common/ConfirmModal";
-import EmptySearchResult from "@/components/common/EmptySearchResult";
-import { businessListMock } from "@/mock/resource";
 import ModifyDrawer from "../components/ModifyDrawer";
+import { getBusinessList } from "@/api";
 import "./style.css";
-import { HistoryOutlined } from "@ant-design/icons";
 import { archivedBusinessPath } from "../index";
 import dayjs from 'dayjs';
 import { searchFieldOptions } from "../../constants";
@@ -17,7 +15,7 @@ import { CREATE_TYPES } from "@/constants/business";
 
 const { Option } = Select;
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 const BusinessList: React.FC = () => {
     const { t } = useTranslation();
@@ -32,11 +30,10 @@ const BusinessList: React.FC = () => {
     const [drawerType, setDrawerType] = useState<"create" | "edit">("create");
     const [archiveModalVisible, setArchiveModalVisible] = useState(false);
     const [archivingBusiness, setArchivingBusiness] = useState<any>(null);
-    const [archivedBusinessIds, setArchivedBusinessIds] = useState<number[]>([]);
     const [searchField, setSearchField] = useState<string>(searchFieldOptions[1].value);
     const [searchText, setSearchText] = useState<string>("");
     const [searchDateRange, setSearchDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
-    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
     // Find current field option
     const currentFieldOption = searchFieldOptions.find(option => option.value === searchField);
@@ -46,38 +43,39 @@ const BusinessList: React.FC = () => {
     const columns = [
         {
             title: t('resource.business.columns.id'),
-            dataIndex: "bk_biz_id",
+            dataIndex: "id",
             sorter: true,
             width: 300,
         },
         {
             title: t('resource.business.columns.name'),
-            dataIndex: "bk_biz_name",
+            dataIndex: "name",
             sorter: true,
             width: 300,
         },
         {
             title: t('resource.business.columns.maintainer'),
-            dataIndex: "bk_biz_maintainer",
+            dataIndex: "maintainers",
             sorter: true,
             width: 300,
+            render: (val: string[]) => val.join(', '),
         },
         {
             title: t('resource.business.columns.created_at'),
-            dataIndex: "bk_created_at",
+            dataIndex: "created_at",
             sorter: true,
             width: 300,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
             title: t('resource.business.columns.created_by'),
-            dataIndex: "bk_created_by",
+            dataIndex: "created_by",
             sorter: true,
             width: 300,
         },
         {
             title: t('resource.business.columns.updated_at'),
-            dataIndex: "bk_updated_at",
+            dataIndex: "updated_at",
             sorter: true,
             width: 300,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
@@ -92,31 +90,37 @@ const BusinessList: React.FC = () => {
     ];
 
     useEffect(() => {
-        // First filter out archived businesses
-        let filteredData = businessListMock.info.filter(
-            (business: any) => !archivedBusinessIds.includes(business.bk_biz_id)
-        );
+        fetchBusinessList();
+    }, []);
 
-        setIsSearching(true);
-        // TODO: api
-        console.log('Search Parameters for API:', {
-            field: searchField,
-            textValue: searchText,
-            dateRange: searchDateRange ? {
-                startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
-                endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss')
-            } : null,
-            pagination: {
-                page,
-                pageSize
-            }
-        });
-        setIsSearching(false);
+    useEffect(() => {
+        fetchBusinessList();
+    }, [page, pageSize, searchDateRange])
 
-        setBusinessCount(filteredData.length);
-        const data = filteredData.slice((page - 1) * pageSize, page * pageSize);
-        setBusinessList(data);
-    }, [businessListMock, page, pageSize, archivedBusinessIds, searchField, searchText, searchDateRange])
+    const fetchBusinessList = async () => {
+        try {
+            setLoading(true);
+            const params = {
+                field: searchField,
+                textValue: searchText,
+                dateRange: searchDateRange ? {
+                    startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
+                    endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss')
+                } : null,
+            };
+            const data = await getBusinessList({
+                limit: pageSize,
+                offset: (page - 1) * pageSize
+            });
+            const { items, total } = data;
+            setBusinessList(items);
+            setBusinessCount(total);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     // Handle URL parameters to auto-open drawer
     useEffect(() => {
@@ -150,9 +154,6 @@ const BusinessList: React.FC = () => {
         // API call to archive the business would go here
         message.success(t('resource.business.messages.archive_success'));
 
-        // Add the business ID to the archived list
-        setArchivedBusinessIds(prev => [...prev, archivingBusiness.bk_biz_id]);
-
         // Remove the archived business from the table
         const updatedList = businessList.filter(
             (item: any) => item.bk_biz_id !== archivingBusiness.bk_biz_id
@@ -171,6 +172,7 @@ const BusinessList: React.FC = () => {
         setSearchText(value);
         setSearchDateRange(null);
         setPage(1);
+        fetchBusinessList();
     }
 
     const handleDateRangeSearch = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
@@ -185,11 +187,9 @@ const BusinessList: React.FC = () => {
         setSearchDateRange(null);
     }
 
-    const clearSearch = () => {
-        setSearchText("");
-        setSearchDateRange(null);
-        setPage(1);
-    }
+    const handleSuccess = useCallback(() => {
+        fetchBusinessList();
+    }, []);
 
     return (
         <div className="business-list">
@@ -255,32 +255,38 @@ const BusinessList: React.FC = () => {
                 columns={columns}
                 dataSource={businessList}
                 showSorterTooltip={false}
-                rowKey="bk_biz_id"
+                rowKey="id"
                 bordered={true}
                 pagination={false}
                 locale={{
-                    emptyText: isSearching && businessList.length === 0 ?
-                        <EmptySearchResult onClearFilter={clearSearch} /> :
-                        undefined
+                    emptyText: loading
+                        ? <Spin className="table-spin" />
+                        : <Empty
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                            description={t('common.noData')}
+                        />
                 }}
             />
 
-            <Pagination
-                total={businessCount}
-                pageSize={pageSize}
-                current={page}
-                onChange={setPage}
-                onSizeChange={(_, size) => {
-                    setPage(1);
-                    setPageSize(size);
-                }}
-            />
+            {
+                !loading && businessList.length > 0 && <Pagination
+                    total={businessCount}
+                    pageSize={pageSize}
+                    current={page}
+                    onChange={setPage}
+                    onSizeChange={(_, size) => {
+                        setPage(1);
+                        setPageSize(size);
+                    }}
+                />
+            }
 
             {/* Modify business drawer */}
             <ModifyDrawer
                 visible={drawerVisible}
                 type={drawerType}
                 onClose={() => setDrawerVisible(false)}
+                onSuccess={handleSuccess}
             />
 
             {/* Archive confirmation modal */}

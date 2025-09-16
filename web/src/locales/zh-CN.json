@@ -14,6 +14,7 @@
     "pleaseEnter": "请输入",
     "pleaseSelect": "请选择",
     "noMatch": "无匹配人员",
+    "noData": "暂无数据",
     "form": {
       "rules_message": "该字段是必填项"
     },
@@ -765,9 +766,9 @@
         "fields": {
           "businessName": "业务名",
           "lifecycle": "生命周期",
-          "timeZone": "时区",
+          "timezone": "时区",
           "language": "语言",
-          "operators": "运维人员",
+          "maintainers": "运维人员",
           "productManagers": "产品人员",
           "testers": "测试人员",
           "developers": "开发人员",
@@ -776,7 +777,7 @@
         "placeholders": {
           "businessName": "请输入业务名",
           "lifecycle": "请选择生命周期",
-          "timeZone": "请选择时区",
+          "timezone": "请选择时区",
           "language": "请选择语言"
         },
         "options": {

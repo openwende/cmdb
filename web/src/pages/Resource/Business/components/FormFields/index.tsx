@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import "./style.css";
 
 // Define form field types
-export type FormFieldName = 'businessName' | 'lifecycle' | 'timeZone' | 'language' | 'operators' |
+export type FormFieldName = 'businessName' | 'lifecycle' | 'timezone' | 'language' | 'maintainers' |
     'productManagers' | 'testers' | 'developers' | 'administrators';
 
 // Form validation rule constants

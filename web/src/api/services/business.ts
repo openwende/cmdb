@@ -1,7 +1,7 @@
-import axios from './axiosInstance';
-import { Property, PropertyMap } from '../pages/Business/Types';
-import { dynamicGroupCondition, objectmainline } from '../mock/business';
-import { ObjectMainLine } from '../pages/Business/Types';
+import axios from '../axiosInstance';
+import { Property, PropertyMap } from '../../pages/Business/Types';
+import { dynamicGroupCondition, objectmainline } from '../../mock/business';
+import { ObjectMainLine } from '../../pages/Business/Types';
 import { createIdProperty } from '@/pages/Business/utils';
 
 interface BatchSearchOptions {

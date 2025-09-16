@@ -3,6 +3,7 @@ import { Drawer, Form, Input, Select, Button, Collapse } from "antd";
 import { useTranslation } from "react-i18next";
 import { userListMock } from '@/mock/resource';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { createBusiness } from "@/api";
 import {
     FormFieldItem,
     PersonnelSelectItem,
@@ -16,7 +17,7 @@ const { Panel } = Collapse;
 
 // Get IANA time zones
 const defaultTimeZone = 'Asia/Shanghai';
-const timeZoneOptions: string[] = (Intl as any).supportedValuesOf
+const timezoneOptions: string[] = (Intl as any).supportedValuesOf
     ? (Intl as any).supportedValuesOf('timeZone')
     : ['UTC', 'Asia/Shanghai', 'Asia/Tokyo', 'America/New_York'];
 
@@ -24,9 +25,10 @@ interface DrawerProps {
     visible: boolean;
     type: "create" | "edit";
     onClose: () => void;
+    onSuccess: () => void;
 }
 
-const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
+const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess }) => {
     const { t } = useTranslation();
     const [lang, setLang] = useState<string>('chinese');
     const [searchOptions, setSearchOptions] = useState<{ value: string, label: string }[]>([]);
@@ -41,12 +43,12 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
     // Lifecycle and language options
     const lifecycleOptions = [
         { label: t('resource.business.modify.options.lifecycle.testing'), value: 'testing' },
-        { label: t('resource.business.modify.options.lifecycle.online'), value: 'online' },
+        { label: t('resource.business.modify.options.lifecycle.online'), value: 'production' },
         { label: t('resource.business.modify.options.lifecycle.offline'), value: 'offline' },
     ];
     const languageOptions = [
-        { label: t('resource.business.modify.options.language.chinese'), value: 'chinese' },
-        { label: t('resource.business.modify.options.language.english'), value: 'english' },
+        { label: t('resource.business.modify.options.language.chinese'), value: 'zh' },
+        { label: t('resource.business.modify.options.language.english'), value: 'en' },
     ];
 
     // Utility function to determine if a field should be disabled
@@ -108,7 +110,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                 form.setFieldsValue({
                     language: languageOptions[0],
                     lifecycle: lifecycleOptions[1],
-                    timeZone: defaultTimeZone
+                    timezone: defaultTimeZone
                 })
             }
         }
@@ -149,10 +151,12 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            console.log('Form submission data:', values);
+            await createBusiness({ ...values, name: values.businessName });
+            console.log('Form values:', values);
+            onSuccess();
             handleConfirmClose();
-        } catch (errorInfo) {
-            console.log('Form validation failed:', errorInfo);
+        } catch (error) {
+            console.log(error);
         }
     };
 
@@ -181,8 +185,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
         <Drawer
             title={
                 isCreateMode(type)
-                ? t('resource.business.modify.title.create')
-                : t('resource.business.modify.title.edit')
+                    ? t('resource.business.modify.title.create')
+                    : t('resource.business.modify.title.edit')
             }
             width={800}
             onClose={handleClose}
@@ -223,8 +227,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
 
                             {isCreateMode(type) && (
                                 <FormFieldItem
-                                    fieldName="timeZone"
-                                    label={t('resource.business.modify.fields.timeZone')}
+                                    fieldName="timezone"
+                                    label={t('resource.business.modify.fields.timezone')}
                                     required={true}
                                     type={type}
                                     handleFieldChange={handleFieldChange}
@@ -232,9 +236,9 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                                 >
                                     <Select
                                         showSearch
-                                        placeholder={t('resource.business.modify.placeholders.timeZone')}
+                                        placeholder={t('resource.business.modify.placeholders.timezone')}
                                         filterOption={(input, option) => (option?.value as string).toLowerCase().includes(input.toLowerCase())}
-                                        options={timeZoneOptions.map(tz => ({ value: tz, label: tz }))}
+                                        options={timezoneOptions.map(tz => ({ value: tz, label: tz }))}
                                         className="select-input"
                                     />
                                 </FormFieldItem>)}
@@ -259,8 +263,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose }) => {
                     <Panel header={t('resource.business.modify.sections.roles')} key="role">
                         <div className="form-grid">
                             <PersonnelSelectItem
-                                fieldName="operators"
-                                label={t('resource.business.modify.fields.operators')}
+                                fieldName="maintainers"
+                                label={t('resource.business.modify.fields.maintainers')}
                                 required={true}
                                 type={type}
                                 isSearching={isSearching}

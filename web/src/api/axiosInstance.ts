@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // --- Environment Variable for Base URL ---
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/v1';
+const LOCAL_API_URL = 'http://localhost:8080/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || LOCAL_API_URL;
 
 // --- Create Axios Instance ---
 const axiosInstance = axios.create({
@@ -52,7 +53,7 @@ axiosInstance.interceptors.response.use(
     // ANNOTATION: This function is executed for any response with a status code
     // within the 2xx range (e.g., 200 OK, 201 Created).
 
-    return response.data;
+    return response.data.data;
     // ANNOTATION: Extracts and returns the `data` property from the response object.
     // This means your `.then()` callbacks will receive the actual data directly.
   },
@@ -63,7 +64,7 @@ axiosInstance.interceptors.response.use(
     console.error('Response Interceptor Error:', error.response || error.message);
 
     if (error.response) {
-      const { status, data } = error.response;
+      const { status } = error.response;
 
       if (status === 401) {
         // ANNOTATION: Handle 401 Unauthorized errors globally.
