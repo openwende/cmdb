@@ -51,11 +51,24 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
         return currentSection.children || [];
     };
 
+    // Check if current path matches route pattern (supports dynamic params like :id)
+    const matchesRoute = (currentPath: string, routePattern: string): boolean => {
+        const currentSegments = currentPath.split('/').filter(Boolean);
+        const patternSegments = routePattern.split('/').filter(Boolean);
+
+        if (currentSegments.length !== patternSegments.length) return false;
+
+        return patternSegments.every((pattern, index) =>
+            pattern.startsWith(':') || pattern === currentSegments[index]
+        );
+    };
+
     const sidebarItems = getSidebarItems();
 
     // Get the currently selected sidebar item
     const getSelectedKey = () => {
         const path = location.pathname;
+
         if (sidebarItems.length > 0) {
             // Special handling for business set paths
             if (isBusinessSetPage(path)) {
@@ -72,9 +85,35 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
                 }
             } else {
                 // Regular path handling
-                const selectedItem = sidebarItems.find((item: NavigationItem) => {
-                    return path.endsWith(item.path);
+                // First try direct path matching (with dynamic route support)
+                let selectedItem = sidebarItems.find((item: NavigationItem) => {
+                    if (!item.path) return false;
+                    // Build full path for matching
+                    const fullPattern = `${currentSection?.path}/${item.path}`;
+                    return matchesRoute(path, fullPattern);
                 });
+
+                // If no exact match found, check if current path matches any child route
+                if (!selectedItem) {
+                    selectedItem = sidebarItems.find((item: NavigationItem) => {
+                        if (!item.children || !item.path) return false;
+
+                        return item.children.some((child: NavigationItem) => {
+                            if (child.path) {
+                                // Build full child path pattern
+                                const childPattern = `${currentSection?.path}/${item.path}/${child.path}`;
+                                return matchesRoute(path, childPattern);
+                            }
+                            // For index routes, check if path matches parent
+                            if (child.index) {
+                                const parentPattern = `${currentSection?.path}/${item.path}`;
+                                return matchesRoute(path, parentPattern);
+                            }
+                            return false;
+                        });
+                    });
+                }
+
                 return selectedItem ? selectedItem.key : '';
             }
         }
@@ -90,26 +129,27 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
 
             // Check if current path is business related
             if (isBusinessPage(location.pathname)) {
-                fullPath = buildEntityPath(pathSegments, EntityRouteType.Business, item.path);
+                fullPath = item.path ? buildEntityPath(pathSegments, EntityRouteType.Business, item.path) : '';
             }
             // Check if current path is business set related
             else if (isBusinessSetPage(location.pathname)) {
-                fullPath = buildEntityPath(pathSegments, EntityRouteType.BusinessSet, item.path);
+                fullPath = item.path ? buildEntityPath(pathSegments, EntityRouteType.BusinessSet, item.path) : '';
             }
             // Other paths
             else if (currentSection) {
                 // Use original logic directly
-                fullPath = item.path.startsWith('/')
+                fullPath = item.path && item.path.startsWith('/')
                     ? item.path
-                    : `${currentSection.path}/${item.path}`;
+                    : `${currentSection.path}/${item.path || ''}`;
             }
-
             navigate(fullPath);
         }
     }
 
     // Check if we're in business or business set related section
     const isBusinessRelated = isBusinessRelatedPage(location.pathname);
+
+    const selectedKey = getSelectedKey();
 
     return (
         <Fragment>
@@ -118,8 +158,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
                     {/* Display business selector in business and business set sections */}
                     {isBusinessRelated && <BusinessSelector collapsed={collapsed} />}
                     <Menu
+                        key={location.pathname}
                         mode="inline"
-                        selectedKeys={[getSelectedKey()]}
+                        selectedKeys={[selectedKey]}
                         onClick={({ key }) => onMenuClick(key as string)}
                         items={sidebarItems.map((item: NavigationItem) => ({
                             key: item.key,

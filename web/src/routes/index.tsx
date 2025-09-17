@@ -103,9 +103,9 @@ export const routes: NavigationItem[] = [
       {
         name: '业务集拓扑',
         key: BusinessSetNavKey.Topology,
+        path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <UnorderedListOutlined />,
-        index: true
       }
     ]
   },
