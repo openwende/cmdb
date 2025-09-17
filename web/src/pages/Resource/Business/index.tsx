@@ -1,15 +1,13 @@
 import React from "react";
-import { Outlet, useMatch } from "react-router-dom";
-import BusinessList from "./BusinessList";
+import { Outlet } from "react-router-dom";
 
 export const archivedBusinessPath = '/resource/business/archivedBusiness';
+export const businessDetailPath = '/resource/business/businessDetail';
 
 const ResourceBusiness: React.FC = () => {
-    const isArchivedBusinessRoute = useMatch(archivedBusinessPath);
-
     return (
         <>
-            {isArchivedBusinessRoute ? <Outlet /> : <BusinessList />}
+            <Outlet />
         </>
     );
 }

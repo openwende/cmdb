@@ -8,7 +8,7 @@ import ConfirmModal from "@/components/common/ConfirmModal";
 import ModifyDrawer from "../components/ModifyDrawer";
 import { getBusinessList } from "@/api";
 import "./style.css";
-import { archivedBusinessPath } from "../index";
+import { archivedBusinessPath, businessDetailPath } from "../index";
 import dayjs from 'dayjs';
 import { searchFieldOptions } from "../../constants";
 import { CREATE_TYPES } from "@/constants/business";
@@ -46,6 +46,7 @@ const BusinessList: React.FC = () => {
             dataIndex: "id",
             sorter: true,
             width: 300,
+            render: (val: number) => <a onClick={() => handleDetail(val)}>{val}</a>
         },
         {
             title: t('resource.business.columns.name'),
@@ -141,6 +142,10 @@ const BusinessList: React.FC = () => {
     const handleEdit = () => {
         setDrawerType("edit");
         setDrawerVisible(true);
+    }
+
+    const handleDetail = (id: number) => {
+        navigate(`${businessDetailPath}/${id}`);
     }
 
     const handleArchive = (business: any) => {

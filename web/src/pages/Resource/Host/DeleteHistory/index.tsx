@@ -5,7 +5,7 @@ import type { RangePickerProps } from 'antd/es/date-picker';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import { deleteHistoryMock } from '@/mock/resource';
-import OperationDetails from '../OperationDetails';
+import OperationDetails from '../components/OperationDetails';
 import './style.css';
 
 const { RangePicker } = DatePicker;

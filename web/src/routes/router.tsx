@@ -10,6 +10,7 @@ function createRouteElements(items: NavigationItem[]): React.ReactNode[] {
       key={item.key}
       path={item.path}
       element={item.element}
+      index={item.index}
       handle={{
         navigationItem: item,
       }}

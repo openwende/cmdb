@@ -3,7 +3,7 @@ import { Drawer, Table } from 'antd';
 import { useTranslation } from 'react-i18next';
 import './style.css';
 import { hostDetailAttrs } from '@/pages/Resource/constants';
-import { DeleteHistoryItem } from '../DeleteHistory';
+import { DeleteHistoryItem } from '../../DeleteHistory';
 
 interface DetailRow {
     key: string;

@@ -3,15 +3,15 @@ import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip, Popconfirm } 
 import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTransferHostStore } from '@/store/TransferHostStore';
-import AddHostModal from '../AddHostModal';
-import AddProcessModal, { ListenInfo } from '../AddProcessModal';
+import AddHostModal from '../components/AddHostModal';
+import AddProcessModal, { ListenInfo } from '../components/AddProcessModal';
 import './style.css';
 import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
 import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
 import { AppendMenuItemKey, TransferHostItem, TransferMenuItemType, TreeData, RemoveMenuItemKey } from '@/pages/Business/Types';
 import { useNavigate } from 'react-router-dom';
-import { getBusinessTopologyPath, getBusinessIdFromUrl } from '../../../../../utils/routes';
-import TransferHostModal from '../TransferHostModal';
+import { getBusinessTopologyPath, getBusinessIdFromUrl } from '../../../../utils/routes';
+import TransferHostModal from '../components/TransferHostModal';
 import { allHosts2 } from '@/mock/business';
 
 export interface ProcessItem {

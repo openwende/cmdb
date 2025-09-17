@@ -1,4 +1,5 @@
 import React, { lazy, Suspense } from 'react';
+import { Spin } from 'antd';
 import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey } from './Types';
 import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined } from '@ant-design/icons';
 
@@ -6,24 +7,37 @@ import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOut
 const HomePage = lazy(() => import('../pages/Home'));
 const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
-const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/components/TransferHost'));
+const TopologyView = lazy(() => import('../pages/Business/BusinessTopology/TopologyView'));
+const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/TransferHost'));
 const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
 const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
 const ResourcePage = lazy(() => import('../pages/Resource'));
 const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
 const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
+const BusinessList = lazy(() => import('../pages/Resource/Business/BusinessList'));
+const BusinessDetail = lazy(() => import('../pages/Resource/Business/BusinessDetail'));
 const ArchivedBusiness = lazy(() => import('../pages/Resource/Business/ArchivedBusiness'));
 const ResourceHost = lazy(() => import('../pages/Resource/Host'));
-const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/components/DeleteHistory'));
+const ResourceHostView = lazy(() => import('../pages/Resource/Host/HostView'));
+const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHistory'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
-
-// Loading component for Suspense
-const Loading = () => <div>Loading...</div>;
 
 // Wrap lazy-loaded components with Suspense
 const withSuspense = (Component: React.LazyExoticComponent<any>) => (
-  <Suspense fallback={<Loading />}>
+  <Suspense fallback={
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Spin size="large" />
+    </div>
+  }
+  >
     <Component />
   </Suspense>
 );
@@ -47,8 +61,13 @@ export const routes: NavigationItem[] = [
         path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <UnorderedListOutlined />,
-        index: true,
         children: [
+          {
+            key: BusinessNavKey.TopologyView,
+            element: withSuspense(TopologyView),
+            index: true,
+            hideInMenu: true
+          },
           {
             name: '转移主机',
             key: BusinessNavKey.TransferHost,
@@ -84,7 +103,6 @@ export const routes: NavigationItem[] = [
       {
         name: '业务集拓扑',
         key: BusinessSetNavKey.Topology,
-        path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <UnorderedListOutlined />,
         index: true
@@ -119,6 +137,19 @@ export const routes: NavigationItem[] = [
         icon: <AppstoreOutlined />,
         children: [
           {
+            key: ResourceKey.BusinessList,
+            element: withSuspense(BusinessList),
+            index: true,
+            hideInMenu: true
+          },
+          {
+            name: '业务详情',
+            key: ResourceKey.BusinessDetail,
+            path: 'businessDetail/:id',
+            element: withSuspense(BusinessDetail),
+            hideInMenu: true
+          },
+          {
             name: '已归档业务',
             key: ResourceKey.ArchivedBusiness,
             path: 'archivedBusiness',
@@ -134,6 +165,12 @@ export const routes: NavigationItem[] = [
         element: withSuspense(ResourceHost),
         icon: <AppstoreOutlined />,
         children: [
+          {
+            key: ResourceKey.HostView,
+            element: withSuspense(ResourceHostView),
+            index: true,
+            hideInMenu: true
+          },
           {
             name: '删除历史',
             key: ResourceKey.DeleteHistory,

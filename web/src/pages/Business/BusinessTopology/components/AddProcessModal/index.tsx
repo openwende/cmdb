@@ -4,7 +4,7 @@ import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, To
 import './style.css';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { listenIPOptions } from '@/mock/business';
-import { ProcessItem } from '../TransferHost';
+import { ProcessItem } from '../../TransferHost';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
 const { Panel } = Collapse;

@@ -1,12 +1,12 @@
 export interface NavigationItem {
-    name: string;
+    name?: string;
     key: string;
-    path: string;
-    element: React.ReactNode;
+    path?: string;
+    element?: React.ReactNode;
     children?: NavigationItem[];
     hideInMenu?: boolean;
     icon?: any;
-    index?: boolean;
+    index?: any;
 }
 
 /**
@@ -27,6 +27,7 @@ export enum PrimaryNavKey {
 
 export enum BusinessNavKey {
     Topology = 'topology',
+    TopologyView = 'topologyView',
     Template = 'template',
     TransferHost = 'transferHost',
     DynamicGroup = 'dynamicGroup'
@@ -40,7 +41,10 @@ export enum ResourceKey {
     Content = 'content',
     Project = 'project',
     Business = 'business',
+    BusinessList = 'businessList',
+    BusinessDetail = 'businessDetail',
     ArchivedBusiness = 'ArchivedBusiness',
     Host = 'host',
+    HostView = 'hostView',
     DeleteHistory = 'deleteHistory'
 }
