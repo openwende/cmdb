@@ -5,10 +5,17 @@
 
     .form-item {
         display: flex;
-        align-items: center;
+        flex-direction: column;
         flex: 0 0 50%;
         max-width: 50%;
         padding-bottom: 8px;
+        min-height: 32px;
+
+        .form-item-content {
+            display: flex;
+            align-items: center;
+            min-height: 32px;
+        }
 
         .item-label {
             line-height: 32px;
@@ -55,9 +62,17 @@
             .error-message {
                 color: #ff4d4f;
                 font-size: 12px;
-                margin-top: 4px;
                 line-height: 1.4;
             }
+        }
+
+        .form-item-error {
+            color: #ff4d4f;
+            font-size: 12px;
+            line-height: 1.4;
+            margin-top: 4px;
+            margin-left: 264px;
+            max-width: 288px;
         }
     }
 }

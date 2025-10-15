@@ -457,7 +457,7 @@ const TransferHost: React.FC = () => {
 
     return (
         <div className="transfer-container">
-            <div className='info-item'>
+            <div className='info-item first-item'>
                 <label className='info-label'>
                     {t('business.topology.transferHost.labels.selectedHosts')}：
                 </label>

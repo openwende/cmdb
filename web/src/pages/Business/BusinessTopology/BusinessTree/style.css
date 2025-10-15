@@ -1,12 +1,16 @@
-.tree-wrapper {
+.business-tree-wrapper {
     background: #fff;
     border-right: 1px solid #eee;
     position: relative;
     user-select: none;
-    margin: 12px 20px 12px auto;
+    margin: 16px 20px 16px auto;
 
     .search-wrapper {
-        padding: 8px;
+        padding: 16px 16px 10px;
+    }
+
+    .ant-tree {
+        padding: 0 16px 16px;
     }
 
     .collapsed-button {

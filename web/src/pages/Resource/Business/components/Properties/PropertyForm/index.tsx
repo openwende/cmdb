@@ -88,50 +88,52 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
 
   return (
     <div className="form-item">
-      <div className="item-label">
-        <Popover
-          content={getPopoverContent()}
-          title={getPopoverTitle()}
-          placement="topRight"
-        >
-          <div className="label-content">{label}&nbsp;:</div>
-        </Popover>
-      </div>
-      <div className="item-value-container">
-        <div
-          className="item-value"
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          {isEditing && editable ? (
-            <DynamicComponent
-              componentType={type}
-              value={editValue}
-              onChange={onValueChange}
-              placeholder={`请输入${label}`}
-              mode={type === PROPERTY_TYPES.ENUM ? 'single' : undefined}
-              options={options}
-              disabled={!editable}
-            />
-          ) : (
-            <>
-              <span>{displayValue}</span>
-              {isHovered && value !== '--' && (
-                <CopyOutlined
-                  className="copy-icon"
-                  onClick={handleCopy}
-                  title="复制"
-                />
-              )}
-            </>
-          )}
+      <div className="form-item-content">
+        <div className="item-label">
+          <Popover
+            content={getPopoverContent()}
+            title={getPopoverTitle()}
+            placement="topRight"
+          >
+            <div className="label-content">{label}&nbsp;:</div>
+          </Popover>
         </div>
-        {hasError && (
-          <div className="error-message">
-            {t('common.form.rules_message')}
+        <div className="item-value-container">
+          <div
+            className="item-value"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {isEditing && editable ? (
+              <DynamicComponent
+                componentType={type}
+                value={editValue}
+                onChange={onValueChange}
+                placeholder={`请输入${label}`}
+                mode={type === PROPERTY_TYPES.ENUM ? 'single' : undefined}
+                options={options}
+                disabled={!editable}
+              />
+            ) : (
+              <>
+                <span>{displayValue}</span>
+                {isHovered && value !== '--' && (
+                  <CopyOutlined
+                    className="copy-icon"
+                    onClick={handleCopy}
+                    title="复制"
+                  />
+                )}
+              </>
+            )}
           </div>
-        )}
+        </div>
       </div>
+      {hasError && (
+        <div className="form-item-error">
+          {t('common.form.rules_message')}
+        </div>
+      )}
     </div>
   );
 };

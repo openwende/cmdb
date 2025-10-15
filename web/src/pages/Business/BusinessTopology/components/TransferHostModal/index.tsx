@@ -371,7 +371,6 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
               <Input.Search
                 allowClear
                 placeholder={t('business.topology.transferHostModal.placeholders.searchKeyword')}
-                style={{ marginBottom: 4 }}
                 value={searchValue}
                 onChange={e => setSearchValue(e.target.value.trim())}
                 onClear={() => setSearchValue('')}

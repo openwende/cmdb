@@ -1,12 +1,16 @@
 .transfer-container {
-    margin: 8px;
+    margin: 16px 20px;
     padding: 16px;
     background-color: #fff;
 
     .info-item {
         display: flex;
         gap: 8px;
-        margin-bottom: 30px;
+        margin-bottom: 24px;
+
+        &.first-item {
+            margin-top: 24px;
+        }
 
         .info-label {
             color: #63656e;
@@ -72,17 +76,32 @@
             }
 
             .options {
-                margin-top: 20px;
+                margin-top: 24px;
                 bottom: 0;
                 left: 0;
                 position: sticky;
                 display: flex;
                 gap: 8px;
 
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: -16px;
+                    right: 0;
+                    height: 1px;
+                    background-color: #f0f0f0;
+                }
+
                 &.sticky-active {
                     flex-shrink: 0;
                     padding: 8px 0;
                     background-color: #fff;
+                    margin-left: 0;
+
+                    &::before {
+                        top: -1px;
+                        left: 0;
+                    }
                 }
             }
 

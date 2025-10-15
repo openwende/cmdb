@@ -188,7 +188,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                         />
                                     </Form.Item>
                                 </div>
-                                <div className="form-row">
+                                <div className="form-row last-row">
                                     <Form.Item
                                         label={t('business.topology.moduleNodeInfo.backupOperator')}
                                         name="bkBakOperator"
@@ -212,17 +212,20 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                     }]}
                 />
 
-                <div className="action-buttons">
-                    <Button
-                        type="primary"
-                        onClick={handleSave}
-                        disabled={!formChanged}
-                    >
-                        {t('common.submit')}
-                    </Button>
-                    <Button onClick={handleCancel}>
-                        {t('common.cancel')}
-                    </Button>
+                <div className="node-actions">
+                    <div className="actions-divider"></div>
+                    <div className="actions-content">
+                        <Button
+                            type="primary"
+                            onClick={handleSave}
+                            disabled={!formChanged}
+                        >
+                            {t('common.submit')}
+                        </Button>
+                        <Button onClick={handleCancel}>
+                            {t('common.cancel')}
+                        </Button>
+                    </div>
                 </div>
             </>
         );
@@ -298,13 +301,16 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 ]}
             />
 
-            <div className="action-buttons">
-                <Button type="primary" onClick={handleEdit}>
-                    {t('common.edit')}
-                </Button>
-                <Button type="primary" danger onClick={handleDelete}>
-                    {t('business.topology.moduleNodeInfo.deleteNode')}
-                </Button>
+            <div className="node-actions">
+                <div className="actions-divider"></div>
+                <div className="actions-content">
+                    <Button type="primary" onClick={handleEdit}>
+                        {t('common.edit')}
+                    </Button>
+                    <Button type="primary" danger onClick={handleDelete}>
+                        {t('business.topology.moduleNodeInfo.deleteNode')}
+                    </Button>
+                </div>
             </div>
         </>
     );

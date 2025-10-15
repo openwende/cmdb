@@ -18,7 +18,7 @@
     .action-buttons {
         display: flex;
         justify-content: flex-start;
-        gap: 16px;
+        gap: 8px;
         padding-left: 16px;
     }
 
@@ -26,6 +26,12 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 50px;
+
+        &.last-row {
+            .ant-form-item {
+                margin-bottom: 0;
+            }
+        }
     }
 
     .flex-item {

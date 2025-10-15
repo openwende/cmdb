@@ -18,11 +18,11 @@
 
     .ant-tree {
       height: 100%;
-      padding: 8px;
+      padding: 0;
     }
 
     .ant-input-search {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     .custom-title-prefix {

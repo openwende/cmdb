@@ -251,38 +251,6 @@
     }
 
     .search-input {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
-}
-
-/* Add styles for search popover */
-.tree-search-popover .ant-popover-content {
-    max-width: 400px;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.search-popover-content {
-    min-width: 300px;
-}
-
-.search-popover-content .ant-tree {
-    max-height: 250px;
-    overflow-y: auto;
-}
-
-.search-popover-content .title-wrapper.search-result {
-    cursor: pointer;
-    padding: 4px 8px;
-    margin: 2px 0;
-    border-radius: 4px;
-}
-
-.search-popover-content .title-wrapper.search-result:hover {
-    background-color: #f5f7fa;
-}
-
-.search-popover-content .empty-search-result {
-    padding: 24px;
-    min-width: 280px;
 }

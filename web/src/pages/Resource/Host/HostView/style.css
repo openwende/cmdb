@@ -1,6 +1,6 @@
 .host-wrapper {
-    margin: 0 20px;
-    height: 100%;
+    margin: 0 20px 4px;
+    height: calc(100% - 4px);
 
     .ant-tabs {
         height: 100%;

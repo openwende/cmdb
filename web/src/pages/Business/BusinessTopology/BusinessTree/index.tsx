@@ -89,7 +89,7 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
     const isEmptySearchResult = filteredTreeData.length === 0 && searchValue;
 
     return (
-        <div className="tree-wrapper"
+        <div className="business-tree-wrapper"
             style={{
                 width: collapsed ? 0 : sidebarWidth,
                 minWidth: collapsed ? 0 : MIN_WIDTH,
