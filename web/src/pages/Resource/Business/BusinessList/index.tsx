@@ -109,7 +109,7 @@ const BusinessList: React.FC = () => {
                     endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss')
                 } : null,
             };
-            const data = await getBusinessList({
+            const { data } = await getBusinessList({
                 limit: pageSize,
                 offset: (page - 1) * pageSize
             });

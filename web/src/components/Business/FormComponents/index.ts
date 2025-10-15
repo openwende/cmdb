@@ -9,10 +9,11 @@ import {PROPERTY_TYPES} from '../../../pages/Business/constants';
 
 // Unified Props interface for all form components
 export interface FormComponentProps {
-    property: Property;
+    property?: Property;
     value: any;
     onChange: (value: any) => void;
     placeholder: string;
+    mode?: 'multiple' | 'tags' | 'single'; // For Select components
     options: any[] | { [key: string]: any };
     disabled?: boolean;
     [key: string]: any;

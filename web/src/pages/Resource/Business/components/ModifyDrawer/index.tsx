@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Drawer, Form, Input, Select, Button, Collapse } from "antd";
+import { Drawer, Form, Input, Select, Button, Collapse, message } from "antd";
 import { useTranslation } from "react-i18next";
 import { userListMock } from '@/mock/resource';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { createBusiness } from "@/api";
+import { LIFECYCLE_OPTIONS, LANGUAGE_OPTIONS } from '@/pages/Resource/constants';
 import {
     FormFieldItem,
     PersonnelSelectItem,
@@ -17,7 +18,7 @@ const { Panel } = Collapse;
 
 // Get IANA time zones
 const defaultTimeZone = 'Asia/Shanghai';
-const timezoneOptions: string[] = (Intl as any).supportedValuesOf
+export const timezoneOptions: string[] = (Intl as any).supportedValuesOf
     ? (Intl as any).supportedValuesOf('timeZone')
     : ['UTC', 'Asia/Shanghai', 'Asia/Tokyo', 'America/New_York'];
 
@@ -40,16 +41,15 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
     const [selectedFields, setSelectedFields] = useState<FormFieldName[]>([]);
     const [isFormChanged, setIsFormChanged] = useState<boolean>(false);
 
-    // Lifecycle and language options
-    const lifecycleOptions = [
-        { label: t('resource.business.modify.options.lifecycle.testing'), value: 'testing' },
-        { label: t('resource.business.modify.options.lifecycle.online'), value: 'production' },
-        { label: t('resource.business.modify.options.lifecycle.offline'), value: 'offline' },
-    ];
-    const languageOptions = [
-        { label: t('resource.business.modify.options.language.chinese'), value: 'zh' },
-        { label: t('resource.business.modify.options.language.english'), value: 'en' },
-    ];
+    // Lifecycle and language options with i18n
+    const lifecycleOptions = LIFECYCLE_OPTIONS.map(option => ({
+        ...option,
+        label: t(option.label)
+    }));
+    const languageOptions = LANGUAGE_OPTIONS.map(option => ({
+        ...option,
+        label: t(option.label)
+    }));
 
     // Utility function to determine if a field should be disabled
     const isFieldDisabled = (fieldName: FormFieldName): boolean => {
@@ -151,8 +151,12 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            await createBusiness({ ...values, name: values.businessName });
-            console.log('Form values:', values);
+            const data = await createBusiness({ ...values, name: values.businessName });
+            if (data.success) {
+                message.success(t('common.message.createSuccess'));
+            } else {
+                message.error(t('common.message.createFailed'));
+            }
             onSuccess();
             handleConfirmClose();
         } catch (error) {
@@ -205,7 +209,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                                 type={type}
                                 handleFieldChange={handleFieldChange}
                                 selectedFields={selectedFields}
-                            >                                <Input
+                            >
+                                <Input
                                     placeholder={t('resource.business.modify.placeholders.businessName')}
                                     disabled={isFieldDisabled('businessName')}
                                     className="select-input"
@@ -217,7 +222,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                                 type={type}
                                 handleFieldChange={handleFieldChange}
                                 selectedFields={selectedFields}
-                            >                                <Select
+                            >
+                                <Select
                                     placeholder={t('resource.business.modify.placeholders.lifecycle')}
                                     options={lifecycleOptions}
                                     disabled={isFieldDisabled('lifecycle')}

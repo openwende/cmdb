@@ -52,8 +52,7 @@ axiosInstance.interceptors.response.use(
   (response) => {
     // ANNOTATION: This function is executed for any response with a status code
     // within the 2xx range (e.g., 200 OK, 201 Created).
-
-    return response.data.data;
+    return response.data;
     // ANNOTATION: Extracts and returns the `data` property from the response object.
     // This means your `.then()` callbacks will receive the actual data directly.
   },

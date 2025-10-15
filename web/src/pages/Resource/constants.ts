@@ -122,3 +122,20 @@ export const searchFieldOptions = [
     { value: "bk_updated_at", label: "resource.business.search.fields.updated_at", isDate: true }
 ];
 
+/**
+ * Business lifecycle options - will use i18n keys
+ */
+export const LIFECYCLE_OPTIONS = [
+    { label: 'resource.business.modify.options.lifecycle.testing', value: 'testing' },
+    { label: 'resource.business.modify.options.lifecycle.online', value: 'production' },
+    { label: 'resource.business.modify.options.lifecycle.offline', value: 'offline' },
+];
+
+/**
+ * Business language options - will use i18n keys
+ */
+export const LANGUAGE_OPTIONS = [
+    { label: 'resource.business.modify.options.language.chinese', value: 'zh' },
+    { label: 'resource.business.modify.options.language.english', value: 'en' },
+];
+

@@ -1,0 +1,54 @@
+.form-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+
+    .form-item {
+        display: flex;
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding-bottom: 8px;
+
+        .item-label {
+            line-height: 32px;
+            overflow: hidden;
+            padding: 0 8px 0 36px;
+            position: relative;
+            text-align: right;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 260px;
+
+            &:hover {
+                color: #1677ff;
+            }
+        }
+
+        .item-value-container {
+            flex: 1;
+            margin: 6px 0 0 4px;
+            max-width: 288px;
+
+            .item-value {
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-box-orient: vertical;
+                -webkit-line-clamp: 2;
+                word-break: break-all;
+
+                .copy-icon {
+                    margin-left: 8px;
+                    color: #1677ff;
+                    cursor: pointer;
+                }
+            }
+
+            .error-message {
+                color: #ff4d4f;
+                font-size: 12px;
+                margin-top: 4px;
+                line-height: 1.4;
+            }
+        }
+    }
+}

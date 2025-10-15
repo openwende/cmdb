@@ -17,6 +17,7 @@ const { Option } = Select;
 
 const Enum: React.FC<FormComponentProps> = ({
   options = [],
+  mode = 'multiple',
   value,
   onChange,
   placeholder,
@@ -29,8 +30,8 @@ const Enum: React.FC<FormComponentProps> = ({
       placeholder={placeholder}
       disabled={disabled}
       showSearch
-      allowClear
-      mode="multiple"
+      allowClear={mode !== 'single'}
+      mode={mode === 'single' ? undefined : mode}
       optionFilterProp="children"
       style={{ width: '100%' }}
     >

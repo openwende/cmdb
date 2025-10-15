@@ -20,14 +20,19 @@ export interface BusinessListResponse {
   offset: number;
   total: number;
 }
-export interface CreateBusinessParams {
+export interface BusinessDetail {
+  id?: string;
   name: string;
   language: string;
   lifecycle?: string;
   timezone: string;
+  created_at?: string;
+  created_by?: string;
+  updated_at?: string;
+  updated_by?: string;
   maintainers: string[];
   productManagers?: string[];
   testers?: string[];
   developers?: string[];
-  administrators?: string[];
+  operators?: string[];
 }
