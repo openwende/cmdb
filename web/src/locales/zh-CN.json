@@ -485,6 +485,10 @@
         "tester": "测试人员",
         "developer": "开发人员",
         "operator": "操作人员"
+      },
+      "idleNodeInfo": {
+        "alertMessage": "容器集群节点（Node）上没有运行任何Pod，都会归于 \"空Pod节点\"",
+        "nodeName": "节点名称"
       }
     },
     "dynamicGroupForm": {
@@ -947,10 +951,6 @@
             "selectHost": "选择主机",
             "addHostToModule": "新增主机到模块"
           }
-        },
-        "idleNodeInfo": {
-          "alertMessage": "容器集群节点（Node）上没有运行任何Pod，都会归于 \\\"空Pod节点\\\"",
-          "nodeName": "节点名称"
         },
         "addProcessModal": {
           "title": "添加进程",
