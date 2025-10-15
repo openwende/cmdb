@@ -156,14 +156,6 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
     );
   }
 
-  if (!businessData) {
-    return (
-      <div className="properties-error">
-        <div className="error-message">Business data not found</div>
-      </div>
-    );
-  }
-
   const items = [
     {
       key: 'basic',
@@ -203,28 +195,31 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       />
 
       <div className="properties-actions">
-        {!isEditing ? (
-          <Button
-            type="primary"
-            onClick={handleEdit}
-          >
-            编辑
-          </Button>
-        ) : (
-          <div className="edit-actions">
+        <div className="actions-divider"></div>
+        <div className="actions-content">
+          {!isEditing ? (
             <Button
               type="primary"
-              onClick={handleSave}
+              onClick={handleEdit}
             >
-              保存
+              编辑
             </Button>
-            <Button
-              onClick={handleCancel}
-            >
-              取消
-            </Button>
-          </div>
-        )}
+          ) : (
+            <div className="editing-actions">
+              <Button
+                type="primary"
+                onClick={handleSave}
+              >
+                保存
+              </Button>
+              <Button
+                onClick={handleCancel}
+              >
+                取消
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

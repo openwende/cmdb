@@ -5,6 +5,7 @@
 
     .form-item {
         display: flex;
+        align-items: center;
         flex: 0 0 50%;
         max-width: 50%;
         padding-bottom: 8px;
@@ -18,15 +19,23 @@
             text-overflow: ellipsis;
             white-space: nowrap;
             width: 260px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
 
-            &:hover {
-                color: #1677ff;
+            .label-content {
+                display: inline-block;
+                cursor: pointer;
+
+                &:hover {
+                    color: #1677ff;
+                }
             }
         }
 
         .item-value-container {
             flex: 1;
-            margin: 6px 0 0 4px;
+            margin: 0 0 0 4px;
             max-width: 288px;
 
             .item-value {

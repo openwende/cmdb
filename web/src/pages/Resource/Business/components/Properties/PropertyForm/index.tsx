@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CopyOutlined } from '@ant-design/icons';
-import { Popover, message } from 'antd';
+import { Popover, message, Descriptions } from 'antd';
 import { useTranslation } from 'react-i18next';
 import DynamicComponent from '@/components/Business/FormComponents/DynamicComponent';
 import type { BusinessDetail } from '@/api/types/resource';
@@ -72,17 +72,11 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
 
   const getPopoverContent = () => {
     return (
-      <div style={{ padding: '8px' }}>
-        <div style={{ marginBottom: '4px' }}>
-          <span>唯一标识 :</span> {field}
-        </div>
-        <div style={{ marginBottom: '4px' }}>
-          <span>字段名称 :</span> {label}
-        </div>
-        <div>
-          <span>字段类型 :</span> {type}
-        </div>
-      </div>
+      <Descriptions size="small" column={1} style={{ width: 180 }}>
+        <Descriptions.Item label="唯一标识">{field}</Descriptions.Item>
+        <Descriptions.Item label="字段名称">{label}</Descriptions.Item>
+        <Descriptions.Item label="字段类型">{type}</Descriptions.Item>
+      </Descriptions>
     );
   };
 
@@ -94,14 +88,15 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
 
   return (
     <div className="form-item">
-      <Popover
-        content={getPopoverContent()}
-        title={getPopoverTitle()}
-        trigger="hover"
-        placement="topRight"
-      >
-        <div className="item-label">{label}&nbsp;:</div>
-      </Popover>
+      <div className="item-label">
+        <Popover
+          content={getPopoverContent()}
+          title={getPopoverTitle()}
+          placement="topRight"
+        >
+          <div className="label-content">{label}&nbsp;:</div>
+        </Popover>
+      </div>
       <div className="item-value-container">
         <div
           className="item-value"
@@ -121,7 +116,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
           ) : (
             <>
               <span>{displayValue}</span>
-              {isHovered && value && (
+              {isHovered && value !== '--' && (
                 <CopyOutlined
                   className="copy-icon"
                   onClick={handleCopy}
@@ -168,25 +163,29 @@ const PropertyGrid: React.FC<PropertyGridProps> = ({
 
   return (
     <div className="form-container">
-      {fields.map((config) => {
-        const value = getFieldValue(config);
+      {fields
+        .filter((config) => {
+          return isEditing ? config.editable : true;
+        })
+        .map((config) => {
+          const value = getFieldValue(config);
 
-        return (
-          <PropertyItem
-            key={config.field}
-            label={config.label}
-            value={value}
-            field={config.field}
-            type={config.type}
-            editable={config.editable}
-            isEditing={isEditing}
-            editValue={editValues?.[config.field] || ''}
-            onValueChange={(val) => handleValueChange(config.field, val)}
-            options={config.options}
-            hasError={errorFields.includes(config.field)}
-          />
-        );
-      })}
+          return (
+            <PropertyItem
+              key={config.field}
+              label={config.label}
+              value={value}
+              field={config.field}
+              type={config.type}
+              editable={config.editable}
+              isEditing={isEditing}
+              editValue={editValues?.[config.field] || ''}
+              onValueChange={(val) => handleValueChange(config.field, val)}
+              options={config.options}
+              hasError={errorFields.includes(config.field)}
+            />
+          );
+        })}
     </div>
   );
 };
