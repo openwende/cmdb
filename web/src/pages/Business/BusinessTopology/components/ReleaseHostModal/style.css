@@ -22,6 +22,11 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
+
+        .release-modal-select-label {
+            width: 120px;
+            text-align: right;
+        }
     }
 
     .release-modal-footer {

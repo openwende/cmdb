@@ -350,7 +350,8 @@
             "items": "条"
           },
           "confirm": {
-            "deleteInstance": "确定删除该实例?"
+            "deleteInstance": "确定删除该实例?",
+            "deleteProcess": "确定删除该进程?"
           }
         },
         "process": {
@@ -489,6 +490,80 @@
       "idleNodeInfo": {
         "alertMessage": "容器集群节点（Node）上没有运行任何Pod，都会归于 \"空Pod节点\"",
         "nodeName": "节点名称"
+      },
+      "addProcessModal": {
+        "title": "添加进程",
+        "buttons": {
+          "submit": "提交",
+          "cancel": "取消",
+          "add": "添加",
+          "delete": "删除",
+          "addImmediately": "立即添加"
+        },
+        "sections": {
+          "basicInfo": "基础信息",
+          "listenInfo": "监听信息",
+          "processManagementInfo": "进程管理信息"
+        },
+        "fields": {
+          "processName": "进程名称",
+          "processAlias": "进程别名",
+          "startupParams": "启动参数",
+          "description": "备注",
+          "workPath": "工作路径",
+          "pidFile": "PID文件路径",
+          "startUser": "启动用户",
+          "startCount": "启动数量",
+          "priority": "启动优先级",
+          "startCommand": "启动命令",
+          "stopCommand": "停止命令",
+          "restartCommand": "重启命令",
+          "forceStopCommand": "强制停止命令",
+          "reloadCommand": "进程重载命令",
+          "startWaitTime": "启动等待时长",
+          "operationTimeout": "操作超时时长"
+        },
+        "placeholders": {
+          "processName": "请输入进程名称",
+          "processAlias": "请输入进程别名",
+          "startupParams": "请输入启动参数",
+          "description": "请输入备注",
+          "workPath": "请输入工作路径",
+          "pidFile": "请输入PID文件路径",
+          "startUser": "请输入启动用户",
+          "startCount": "请输入启动数量",
+          "priority": "请输入启动优先级",
+          "startCommand": "请输入启动命令",
+          "stopCommand": "请输入停止命令",
+          "restartCommand": "请输入重启命令",
+          "forceStopCommand": "请输入强制停止命令",
+          "reloadCommand": "请输入进程重载命令",
+          "startWaitTime": "请输入启动等待时长",
+          "operationTimeout": "请输入操作超时时长",
+          "selectOrInputIP": "请选择或输入IP",
+          "inputPort": "请输入Port",
+          "selectProtocol": "请选择Protocol"
+        },
+        "tooltips": {
+          "processName": "进程启动后的名称，需要用于检查进程是否存活。例如：\"./application\"",
+          "processAlias": "进程的别名，方便识别，例如：\"代理服务\"",
+          "startupParams": "程序启动参数 用于唯一识别一个进程，例如 -cp zookeeper",
+          "workPath": "执行进程启停等操作的工作路径",
+          "priority": "批量启动进程依据优先级从小到大排序操作，停止进程按反序操作。优先级数值范围支持输入 [ -100 ~ 10000 ]",
+          "startWaitTime": "在执行启动命令后，等待多久检查PID存活的状态",
+          "operationTimeout": "执行命令的超时时长"
+        },
+        "confirmModal": {
+          "title": "确认离开当前页？",
+          "description": "离开将会导致未保存信息丢失"
+        },
+        "columns": {
+          "actions": "操作"
+        },
+        "titles": {
+          "edit": "编辑进程",
+          "add": "添加进程"
+        }
       }
     },
     "dynamicGroupForm": {
@@ -950,79 +1025,6 @@
           "titles": {
             "selectHost": "选择主机",
             "addHostToModule": "新增主机到模块"
-          }
-        },
-        "addProcessModal": {
-          "title": "添加进程",
-          "buttons": {
-            "submit": "提交",
-            "cancel": "取消",
-            "add": "添加",
-            "delete": "删除",
-            "addImmediately": "立即添加"
-          },
-          "sections": {
-            "basicInfo": "基础信息",
-            "listenInfo": "监听信息",
-            "processManagementInfo": "进程管理信息"
-          },
-          "fields": {
-            "processName": "进程名称",
-            "processAlias": "进程别名",
-            "startupParams": "启动参数",
-            "description": "备注",
-            "workPath": "工作路径",
-            "pidFile": "PID文件路径",
-            "startUser": "启动用户",
-            "startCount": "启动数量",
-            "priority": "启动优先级",
-            "startCommand": "启动命令",
-            "stopCommand": "停止命令",
-            "restartCommand": "重启命令",
-            "forceStopCommand": "强制停止命令",
-            "reloadCommand": "进程重载命令",
-            "startWaitTime": "启动等待时长",
-            "operationTimeout": "操作超时时长"
-          },
-          "placeholders": {
-            "processName": "请输入进程名称",
-            "processAlias": "请输入进程别名",
-            "startupParams": "请输入启动参数",
-            "description": "请输入备注",
-            "workPath": "请输入工作路径",
-            "pidFile": "请输入PID文件路径",
-            "startUser": "请输入启动用户",
-            "startCount": "请输入启动数量",
-            "priority": "请输入启动优先级",
-            "startCommand": "请输入启动命令",
-            "stopCommand": "请输入停止命令",
-            "restartCommand": "请输入重启命令",
-            "forceStopCommand": "请输入强制停止命令",
-            "reloadCommand": "请输入进程重载命令",
-            "startWaitTime": "请输入启动等待时长",
-            "operationTimeout": "请输入操作超时时长",
-            "selectOrInputIP": "请选择或输入IP",
-            "inputPort": "请输入Port",
-            "selectProtocol": "请选择Protocol"
-          },
-          "tooltips": {
-            "processName": "进程启动后的名称，需要用于检查进程是否存活。例如：\"./application\"",
-            "processAlias": "进程的别名，方便识别，例如：\"代理服务\"",
-            "workPath": "执行进程启停等操作的工作路径",
-            "priority": "批量启动进程依据优先级从小到大排序操作，停止进程按反序操作。优先级数值范围支持输入 [ -100 ~ 10000 ]",
-            "startWaitTime": "在执行启动命令后，等待多久检查PID存活的状态",
-            "operationTimeout": "执行命令的超时时长"
-          },
-          "confirmModal": {
-            "title": "确认离开当前页？",
-            "description": "离开将会导致未保存信息丢失"
-          },
-          "columns": {
-            "actions": "操作"
-          },
-          "titles": {
-            "edit": "编辑进程",
-            "add": "添加进程"
           }
         }
       }

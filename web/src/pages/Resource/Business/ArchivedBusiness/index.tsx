@@ -154,7 +154,7 @@ const ArchivedBusiness: React.FC = () => {
             <div className="list-header">
                 <div className="list-search">
                     <Input.Search
-                        style={{ width: 240 }}
+                        style={{ width: 248 }}
                         placeholder={t('resource.business.archived.search.placeholder')}
                         allowClear
                         onChange={(e) => handleSearch(e.target.value)}

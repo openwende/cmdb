@@ -216,6 +216,7 @@ const BusinessList: React.FC = () => {
                             className="search-select"
                             onChange={handleFieldChange}
                             value={searchField}
+                            style={{ width: 132 }}
                         >
                             {searchFieldOptions.map(option => (
                                 <Option key={option.value} value={option.value}>{t(option.label)}</Option>

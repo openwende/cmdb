@@ -10,7 +10,7 @@
     "next": "Next",
     "previous": "Previous",
     "confirmLeave": "Confirm to leave current page?",
-    "unsavedChanges": "Leaving will cause unsaved information to be lost",
+    "unsavedChanges": "Unsaved changes will be lost",
     "pleaseEnter": "Please enter",
     "pleaseSelect": "Please select",
     "noMatch": "No matching personnel",
@@ -233,7 +233,7 @@
       "releaseHostModal": {
         "title": "Confirm return to host pool",
         "confirmMessage": "Confirm to transfer {{count}} idle hosts to host pool?",
-        "warning": "Please confirm that business processes have stopped or hosts are shut down",
+        "warning": "Ensure the service is stopped or the host is powered off",
         "selectDirectory": "Return to directory"
       },
       "transferHost": {
@@ -277,7 +277,7 @@
           "selectedHosts": "Selected hosts",
           "units": "units",
           "transferTo": "Transfer to",
-          "changeConfirmation": "Change confirmation"
+          "changeConfirmation": "Confirm Changes"
         }
       },
       "serviceInstance": {
@@ -350,7 +350,8 @@
             "items": "items"
           },
           "confirm": {
-            "deleteInstance": "Confirm to delete this instance?"
+            "deleteInstance": "Confirm to delete this instance?",
+            "deleteProcess": "Confirm to delete this process?"
           }
         },
         "process": {
@@ -439,7 +440,7 @@
         "setNamePlaceholder": "Please enter set name",
         "setDescription": "Set description",
         "setDescriptionPlaceholder": "Please enter set description",
-        "environmentType": "Environment type",
+        "environmentType": "Env type",
         "environmentTypePlaceholder": "Please select environment type",
         "environment": {
           "test": "Test",
@@ -489,6 +490,80 @@
       "idleNodeInfo": {
         "alertMessage": "Container cluster nodes (Node) without any running Pods will be classified as \"Empty Pod nodes\"",
         "nodeName": "Node name"
+      },
+      "addProcessModal": {
+        "title": "Add process",
+        "buttons": {
+          "submit": "Submit",
+          "cancel": "Cancel",
+          "add": "Add",
+          "delete": "Delete",
+          "addImmediately": "Add immediately"
+        },
+        "sections": {
+          "basicInfo": "Basic info",
+          "listenInfo": "Listen info",
+          "processManagementInfo": "Process management info"
+        },
+        "fields": {
+          "processName": "Process name",
+          "processAlias": "Process alias",
+          "startupParams": "Startup parameters",
+          "description": "Description",
+          "workPath": "Work path",
+          "pidFile": "PID file path",
+          "startUser": "Start user",
+          "startCount": "Start count",
+          "priority": "Start priority",
+          "startCommand": "Start command",
+          "stopCommand": "Stop command",
+          "restartCommand": "Restart command",
+          "forceStopCommand": "Force stop command",
+          "reloadCommand": "Process reload command",
+          "startWaitTime": "Start wait time",
+          "operationTimeout": "Operation timeout"
+        },
+        "placeholders": {
+          "processName": "Please enter process name",
+          "processAlias": "Please enter process alias",
+          "startupParams": "Please enter startup parameters",
+          "description": "Please enter description",
+          "workPath": "Please enter work path",
+          "pidFile": "Please enter PID file path",
+          "startUser": "Please enter start user",
+          "startCount": "Please enter start count",
+          "priority": "Please enter start priority",
+          "startCommand": "Please enter start command",
+          "stopCommand": "Please enter stop command",
+          "restartCommand": "Please enter restart command",
+          "forceStopCommand": "Please enter force stop command",
+          "reloadCommand": "Please enter process reload command",
+          "startWaitTime": "Please enter start wait time",
+          "operationTimeout": "Please enter operation timeout",
+          "selectOrInputIP": "Please select or enter IP",
+          "inputPort": "Please enter port",
+          "selectProtocol": "Please select protocol"
+        },
+        "tooltips": {
+          "processName": "Name of the process after startup, used to check if the process is alive. For example: \"./application\"",
+          "processAlias": "Alias of the process for easy identification, for example: \"Proxy service\"",
+          "startupParams": "Program startup parameters used to uniquely identify a process, for example: -cp zookeeper",
+          "workPath": "Working path for executing process start/stop operations",
+          "priority": "Batch process startup is sorted by priority from small to large, stop process is in reverse order. Priority value range supports input [-100 ~ 10000]",
+          "startWaitTime": "After executing the start command, how long to wait before checking PID alive status",
+          "operationTimeout": "Timeout for command execution"
+        },
+        "confirmModal": {
+          "title": "Confirm to leave current page?",
+          "description": "Unsaved changes will be lost"
+        },
+        "columns": {
+          "actions": "Actions"
+        },
+        "titles": {
+          "edit": "Edit process",
+          "add": "Add process"
+        }
       }
     },
     "dynamicGroupForm": {
@@ -588,7 +663,7 @@
         "toggleConfirm": "Confirm to switch?",
         "toggleDescription": "Content will be cleared, confirm to switch?",
         "leaveConfirm": "Confirm to leave current page?",
-        "leaveDescription": "Leaving will cause unsaved information to be lost"
+        "leaveDescription": "Unsaved changes will be lost"
       }
     },
     "dynamicGroup": {
@@ -824,7 +899,7 @@
         },
         "confirmLeave": {
           "title": "Confirm to leave current page?",
-          "description": "Leaving will cause unsaved information to be lost"
+          "description": "Unsaved changes will be lost"
         }
       },
       "archived": {
@@ -950,79 +1025,6 @@
           "titles": {
             "selectHost": "Select host",
             "addHostToModule": "Add host to module"
-          }
-        },
-        "addProcessModal": {
-          "title": "Add process",
-          "buttons": {
-            "submit": "Submit",
-            "cancel": "Cancel",
-            "add": "Add",
-            "delete": "Delete",
-            "addImmediately": "Add immediately"
-          },
-          "sections": {
-            "basicInfo": "Basic info",
-            "listenInfo": "Listen info",
-            "processManagementInfo": "Process management info"
-          },
-          "fields": {
-            "processName": "Process name",
-            "processAlias": "Process alias",
-            "startupParams": "Startup parameters",
-            "description": "Description",
-            "workPath": "Work path",
-            "pidFile": "PID file path",
-            "startUser": "Start user",
-            "startCount": "Start count",
-            "priority": "Start priority",
-            "startCommand": "Start command",
-            "stopCommand": "Stop command",
-            "restartCommand": "Restart command",
-            "forceStopCommand": "Force stop command",
-            "reloadCommand": "Process reload command",
-            "startWaitTime": "Start wait time",
-            "operationTimeout": "Operation timeout"
-          },
-          "placeholders": {
-            "processName": "Please enter process name",
-            "processAlias": "Please enter process alias",
-            "startupParams": "Please enter startup parameters",
-            "description": "Please enter description",
-            "workPath": "Please enter work path",
-            "pidFile": "Please enter PID file path",
-            "startUser": "Please enter start user",
-            "startCount": "Please enter start count",
-            "priority": "Please enter start priority",
-            "startCommand": "Please enter start command",
-            "stopCommand": "Please enter stop command",
-            "restartCommand": "Please enter restart command",
-            "forceStopCommand": "Please enter force stop command",
-            "reloadCommand": "Please enter process reload command",
-            "startWaitTime": "Please enter start wait time",
-            "operationTimeout": "Please enter operation timeout",
-            "selectOrInputIP": "Please select or enter IP",
-            "inputPort": "Please enter port",
-            "selectProtocol": "Please select protocol"
-          },
-          "tooltips": {
-            "processName": "Name of the process after startup, used to check if the process is alive. For example: \"./application\"",
-            "processAlias": "Alias of the process for easy identification, for example: \"Proxy service\"",
-            "workPath": "Working path for executing process start/stop operations",
-            "priority": "Batch process startup is sorted by priority from small to large, stop process is in reverse order. Priority value range supports input [-100 ~ 10000]",
-            "startWaitTime": "After executing the start command, how long to wait before checking PID alive status",
-            "operationTimeout": "Timeout for command execution"
-          },
-          "confirmModal": {
-            "title": "Confirm to leave current page?",
-            "description": "Leaving will cause unsaved information to be lost"
-          },
-          "columns": {
-            "actions": "Actions"
-          },
-          "titles": {
-            "edit": "Edit process",
-            "add": "Add process"
           }
         }
       }
