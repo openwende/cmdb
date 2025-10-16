@@ -64,13 +64,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
 
     const text = selectedHosts.map(rec => getHostCopyValue(rec, copyKey)).join('\n');
     if (!text) {
-      message.warning(t('resource.host.messages.no_copy_content'));
+      message.warning(t('resource.host.messages.noCopyContent'));
       return;
     }
     navigator.clipboard?.writeText(text).then(() => {
-      message.success(t('resource.host.messages.copy_success'));
+      message.success(t('resource.host.messages.copySuccess'));
     }).catch(() => {
-      message.error(t('resource.host.messages.copy_failed'));
+      message.error(t('resource.host.messages.copyFailed'));
     });
   }, [selectedRowKeys]);
 
@@ -160,16 +160,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       render: (id: number) => <a>{id}</a>
     },
     {
-      title: t('resource.host.columns.inner_ipv4'),
+      title: t('resource.host.columns.innerIpv4'),
       dataIndex: ['host', 'bk_host_innerip'],
     },
     {
-      title: t('resource.host.columns.inner_ipv6'),
+      title: t('resource.host.columns.innerIpv6'),
       dataIndex: ['host', 'bk_host_innerip_v6'],
       render: (text: string) => text || '--'
     },
     {
-      title: t('resource.host.columns.cloud_area'),
+      title: t('resource.host.columns.cloudArea'),
       render: (_: any, record: any) => {
         const cloudInfo = record.host.bk_cloud_id;
         const region = cloudInfo.length > 0

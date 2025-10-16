@@ -24,7 +24,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
     const [serviceCategory, setServiceCategory] = useState<number[]>([]);
     const formItemRules = [{
         required: true,
-        message: t("common.form.rules_message")
+        message: t("common.form.rulesMessage")
     }];
 
     const onOk = async () => {
@@ -100,7 +100,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
                                 {menu}
                                 <div style={{ textAlign: "center" }}>
                                     <Button type="link" icon={<PlusOutlined />} style={{ padding: 0 }}>
-                                        {t("business.topology.tree.create.form.create_setTemplate")}
+                                        {t("business.topology.tree.create.form.createSetTemplate")}
                                     </Button>
                                 </div>
                             </>
@@ -145,7 +145,7 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
                                 {menu}
                                 <div style={{ textAlign: "center" }}>
                                     <Button type="link" icon={<PlusOutlined />} style={{ padding: 0 }}>
-                                        {t("business.topology.tree.create.form.create_serviceTemplate")}
+                                        {t("business.topology.tree.create.form.createServiceTemplate")}
                                     </Button>
                                 </div>
                             </>
@@ -209,8 +209,8 @@ const CreateModal: React.FC<CreateModalProps> = ({ visible, type, selectedNode, 
             open={visible}
             title={
                 type === TopoTreeNodeType.Set
-                    ? t("business.topology.tree.create.set_title")
-                    : t("business.topology.tree.create.module_title")
+                    ? t("business.topology.tree.create.setTitle")
+                    : t("business.topology.tree.create.moduleTitle")
             }
             okText={t("common.confirm")}
             cancelText={t("common.cancel")}

@@ -39,33 +39,33 @@ const ArchivedBusiness: React.FC = () => {
             width: 240,
         },
         {
-            title: t('resource.business.archived.columns.created_at'),
+            title: t('resource.business.archived.columns.createdAt'),
             dataIndex: "bk_created_at",
             sorter: true,
             width: 240,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: t('resource.business.archived.columns.created_by'),
+            title: t('resource.business.archived.columns.createdBy'),
             dataIndex: "bk_created_by",
             sorter: true,
             width: 240,
         },
         {
-            title: t('resource.business.archived.columns.updated_at'),
+            title: t('resource.business.archived.columns.updatedAt'),
             dataIndex: "bk_updated_at",
             sorter: true,
             width: 240,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: t('resource.business.archived.columns.updated_by'),
+            title: t('resource.business.archived.columns.updatedBy'),
             dataIndex: "bk_updated_by",
             sorter: true,
             width: 240,
         },
         {
-            title: t('resource.business.archived.columns.archived_at'),
+            title: t('resource.business.archived.columns.archivedAt'),
             dataIndex: "archived_at",
             sorter: true,
             width: 240,
@@ -78,8 +78,8 @@ const ArchivedBusiness: React.FC = () => {
                 <Space>
                     <a onClick={() => handleRestore(record)}>{t('resource.business.archived.actions.restore')}</a>
                     <Popconfirm
-                        title={t('resource.business.archived.delete_confirm.title')}
-                        description={t('resource.business.archived.delete_confirm.description')}
+                        title={t('resource.business.archived.deleteConfirm.title')}
+                        description={t('resource.business.archived.deleteConfirm.description')}
                         onConfirm={() => confirmDelete(record)}
                         okText={t("common.confirm")}
                         cancelText={t("common.cancel")}
@@ -118,7 +118,7 @@ const ArchivedBusiness: React.FC = () => {
     const confirmRestore = () => {
         form.validateFields().then(() => {
             // API call to restore the business would go here
-            message.success(t('resource.business.archived.messages.restore_success'));
+            message.success(t('resource.business.archived.messages.restoreSuccess'));
 
             // Remove the business from the list
             const updatedList = businessList.filter(
@@ -135,7 +135,7 @@ const ArchivedBusiness: React.FC = () => {
 
     const confirmDelete = (business: any) => {
         // API call to permanently delete the business would go here
-        message.success(t('resource.business.archived.messages.delete_success'));
+        message.success(t('resource.business.archived.messages.deleteSuccess'));
 
         // Remove the business from the list
         const updatedList = businessList.filter(
@@ -184,7 +184,7 @@ const ArchivedBusiness: React.FC = () => {
 
             {/* Restore business modal */}
             <Modal
-                title={t('resource.business.archived.restore_modal.title')}
+                title={t('resource.business.archived.restoreModal.title')}
                 open={restoreModalVisible}
                 onOk={confirmRestore}
                 onCancel={() => { setRestoreModalVisible(false) }}
@@ -199,10 +199,10 @@ const ArchivedBusiness: React.FC = () => {
                 >
                     <Form.Item
                         name="businessName"
-                        label={t('resource.business.archived.restore_modal.name_label')}
-                        rules={[{ required: true, message: t('common.form.rules_message') }]}
+                        label={t('resource.business.archived.restoreModal.nameLabel')}
+                        rules={[{ required: true, message: t('common.form.rulesMessage') }]}
                     >
-                        <Input placeholder={t('resource.business.archived.restore_modal.name_placeholder')} />
+                        <Input placeholder={t('resource.business.archived.restoreModal.namePlaceholder')} />
                     </Form.Item>
                 </Form>
             </Modal>

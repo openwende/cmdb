@@ -131,7 +131,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
       </div>
       {hasError && (
         <div className="form-item-error">
-          {t('common.form.rules_message')}
+          {t('common.form.rulesMessage')}
         </div>
       )}
     </div>

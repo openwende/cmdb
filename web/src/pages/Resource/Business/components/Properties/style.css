@@ -22,10 +22,11 @@
   margin-top: 24px;
   
   .actions-divider {
-    width: 100%;
+    width: calc(100% - 32px);
     height: 1px;
     background-color: #f0f0f0;
     margin-bottom: 16px;
+    margin-left: 16px;
   }
   
   .actions-content {

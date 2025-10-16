@@ -111,26 +111,26 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
         const text = selectedHosts.map((rec: any) => getHostCopyValue(rec, copyKey)).join('\n');
         if (!text) {
-            message.warning(t('resource.host.messages.no_copy_content'));
+            message.warning(t('resource.host.messages.noCopyContent'));
             return;
         }
         navigator.clipboard?.writeText(text).then(() => {
-            message.success(t('resource.host.messages.copy_success'));
+            message.success(t('resource.host.messages.copySuccess'));
         }).catch(() => {
-            message.error(t('resource.host.messages.copy_failed'));
+            message.error(t('resource.host.messages.copyFailed'));
         });
     }, [hostsList, selectedRowKeys]);
 
     const handleMoreMenuClick = (key: ResourceMoreKey) => {
         if (key === ResourceMoreKey.Delete) {
             confirm({
-                title: t('resource.host.messages.confirm_delete'),
+                title: t('resource.host.messages.confirmDelete'),
                 icon: <ExclamationCircleFilled />,
                 okText: t("common.confirm"),
                 cancelText: t("common.cancel"),
                 onOk() {
                     // TODO: api
-                    message.success(t('resource.host.messages.delete_success'));
+                    message.success(t('resource.host.messages.deleteSuccess'));
                 },
                 onCancel() { },
             });
@@ -176,21 +176,21 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             }
         },
         {
-            title: t('resource.host.columns.inner_ipv4'),
+            title: t('resource.host.columns.innerIpv4'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_host_innerip;
             }
         },
         {
-            title: t('resource.host.columns.inner_ipv6'),
+            title: t('resource.host.columns.innerIpv6'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_host_innerip_v6 || "--";
             }
         },
         {
-            title: t('resource.host.columns.cloud_area'),
+            title: t('resource.host.columns.cloudArea'),
             render: (_: any, record: any) => {
                 const cloudInfo = record.host.bk_cloud_id;
                 const region = cloudInfo.length > 0
@@ -200,14 +200,14 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             }
         },
         {
-            title: t('resource.host.columns.business_topology'),
+            title: t('resource.host.columns.businessTopology'),
             render: (_: any, record: any) => {
                 const topo = record.module.length > 0 ? record.module[0].topo_module_name : "";
                 return topo.replace(/##/g, "/");
             }
         },
         {
-            title: t('resource.host.columns.cloud_host_status'),
+            title: t('resource.host.columns.cloudHostStatus'),
             sorter: true,
             render: (_: any, record: any) => {
                 return record.host.bk_cloud_host_status || "--";
@@ -225,8 +225,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
                 disabled = hostsNotInIdlePool;
                 tip = base.key === TransferMenuItemType.hostPool
-                    ? t('resource.host.tooltips.only_idle_hosts_to_host_pool')
-                    : t('resource.host.tooltips.only_idle_hosts_cross_business');
+                    ? t('resource.host.tooltips.onlyIdleHostsToHostPool')
+                    : t('resource.host.tooltips.onlyIdleHostsCrossBusiness');
             }
 
             if (disabled) {
@@ -257,7 +257,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 type="primary"
                                 onClick={() => setImportModalVisible(true)}
                             >
-                                {t('resource.host.actions.import_host')}
+                                {t('resource.host.actions.importHost')}
                             </Button>
                         )
                     }
@@ -275,12 +275,12 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 trigger={['click']}
                             >
                                 <Tooltip
-                                    title={isHostPoolHost ? t('resource.host.tooltips.only_host_pool_hosts') : undefined}
+                                    title={isHostPoolHost ? t('resource.host.tooltips.onlyHostPoolHosts') : undefined}
                                 >
                                     <Button
                                         disabled={selectedRowKeys.length === 0 || isHostPoolHost}
                                     >
-                                        {t('resource.host.actions.assign_to')} <DownOutlined />
+                                        {t('resource.host.actions.assignTo')} <DownOutlined />
                                     </Button>
                                 </Tooltip>
                             </Dropdown>
@@ -297,10 +297,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                                 trigger={['click']}
                             >
                                 <Tooltip
-                                    title={hostsNotAllInBizPool ? t('resource.host.tooltips.only_business_hosts') : undefined}
+                                    title={hostsNotAllInBizPool ? t('resource.host.tooltips.onlyBusinessHosts') : undefined}
                                 >
                                     <Button disabled={selectedRowKeys.length === 0 || hostsNotAllInBizPool}>
-                                        {t('resource.host.actions.transfer_to')} <DownOutlined />
+                                        {t('resource.host.actions.transferTo')} <DownOutlined />
                                     </Button>
                                 </Tooltip>
                             </Dropdown>
@@ -353,7 +353,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                         placeholder={t('resource.host.search.placeholder')}
                         style={{ width: 300, marginRight: 8 }}
                     />
-                    <Tooltip title={t('resource.host.tooltips.view_delete_history')}>
+                    <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
                         <Button icon={<HistoryOutlined />} onClick={handleDeleteHistory} />
                     </Tooltip>
                 </div>

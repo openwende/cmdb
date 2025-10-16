@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React from 'react';
 import { Layout } from 'antd';
 import Logo from './Logo';
 import Menu from './Menu';

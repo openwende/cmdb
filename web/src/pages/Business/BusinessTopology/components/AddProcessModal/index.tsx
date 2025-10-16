@@ -267,7 +267,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                                 <InfoCircleOutlined />
                                             </Tooltip>
                                         </span>}
-                                        rules={[{ required: true, message: t("common.form.rules_message") }]}
+                                        rules={[{ required: true, message: t("common.form.rulesMessage") }]}
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder={t('business.topology.addProcessModal.placeholders.processName')} />
@@ -285,7 +285,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
                                                 <InfoCircleOutlined />
                                             </Tooltip>
                                         </span>}
-                                        rules={[{ required: true, message: t("common.form.rules_message") }]}
+                                        rules={[{ required: true, message: t("common.form.rulesMessage") }]}
                                         style={{ flex: 1 }}
                                     >
                                         <Input placeholder={t('business.topology.addProcessModal.placeholders.processAlias')} />

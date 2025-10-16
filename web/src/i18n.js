@@ -1,19 +1,29 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import zhTranslation from './locales/zh-CN.json';
+import zhCN from './locales/zh-CN.json';
+import enUS from './locales/en-US.json';
+
+const resources = {
+  'zh-CN': {
+    translation: zhCN
+  },
+  'en-US': {
+    translation: enUS
+  }
+};
 
 i18n
   .use(initReactI18next)
   .init({
-    resources: {
-      zh: {
-        translation: zhTranslation
-      }
-    },
-    lng: 'zh', // default language
-    fallbackLng: 'zh', // if current language does not have a key, fallback to this language
+    resources,
+    // default language
+    lng: localStorage.getItem('language') || 'zh-CN',
+    // fallback language
+    fallbackLng: 'zh-CN',
+
     interpolation: {
-      escapeValue: false // React has already done XSS protection
+      // React already does XSS protection
+      escapeValue: false
     }
   });
 

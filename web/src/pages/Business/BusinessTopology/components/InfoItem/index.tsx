@@ -16,9 +16,9 @@ const InfoItem: React.FC<Props> = ({ label, value }) => {
     const handleCopy = async (text: string) => {
         try {
             await navigator.clipboard.writeText(text);
-            message.success(t('resource.host.messages.copy_success'));
+            message.success(t('resource.host.messages.copySuccess'));
         } catch (error) {
-            message.error(t('resource.host.messages.copy_failed'));
+            message.error(t('resource.host.messages.copyFailed'));
         }
     };
 

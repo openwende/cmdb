@@ -81,7 +81,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                     <Form.Item
                                         label={t('business.topology.setNodeInfo.setName')}
                                         name="bkSetName"
-                                        rules={[{ required: true, message: t('common.form.rules_message') }]}
+                                        rules={[{ required: true, message: t('common.form.rulesMessage') }]}
                                         className="flex-item"
                                     >
                                         <Input

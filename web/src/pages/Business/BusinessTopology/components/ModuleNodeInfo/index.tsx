@@ -149,7 +149,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                                     <Form.Item
                                         label={t('business.topology.moduleNodeInfo.moduleName')}
                                         name="bkModuleName"
-                                        rules={[{ required: true, message: t('common.form.rules_message') }]}
+                                        rules={[{ required: true, message: t('common.form.rulesMessage') }]}
                                         className="flex-item"
                                     >
                                         <Input

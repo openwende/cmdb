@@ -33,8 +33,8 @@ const DynamicGroup: React.FC = () => {
     const searchFieldOptions = [
         { value: "id", label: t('business.dynamicGroup.searchFields.id') },
         { value: "name", label: t('business.dynamicGroup.searchFields.name') },
-        { value: "bk_obj_id", label: t('business.dynamicGroup.searchFields.bk_obj_id') },
-        { value: "modify_user", label: t('business.dynamicGroup.searchFields.modify_user') }
+        { value: "bk_obj_id", label: t('business.dynamicGroup.searchFields.bkObjId') },
+        { value: "modify_user", label: t('business.dynamicGroup.searchFields.modifyUser') }
     ];
 
     // Find current field option
@@ -53,7 +53,7 @@ const DynamicGroup: React.FC = () => {
             width: 300,
         },
         {
-            title: t('business.dynamicGroup.columns.bk_obj_id'),
+            title: t('business.dynamicGroup.columns.bkObjId'),
             dataIndex: "bk_obj_id",
             sorter: true,
             width: 150,
@@ -64,26 +64,26 @@ const DynamicGroup: React.FC = () => {
             )
         },
         {
-            title: t('business.dynamicGroup.columns.create_user'),
+            title: t('business.dynamicGroup.columns.createUser'),
             dataIndex: "create_user",
             sorter: true,
             width: 150,
         },
         {
-            title: t('business.dynamicGroup.columns.create_time'),
+            title: t('business.dynamicGroup.columns.createTime'),
             dataIndex: "create_time",
             sorter: true,
             width: 180,
             render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
         },
         {
-            title: t('business.dynamicGroup.columns.modify_user'),
+            title: t('business.dynamicGroup.columns.modifyUser'),
             dataIndex: "modify_user",
             sorter: true,
             width: 150,
         },
         {
-            title: t('business.dynamicGroup.columns.last_time'),
+            title: t('business.dynamicGroup.columns.lastTime'),
             dataIndex: "last_time",
             sorter: true,
             width: 180,

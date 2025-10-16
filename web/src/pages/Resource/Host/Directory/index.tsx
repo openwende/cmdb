@@ -49,12 +49,12 @@ const Directory: React.FC<{
     const handleAddConfirm = () => {
         // Trigger the error message
         if (inputValue.trim() === "") {
-            message.error(t("host.directory.message.correct_name"));
+            message.error(t("host.directory.message.correctName"));
             return;
         }
 
         if (!isInputValueAvailable()) {
-            message.error(t("host.directory.message.exist_name"));
+            message.error(t("host.directory.message.existName"));
             return;
         }
 
@@ -86,7 +86,7 @@ const Directory: React.FC<{
 
         setNewDir(false);
         setInputValue("");
-        message.success(t("host.directory.message.add_success"));
+        message.success(t("host.directory.message.addSuccess"));
     };
 
     // Directory to be renamed
@@ -99,19 +99,19 @@ const Directory: React.FC<{
     // Confirm the renaming of a directory
     const handleRenameConfirm = (id: number) => {
         if (inputValue.trim() === "") {
-            message.error(t("host.directory.message.correct_name"));
+            message.error(t("host.directory.message.correctName"));
             return;
         }
 
         if (!isInputValueAvailable()) {
-            message.error(t("host.directory.message.exist_name"));
+            message.error(t("host.directory.message.existName"));
             return;
         }
 
         setDirs(dirs.map(d => d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d));
         setEditDirId(null);
         setInputValue("");
-        message.success(t("host.directory.message.rename_success"));
+        message.success(t("host.directory.message.renameSuccess"));
     };
 
     // Check if the input value is available
@@ -156,7 +156,7 @@ const Directory: React.FC<{
                 setDirs(dirs.filter(d => d.bk_module_id !== id));
                 setPinnedDirs(pinnedDirs.filter(d => d.bk_module_id !== id));
                 if (selectedId === id) onSelect(unmodifiableDirIds[0]);
-                message.success(t("host.directory.message.delete_success"));
+                message.success(t("host.directory.message.deleteSuccess"));
             },
             onCancel() { },
         });
@@ -177,7 +177,7 @@ const Directory: React.FC<{
                 return newDirs;
             });
             setPinnedOrder(prev => prev.filter(pinnedId => pinnedId !== id));
-            message.success(t("host.directory.message.unpin_success"));
+            message.success(t("host.directory.message.unpinSuccess"));
         } else {
             // Pin
             setDirs(prevDirs => {
@@ -188,7 +188,7 @@ const Directory: React.FC<{
                 return newDirs;
             });
             setPinnedOrder(prev => [id, ...prev]);
-            message.success(t("host.directory.message.pin_success"));
+            message.success(t("host.directory.message.pinSuccess"));
         }
     };
 
@@ -326,7 +326,7 @@ const Directory: React.FC<{
         return [
             {
                 key: unmodifiableDirIds[0],
-                title: t("host.directory.host_pool"),
+                title: t("host.directory.hostPool"),
                 children,
             }
         ];

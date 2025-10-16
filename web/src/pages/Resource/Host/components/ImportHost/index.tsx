@@ -40,8 +40,8 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
     const [importStatus, setImportStatus] = useState<ImportStatus>(ImportStatus.None);
 
     const columns = [
-        { title: t('resource.import.columns.related_model'), dataIndex: 'name' },
-        { title: t('resource.import.columns.unique_identifier'), dataIndex: 'unique' }
+        { title: t('resource.import.columns.relatedModel'), dataIndex: 'name' },
+        { title: t('resource.import.columns.uniqueIdentifier'), dataIndex: 'unique' }
     ];
 
     useEffect(() => {
@@ -112,7 +112,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                 <Alert
                     type="warning"
                     showIcon
-                    message={t('resource.import.messages.import_info')}
+                    message={t('resource.import.messages.importInfo')}
                     className="import-tip"
                 />
 
@@ -151,7 +151,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                     checked={importRelated}
                     onChange={e => setImportRelated(e.target.checked)}
                 >
-                    {t('resource.import.steps.import_related_models')}
+                    {t('resource.import.steps.importRelatedModels')}
                 </Checkbox>
 
                 {importRelated && (
@@ -161,14 +161,14 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                             <span className='host-info'>
                                 <span className="host-label"><HddOutlined /></span>
                                 <span className="host-text">{t('resource.import.host.label')}
-                                    <span className='host-model-text'>{t('resource.import.host.model_text')}</span>
+                                    <span className='host-model-text'>{t('resource.import.host.modelText')}</span>
                                 </span>
                             </span>
                             <span>
-                                <span>{t('resource.import.host.unique_label')}</span>
+                                <span>{t('resource.import.host.uniqueLabel')}</span>
                                 <Select
                                     size="small"
-                                    options={hostUniqueOptions.map(v => ({ label: t(v), value: v }))}
+                                    options={hostUniqueOptions.map((v: any) => ({ label: t(v), value: v }))}
                                     value={uniqueKey}
                                     onChange={setUniqueKey}
                                     style={{ width: 180, fontSize: 12 }}
@@ -190,7 +190,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                             locale={{
                                 emptyText: (
                                     <Empty
-                                        description={t('resource.import.messages.no_related_models')}
+                                        description={t('resource.import.messages.noRelatedModels')}
                                         className="empty-text"
                                     />
                                 )
@@ -250,7 +250,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                             current={step}
                             items={[
                                 { title: t('resource.import.steps.upload') },
-                                { title: t('resource.import.steps.select_models') }
+                                { title: t('resource.import.steps.selectModels') }
                             ]}
                         />
                     </div>
@@ -285,7 +285,7 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                                         onClick={handleImport}
                                         disabled={importRelated && selectedKeys.length === 0}
                                     >
-                                        {t('resource.import.actions.start_import')}
+                                        {t('resource.import.actions.startImport')}
                                     </Button>
                                 </>
                             )

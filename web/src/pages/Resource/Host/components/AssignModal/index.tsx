@@ -66,9 +66,9 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
             className="assign-modal"
         >
             <Typography.Text className="selected-tip">
-                {t("host.assign.modal.selected_prefix")}
+                {t("host.assign.modal.selectedPrefix")}
                 <span className="selected-count">{selectedRowKeys.length}</span>
-                {t("host.assign.modal.selected_suffix")}
+                {t("host.assign.modal.selectedSuffix")}
             </Typography.Text>
             <div className="assign-target">
                 <Typography.Text className="target-label">

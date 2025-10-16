@@ -34,12 +34,12 @@ const OperationDetails: React.FC<OperationDetailsProps> = ({ visible, onClose, d
 
     // Top meta info blocks
     const metaList = [
-        { label: t('resource.operation.meta.business'), value: t('resource.operation.values.no_business') },
+        { label: t('resource.operation.meta.business'), value: t('resource.operation.values.noBusiness') },
         { label: t('resource.operation.meta.object'), value: t('resource.operation.values.host') },
         { label: t('resource.operation.meta.action'), value: t('resource.operation.values.delete') },
-        { label: t('resource.operation.meta.model_type'), value: t('resource.operation.values.host') },
+        { label: t('resource.operation.meta.modelType'), value: t('resource.operation.values.host') },
         { label: t('resource.operation.meta.instance'), value: data.resource_name },
-        { label: t('resource.operation.meta.description'), value: t('resource.operation.values.delete_description', { name: data.resource_name }) },
+        { label: t('resource.operation.meta.description'), value: t('resource.operation.values.deleteDescription', { name: data.resource_name }) },
         { label: t('resource.operation.meta.time'), value: data.operation_time },
         { label: t('resource.operation.meta.user'), value: data.user },
     ];

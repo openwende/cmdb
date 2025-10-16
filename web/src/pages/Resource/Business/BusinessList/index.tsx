@@ -62,24 +62,24 @@ const BusinessList: React.FC = () => {
             render: (val: string[]) => val.join(', '),
         },
         {
-            title: t('resource.business.columns.created_at'),
-            dataIndex: "created_at",
-            sorter: true,
-            width: 300,
-            render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
+            title: t('resource.business.columns.createdAt'),
+            dataIndex: 'bk_created_at',
+            key: 'bk_created_at',
+            width: 180,
+            render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
         },
         {
-            title: t('resource.business.columns.created_by'),
-            dataIndex: "created_by",
-            sorter: true,
-            width: 300,
+            title: t('resource.business.columns.createdBy'),
+            dataIndex: 'bk_created_by',
+            key: 'bk_created_by',
+            width: 120,
         },
         {
-            title: t('resource.business.columns.updated_at'),
-            dataIndex: "updated_at",
-            sorter: true,
-            width: 300,
-            render: (val: string) => dayjs(val).format('YYYY-MM-DD HH:mm:ss')
+            title: t('resource.business.columns.updatedAt'),
+            dataIndex: 'bk_updated_at',
+            key: 'bk_updated_at',
+            width: 180,
+            render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
         },
         {
             title: t('resource.business.columns.actions'),
@@ -157,7 +157,7 @@ const BusinessList: React.FC = () => {
     const confirmArchive = () => {
         console.log('Archiving business:', archivingBusiness);
         // API call to archive the business would go here
-        message.success(t('resource.business.messages.archive_success'));
+        message.success(t('resource.business.messages.archiveSuccess'));
 
         // Remove the archived business from the table
         const updatedList = businessList.filter(
@@ -207,7 +207,7 @@ const BusinessList: React.FC = () => {
                     <Button
                         disabled={selectedRowKeys.length === 0}
                         onClick={handleEdit}
-                    >{t('resource.business.actions.batch_edit')}</Button>
+                    >{t('resource.business.actions.batchEdit')}</Button>
                 </div>
                 <div className="list-search">
                     <Space.Compact>
@@ -225,8 +225,8 @@ const BusinessList: React.FC = () => {
                             <DatePicker.RangePicker
                                 className="search-date-picker"
                                 placeholder={[
-                                    t('resource.business.search.date_range.start_placeholder'),
-                                    t('resource.business.search.date_range.end_placeholder')
+                                    t('resource.business.search.dateRange.startPlaceholder'),
+                                    t('resource.business.search.dateRange.endPlaceholder')
                                 ]}
                                 allowClear
                                 value={searchDateRange}
@@ -246,7 +246,7 @@ const BusinessList: React.FC = () => {
                             />
                         )}
                     </Space.Compact>
-                    <Tooltip title={t('resource.business.tooltips.view_archived')}>
+                    <Tooltip title={t('resource.business.tooltips.viewArchived')}>
                         <Button icon={<HistoryOutlined />} onClick={handleArchivedBusiness} />
                     </Tooltip>
                 </div>
@@ -297,8 +297,8 @@ const BusinessList: React.FC = () => {
             {/* Archive confirmation modal */}
             <ConfirmModal
                 visible={archiveModalVisible}
-                title={t('resource.business.messages.confirm_archive_title', { name: archivingBusiness?.bk_biz_name || '' })}
-                description={t('resource.business.messages.confirm_archive_description')}
+                title={t('resource.business.messages.confirmArchiveTitle', { name: archivingBusiness?.bk_biz_name || '' })}
+                description={t('resource.business.messages.confirmArchiveDescription')}
                 onOk={confirmArchive}
                 onCancel={() => setArchiveModalVisible(false)}
                 okText={t('common.components.confirmModal.confirm')}

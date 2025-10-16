@@ -8,7 +8,7 @@ export type FormFieldName = 'businessName' | 'lifecycle' | 'timezone' | 'languag
     'productManagers' | 'testers' | 'developers' | 'administrators';
 
 // Form validation rule constants
-export const createRequiredRule = (t: (key: string) => string) => [{ required: true, message: t('common.form.rules_message') }];
+export const createRequiredRule = (t: (key: string) => string) => [{ required: true, message: t('common.form.rulesMessage') }];
 
 // Utility functions for determining drawer type
 export const isCreateMode = (type: "create" | "edit"): boolean => type === "create";

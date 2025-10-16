@@ -1,25 +1,25 @@
 import { AssignType, ResourceCopyKey, ResourceMoreKey } from './Types';
 
 /**
- * "Copy" dropdown menu items - will use i18n keys
+ * "Copy" dropdown menu**
  */
 export const resourceCopyMenuItems = [
     { key: ResourceCopyKey.Id, label: 'resource.host.copy.id' },
-    { key: ResourceCopyKey.IPv4, label: 'resource.host.copy.inner_ipv4' },
-    { key: ResourceCopyKey.IPv6, label: 'resource.host.copy.inner_ipv6' },
+    { key: ResourceCopyKey.IPv4, label: 'resource.host.copy.innerIpv4' },
+    { key: ResourceCopyKey.IPv6, label: 'resource.host.copy.innerIpv6' },
     {
         key: 'cloud_id_ip_group',
-        label: 'resource.host.copy.cloud_area_id_ip',
+        label: 'resource.host.copy.cloudAreaIdIp',
         children: [
-            { key: ResourceCopyKey.CloudIdIPv4, label: 'resource.host.copy.cloud_area_id_ipv4' },
-            { key: ResourceCopyKey.CloudIdIPv6, label: 'resource.host.copy.cloud_area_id_ipv6' },
-            { key: ResourceCopyKey.CloudIdIPIPv4First, label: 'resource.host.copy.cloud_area_id_ip_ipv4_first' },
-            { key: ResourceCopyKey.CloudIdIPIPv6First, label: 'resource.host.copy.cloud_area_id_ip_ipv6_first' },
+            { key: ResourceCopyKey.CloudIdIPv4, label: 'resource.host.copy.cloudAreaIdIpv4' },
+            { key: ResourceCopyKey.CloudIdIPv6, label: 'resource.host.copy.cloudAreaIdIpv6' },
+            { key: ResourceCopyKey.CloudIdIPIPv4First, label: 'resource.host.copy.cloudAreaIdIpIpv4First' },
+            { key: ResourceCopyKey.CloudIdIPIPv6First, label: 'resource.host.copy.cloudAreaIdIpIpv6First' },
         ],
     },
-    { key: ResourceCopyKey.CloudRegion, label: 'resource.host.copy.cloud_area' },
-    { key: ResourceCopyKey.TopoPath, label: 'resource.host.copy.topo_path' },
-    { key: ResourceCopyKey.CloudHostStatus, label: 'resource.host.copy.cloud_host_status' },
+    { key: ResourceCopyKey.CloudRegion, label: 'resource.host.copy.cloudArea' },
+    { key: ResourceCopyKey.TopoPath, label: 'resource.host.copy.topoPath' },
+    { key: ResourceCopyKey.CloudHostStatus, label: 'resource.host.copy.cloudHostStatus' },
 ] as const;
 
 /**
@@ -35,11 +35,11 @@ export const resourceCopyKeys: ResourceCopyKey[] = resourceCopyMenuItems.flatMap
 export const resourceAssignMenuItems = [
     {
         key: AssignType.Biz,
-        label: "resource.host.assign.business_idle_pool",
+        label: "resource.host.assign.businessIdlePool",
     },
     {
         key: AssignType.HostPool,
-        label: "resource.host.assign.host_pool_other_directory",
+        label: "resource.host.assign.hostPoolOtherDirectory",
     }
 ];
 
@@ -57,57 +57,58 @@ export const resourceMoreMenuItems = [
  * Host detail attributes - will use i18n keys
  */
 export const hostDetailAttrs = [
-    'resource.operation.attributes.addressing_method',
-    'resource.operation.attributes.gse_agent_id',
-    'resource.operation.attributes.asset_number',
-    'resource.operation.attributes.backup_maintainer',
-    'resource.operation.attributes.cloud_host_status',
-    'resource.operation.attributes.cloud_area',
-    'resource.operation.attributes.cloud_instance_id',
-    'resource.operation.attributes.cloud_region',
-    'resource.operation.attributes.cloud_vendor',
-    'resource.operation.attributes.cloud_zone',
+    'resource.operation.attributes.addressingMethod',
+    'resource.operation.attributes.gseAgentId',
+    'resource.operation.attributes.assetNumber',
+    'resource.operation.attributes.backupMaintainer',
+    'resource.operation.attributes.cloudHostStatus',
+    'resource.operation.attributes.cloudArea',
+    'resource.operation.attributes.cloudInstanceId',
+    'resource.operation.attributes.cloudRegion',
+    'resource.operation.attributes.cloudVendor',
+    'resource.operation.attributes.cloudZone',
     'resource.operation.attributes.remark',
-    'resource.operation.attributes.cpu_logical_cores',
-    'resource.operation.attributes.cpu_architecture',
-    'resource.operation.attributes.cpu_model',
-    'resource.operation.attributes.created_time',
-    'resource.operation.attributes.created_by',
-    'resource.operation.attributes.disk_capacity',
-    'resource.operation.attributes.inner_ipv4',
-    'resource.operation.attributes.inner_ipv6',
+    'resource.operation.attributes.cpuLogicalCores',
+    'resource.operation.attributes.cpuArchitecture',
+    'resource.operation.attributes.cpuModel',
+    'resource.operation.attributes.createdTime',
+    'resource.operation.attributes.createdBy',
+    'resource.operation.attributes.diskCapacity',
+    'resource.operation.attributes.innerIpv4',
+    'resource.operation.attributes.innerIpv6',
     'resource.operation.attributes.hostname',
-    'resource.operation.attributes.outer_ipv4',
-    'resource.operation.attributes.outer_ipv6',
+    'resource.operation.attributes.outerIpv4',
+    'resource.operation.attributes.outerIpv6',
     'resource.operation.attributes.isp',
-    'resource.operation.attributes.inner_mac',
-    'resource.operation.attributes.memory_capacity',
-    'resource.operation.attributes.os_bit',
-    'resource.operation.attributes.os_name',
-    'resource.operation.attributes.os_type',
-    'resource.operation.attributes.os_version',
-    'resource.operation.attributes.outer_mac',
+    'resource.operation.attributes.innerMac',
+    'resource.operation.attributes.memoryCapacity',
+    'resource.operation.attributes.osBit',
+    'resource.operation.attributes.osName',
+    'resource.operation.attributes.osType',
+    'resource.operation.attributes.osVersion',
+    'resource.operation.attributes.outerMac',
     'resource.operation.attributes.province',
-    'resource.operation.attributes.warranty_years',
-    'resource.operation.attributes.sla_level',
-    'resource.operation.attributes.device_sn',
-    'resource.operation.attributes.current_status',
+    'resource.operation.attributes.warrantyYears',
+    'resource.operation.attributes.slaLevel',
+    'resource.operation.attributes.deviceSn',
+    'resource.operation.attributes.currentStatus',
     'resource.operation.attributes.country',
-    'resource.operation.attributes.updated_time',
-    'resource.operation.attributes.updated_by',
-    'resource.operation.attributes.import_time',
-    'resource.operation.attributes.import_method',
-    'resource.operation.attributes.main_maintainer',
+    'resource.operation.attributes.updatedTime',
+    'resource.operation.attributes.updatedBy',
+    'resource.operation.attributes.importTime',
+    'resource.operation.attributes.importMethod',
+    'resource.operation.attributes.mainMaintainer',
 ];
+
 /**
- * Host unique options - will use i18n keys
+ * Host unique identifier options - will use i18n keys
  */
 export const hostUniqueOptions = [
-    'resource.import.unique_options.cloud_area_ipv4',
-    'resource.import.unique_options.outer_ipv4',
-    'resource.import.unique_options.cloud_instance_vendor',
-    'resource.import.unique_options.ipv6_cloud_area',
-    'resource.import.unique_options.gse_agent_id'
+    'resource.import.uniqueOptions.cloudAreaIpv4',
+    'resource.import.uniqueOptions.outerIpv4',
+    'resource.import.uniqueOptions.cloudInstanceVendor',
+    'resource.import.uniqueOptions.ipv6CloudArea',
+    'resource.import.uniqueOptions.gseAgentId'
 ];
 
 /**
@@ -117,9 +118,9 @@ export const searchFieldOptions = [
     { value: "bk_biz_id", label: "resource.business.search.fields.id" },
     { value: "bk_biz_name", label: "resource.business.search.fields.name" },
     { value: "bk_biz_maintainer", label: "resource.business.search.fields.maintainer" },
-    { value: "bk_created_at", label: "resource.business.search.fields.created_at", isDate: true },
-    { value: "bk_created_by", label: "resource.business.search.fields.created_by" },
-    { value: "bk_updated_at", label: "resource.business.search.fields.updated_at", isDate: true }
+    { value: "bk_created_at", label: "resource.business.search.fields.createdAt", isDate: true },
+    { value: "bk_created_by", label: "resource.business.search.fields.createdBy" },
+    { value: "bk_updated_at", label: "resource.business.search.fields.updatedAt", isDate: true }
 ];
 
 /**

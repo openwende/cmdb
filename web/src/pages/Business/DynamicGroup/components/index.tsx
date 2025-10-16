@@ -442,7 +442,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                                 label={t('business.dynamicGroupForm.form.groupName.label')}
                                 name="groupName"
                                 rules={[
-                                    { required: true, message: t('common.form.rules_message') },
+                                    { required: true, message: t('common.form.rulesMessage') },
                                     { max: 256 }
                                 ]}
                             >
