@@ -48,7 +48,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
     }));
     const languageOptions = LANGUAGE_OPTIONS.map(option => ({
         ...option,
-        label: t(option.label)
+        label: option.label
     }));
 
     // Utility function to determine if a field should be disabled

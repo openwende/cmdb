@@ -892,10 +892,6 @@
             "testing": "Testing",
             "online": "Online",
             "offline": "Offline"
-          },
-          "language": {
-            "chinese": "Chinese",
-            "english": "English"
           }
         },
         "confirmLeave": {

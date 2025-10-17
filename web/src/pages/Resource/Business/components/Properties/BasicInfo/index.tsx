@@ -32,8 +32,8 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
   const languageOptions = useMemo(() =>
     LANGUAGE_OPTIONS.map(option => ({
       id: option.value,
-      name: t(option.label)
-    })), [t]
+      name: option.label
+    })), []
   );
 
   // Field configuration for basic info

@@ -47,9 +47,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       lifecycle: LIFECYCLE_OPTIONS.find(opt => opt.value === businessData.lifecycle)?.label
         ? t(LIFECYCLE_OPTIONS.find(opt => opt.value === businessData.lifecycle)!.label)
         : businessData.lifecycle,
-      language: LANGUAGE_OPTIONS.find(opt => opt.value === businessData.language)?.label
-        ? t(LANGUAGE_OPTIONS.find(opt => opt.value === businessData.language)!.label)
-        : businessData.language,
+      language: LANGUAGE_OPTIONS.find(opt => opt.value === businessData.language)?.label ||businessData.language,
       created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
       updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
       maintainers: businessData.maintainers.join(', ') || '',

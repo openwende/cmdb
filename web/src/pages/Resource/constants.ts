@@ -136,7 +136,7 @@ export const LIFECYCLE_OPTIONS = [
  * Business language options - will use i18n keys
  */
 export const LANGUAGE_OPTIONS = [
-    { label: 'resource.business.modify.options.language.chinese', value: 'zh' },
-    { label: 'resource.business.modify.options.language.english', value: 'en' },
+    { label: '中文', value: 'zh' },
+    { label: 'English', value: 'en' },
 ];
 
