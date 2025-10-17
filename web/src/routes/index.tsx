@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
 import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey } from './Types';
-import { AppstoreOutlined, ContainerOutlined, PieChartOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { AppstoreOutlined, ContainerOutlined, BarsOutlined, SwitcherOutlined, ProductOutlined, DatabaseOutlined } from '@ant-design/icons';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
@@ -60,7 +60,7 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
-        icon: <UnorderedListOutlined />,
+        icon: <ContainerOutlined />,
         children: [
           {
             key: BusinessNavKey.TopologyView,
@@ -82,14 +82,14 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.Template,
         path: 'template',
         element: withSuspense(ServiceTemplate),
-        icon: <PieChartOutlined />
+        icon: <SwitcherOutlined />
       },
       {
         name: 'routes.dynamicGroup',
         key: BusinessNavKey.DynamicGroup,
         path: 'dynamicGroup',
         element: withSuspense(DynamicGroup),
-        icon: <PieChartOutlined />
+        icon: <ProductOutlined />
       }
     ]
   },
@@ -105,7 +105,7 @@ export const routes: NavigationItem[] = [
         key: BusinessSetNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
-        icon: <UnorderedListOutlined />,
+        icon: <ContainerOutlined />,
       }
     ]
   },
@@ -120,14 +120,14 @@ export const routes: NavigationItem[] = [
         key: ResourceKey.Content,
         path: 'content',
         element: withSuspense(ResourceContent),
-        icon: <ContainerOutlined />
+        icon: <BarsOutlined />
       },
       {
         name: 'routes.project',
         key: ResourceKey.Project,
         path: 'project',
         element: withSuspense(ResourceProject),
-        icon: <AppstoreOutlined />
+        icon: <SwitcherOutlined />
       },
       {
         name: 'routes.resourceBusiness',
@@ -163,7 +163,7 @@ export const routes: NavigationItem[] = [
         key: ResourceKey.Host,
         path: 'host',
         element: withSuspense(ResourceHost),
-        icon: <AppstoreOutlined />,
+        icon: <DatabaseOutlined />,
         children: [
           {
             key: ResourceKey.HostView,

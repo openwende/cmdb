@@ -5,6 +5,8 @@ import { PlusOutlined, FolderOutlined, MoreOutlined, RightOutlined, LeftOutlined
 import DragHandle from "@/components/common/DragHandle";
 import { hostDirectoryMock } from "@/mock/resource";
 import { DirectoryData, DirMenuKey } from "../../Types";
+import PinSvg from '@/assets/icons/pin.svg?react';
+import UnpinSvg from '@/assets/icons/unpin.svg?react';
 import "./style.css";
 
 // The width of the directory tree sidebar
@@ -251,9 +253,9 @@ const Directory: React.FC<{
                                             onClick={() => { handlePin(dir.key) }}
                                         >
                                             {pinnedOrder.includes(dir.key) ? (
-                                                <PushpinOutlined style={{ fontSize: 14 }} />
+                                                <UnpinSvg fontSize={16} />
                                             ) : (
-                                                "不"
+                                                <PinSvg fontSize={16} />
                                             )}
                                         </span>
                                     </Tooltip>
