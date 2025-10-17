@@ -3,6 +3,10 @@
     border-right: 1px solid #dcdee5;
     width: 260px;
 
+    .sidebar-menu {
+        height: calc(100vh - 50px);
+    }
+
     .menu-toggler {
         border-top: 1px solid #dcdee5;
         bottom: 0;

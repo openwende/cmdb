@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { useState } from "react";
 import { Layout, Menu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './style.css';
@@ -152,7 +152,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
     const selectedKey = getSelectedKey();
 
     return (
-        <Fragment>
+        <>
             {sidebarItems.length > 0 ? (
                 <Sider className="app-sidebar" width={collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH}>
                     {/* Display business selector in business and business set sections */}
@@ -168,13 +168,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
                             icon: item.icon
                         }))}
                         inlineCollapsed={collapsed}
+                        className="sidebar-menu"
                     />
                     <div onClick={toggleCollapsed} className="menu-toggler">
                         {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
                     </div>
                 </Sider>
             ) : null}
-        </Fragment>
+        </>
     );
 };
 
