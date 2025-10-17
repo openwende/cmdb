@@ -12,6 +12,9 @@
         display: block;
 
         .selected-count {
+            color: #2dcb56;
+            font-weight: bold;
+            margin: 0 4px;
             font-weight: 700;
         }
     }

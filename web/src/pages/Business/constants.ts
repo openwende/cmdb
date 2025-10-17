@@ -6,21 +6,21 @@ import { CopyMenuItemKey, TransferMenuItemType } from "./Types";
  */
 export const hostCopyMenuItems = [
   { key: CopyMenuItemKey.Id, label: 'ID' },
-  { key: CopyMenuItemKey.IPv4, label: '内网IPv4' },
-  { key: CopyMenuItemKey.IPv6, label: '内网IPv6' },
+  { key: CopyMenuItemKey.IPv4, label: 'business.topology.copyMenu.ipv4' },
+  { key: CopyMenuItemKey.IPv6, label: 'business.topology.copyMenu.ipv6' },
   {
     key: 'cloud_id_ip_group',
-    label: '管控区域ID:IP',
+    label: 'business.topology.copyMenu.cloudIdGroup',
     children: [
-      { key: CopyMenuItemKey.CloudIdIPv4, label: '管控区域ID:IPv4' },
-      { key: CopyMenuItemKey.CloudIdIPv6, label: '管控区域ID:IPv6' },
-      { key: CopyMenuItemKey.CloudIdIPIPv4First, label: '管控区域ID:IP(IPv4优先)' },
-      { key: CopyMenuItemKey.CloudIdIPIPv6First, label: '管控区域ID:IP(IPv6优先)' },
+      { key: CopyMenuItemKey.CloudIdIPv4, label: 'business.topology.copyMenu.cloudIdIPv4' },
+      { key: CopyMenuItemKey.CloudIdIPv6, label: 'business.topology.copyMenu.cloudIdIPv6' },
+      { key: CopyMenuItemKey.CloudIdIPIPv4First, label: 'business.topology.copyMenu.cloudIdIPIPv4First' },
+      { key: CopyMenuItemKey.CloudIdIPIPv6First, label: 'business.topology.copyMenu.cloudIdIPIPv6First' },
     ]
   },
-  { key: CopyMenuItemKey.CloudRegion, label: '管控区域' },
-  { key: CopyMenuItemKey.ModuleName, label: '模块名' },
-  { key: CopyMenuItemKey.SetName, label: '集群名' },
+  { key: CopyMenuItemKey.CloudRegion, label: 'business.topology.copyMenu.cloudRegion' },
+  { key: CopyMenuItemKey.ModuleName, label: 'business.topology.copyMenu.moduleName' },
+  { key: CopyMenuItemKey.SetName, label: 'business.topology.copyMenu.setName' },
 ] as const;
 
 /**
@@ -35,10 +35,10 @@ export const hostCopyKeys: CopyMenuItemKey[] = hostCopyMenuItems.flatMap((item: 
  * Note: Labels are hardcoded for static structure. Use translation keys in components for i18n.
  */
 export const transferBaseMenuItems = [
-  { key: TransferMenuItemType.idlePool, label: '空闲机池' },
-  { key: TransferMenuItemType.businessModule, label: '业务模块' },
-  { key: TransferMenuItemType.hostPool, label: '主机池' },
-  { key: TransferMenuItemType.otherBusiness, label: '其他业务' },
+  { key: TransferMenuItemType.idlePool, label: 'business.topology.transferMenu.idlePool' },
+  { key: TransferMenuItemType.businessModule, label: 'business.topology.transferMenu.businessModule' },
+  { key: TransferMenuItemType.hostPool, label: 'business.topology.transferMenu.hostPool' },
+  { key: TransferMenuItemType.otherBusiness, label: 'business.topology.transferMenu.otherBusiness' },
 ] as const;
 
 /**

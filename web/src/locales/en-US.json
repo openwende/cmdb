@@ -11,7 +11,7 @@
     "previous": "Previous",
     "confirmLeave": "Confirm to leave current page?",
     "unsavedChanges": "Unsaved changes will be lost",
-    "pleaseEnter": "Please enter",
+    "pleaseEnter": "Please enter ",
     "pleaseSelect": "Please select",
     "noMatch": "No matching personnel",
     "noData": "No data",
@@ -232,7 +232,8 @@
       },
       "releaseHostModal": {
         "title": "Confirm return to host pool",
-        "confirmMessage": "Confirm to transfer {{count}} idle hosts to host pool?",
+        "confirmMessagePrefix": "Confirm to transfer",
+        "confirmMessageSuffix": "idle hosts to host pool?",
         "warning": "Ensure the service is stopped or the host is powered off",
         "selectDirectory": "Return to directory"
       },
@@ -813,7 +814,7 @@
       "host": {
         "label": "Host",
         "modelText": "(Model itself)",
-        "uniqueLabel": "Unique identifier:"
+        "uniqueLabel": "Unique identifier"
       },
       "result": {
         "success": "Import successful",

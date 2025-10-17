@@ -120,7 +120,12 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                 {fileList.length === 0 ? (
                     <Dragger className="import-uploader" {...uploadProps}>
                         <p className="ant-upload-drag-icon"><InboxOutlined /></p>
-                        <p className="ant-upload-text">{t('resource.import.upload.dragText')} <Link>{t('resource.import.upload.clickText')}</Link></p>
+                        <p className="ant-upload-text">
+                            {t('resource.import.upload.dragText')}
+                            <Link>
+                                {t('resource.import.upload.clickText')}
+                            </Link>
+                        </p>
                     </Dragger>
                 ) : (
                     <div className="file-card">
@@ -160,12 +165,17 @@ const ImportHost: React.FC<ImportHostProps> = ({ visible, selectedDirId, onClose
                         <div className="host-info-card">
                             <span className='host-info'>
                                 <span className="host-label"><HddOutlined /></span>
-                                <span className="host-text">{t('resource.import.host.label')}
-                                    <span className='host-model-text'>{t('resource.import.host.modelText')}</span>
+                                <span className="host-text">
+                                    {t('resource.import.host.label')}
+                                    <span className='host-model-text'>
+                                        {t('resource.import.host.modelText')}
+                                    </span>
                                 </span>
                             </span>
                             <span>
-                                <span>{t('resource.import.host.uniqueLabel')}</span>
+                                <span className="unique-label">
+                                    {t('resource.import.host.uniqueLabel')}
+                                </span>
                                 <Select
                                     size="small"
                                     options={hostUniqueOptions.map((v: any) => ({ label: t(v), value: v }))}

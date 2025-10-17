@@ -232,7 +232,8 @@
       },
       "releaseHostModal": {
         "title": "确认归还主机池",
-        "confirmMessage": "确认将 {{count}} 台空闲机池转移到主机池？",
+        "confirmMessagePrefix": "确认将",
+        "confirmMessageSuffix": "台空闲机池转移到主机池？",
         "warning": "请务必确认业务进程已停止或主机处于关机状态",
         "selectDirectory": "归还至目录"
       },
@@ -813,7 +814,7 @@
       "host": {
         "label": "主机",
         "modelText": "(模型本身)",
-        "uniqueLabel": "唯一校验标识："
+        "uniqueLabel": "唯一校验标识"
       },
       "result": {
         "success": "导入成功",

@@ -222,7 +222,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             let disabled = false;
             let tip: string | undefined;
 
-            if (base.key === TransferMenuItemType.hostPool || base.key === TransferMenuItemType.otherBusiness) {
+            if (
+                base.key === TransferMenuItemType.hostPool
+                || base.key === TransferMenuItemType.otherBusiness
+            ) {
                 disabled = hostsNotInIdlePool;
                 tip = base.key === TransferMenuItemType.hostPool
                     ? t('resource.host.tooltips.onlyIdleHostsToHostPool')
@@ -236,12 +239,15 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                         title={disabled ? tip : undefined}
                         styles={{ root: { maxWidth: 'none' } }}
                     >
-                        {base.label}
+                        {t(base.label)}
                     </Tooltip>,
                     disabled
                 });
             } else {
-                items.push(base);
+                items.push({
+                    ...base,
+                    label: t(base.label)
+                });
             }
         });
         return { items };
@@ -276,6 +282,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                             >
                                 <Tooltip
                                     title={isHostPoolHost ? t('resource.host.tooltips.onlyHostPoolHosts') : undefined}
+                                    styles={{ root: { maxWidth: 'none' } }}
                                 >
                                     <Button
                                         disabled={selectedRowKeys.length === 0 || isHostPoolHost}
@@ -298,6 +305,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                             >
                                 <Tooltip
                                     title={hostsNotAllInBizPool ? t('resource.host.tooltips.onlyBusinessHosts') : undefined}
+                                    styles={{ root: { maxWidth: 'none' } }}
                                 >
                                     <Button disabled={selectedRowKeys.length === 0 || hostsNotAllInBizPool}>
                                         {t('resource.host.actions.transferTo')} <DownOutlined />

@@ -46,7 +46,9 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({ visible, selectedCo
             className="release-host-modal"
         >
             <div className="release-modal-desc">
-                {t('business.topology.releaseHostModal.confirmMessage', { count: selectedCount })}<br />
+                {t('business.topology.releaseHostModal.confirmMessagePrefix')}
+                <span className="release-modal-count">{selectedCount}</span>
+                {t('business.topology.releaseHostModal.confirmMessageSuffix')}<br />
                 {t('business.topology.releaseHostModal.warning')}
             </div>
             <div className="release-modal-select-wrapper">

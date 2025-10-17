@@ -15,7 +15,12 @@ interface AssignModalProps {
     onClose: () => void;
 }
 
-const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, hostPoolStatuses = [], onClose }) => {
+const AssignModal: React.FC<AssignModalProps> = ({
+    assignType,
+    selectedRowKeys,
+    hostPoolStatuses = [],
+    onClose
+}) => {
     const { t } = useTranslation();
     const [selected, setSelected] = useState<number | null>(null);
 
@@ -42,9 +47,8 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
         onClose();
     }
 
-    // Exclude a directory if and only if all hosts are already located in that same directory
+    // Exclude a directory if it already contains all hosts.
     const shouldDirExclude = (dirId: number) => {
-        // If at least one host is not in the directory, then that directory can be a target
         return hostPoolStatuses.every(it => it.moduleId === dirId);
     };
 
@@ -67,9 +71,12 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
         >
             <Typography.Text className="selected-tip">
                 {t("host.assign.modal.selectedPrefix")}
-                <span className="selected-count">{selectedRowKeys.length}</span>
+                <span className="selected-count">
+                    {selectedRowKeys.length}
+                </span>
                 {t("host.assign.modal.selectedSuffix")}
             </Typography.Text>
+
             <div className="assign-target">
                 <Typography.Text className="target-label">
                     {
@@ -78,6 +85,7 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
                             : t("host.assign.modal.text.pool")
                     }
                 </Typography.Text>
+
                 <Select
                     showSearch={true}
                     value={selected}
@@ -88,7 +96,9 @@ const AssignModal: React.FC<AssignModalProps> = ({ assignType, selectedRowKeys, 
                             ? t("host.assign.modal.placeholder.biz")
                             : t("host.assign.modal.placeholder.pool")
                     }
-                    filterOption={(input, option) => (option?.children as any).toLowerCase().includes(input.toLowerCase())}
+                    filterOption={(input, option) =>
+                        (option?.children as any).toLowerCase().includes(input.toLowerCase())
+                    }
                 >
                     {assignType === AssignType.Biz ? (
                         bizListMock.map(biz => (

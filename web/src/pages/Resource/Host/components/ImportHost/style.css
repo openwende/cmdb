@@ -26,6 +26,10 @@
 
         .ant-upload-text {
             font-size: 14px !important;
+
+            &>*:last-child {
+                margin-left: 4px;
+            }
         }
     }
 
@@ -138,5 +142,11 @@
 
     .error-icon {
         color: #ff4d4f;
+    }
+
+    .unique-label::after {
+        content: ':';
+        margin-left: 2px;
+        margin-right: 4px;
     }
 }

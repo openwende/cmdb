@@ -194,20 +194,11 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     }
   ];
 
-  // The operation button menu
   const getDropdownMenu = (type: DropdownMenuType) => {
     const items = [];
 
     if (type === DropdownMenuType.Transfer) {
       transferBaseMenuItems.forEach(base => {
-        const translatedLabel = base.key === TransferMenuItemType.idlePool
-          ? t('business.topology.transferMenu.idlePool')
-          : base.key === TransferMenuItemType.businessModule
-            ? t('business.topology.transferMenu.businessModule')
-            : base.key === TransferMenuItemType.hostPool
-              ? t('business.topology.transferMenu.hostPool')
-              : t('business.topology.transferMenu.otherBusiness');
-
         if (
           base.key === TransferMenuItemType.hostPool
           || base.key === TransferMenuItemType.otherBusiness
@@ -221,16 +212,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               ...base,
               label: disabled
                 ? <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
-                  {translatedLabel}
+                  {t(base.label)}
                 </Tooltip>
-                : translatedLabel,
+                : t(base.label),
               disabled
             }
           );
         } else {
           items.push({
             ...base,
-            label: translatedLabel
+            label: t(base.label)
           } as any);
         }
       });
@@ -249,39 +240,20 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
         }
       );
     } else if (type === DropdownMenuType.Copy) {
-      // Map copy menu items to use translations
       const translatedCopyItems = hostCopyMenuItems.map(item => {
         if ('children' in item && item.children) {
           return {
             ...item,
-            label: t('business.topology.copyMenu.cloudIdGroup'),
+            label: t(item.label),
             children: item.children.map(child => ({
               ...child,
-              label: child.key === HostCopyKey.CloudIdIPv4
-                ? t('business.topology.copyMenu.cloudIdIPv4')
-                : child.key === HostCopyKey.CloudIdIPv6
-                  ? t('business.topology.copyMenu.cloudIdIPv6')
-                  : child.key === HostCopyKey.CloudIdIPIPv4First
-                    ? t('business.topology.copyMenu.cloudIdIPIPv4First')
-                    : t('business.topology.copyMenu.cloudIdIPIPv6First')
+              label: t(child.label)
             }))
           };
         } else {
-          const translatedLabel = item.key === HostCopyKey.Id
-            ? 'ID'
-            : item.key === HostCopyKey.IPv4
-              ? t('business.topology.copyMenu.ipv4')
-              : item.key === HostCopyKey.IPv6
-                ? t('business.topology.copyMenu.ipv6')
-                : item.key === HostCopyKey.CloudRegion
-                  ? t('business.topology.copyMenu.cloudRegion')
-                  : item.key === HostCopyKey.ModuleName
-                    ? t('business.topology.copyMenu.moduleName')
-                    : t('business.topology.copyMenu.setName');
-
           return {
             ...item,
-            label: translatedLabel
+            label: item.label === 'ID' ? 'ID' : t(item.label)
           };
         }
       });
