@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Menu as AntMenu, message } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { routes } from '../../../../routes';
 import { PrimaryNavKey } from '../../../../routes/Types';
 import { useBusinessStore } from '../../../../store/BusinessStore';
@@ -10,6 +11,7 @@ import '../style.css';
 const Menu: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const { businessList, loadBusinessData, loading } = useBusinessStore();
 
     useEffect(() => {
@@ -17,6 +19,15 @@ const Menu: React.FC = () => {
             loadBusinessData();
         }
     }, [businessList.length, loadBusinessData, loading]);
+
+    const menuItems = useMemo(() => {
+        return routes
+            .filter(item => !item.hideInMenu)
+            .map(item => ({
+                key: item.key,
+                label: item.name ? t(item.name) : ''
+            }));
+    }, [t]);
 
     // Determine which menu item is active based on the current path
     const getSelectedKey = () => {
@@ -71,7 +82,7 @@ const Menu: React.FC = () => {
                 navigate(childPath);
             } else {
                 // If no child routes, navigate directly
-                navigate(item.path);
+                navigate(item.path!);
             }
         }
     }
@@ -82,13 +93,8 @@ const Menu: React.FC = () => {
             selectedKeys={[getSelectedKey()]}
             className="header-menu"
             theme="dark"
+            items={menuItems}
             onClick={({ key }) => onMenuClick(key)}
-            items={routes
-                .filter(item => !item.hideInMenu)
-                .map(item => ({
-                    key: item.key,
-                    label: item.name
-                }))}
         />
     );
 };

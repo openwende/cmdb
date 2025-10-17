@@ -1,4 +1,23 @@
 {
+  "routes": {
+    "home": "首页",
+    "business": "业务",
+    "businessTopology": "业务拓扑",
+    "transferHost": "转移主机",
+    "serviceTemplate": "服务模板",
+    "dynamicGroup": "动态分组",
+    "businessSet": "业务集",
+    "businessSetTopology": "业务集拓扑",
+    "resource": "资源",
+    "resourceContent": "资源目录",
+    "project": "项目",
+    "resourceBusiness": "业务",
+    "businessDetail": "业务详情",
+    "archivedBusiness": "已归档业务",
+    "host": "主机",
+    "deleteHistory": "删除历史",
+    "notFound": "404"
+  },
   "common": {
     "rename": "重命名",
     "delete": "删除",

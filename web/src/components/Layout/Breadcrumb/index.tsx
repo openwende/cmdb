@@ -1,4 +1,5 @@
 import React, { Fragment, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Breadcrumb as AntBreadcrumb } from 'antd';
 import type { ItemType as AntdBreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
 import { useLocation, useNavigate, useMatches, Link, UIMatch } from 'react-router-dom';
@@ -9,6 +10,7 @@ const Breadcrumb: React.FC = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const matches = useMatches();
+    const { t } = useTranslation();
 
     const [breadcrumbItems, setBreadcrumbItems] = useState<AntdBreadcrumbItemType[]>([]);
 
@@ -51,7 +53,7 @@ const Breadcrumb: React.FC = () => {
                     if (parentRouteConfig?.name && !parentAlreadyAdded) {
                         items.push({
                             key: `breadcrumb-${parentRouteConfig.key}-${index}`,
-                            title: parentRouteConfig.name,
+                            title: t(parentRouteConfig.name),
                         });
                     }
                     return;
@@ -68,15 +70,15 @@ const Breadcrumb: React.FC = () => {
                     items.push({
                         key: `breadcrumb-${routeConfig.key}-${index}`,
                         title: (isLastItem || nextIsIndexRoute)
-                            ? title
-                            : <Link to={linkPath} className='item-link'>{title}</Link>,
+                            ? t(title)
+                            : <Link to={linkPath} className='item-link'>{t(title)}</Link>,
                     });
                 }
             }
         });
 
         setBreadcrumbItems(items);
-    }, [location, matches, navigate]);
+    }, [location, matches, navigate, t]);
 
     return (
         <Fragment>

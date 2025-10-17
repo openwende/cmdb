@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useTranslation } from 'react-i18next';
 import { Layout, Menu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './style.css';
@@ -23,14 +24,14 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { t } = useTranslation();
     const [collapsed, setCollapsed] = useState(false);
 
     const toggleCollapsed = () => {
         setCollapsed(!collapsed);
     };
-
-    const location = useLocation();
-    const navigate = useNavigate();
 
     // Get sidebar menu items
     // if current path is a business set, get menu items from business set configuration
@@ -151,6 +152,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
 
     const selectedKey = getSelectedKey();
 
+    const menuItems = useMemo(() => {
+        return sidebarItems.map((item: NavigationItem) => ({
+            key: item.key,
+            label: item.name ? t(item.name) : '',
+            icon: item.icon
+        }));
+    }, [t, sidebarItems]);
+
     return (
         <>
             {sidebarItems.length > 0 ? (
@@ -161,14 +170,10 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
                         key={location.pathname}
                         mode="inline"
                         selectedKeys={[selectedKey]}
-                        onClick={({ key }) => onMenuClick(key as string)}
-                        items={sidebarItems.map((item: NavigationItem) => ({
-                            key: item.key,
-                            label: item.name,
-                            icon: item.icon
-                        }))}
+                        items={menuItems}
                         inlineCollapsed={collapsed}
                         className="sidebar-menu"
+                        onClick={({ key }) => onMenuClick(key as string)}
                     />
                     <div onClick={toggleCollapsed} className="menu-toggler">
                         {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}

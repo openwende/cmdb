@@ -44,19 +44,19 @@ const withSuspense = (Component: React.LazyExoticComponent<any>) => (
 
 export const routes: NavigationItem[] = [
   {
-    name: '首页',
+    name: 'routes.home',
     key: PrimaryNavKey.Home,
     path: '/',
     element: withSuspense(HomePage)
   },
   {
-    name: '业务',
+    name: 'routes.business',
     key: PrimaryNavKey.Business,
     path: '/business/:businessId',
     element: withSuspense(BusinessPage),
     children: [
       {
-        name: '业务拓扑',
+        name: 'routes.businessTopology',
         key: BusinessNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
@@ -69,7 +69,7 @@ export const routes: NavigationItem[] = [
             hideInMenu: true
           },
           {
-            name: '转移主机',
+            name: 'routes.transferHost',
             key: BusinessNavKey.TransferHost,
             path: 'transferHost',
             element: withSuspense(TransferHost),
@@ -78,14 +78,14 @@ export const routes: NavigationItem[] = [
         ]
       },
       {
-        name: '服务模板',
+        name: 'routes.serviceTemplate',
         key: BusinessNavKey.Template,
         path: 'template',
         element: withSuspense(ServiceTemplate),
         icon: <PieChartOutlined />
       },
       {
-        name: '动态分组',
+        name: 'routes.dynamicGroup',
         key: BusinessNavKey.DynamicGroup,
         path: 'dynamicGroup',
         element: withSuspense(DynamicGroup),
@@ -94,14 +94,14 @@ export const routes: NavigationItem[] = [
     ]
   },
   {
-    name: '业务集',
+    name: 'routes.businessSet',
     key: PrimaryNavKey.BusinessSet,
     path: '/business-set/:businessSetId',
     element: withSuspense(BusinessPage),
     hideInMenu: true,
     children: [
       {
-        name: '业务集拓扑',
+        name: 'routes.businessSetTopology',
         key: BusinessSetNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
@@ -110,27 +110,27 @@ export const routes: NavigationItem[] = [
     ]
   },
   {
-    name: '资源',
+    name: 'routes.resource',
     key: PrimaryNavKey.Resource,
     path: '/resource',
     element: withSuspense(ResourcePage),
     children: [
       {
-        name: '资源目录',
+        name: 'routes.resourceContent',
         key: ResourceKey.Content,
         path: 'content',
         element: withSuspense(ResourceContent),
         icon: <ContainerOutlined />
       },
       {
-        name: '项目',
+        name: 'routes.project',
         key: ResourceKey.Project,
         path: 'project',
         element: withSuspense(ResourceProject),
         icon: <AppstoreOutlined />
       },
       {
-        name: '业务',
+        name: 'routes.resourceBusiness',
         key: ResourceKey.Business,
         path: 'business',
         element: withSuspense(ResourceBusiness),
@@ -143,14 +143,14 @@ export const routes: NavigationItem[] = [
             hideInMenu: true
           },
           {
-            name: '业务详情',
+            name: 'routes.businessDetail',
             key: ResourceKey.BusinessDetail,
             path: 'businessDetail/:id',
             element: withSuspense(BusinessDetail),
             hideInMenu: true
           },
           {
-            name: '已归档业务',
+            name: 'routes.archivedBusiness',
             key: ResourceKey.ArchivedBusiness,
             path: 'archivedBusiness',
             element: withSuspense(ArchivedBusiness),
@@ -159,7 +159,7 @@ export const routes: NavigationItem[] = [
         ]
       },
       {
-        name: '主机',
+        name: 'routes.host',
         key: ResourceKey.Host,
         path: 'host',
         element: withSuspense(ResourceHost),
@@ -172,7 +172,7 @@ export const routes: NavigationItem[] = [
             hideInMenu: true
           },
           {
-            name: '删除历史',
+            name: 'routes.deleteHistory',
             key: ResourceKey.DeleteHistory,
             path: 'deleteHistory',
             element: withSuspense(ResourceDelHistory),
@@ -183,7 +183,7 @@ export const routes: NavigationItem[] = [
     ]
   },
   {
-    name: '404',
+    name: 'routes.notFound',
     key: PrimaryNavKey.NotFound,
     path: '*',
     element: withSuspense(NotFoundPage),
