@@ -253,9 +253,9 @@ const Directory: React.FC<{
                                             onClick={() => { handlePin(dir.key) }}
                                         >
                                             {pinnedOrder.includes(dir.key) ? (
-                                                <UnpinSvg fontSize={16} />
+                                                <UnpinSvg className="pin-icon" />
                                             ) : (
-                                                <PinSvg fontSize={16} />
+                                                <PinSvg className="pin-icon" />
                                             )}
                                         </span>
                                     </Tooltip>

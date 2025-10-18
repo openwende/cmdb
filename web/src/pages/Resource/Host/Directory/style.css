@@ -78,6 +78,10 @@
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
+
+                    .pin-icon {
+                        font-size: 16px;
+                    }
                 }
 
                 .more-operation {
