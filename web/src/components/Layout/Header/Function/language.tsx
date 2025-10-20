@@ -1,8 +1,9 @@
 import React from 'react';
 import { Dropdown, Button } from 'antd';
-import { GlobalOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
+import ZhSvg from '@/assets/icons/zh.svg?react';
+import EnSvg from '@/assets/icons/en.svg?react';
 
 enum LanguageKey {
     ZH = 'zh-CN',
@@ -52,20 +53,18 @@ const Language: React.FC = () => {
             }}
             placement="bottom"
         >
-            <Button
-                type="text"
-                icon={<GlobalOutlined />}
-                style={{
-                    color: '#fff',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    height: '64px',
-                    gap: '4px'
-                }}
-            >
-                {getCurrentLanguageLabel()}
-            </Button>
+            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                <Button
+                    type="text"
+                    icon={<ZhSvg />}
+                    style={{ color: '#fff' }}
+                />
+                <Button
+                    type="text"
+                    icon={<EnSvg />}
+                    style={{ color: '#fff' }}
+                />
+            </div>
         </Dropdown>
     );
 };
