@@ -2,8 +2,8 @@ import React from 'react';
 import { Dropdown, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { MenuProps } from 'antd';
-import ZhSvg from '@/assets/icons/zh.svg?react';
-import EnSvg from '@/assets/icons/en.svg?react';
+import { GlobalOutlined } from '@ant-design/icons';
+import './style.css';
 
 enum LanguageKey {
     ZH = 'zh-CN',
@@ -16,21 +16,11 @@ const Language: React.FC = () => {
     const languageOptions: MenuProps['items'] = [
         {
             key: LanguageKey.ZH,
-            label: (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>🇨🇳</span>
-                    <span>中文</span>
-                </div>
-            ),
+            label: '中文',
         },
         {
             key: LanguageKey.EN,
-            label: (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <span>🇺🇸</span>
-                    <span>English</span>
-                </div>
-            ),
+            label: 'English',
         },
     ];
 
@@ -40,32 +30,27 @@ const Language: React.FC = () => {
         localStorage.setItem('language', key);
     };
 
-    const getCurrentLanguageLabel = () => {
-        return i18n.language === LanguageKey.ZH ? '🇨🇳' : '🇺🇸';
-    };
-
     return (
-        <Dropdown
-            menu={{
-                items: languageOptions,
-                onClick: handleLanguageChange,
-                selectedKeys: [i18n.language],
-            }}
-            placement="bottom"
-        >
-            <div style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+        <div className="language-container">
+            <Dropdown
+                menu={{
+                    items: languageOptions,
+                    onClick: handleLanguageChange,
+                    selectedKeys: [i18n.language],
+                }}
+                placement="bottom"
+            >
                 <Button
                     type="text"
-                    icon={<ZhSvg />}
-                    style={{ color: '#fff' }}
-                />
-                <Button
-                    type="text"
-                    icon={<EnSvg />}
-                    style={{ color: '#fff' }}
-                />
-            </div>
-        </Dropdown>
+                    icon={<GlobalOutlined />}
+                    className="language-button"
+                >
+                    <span className="language-label">
+                        {i18n.language === LanguageKey.ZH ? '中' : 'EN'}
+                    </span>
+                </Button>
+            </Dropdown>
+        </div>
     );
 };
 

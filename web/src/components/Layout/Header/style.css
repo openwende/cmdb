@@ -17,7 +17,7 @@
 .header-menu .ant-menu-item {
     padding: 0 20px;
     margin: 0 10px;
-} 
+}
 
 .header-logo {
     flex: 290px 0 0;
@@ -31,6 +31,5 @@
 
     div {
         margin: 0 20px 0 0;
-        cursor: pointer;
     }
 }
