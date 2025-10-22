@@ -1,0 +1,12 @@
+.time-filter {
+  &__item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__label {
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+  }
+}

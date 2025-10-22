@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Modal, Select, Typography } from "antd";
 import { AssignType } from "@/pages/Resource/Types";
 import { HostPoolStatus } from "@/pages/Resource/Types";
-import { bizListMock, hostDirectoryMock } from "@/mock/resource";
+import { hostDirectoryMock } from "@/mock/resource";
+import BusinessSelector from "@/components/common/BusinessSelector";
 import "./style.css";
 
 const { Option } = Select;
@@ -86,38 +87,32 @@ const AssignModal: React.FC<AssignModalProps> = ({
                     }
                 </Typography.Text>
 
-                <Select
-                    showSearch={true}
-                    value={selected}
-                    onChange={setSelected}
-                    style={{ width: "100%" }}
-                    placeholder={
-                        assignType === AssignType.Biz
-                            ? t("host.assign.modal.placeholder.biz")
-                            : t("host.assign.modal.placeholder.pool")
-                    }
-                    filterOption={(input, option) =>
-                        (option?.children as any).toLowerCase().includes(input.toLowerCase())
-                    }
-                >
-                    {assignType === AssignType.Biz ? (
-                        bizListMock.map(biz => (
-                            <Option key={biz.bk_biz_id} value={biz.bk_biz_id}>
-                                {`[${biz.bk_biz_id}] ${biz.bk_biz_name}`}
-                            </Option>
-                        ))
-                    ) : (
-                        (() => {
-                            return hostDirectoryMock
-                                .filter(dir => !shouldDirExclude(dir.bk_module_id))
-                                .map(dir => (
-                                    <Option key={dir.bk_module_id} value={dir.bk_module_id}>
-                                        {dir.bk_module_name}
-                                    </Option>
-                                ));
-                        })()
-                    )}
-                </Select>
+                {assignType === AssignType.Biz ? (
+                    <BusinessSelector
+                        value={selected}
+                        onChange={setSelected}
+                        allowClear={false}
+                    />
+                ) : (
+                    <Select
+                        showSearch={true}
+                        value={selected}
+                        onChange={setSelected}
+                        style={{ width: "100%" }}
+                        placeholder={t("host.assign.modal.placeholder.pool")}
+                        filterOption={(input, option) =>
+                            (option?.children as any).toLowerCase().includes(input.toLowerCase())
+                        }
+                    >
+                        {hostDirectoryMock
+                            .filter(dir => !shouldDirExclude(dir.bk_module_id))
+                            .map(dir => (
+                                <Option key={dir.bk_module_id} value={dir.bk_module_id}>
+                                    {dir.bk_module_name}
+                                </Option>
+                            ))}
+                    </Select>
+                )}
             </div>
         </Modal>
     );

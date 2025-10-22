@@ -16,6 +16,9 @@
     "archivedBusiness": "已归档业务",
     "host": "主机",
     "deleteHistory": "删除历史",
+    "analysis": "运营分析",
+    "auditLogs": "操作审计",
+    "operations": "运营统计",
     "notFound": "404"
   },
   "common": {

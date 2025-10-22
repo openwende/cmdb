@@ -2,12 +2,12 @@
   "routes": {
     "home": "Home",
     "business": "Business",
-    "businessTopology": "Business Topology",
+    "businessTopology": "Topology",
     "transferHost": "Transfer Host",
     "serviceTemplate": "Service Template",
     "dynamicGroup": "Dynamic Group",
     "businessSet": "Business Set",
-    "businessSetTopology": "Business Set Topology",
+    "businessSetTopology": "Topology",
     "resource": "Resource",
     "resourceContent": "Resource Content",
     "project": "Project",
@@ -16,6 +16,9 @@
     "archivedBusiness": "Archived Business",
     "host": "Host",
     "deleteHistory": "Delete History",
+    "analysis": "Analysis",
+    "auditLogs": "Audit",
+    "operations": "Operations",
     "notFound": "404"
   },
   "common": {

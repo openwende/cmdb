@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
-import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey } from './Types';
-import { AppstoreOutlined, ContainerOutlined, BarsOutlined, SwitcherOutlined, ProductOutlined, DatabaseOutlined } from '@ant-design/icons';
+import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey, AnalysisKey } from './Types';
+import { AppstoreOutlined, ContainerOutlined, DiffOutlined, BarChartOutlined, ProductOutlined, DatabaseOutlined } from '@ant-design/icons';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
@@ -9,11 +9,11 @@ const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
 const TopologyView = lazy(() => import('../pages/Business/BusinessTopology/TopologyView'));
 const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/TransferHost'));
-const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
+// const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
 const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
 const ResourcePage = lazy(() => import('../pages/Resource'));
-const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
-const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
+// const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
+// const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
 const BusinessList = lazy(() => import('../pages/Resource/Business/BusinessList'));
 const BusinessDetail = lazy(() => import('../pages/Resource/Business/BusinessDetail'));
@@ -21,6 +21,9 @@ const ArchivedBusiness = lazy(() => import('../pages/Resource/Business/ArchivedB
 const ResourceHost = lazy(() => import('../pages/Resource/Host'));
 const ResourceHostView = lazy(() => import('../pages/Resource/Host/HostView'));
 const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHistory'));
+const AnalysisPage = lazy(() => import('../pages/Analysis'));
+const AuditLogs = lazy(() => import('../pages/Analysis/Audit'));
+const Operations = lazy(() => import('../pages/Analysis/Operations'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Wrap lazy-loaded components with Suspense
@@ -77,13 +80,13 @@ export const routes: NavigationItem[] = [
           }
         ]
       },
-      {
-        name: 'routes.serviceTemplate',
-        key: BusinessNavKey.Template,
-        path: 'template',
-        element: withSuspense(ServiceTemplate),
-        icon: <SwitcherOutlined />
-      },
+      // {
+      //   name: 'routes.serviceTemplate',
+      //   key: BusinessNavKey.Template,
+      //   path: 'template',
+      //   element: withSuspense(ServiceTemplate),
+      //   icon: <SwitcherOutlined />
+      // },
       {
         name: 'routes.dynamicGroup',
         key: BusinessNavKey.DynamicGroup,
@@ -115,20 +118,20 @@ export const routes: NavigationItem[] = [
     path: '/resource',
     element: withSuspense(ResourcePage),
     children: [
-      {
-        name: 'routes.resourceContent',
-        key: ResourceKey.Content,
-        path: 'content',
-        element: withSuspense(ResourceContent),
-        icon: <BarsOutlined />
-      },
-      {
-        name: 'routes.project',
-        key: ResourceKey.Project,
-        path: 'project',
-        element: withSuspense(ResourceProject),
-        icon: <SwitcherOutlined />
-      },
+      // {
+      //   name: 'routes.resourceContent',
+      //   key: ResourceKey.Content,
+      //   path: 'content',
+      //   element: withSuspense(ResourceContent),
+      //   icon: <BarsOutlined />
+      // },
+      // {
+      //   name: 'routes.project',
+      //   key: ResourceKey.Project,
+      //   path: 'project',
+      //   element: withSuspense(ResourceProject),
+      //   icon: <SwitcherOutlined />
+      // },
       {
         name: 'routes.resourceBusiness',
         key: ResourceKey.Business,
@@ -179,6 +182,28 @@ export const routes: NavigationItem[] = [
             hideInMenu: true
           },
         ]
+      }
+    ]
+  },
+  {
+    name: 'routes.analysis',
+    key: PrimaryNavKey.Analysis,
+    path: '/analysis',
+    element: withSuspense(AnalysisPage),
+    children: [
+      {
+        name: 'routes.auditLogs',
+        key: AnalysisKey.Audit,
+        path: 'audit',
+        element: withSuspense(AuditLogs),
+        icon: <DiffOutlined />
+      },
+      {
+        name: 'routes.operations',
+        key: AnalysisKey.Operations,
+        path: 'operations',
+        element: withSuspense(Operations),
+        icon: <BarChartOutlined />
       }
     ]
   },

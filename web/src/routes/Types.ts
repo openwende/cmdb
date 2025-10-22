@@ -22,6 +22,7 @@ export enum PrimaryNavKey {
     Business = 'business',
     BusinessSet = 'businessSet',
     Resource = 'resource',
+    Analysis = 'analysis',
     NotFound = 'notfound'
 }
 
@@ -47,4 +48,9 @@ export enum ResourceKey {
     Host = 'host',
     HostView = 'hostView',
     DeleteHistory = 'deleteHistory'
+}
+
+export enum AnalysisKey {
+    Audit = 'audit',
+    Operations = 'operations'
 }

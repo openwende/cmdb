@@ -1,0 +1,8 @@
+.audit-list {
+    padding: 16px;
+    background: #fff;
+
+    &>:first-child {
+        margin-bottom: 16px;
+    }
+}

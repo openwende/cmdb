@@ -1,0 +1,13 @@
+.audit-filters {
+  padding: 16px 20px;
+  background: #fff;
+  margin-bottom: 16px;
+
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
+
+  .ant-row {
+    width: 100%;
+  }
+}
