@@ -26,23 +26,28 @@ export const COMMON_ACTIONS = [
   { label: '修改', value: 'update' },
   { label: '删除', value: 'delete' },
 ];
-
 export const BUSINESS_ACTIONS = [
-  { label: '新增', value: 'create' },
-  { label: '修改', value: 'update' },
+  COMMON_ACTIONS[0],
+  COMMON_ACTIONS[1],
   { label: '归档', value: 'archive' },
   { label: '恢复', value: 'restore' },
 ];
-
-// Host actions (for host tab)
 export const HOST_ACTIONS = [
-  { label: '新增', value: 'create' },
-  { label: '修改', value: 'update' },
-  { label: '删除', value: 'delete' },
+  ...COMMON_ACTIONS,
   { label: '分配到业务', value: 'assign_to_business' },
   { label: '归还到资源池', value: 'return_to_pool' },
   { label: '转移模块', value: 'transfer_module' },
 ];
+
+// Create action value to label mapping from all actions
+export const ACTION_LABELS = [
+  ...COMMON_ACTIONS,
+  ...BUSINESS_ACTIONS,
+  ...HOST_ACTIONS,
+].reduce((acc, action) => {
+  acc[action.value] = action.label;
+  return acc;
+}, {} as Record<string, string>);
 
 // Account filter options
 export const ACCOUNT_FILTER_OPTIONS = [
@@ -56,4 +61,3 @@ export const INSTANCE_FILTER_OPTIONS = [
   { label: 'ID', value: 'id' },
 ];
 
-export type AuditTabKey = typeof AUDIT_TAB_KEYS[keyof typeof AUDIT_TAB_KEYS];

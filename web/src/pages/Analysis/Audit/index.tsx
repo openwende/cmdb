@@ -3,7 +3,8 @@ import { Tabs } from 'antd';
 import Business from './Business';
 import Host from './Host';
 import Resource from './Resource';
-import { AUDIT_TAB_KEYS, type AuditTabKey } from '@/pages/Analysis/constants';
+import { AUDIT_TAB_KEYS } from '@/pages/Analysis/constants';
+import { AuditTabKey } from '@/pages/Analysis/Types';
 import './style.css';
 
 const Audit: React.FC = () => {

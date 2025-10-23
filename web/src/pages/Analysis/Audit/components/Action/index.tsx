@@ -6,7 +6,7 @@ import {
     BUSINESS_ACTIONS,
     HOST_ACTIONS,
 } from '@/pages/Analysis/constants';
-import type { AuditTabKey } from '@/pages/Analysis/constants';
+import { AuditTabKey } from '@/pages/Analysis/Types';
 
 const { Option } = Select;
 

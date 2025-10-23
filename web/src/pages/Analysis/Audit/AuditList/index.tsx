@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import Pagination from '@/components/common/Pagination';
+import OperationDetail from '../components/OperationDetail';
 import './style.css';
 
 export interface AuditLogRecord {
-    id: string;
+    id: number;
     operationObject: string;
     action: string;
     targetBusiness: string;
@@ -37,6 +38,20 @@ const AuditTable: React.FC<AuditTableProps> = ({
         onSizeChange
     },
 }) => {
+    const [drawerVisible, setDrawerVisible] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState<number | null>(null);
+
+    // Handle row click to show drawer
+    const handleRowClick = (id: number) => {
+        setSelectedRecord(id);
+        setDrawerVisible(true);
+    };
+
+    // Close drawer
+    const handleDrawerClose = () => {
+        setDrawerVisible(false);
+        setSelectedRecord(null);
+    };
     const columns: ColumnsType<AuditLogRecord> = [
         {
             title: '操作对象',
@@ -84,6 +99,10 @@ const AuditTable: React.FC<AuditTableProps> = ({
                 loading={loading}
                 pagination={false}
                 rowKey="id"
+                onRow={(record) => ({
+                    onClick: () => handleRowClick(record.id),
+                    style: { cursor: 'pointer' },
+                })}
             />
             <Pagination
                 total={total}
@@ -91,6 +110,13 @@ const AuditTable: React.FC<AuditTableProps> = ({
                 current={page}
                 onChange={onChange}
                 onSizeChange={onSizeChange}
+            />
+            
+            {/* Operation Details Drawer */}
+            <OperationDetail
+                visible={drawerVisible}
+                recordId={selectedRecord}
+                onClose={handleDrawerClose}
             />
         </div>
     );

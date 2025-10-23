@@ -2,8 +2,12 @@
 
 // 左侧导航栏选项
 export const bizInfo = {
-  "count": 3,
+  "count": 4,
   "info": [
+    {
+      "bk_biz_id": 1,
+      "bk_biz_name": "测试业务"
+    },
     {
       "bk_biz_id": 2,
       "bk_biz_name": "蓝鲸"

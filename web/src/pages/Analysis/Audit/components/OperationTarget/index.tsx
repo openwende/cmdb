@@ -5,7 +5,7 @@ import {
     BUSINESS_OPERATION_TARGETS,
     RESOURCE_OPERATION_TARGETS,
 } from '@/pages/Analysis/constants';
-import type { AuditTabKey } from '@/pages/Analysis/constants';
+import { AuditTabKey } from '@/pages/Analysis/Types';
 
 const { Option } = Select;
 
