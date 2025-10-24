@@ -5,12 +5,11 @@ import './style.css';
 
 interface AuditFiltersProps {
     onSearch: (values: any) => void;
-    onReset: (values: any) => void;
     loading: boolean;
     children: React.ReactNode[];
 }
 
-const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, onReset, loading, children }) => {
+const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, loading, children }) => {
     const [form] = Form.useForm();
 
     const handleSearch = () => {
@@ -28,41 +27,70 @@ const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, onReset, loading,
 
     const handleReset = () => {
         form.resetFields();
-        const values = form.getFieldsValue();
-        onReset(values);
+        handleSearch();
     };
+
+    const renderActionButtons = () => (
+        <Form.Item style={{ marginBottom: 0 }}>
+            <Space>
+                <Button type="primary" onClick={handleSearch} loading={loading}>
+                    查询
+                </Button>
+                <Button onClick={handleReset}>
+                    清空
+                </Button>
+            </Space>
+        </Form.Item>
+    );
+
+    const isMultipleOfThree = children.length % 3 === 0;
 
     return (
         <div className="audit-filters">
-            <Form 
-                form={form} 
+            <Form
+                form={form}
                 layout="inline"
                 labelCol={{ flex: '70px' }}
                 labelAlign="right"
                 colon={false}
             >
                 <Row gutter={280}>
-                    {/* Wrappered child components */}
-                    {children.map((child, index) => (
-                        <Col span={8} key={index}>
-                            {child}
+                    {/* Form items */}
+                    {children.map((child, index) => {
+                        const isLastChild = index === children.length - 1;
+                        const shouldCombineWithButtons = isMultipleOfThree && isLastChild;
+
+                        return (
+                            <Col span={8} key={index}>
+                                {shouldCombineWithButtons ? (
+                                    <div className="filter-with-actions">
+                                        {child}
+                                        <div style={{
+                                            position: 'absolute',
+                                            left: '100%',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            marginLeft: '32px',
+                                            whiteSpace: 'nowrap'
+                                        }}>
+                                            {renderActionButtons()}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    child
+                                )}
+                            </Col>
+                        );
+                    })}
+
+                    {/* Action buttons - only when not combined with last child */}
+                    {!isMultipleOfThree && (
+                        <Col span={8}>
+                            <div className="action-buttons">
+                                {renderActionButtons()}
+                            </div>
                         </Col>
-                    ))}
-
-
-                    {/* Action bottons */}
-                    <Col span={8}>
-                        <Form.Item>
-                            <Space>
-                                <Button type="primary" onClick={handleSearch} loading={loading}>
-                                    查询
-                                </Button>
-                                <Button onClick={handleReset}>
-                                    清空
-                                </Button>
-                            </Space>
-                        </Form.Item>
-                    </Col>
+                    )}
                 </Row>
             </Form>
         </div>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Select, Input, Checkbox, Space } from 'antd';
 import { INSTANCE_FILTER_OPTIONS } from '@/pages/Analysis/constants';
+import './style.css';
 
 const { Option } = Select;
 
@@ -16,7 +17,11 @@ interface InstanceInputProps {
 }
 
 const InstanceInput: React.FC<InstanceInputProps> = ({
-    value = { type: 'name', value: '', fuzzy: false },
+    value = {
+        type: 'name',
+        value: '',
+        fuzzy: false
+    },
     onChange
 }) => {
     const handleTypeChange = (type: string) => {
@@ -32,12 +37,12 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
     };
 
     return (
-        <Space style={{ width: '100%' }}>
-            <Space.Compact style={{ flex: 1, width: '100%' }}>
+        <Space className="instance-space">
+            <Space.Compact className="instance-compact">
                 <Select
                     value={value.type}
                     onChange={handleTypeChange}
-                    style={{ width: 90 }}
+                    className="instance-select"
                 >
                     {INSTANCE_FILTER_OPTIONS.map(option => (
                         <Option key={option.value} value={option.value}>
@@ -48,13 +53,14 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
                 <Input
                     value={value.value}
                     onChange={handleValueChange}
+                    className="instance-input"
                     placeholder={value.type === 'id' ? '请输入ID' : '请输入名称'}
-                    style={{ width: 'calc(100% - 90px)' }}
                 />
             </Space.Compact>
             <Checkbox
                 checked={value.fuzzy}
                 onChange={handleFuzzyChange}
+                className="instance-checkbox"
             >
                 模糊
             </Checkbox>

@@ -8,15 +8,16 @@ import {
     AccountFilter,
     InstanceFilter,
 } from '../components';
-import type { AuditLogRecord } from '../AuditList';
+import type { OperationDetail } from '@/pages/Analysis/Types';
 import { AUDIT_TAB_KEYS } from '@/pages/Analysis/constants';
-import { mockAuditData } from '@/mock/Analysis';
+import { mockOperationDetails } from '@/mock/Analysis';
+import { processDetailList } from '@/pages/Analysis/utils';
 
 const ResourceAudit: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
-    const [auditList, setAuditList] = useState<AuditLogRecord[]>([]);
+    const [auditList, setAuditList] = useState<OperationDetail[]>([]);
 
     useEffect(() => {
         // TODO: Unknown parameters
@@ -24,8 +25,9 @@ const ResourceAudit: React.FC = () => {
     }, [page, pageSize]);
 
     const fetchAuditList = () => {
-        const data = mockAuditData.resource || [];
-        setAuditList(data);
+        // Process mockOperationDetails data using unified processing function
+        const processedData = processDetailList(mockOperationDetails);
+        setAuditList(processedData);
     };
 
     const handleSearch = (filters: any) => {
@@ -37,16 +39,10 @@ const ResourceAudit: React.FC = () => {
         }, 1000);
     };
 
-    const handleReset = (filters: any) => {
-        // TODO: Unknown parameters
-        fetchAuditList();
-    };
-
     return (
         <div>
             <AuditFilters
                 onSearch={handleSearch}
-                onReset={handleReset}
                 loading={loading}
             >
                 <OperationTarget tab={AUDIT_TAB_KEYS.RESOURCE} />

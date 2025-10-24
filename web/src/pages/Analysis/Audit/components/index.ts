@@ -6,6 +6,3 @@ export { default as TimeFilter } from './Time';
 export { default as AccountFilter } from './Account';
 export { default as InstanceFilter } from './Instance';
 export { default as HostFilter } from './Host';
-
-// Export types
-export type { AuditLogRecord } from '../AuditList';

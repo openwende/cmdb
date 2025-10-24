@@ -1,26 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Drawer, Descriptions, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { mockOperationDetails } from '@/mock/Analysis';
-import { dynamicGroupCondition, bizInfo } from '@/mock/business';
-import { ACTION_LABELS } from '@/pages/Analysis/constants';
+import { dynamicGroupCondition } from '@/mock/business';
+import type { OperationDetail } from '@/pages/Analysis/Types';
 import './style.css';
-
-export interface OperationDetail {
-    business: string;
-    object: string;
-    action: string;
-    modelType: string;
-    instance: string;
-    description: string;
-    time: string;
-    account: string;
-    details: {
-        preData: Record<string, any> | null;
-        curData: Record<string, any> | null;
-        updateFields: string[] | null;
-    };
-}
 
 export interface PropertyItem {
     id: number;
@@ -32,13 +15,13 @@ export interface PropertyItem {
 
 export interface OperationDetailProps {
     visible: boolean;
-    recordId: number | null;
+    record: OperationDetail | null;
     onClose: () => void;
 }
 
 const OperationDetail: React.FC<OperationDetailProps> = ({
     visible,
-    recordId,
+    record,
     onClose,
 }) => {
     const [detailList, setDetailList] = useState<OperationDetail | null>(null);
@@ -46,48 +29,14 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
     const [isExpanded, setIsExpanded] = useState(false);
 
     useEffect(() => {
-        if (recordId) {
-            // TODO: api call to fetch operation details
-            const mockData = mockOperationDetails.find(item => item.id === recordId);
-            if (mockData) {
-                const detailList = processDetailList(mockData);
-                setDetailList(detailList);
+        if (record) {
+            // Use the record data directly
+            setDetailList(record);
 
-                const propertyList = processPropertyList(detailList);
-                setPropertyList(propertyList);
-            }
+            const propertyList = processPropertyList(record);
+            setPropertyList(propertyList);
         }
-    }, [recordId]);
-
-    const processDetailList = (detailList: any): OperationDetail => {
-        const {
-            bk_biz_id,
-            resource_type,
-            operation_detail,
-            user,
-            operation_time,
-            resource_name,
-            action,
-        } = detailList;
-
-        const actionName = ACTION_LABELS[action] || action;
-
-        return {
-            business: bizInfo.info.find(biz => biz.bk_biz_id === bk_biz_id)?.bk_biz_name || '--',
-            object: resource_type,
-            action: actionName,
-            modelType: operation_detail.bk_obj_id,
-            instance: resource_name,
-            description: `${actionName}${resource_name}`,
-            time: operation_time,
-            account: user,
-            details: {
-                preData: operation_detail.details.pre_data,
-                curData: operation_detail.details.cur_data,
-                updateFields: operation_detail.details.update_fields,
-            },
-        };
-    };
+    }, [record]);
 
     const processPropertyList = (detailList: OperationDetail): PropertyItem[] => {
         const { preData, curData } = detailList.details;
@@ -170,6 +119,16 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
         return columns;
     };
 
+    // Calculate scroll Y dynamically based on content height
+    const calculateScrollY = useMemo(() => {
+        const maxHeight = window.innerHeight - 312;
+        // Estimate table content height: header(32px) + rows(32px each) + padding
+        const estimatedContentHeight = 32 + (filteredPropertyList.length * 32) + 16;
+        
+        // Only show scroll if content exceeds the max height
+        return estimatedContentHeight > maxHeight ? maxHeight : undefined;
+    }, [filteredPropertyList.length]);
+
     const descriptionItems = [
         {
             key: 'business',
@@ -217,7 +176,7 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
         <Drawer
             title="操作详情"
             placement="right"
-            width={800}
+            width={760}
             open={visible}
             onClose={onClose}
             className="operation-details-drawer"
@@ -239,7 +198,7 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
                     rowKey="id"
                     size="small"
                     bordered
-                    scroll={{ y: window.innerHeight - 312 }}
+                    scroll={{ y: calculateScrollY }}
                 />
                 <div className="details-toggle">
                     <a

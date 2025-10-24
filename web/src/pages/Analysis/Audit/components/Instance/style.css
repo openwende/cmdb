@@ -1,0 +1,24 @@
+.instance-space {
+    width: 100%;
+
+    .instance-compact {
+        width: 100%;
+        flex: 1;
+
+        .instance-select {
+            width: 130px;
+        }
+
+        .instance-input {
+            width: 100%;
+        }
+    }
+
+    .instance-checkbox {
+        width: 52px;
+
+        .ant-checkbox-label {
+            padding-right: 0;
+        }
+    }
+}

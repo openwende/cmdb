@@ -1,5 +1,5 @@
 .audit-filters {
-  padding: 16px 20px;
+  padding: 24px 24px 8px;
   background: #fff;
   margin-bottom: 16px;
 
@@ -9,5 +9,13 @@
 
   .ant-row {
     width: 100%;
+  }
+
+  .filter-with-actions {
+    position: relative;
+  }
+
+  .action-buttons {
+    margin-left: 70px;
   }
 }

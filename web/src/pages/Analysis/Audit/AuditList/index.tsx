@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
 import { Table } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
+import DetailDrawer from '../components/OperationDetail';
 import Pagination from '@/components/common/Pagination';
-import OperationDetail from '../components/OperationDetail';
+import type { OperationDetail } from '@/pages/Analysis/Types';
 import './style.css';
 
-export interface AuditLogRecord {
-    id: number;
-    operationObject: string;
-    action: string;
-    targetBusiness: string;
-    target: string;
-    operationTime: string;
-    operator: string;
-}
-
 export interface AuditTableProps {
-    data: AuditLogRecord[];
+    data: OperationDetail[];
     loading: boolean;
     pagination: {
         total: number;
@@ -39,11 +29,11 @@ const AuditTable: React.FC<AuditTableProps> = ({
     },
 }) => {
     const [drawerVisible, setDrawerVisible] = useState(false);
-    const [selectedRecord, setSelectedRecord] = useState<number | null>(null);
+    const [selectedRecord, setSelectedRecord] = useState<OperationDetail | null>(null);
 
     // Handle row click to show drawer
-    const handleRowClick = (id: number) => {
-        setSelectedRecord(id);
+    const handleRowClick = (record: OperationDetail) => {
+        setSelectedRecord(record);
         setDrawerVisible(true);
     };
 
@@ -52,41 +42,48 @@ const AuditTable: React.FC<AuditTableProps> = ({
         setDrawerVisible(false);
         setSelectedRecord(null);
     };
-    const columns: ColumnsType<AuditLogRecord> = [
+
+    const columns = [
         {
             title: '操作对象',
-            dataIndex: 'operationObject',
-            key: 'operationObject',
+            dataIndex: 'object',
+            key: 'object',
             width: 120,
         },
         {
-            title: '操作',
+            title: '动作',
             dataIndex: 'action',
             key: 'action',
             width: 100,
         },
         {
-            title: '目标业务',
-            dataIndex: 'targetBusiness',
-            key: 'targetBusiness',
+            title: '所属业务',
+            dataIndex: 'business',
+            key: 'business',
             width: 150,
         },
         {
-            title: '目标',
-            dataIndex: 'target',
-            key: 'target',
+            title: '实例',
+            dataIndex: 'instance',
+            key: 'instance',
             width: 200,
         },
         {
-            title: '操作时间',
-            dataIndex: 'operationTime',
-            key: 'operationTime',
+            title: '操作描述',
+            dataIndex: 'description',
+            key: 'description',
+            width: 200,
+        },
+        {
+            title: '时间',
+            dataIndex: 'time',
+            key: 'time',
             width: 180,
         },
         {
-            title: '操作者',
-            dataIndex: 'operator',
-            key: 'operator',
+            title: '操作账号',
+            dataIndex: 'account',
+            key: 'account',
             width: 120,
         },
     ];
@@ -100,7 +97,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
                 pagination={false}
                 rowKey="id"
                 onRow={(record) => ({
-                    onClick: () => handleRowClick(record.id),
+                    onClick: () => handleRowClick(record),
                     style: { cursor: 'pointer' },
                 })}
             />
@@ -113,9 +110,9 @@ const AuditTable: React.FC<AuditTableProps> = ({
             />
             
             {/* Operation Details Drawer */}
-            <OperationDetail
+            <DetailDrawer
                 visible={drawerVisible}
-                recordId={selectedRecord}
+                record={selectedRecord}
                 onClose={handleDrawerClose}
             />
         </div>
