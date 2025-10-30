@@ -23,7 +23,7 @@ const ResourceHostView = lazy(() => import('../pages/Resource/Host/HostView'));
 const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHistory'));
 const AnalysisPage = lazy(() => import('../pages/Analysis'));
 const AuditLogs = lazy(() => import('../pages/Analysis/Audit'));
-const Operations = lazy(() => import('../pages/Analysis/Operations'));
+const Statistics = lazy(() => import('../pages/Analysis/Statistics'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Wrap lazy-loaded components with Suspense
@@ -200,9 +200,9 @@ export const routes: NavigationItem[] = [
       },
       {
         name: 'routes.operations',
-        key: AnalysisKey.Operations,
-        path: 'operations',
-        element: withSuspense(Operations),
+        key: AnalysisKey.Statistics,
+        path: 'statistics',
+        element: withSuspense(Statistics),
         icon: <BarChartOutlined />
       }
     ]

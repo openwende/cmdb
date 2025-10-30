@@ -1,0 +1,14 @@
+.statistics-overview {
+    .statistics-overview .ant-row {
+        width: 100%;
+    }
+
+    .statistics-overview .ant-col {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .statistics-overview .statistics-card {
+        height: 100%;
+    }
+}

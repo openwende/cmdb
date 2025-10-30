@@ -52,5 +52,5 @@ export enum ResourceKey {
 
 export enum AnalysisKey {
     Audit = 'audit',
-    Operations = 'operations'
+    Statistics = 'statistics'
 }

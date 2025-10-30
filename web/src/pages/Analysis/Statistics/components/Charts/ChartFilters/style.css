@@ -1,0 +1,15 @@
+.chart-date-picker {
+  border-radius: 6px;
+}
+
+.chart-date-picker .ant-picker-input input {
+  font-size: 14px;
+}
+
+.chart-select {
+  border-radius: 6px;
+}
+
+.chart-select .ant-select-selector {
+  border-radius: 6px;
+}

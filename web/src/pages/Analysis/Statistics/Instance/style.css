@@ -1,0 +1,19 @@
+.instance-statistics {
+  padding: 0;
+}
+
+.instance-statistics .ant-row {
+  margin: 0;
+}
+
+.instance-statistics .ant-col {
+  padding: 0 12px 24px 12px;
+}
+
+.instance-statistics .ant-col:first-child {
+  padding-left: 0;
+}
+
+.instance-statistics .ant-col:last-child {
+  padding-right: 0;
+}

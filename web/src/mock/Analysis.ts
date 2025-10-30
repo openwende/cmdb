@@ -1,5 +1,5 @@
 // Mock data for Analysis module
-
+// Audit data for different audit types: host, business, resource
 export const mockAuditData = {
   host: [
     {
@@ -147,3 +147,319 @@ export const mockOperationDetails = [
     "extend_resource_name": ""
   }
 ]
+
+
+// Statistics data for different statistics types: host, business, resource
+export const mockStatisticsData = [
+  {
+    "id": "biz",
+    "count": 7
+  },
+  {
+    "id": "host",
+    "count": 210
+  },
+  {
+    "id": "model",
+    "count": 5
+  },
+  {
+    "id": "inst",
+    "count": 7
+  }
+]
+
+export const mockChartData = {
+  "host": [
+    {
+      "config_id": 3,
+      "report_type": "host_os_chart",
+      "name": "按操作系统类型统计",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "host",
+      "width": "50",
+      "chart_type": "pie",
+      "field": "bk_os_type",
+      "x_axis_count": 10
+    },
+    {
+      "config_id": 4,
+      "report_type": "host_biz_chart",
+      "name": "按业务统计",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "host",
+      "width": "50",
+      "chart_type": "bar",
+      "field": "",
+      "x_axis_count": 10
+    },
+    {
+      "config_id": 5,
+      "report_type": "host_cloud_chart",
+      "name": "按管控区域统计",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "host",
+      "width": "100",
+      "chart_type": "bar",
+      "field": "bk_cloud_id",
+      "x_axis_count": 20
+    },
+    {
+      "config_id": 6,
+      "report_type": "host_change_biz_chart",
+      "name": "主机数量变化趋势",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "",
+      "width": "100",
+      "chart_type": "",
+      "field": "",
+      "x_axis_count": 20
+    }
+  ],
+  "inst": [
+    {
+      "config_id": 7,
+      "report_type": "model_inst_chart",
+      "name": "实例数量统计",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "",
+      "width": "50",
+      "chart_type": "bar",
+      "field": "",
+      "x_axis_count": 10
+    },
+    {
+      "config_id": 8,
+      "report_type": "model_inst_change_chart",
+      "name": "实例变更统计",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "",
+      "width": "50",
+      "chart_type": "bar",
+      "field": "",
+      "x_axis_count": 10
+    }
+  ],
+  "nav": [
+    {
+      "config_id": 1,
+      "report_type": "biz_module_host_chart",
+      "name": "",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "",
+      "width": "",
+      "chart_type": "",
+      "field": "",
+      "x_axis_count": 0
+    },
+    {
+      "config_id": 2,
+      "report_type": "model_and_inst_count",
+      "name": "",
+      "create_time": "2025-10-28 08:17:15",
+      "bk_supplier_account": "0",
+      "bk_obj_id": "",
+      "width": "",
+      "chart_type": "",
+      "field": "",
+      "x_axis_count": 0
+    }
+  ]
+};
+
+// 图表具体数据 - 根据 config_id 获取
+export const mockChartDetailData: Record<number, any[]> = {
+  // config_id: 3 - 按操作系统类型统计 (饼图)
+  3: [
+    { type: 'Linux', value: 156 },
+    { type: 'Windows', value: 42 },
+    { type: 'MacOS', value: 12 }
+  ],
+
+  // config_id: 4 - 按业务统计 (柱状图)
+  4: [
+    { category: '蓝鲸', value: 45 },
+    { category: '财务系统', value: 32 },
+    { category: '官网业务', value: 128 },
+    { category: '人力资源业务', value: 28 },
+    { category: '小程序业务', value: 35 },
+    { category: '电商渠道系统', value: 18 },
+    { category: '人力资源系统', value: 24 }
+  ],
+
+  // config_id: 5 - 按管控区域统计 (柱状图)
+  5: [
+    { category: 'Default Area', value: 185 },
+    { category: '未分配', value: 25 }
+  ],
+
+  // config_id: 6 - 主机数量变化趋势 (折线图) - 最近7天
+  6: [
+    { date: '2025-10-23', value: 198 },
+    { date: '2025-10-24', value: 205 },
+    { date: '2025-10-25', value: 210 },
+    { date: '2025-10-26', value: 208 },
+    { date: '2025-10-27', value: 215 },
+    { date: '2025-10-28', value: 210 },
+    { date: '2025-10-29', value: 210 }
+  ],
+
+  // config_id: 7 - 实例数量统计 (柱状图)
+  7: [
+    { category: 'bk_switch', value: 8 },
+    { category: 'bk_router', value: 12 },
+    { category: 'bk_load_balance', value: 6 },
+    { category: 'bk_firewall', value: 4 },
+    { category: 'bk_big_set_obj', value: 2 },
+    { category: 'bk_project', value: 15 }
+  ],
+
+  // config_id: 8 - 实例变更统计 (柱状图) - 堆叠图
+  8: [
+    { category: '业务集', type: '新增', value: 5 },
+    { category: '业务集', type: '更新', value: 3 },
+    { category: '业务集', type: '删除', value: 1 },
+    { category: '交换机', type: '新增', value: 2 },
+    { category: '交换机', type: '更新', value: 4 },
+    { category: '交换机', type: '删除', value: 0 },
+    { category: '负载均衡', type: '新增', value: 1 },
+    { category: '负载均衡', type: '更新', value: 2 },
+    { category: '负载均衡', type: '删除', value: 1 },
+    { category: '路由器', type: '新增', value: 3 },
+    { category: '路由器', type: '更新', value: 1 },
+    { category: '路由器', type: '删除', value: 0 },
+    { category: '防火墙', type: '新增', value: 1 },
+    { category: '防火墙', type: '更新', value: 1 },
+    { category: '防火墙', type: '删除', value: 2 },
+    { category: '项目', type: '新增', value: 8 },
+    { category: '项目', type: '更新', value: 4 },
+    { category: '项目', type: '删除', value: 3 }
+  ]
+};
+
+// 实例统计维度数据
+export const instanceStatisticsDimensions = [
+  {
+    id: 'operating_status',
+    name: '运营状态',
+    propertyId: 'operating_status'
+  }
+];
+
+export const mockStatisticsObjectData = [
+  {
+    "id": 7,
+    "bk_classification_id": "bk_network",
+    "bk_obj_icon": "icon-cc-switch2",
+    "bk_obj_id": "bk_switch",
+    "bk_obj_name": "交换机",
+    "bk_ishidden": false,
+    "ispre": false,
+    "bk_ispaused": false,
+    "position": "{\"bk_network\":{\"x\":-200,\"y\":-50}}",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 1
+  },
+  {
+    "id": 8,
+    "bk_classification_id": "bk_network",
+    "bk_obj_icon": "icon-cc-router",
+    "bk_obj_id": "bk_router",
+    "bk_obj_name": "路由器",
+    "bk_ishidden": false,
+    "ispre": false,
+    "bk_ispaused": false,
+    "position": "{\"bk_network\":{\"x\":-350,\"y\":-50}}",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 2
+  },
+  {
+    "id": 9,
+    "bk_classification_id": "bk_network",
+    "bk_obj_icon": "icon-cc-balance",
+    "bk_obj_id": "bk_load_balance",
+    "bk_obj_name": "负载均衡",
+    "bk_ishidden": false,
+    "ispre": false,
+    "bk_ispaused": false,
+    "position": "{\"bk_network\":{\"x\":-500,\"y\":-50}}",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 3
+  },
+  {
+    "id": 10,
+    "bk_classification_id": "bk_network",
+    "bk_obj_icon": "icon-cc-firewall",
+    "bk_obj_id": "bk_firewall",
+    "bk_obj_name": "防火墙",
+    "bk_ishidden": false,
+    "ispre": false,
+    "bk_ispaused": false,
+    "position": "{\"bk_network\":{\"x\":-650,\"y\":-50}}",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 4
+  },
+  {
+    "id": 11,
+    "bk_classification_id": "bk_organization",
+    "bk_obj_icon": "icon-cc-business-set",
+    "bk_obj_id": "bk_biz_set_obj",
+    "bk_obj_name": "业务集",
+    "bk_ishidden": false,
+    "ispre": true,
+    "bk_ispaused": false,
+    "position": "",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 2
+  },
+  {
+    "id": 12,
+    "bk_classification_id": "bk_organization",
+    "bk_obj_icon": "icon-cc-project",
+    "bk_obj_id": "bk_project",
+    "bk_obj_name": "项目",
+    "bk_ishidden": false,
+    "ispre": true,
+    "bk_ispaused": false,
+    "position": "",
+    "bk_supplier_account": "0",
+    "description": "",
+    "creator": "cc_system",
+    "modifier": "",
+    "create_time": "0001-01-01 00:00:00",
+    "last_time": "0001-01-01 00:00:00",
+    "obj_sort_number": 3
+  }
+];

@@ -1,0 +1,13 @@
+.statistics-dialog {
+    .ant-modal-body {
+        padding: 24px 32px;
+    }
+
+    .ant-form-item {
+        margin-bottom: 16px;
+    }
+
+    .ant-radio-group {
+        width: 100%;
+    }
+}
