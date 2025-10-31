@@ -159,9 +159,9 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
             <Form
                 form={form}
                 layout="horizontal"
-                labelCol={{ style: { width: 100 } }}
+                labelCol={{ style: { width: 100, marginRight: 20 } }}
                 wrapperCol={{ flex: 1 }}
-                labelAlign="left"
+                labelAlign="right"
                 colon={false}
                 initialValues={{
                     source: ChartSourceType.Custom,
@@ -175,7 +175,6 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 <Form.Item
                     name="source"
                     label="图表来源"
-                    rules={[{ required: true, message: '请选择图表来源' }]}
                 >
                     <Radio.Group
                         disabled={visibleFields.isEdit}
@@ -192,7 +191,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="builtInChart"
                         label="选择图表"
-                        rules={[{ required: true, message: '请选择图表' }]}
+                        rules={[{ required: true, message: '该字段是必填项' }]}
                     >
                         <Select
                             placeholder="请选择"
@@ -211,7 +210,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="name"
                         label="图表名称"
-                        rules={[{ required: true, message: '请输入图表名称' }]}
+                        rules={[{ required: true, message: '该字段是必填项' }]}
                     >
                         <Input
                             placeholder="请输入图表名称"
@@ -228,7 +227,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="statisticsObject"
                         label="统计对象"
-                        rules={[{ required: true, message: '请选择统计对象' }]}
+                        rules={[{ required: true, message: '该字段是必填项' }]}
                     >
                         <Select
                             placeholder="请选择"
@@ -245,7 +244,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="statisticsDimension"
                         label="统计维度"
-                        rules={[{ required: true, message: '请选择统计维度' }]}
+                        rules={[{ required: true, message: '该字段是必填项' }]}
                     >
                         <Select
                             placeholder="请选择"
@@ -262,7 +261,6 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="chartType"
                         label="图表类型"
-                        rules={[{ required: true, message: '请选择图表类型' }]}
                     >
                         <Radio.Group onChange={handleChartTypeChange}>
                             <Radio value={ChartType.Pie}>饼图</Radio>
@@ -276,7 +274,6 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 <Form.Item
                     name="width"
                     label="图表宽度"
-                    rules={[{ required: true, message: '请选择图表宽度' }]}
                 >
                     <Radio.Group>
                         <Radio value={50}>50%</Radio>
@@ -292,7 +289,6 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     <Form.Item
                         name="xAxisCount"
                         label="横轴坐标数量"
-                        rules={[{ required: true, message: '请输入横轴坐标数量' }]}
                     >
                         <InputNumber
                             min={1}

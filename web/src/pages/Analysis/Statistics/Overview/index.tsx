@@ -64,7 +64,7 @@ const Overview: React.FC = () => {
 
     return (
         <div className="statistics-overview">
-            <Row gutter={[20, 20]}>
+            <Row gutter={[24, 24]}>
                 {statisticsData.map((data, index) => (
                     <Col key={index} span={6}>
                         <StatisticsCard 

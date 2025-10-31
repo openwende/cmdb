@@ -1,6 +1,6 @@
 .instance-statistics {
   padding: 0;
-
+/* 
   .ant-row {
     margin: 0;
   }
@@ -15,5 +15,5 @@
     &:last-child {
       padding-right: 0;
     }
-  }
+  } */
 }

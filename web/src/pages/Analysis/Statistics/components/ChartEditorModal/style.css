@@ -9,5 +9,13 @@
 
     .ant-radio-group {
         width: 100%;
+
+        .ant-radio-wrapper {
+            width: 30%;
+        }
+    }
+
+    .ant-form-item-explain-error {
+        font-size: 12px;
     }
 }
