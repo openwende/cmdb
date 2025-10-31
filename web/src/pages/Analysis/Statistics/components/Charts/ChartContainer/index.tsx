@@ -1,13 +1,25 @@
 import React from 'react';
 import { Card, Button, Tooltip, Spin } from 'antd';
-import {
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  EditOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
-import type { ChartContainerProps } from '../types';
+import { ArrowUpOutlined, ArrowDownOutlined, EditOutlined, CloseOutlined } from '@ant-design/icons';
 import './style.css';
+
+interface ChartContainerProps {
+  id: string;
+  title: string;
+  children: React.ReactNode;
+  // Filter related
+  showFilters?: boolean;
+  filters?: React.ReactNode;
+  // Chart sorting related
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMoveUp?: (chartId: string) => void;
+  onMoveDown?: (chartId: string) => void;
+  onEdit?: (chartId: string) => void;
+  onDelete?: (chartId: string) => void;
+  loading?: boolean;
+  className?: string;
+}
 
 const ChartContainer: React.FC<ChartContainerProps> = ({
   id,
@@ -24,6 +36,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   loading = false,
   className,
 }) => {
+
   return (
     <Card className={`chart-container ${className || ''}`}>
       {/* Chart header: title + action buttons + filters */}
@@ -36,7 +49,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
                 type="text"
                 size="small"
                 disabled={!canMoveUp}
-                icon={<ArrowUpOutlined style={{ color: canMoveUp ? '#1677ff' : undefined }} />}
+                icon={<ArrowUpOutlined className={canMoveUp ? 'icon-active' : ''} />}
                 onClick={() => onMoveUp?.(id)}
               />
             </Tooltip>
@@ -45,25 +58,25 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
                 type="text"
                 size="small"
                 disabled={!canMoveDown}
-                icon={<ArrowDownOutlined style={{ color: canMoveDown ? '#1677ff' : undefined }} />}
+                icon={<ArrowDownOutlined className={canMoveDown ? 'icon-active' : ''} />}
                 onClick={() => onMoveDown?.(id)}
               />
             </Tooltip>
             <Button
               type="text"
               size="small"
-              icon={<EditOutlined style={{ color: '#1677ff' }} />}
+              icon={<EditOutlined className="icon-active" />}
               onClick={() => onEdit?.(id)}
             />
             <Button
               type="text"
               size="small"
-              icon={<CloseOutlined style={{ color: '#1677ff' }} />}
+              icon={<CloseOutlined className="icon-active" />}
               onClick={() => onDelete?.(id)}
             />
           </div>
         </div>
-        
+
         {/* Filters on the right */}
         {showFilters && filters && (
           <div className="chart-filters-right">

@@ -345,11 +345,52 @@ export const mockChartDetailData: Record<number, any[]> = {
 };
 
 // 实例统计维度数据
-export const instanceStatisticsDimensions = [
+export const instanceStatsDims = [
   {
-    id: 'operating_status',
-    name: '运营状态',
-    propertyId: 'operating_status'
+    "bk_biz_id": 0,
+    "id": 86,
+    "bk_supplier_account": "0",
+    "bk_obj_id": "bk_switch",
+    "bk_property_id": "bk_biz_status",
+    "bk_property_name": "运营状态",
+    "bk_property_group": "default",
+    "bk_property_index": 10,
+    "unit": "",
+    "placeholder": "",
+    "editable": true,
+    "ispre": false,
+    "isrequired": false,
+    "isreadonly": false,
+    "isonly": false,
+    "bk_issystem": false,
+    "bk_isapi": false,
+    "bk_property_type": "enum",
+    "option": [
+      {
+        "id": "1",
+        "is_default": false,
+        "name": "待运营",
+        "type": "text"
+      },
+      {
+        "id": "2",
+        "is_default": false,
+        "name": "运营中",
+        "type": "text"
+      },
+      {
+        "id": "3",
+        "is_default": false,
+        "name": "已下架",
+        "type": "text"
+      }
+    ],
+    "description": "",
+    "bk_template_id": 0,
+    "creator": "cc_system",
+    "create_time": "2025-10-28 08:17:12",
+    "last_time": "2025-10-28 08:17:12",
+    "bk_property_group_name": "基础信息"
   }
 ];
 

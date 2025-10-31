@@ -1,11 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 import { Chart } from '@antv/g2';
-import type { LineChartProps } from '../types';
+import { DEFAULT_CHART_HEIGHT, AXIS_LINE_STYLE, AXIS_TICK_STYLE, AXIS_LABEL_STYLE } from '../constants';
 import './style.css';
+
+interface LineChartData {
+  date: string;
+  value: number;
+}
+
+interface LineChartProps {
+  data: LineChartData[];
+  loading?: boolean;
+  height?: number;
+}
 
 const LineChart: React.FC<LineChartProps> = ({
   data,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   loading = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -49,11 +60,11 @@ const LineChart: React.FC<LineChartProps> = ({
         value: d.value,
       }));
 
-    chart.axis('x', { 
+    chart.axis('x', {
       title: false,
-      line: { stroke: '#d9d9d9', lineWidth: 1 },
-      tick: { stroke: '#d9d9d9', lineWidth: 1 },
-      label: { fill: '#666', fontSize: 12 }
+      line: AXIS_LINE_STYLE,
+      tick: AXIS_TICK_STYLE,
+      label: AXIS_LABEL_STYLE
     });
     chart.axis('y', { title: false });
 
@@ -72,7 +83,7 @@ const LineChart: React.FC<LineChartProps> = ({
     return <div className="chart-loading">加载中...</div>;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     return <div className="chart-empty">暂无数据</div>;
   }
 

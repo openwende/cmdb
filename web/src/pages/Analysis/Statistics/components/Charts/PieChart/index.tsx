@@ -1,11 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 import { Chart } from '@antv/g2';
-import type { PieChartProps } from '../types';
+import { DEFAULT_CHART_HEIGHT } from '../constants';
 import './style.css';
+
+interface PieChartData {
+  type: string;
+  value: number;
+}
+
+interface PieChartProps {
+  data: PieChartData[];
+  loading?: boolean;
+  height?: number;
+}
 
 const PieChart: React.FC<PieChartProps> = ({
   data,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   loading = false,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -34,7 +45,10 @@ const PieChart: React.FC<PieChartProps> = ({
       .coordinate({ type: 'theta', outerRadius: 0.8 })
       .encode('y', 'value')
       .encode('color', 'type')
-      .legend('color', { position: 'right', layout: { justifyContent: 'center' } })
+      .legend('color', {
+        position: 'right',
+        layout: { justifyContent: 'center' }
+      })
       .label({
         position: 'outside',
         text: (d: any) => `${d.type}: ${d.value}`,
@@ -59,7 +73,7 @@ const PieChart: React.FC<PieChartProps> = ({
     return <div className="chart-loading">加载中...</div>;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     return <div className="chart-empty">暂无数据</div>;
   }
 

@@ -1,9 +1,21 @@
 import React from 'react';
 import { DatePicker, Select } from 'antd';
-import type { ChartFiltersProps } from '../types';
-import './style.css';
+
+interface ChartFiltersProps {
+  type: 'dateRange' | 'select' | 'custom';
+  value?: any;
+  placeholder?: string;
+  options?: Array<{ label: string, value: any }>;
+  dateFormat?: string;
+  showTime?: boolean;
+  style?: React.CSSProperties;
+  onChange?: (value: any) => void;
+}
 
 const { RangePicker } = DatePicker;
+const DEFAULT_DATE_FORMAT = 'YYYY-MM-DD';
+const DATE_RANGE_WIDTH = 240;
+const SELECT_WIDTH = 180;
 
 const ChartFilters: React.FC<ChartFiltersProps> = ({
   type,
@@ -11,7 +23,7 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
   onChange,
   placeholder,
   options = [],
-  dateFormat = 'YYYY-MM-DD',
+  dateFormat = DEFAULT_DATE_FORMAT,
   showTime = false,
   style,
 }) => {
@@ -23,8 +35,7 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
       format={dateFormat}
       showTime={showTime}
       placeholder={['开始日期', '结束日期']}
-      style={{ width: 240, ...style }}
-      className="chart-date-picker"
+      style={{ width: DATE_RANGE_WIDTH, ...style }}
     />
   );
 
@@ -34,9 +45,8 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
       value={value}
       onChange={onChange}
       placeholder={placeholder}
-      style={{ width: 180, ...style }}
+      style={{ width: SELECT_WIDTH, ...style }}
       options={options}
-      className="chart-select"
     />
   );
 

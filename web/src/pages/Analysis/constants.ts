@@ -61,3 +61,8 @@ export const INSTANCE_FILTER_OPTIONS = [
   { label: 'ID', value: 'id' },
 ];
 
+// Statistics dialog modes
+export const DIALOG_MODE = {
+  ADD: 'add',
+  EDIT: 'edit',
+} as const;

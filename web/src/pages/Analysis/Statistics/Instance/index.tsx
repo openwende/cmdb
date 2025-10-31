@@ -1,99 +1,156 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, message } from 'antd';
 import { PlusSquareOutlined } from '@ant-design/icons';
-import {
-  ChartContainer,
-  BarChart,
-} from '../components/Charts';
-import StatisticsDialog from '../components/StatisticsDialog';
-import { mockChartData, mockChartDetailData } from '@/mock/Analysis';
-import type { ChartItem, ChartConfig } from '../components/Charts';
+import { ChartContainer, PieChart, BarChart } from '../components/Charts';
+import EditorModal, { SelectOption } from '../components/ChartEditorModal';
+import ConfirmModal from '@/components/common/ConfirmModal';
+import { mockChartData, mockChartDetailData, mockStatisticsObjectData, instanceStatsDims } from '@/mock/Analysis';
+import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
+import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
 import './style.css';
+
+// Built-in chart IDs for instance statistics
+const BUILTIN_CHART_IDS = [7, 8];
 
 const InstanceStatistics: React.FC = () => {
   const [charts, setCharts] = useState<ChartItem[]>([]);
-  const [dialogVisible, setDialogVisible] = useState(false);
-  const [dialogMode, setDialogMode] = useState<'add' | 'edit'>('add');
+  const [chartDatas, setChartDatas] = useState<Record<number, any[]>>({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>(ModalMode.Add);
   const [editingChart, setEditingChart] = useState<ChartItem | undefined>();
+  const [deleteConfirmVisible, setDeleteConfirmVisible] = useState(false);
+  const [deletingChartId, setDeletingChartId] = useState<string>();
 
   useEffect(() => {
-    // Initialize chart list based on mockChartData.inst
+    // TODO: api
     const instCharts: ChartItem[] = mockChartData.inst.map((config, index) => ({
       id: `inst-chart-${config.config_id}`,
       configId: config.config_id,
-      type: 'bar', // All instance statistics are bar charts
-      title: config.name,
+      type: config.chart_type as ChartType,
       name: config.name,
+      source: BUILTIN_CHART_IDS.includes(config.config_id)
+        ? ChartSourceType.Builtin
+        : ChartSourceType.Custom,
       xAxisCount: config.x_axis_count,
       order: index + 1,
       width: parseInt(config.width),
-      stacked: config.config_id === 8, // Instance change statistics is stacked chart
+      // Instance change statistics is stacked chart
+      stacked: config.config_id === 8,
     }));
     setCharts(instCharts);
   }, []);
 
-  // Handle add chart
+  useEffect(() => {
+    // TODO: api
+    setChartDatas(mockChartDetailData);
+  }, [charts]);
+
+  // Instance statistics object options Built-in options
+  const builtInOptions = useMemo(() => {
+    return charts
+      .filter(chart => BUILTIN_CHART_IDS.includes(chart.configId))
+      .map(chart => ({
+        value: chart.configId,
+        label: chart.name,
+        // Check if already exists
+        disabled: charts.some(c => c.configId === chart.configId),
+        chartData: chart
+      }));
+  }, [charts]);
+
+  // Instance statistics object options
+  const statObjOptions = useMemo((): SelectOption[] => {
+    // TODO: api
+    return mockStatisticsObjectData.map(obj => ({
+      value: obj.bk_obj_id,
+      label: obj.bk_obj_name
+    }));
+  }, []);
+
+  // Instance statistics dimension options
+  const statDimsOptions = useMemo((): SelectOption[] => {
+    // TODO: api
+    return instanceStatsDims.map(dim => ({
+      value: dim.bk_property_id,
+      label: dim.bk_property_name
+    }));
+  }, []);
+
   const handleAdd = () => {
-    setDialogMode('add');
+    setModalMode(ModalMode.Add);
     setEditingChart(undefined);
-    setDialogVisible(true);
-  };
-
-  // Handle chart move
-  const handleChartMove = (chartId: string, direction: 'up' | 'down') => {
-    const currentIndex = charts.findIndex(chart => chart.id === chartId);
-    if (currentIndex === -1) return;
-
-    const newCharts = [...charts];
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-
-    if (targetIndex >= 0 && targetIndex < charts.length) {
-      // Swap positions
-      [newCharts[currentIndex], newCharts[targetIndex]] = 
-      [newCharts[targetIndex], newCharts[currentIndex]];
-      
-      // Update order
-      newCharts.forEach((chart, index) => {
-        chart.order = index + 1;
-      });
-      
-      setCharts(newCharts);
-    }
+    setModalVisible(true);
   };
 
   const handleChartEdit = (chartId: string) => {
     const chart = charts.find(c => c.id === chartId);
     if (chart) {
       setEditingChart(chart);
-      setDialogMode('edit');
-      setDialogVisible(true);
+      setModalMode(ModalMode.Edit);
+      setModalVisible(true);
     }
   };
 
   const handleChartDelete = (chartId: string) => {
-    const newCharts = charts.filter(c => c.id !== chartId);
-    // Re-order
-    newCharts.forEach((chart, index) => {
-      chart.order = index + 1;
-    });
-    setCharts(newCharts);
-    message.success('删除成功');
+    setDeletingChartId(chartId);
+    setDeleteConfirmVisible(true);
   };
 
-  const handleDialogClose = () => {
-    setDialogVisible(false);
+  const handleConfirmDelete = () => {
+    if (deletingChartId) {
+      const newCharts = charts.filter(c => c.id !== deletingChartId);
+      // Re-order
+      newCharts.forEach((chart, index) => {
+        chart.order = index + 1;
+      });
+      setCharts(newCharts);
+      message.success('删除成功');
+      setDeleteConfirmVisible(false);
+      setDeletingChartId(undefined);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteConfirmVisible(false);
+    setDeletingChartId(undefined);
+  };
+
+  const handleChartMove = (chartId: string, direction: ChartMoveDirection) => {
+    const currentIndex = charts.findIndex(chart => chart.id === chartId);
+    if (currentIndex === -1) return;
+
+    const newCharts = [...charts];
+    const targetIndex = direction === ChartMoveDirection.Up ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex >= 0 && targetIndex < charts.length) {
+      // Swap positions
+      [newCharts[currentIndex], newCharts[targetIndex]] =
+        [newCharts[targetIndex], newCharts[currentIndex]];
+
+      // Update order
+      newCharts.forEach((chart, index) => {
+        chart.order = index + 1;
+      });
+
+      setCharts(newCharts);
+    }
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
     setEditingChart(undefined);
   };
 
-  const handleDialogSubmit = (formData: ChartConfig) => {
-    if (dialogMode === 'add') {
+  const handleModalSubmit = (formData: ChartConfig) => {
+    // TODO: api
+    if (modalMode === ModalMode.Add) {
       // Add new chart
       const newChart: ChartItem = {
         id: `inst-chart-${Date.now()}`,
         configId: formData.configId || Date.now(),
-        type: 'bar', // All instance statistics are bar charts
-        title: formData.name,
+        type: formData.chartType as ChartType,
         name: formData.name,
+        source: formData.source,
         xAxisCount: formData.xAxisCount,
         order: charts.length + 1,
         width: parseInt(formData.width),
@@ -116,14 +173,24 @@ const InstanceStatistics: React.FC = () => {
       setCharts(newCharts);
       message.success('编辑成功');
     }
-    setDialogVisible(false);
+    setModalVisible(false);
     setEditingChart(undefined);
   };
 
-  // Get chart data by configId
-  const getChartData = (configId: number) => {
-    return mockChartDetailData[configId] || [];
+  const renderChart = (chart: ChartItem) => {
+    const data = chartDatas[chart.configId];
+
+    switch (chart.type) {
+      case ChartType.Pie:
+        return <PieChart data={data} />;
+      case ChartType.Bar:
+        return <BarChart data={data} stacked={chart.stacked} />;
+      default:
+        return <div>Unknown chart type</div>;
+    }
   };
+
+  const deletingChartName = charts.find(c => c.id === deletingChartId)?.name;
 
   return (
     <div className="instance-statistics">
@@ -134,34 +201,46 @@ const InstanceStatistics: React.FC = () => {
 
       <Row gutter={[24, 24]}>
         {charts.map((chart, index) => (
-          <Col 
-            key={chart.id} 
+          <Col
+            key={chart.id}
             span={chart.width === 50 ? 12 : 24}
           >
             <ChartContainer
               id={chart.id}
-              title={chart.title}
+              title={chart.name}
               canMoveUp={index > 0}
               canMoveDown={index < charts.length - 1}
-              onMoveUp={() => handleChartMove(chart.id, 'up')}
-              onMoveDown={() => handleChartMove(chart.id, 'down')}
+              onMoveUp={() => handleChartMove(chart.id, ChartMoveDirection.Up)}
+              onMoveDown={() => handleChartMove(chart.id, ChartMoveDirection.Down)}
               onEdit={() => handleChartEdit(chart.id)}
               onDelete={() => handleChartDelete(chart.id)}
             >
-              <BarChart data={getChartData(chart.configId)} stacked={chart.stacked} />
+              {renderChart(chart)}
             </ChartContainer>
           </Col>
         ))}
       </Row>
 
-      <StatisticsDialog
-        visible={dialogVisible}
-        mode={dialogMode}
+      <EditorModal
+        visible={modalVisible}
+        mode={modalMode}
         type="instance"
         editData={editingChart}
-        existingCharts={charts}
-        onClose={handleDialogClose}
-        onSubmit={handleDialogSubmit}
+        builtInOptions={builtInOptions}
+        statObjOptions={statObjOptions}
+        statDimsOptions={statDimsOptions}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
+
+      <ConfirmModal
+        visible={deleteConfirmVisible}
+        title="是否确认删除?"
+        description={`确定要删除【${deletingChartName}】`}
+        okText="确定"
+        cancelText="取消"
+        onOk={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </div>
   );

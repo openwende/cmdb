@@ -1,19 +1,19 @@
 .host-statistics {
   padding: 0;
-}
 
-.host-statistics .ant-row {
-  margin: 0;
-}
+  .ant-row {
+    margin: 0;
+  }
 
-.host-statistics .ant-col {
-  padding: 0 12px 24px 12px;
-}
+  .ant-col {
+    padding: 0 12px 24px 12px;
 
-.host-statistics .ant-col:first-child {
-  padding-left: 0;
-}
+    &:first-child {
+      padding-left: 0;
+    }
 
-.host-statistics .ant-col:last-child {
-  padding-right: 0;
+    &:last-child {
+      padding-right: 0;
+    }
+  }
 }

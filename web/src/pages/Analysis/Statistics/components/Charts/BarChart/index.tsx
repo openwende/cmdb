@@ -1,11 +1,24 @@
 import React, { useEffect, useRef } from 'react';
 import { Chart } from '@antv/g2';
-import type { BarChartProps } from '../types';
+import { DEFAULT_CHART_HEIGHT, AXIS_LINE_STYLE, AXIS_TICK_STYLE, AXIS_LABEL_STYLE } from '../constants';
 import './style.css';
+
+interface BarChartData {
+  category: string;
+  value: number;
+  type?: string;
+}
+
+interface BarChartProps {
+  data: BarChartData[];
+  loading?: boolean;
+  height?: number;
+  stacked?: boolean;
+}
 
 const BarChart: React.FC<BarChartProps> = ({
   data,
-  height = 300,
+  height = DEFAULT_CHART_HEIGHT,
   loading = false,
   stacked = false,
 }) => {
@@ -37,21 +50,20 @@ const BarChart: React.FC<BarChartProps> = ({
         .encode('x', 'category')
         .encode('y', 'value')
         .encode('color', 'type')
-        .axis('x', { 
+        .axis('x', {
           title: false,
-          line: { stroke: '#d9d9d9', lineWidth: 1 },
-          tick: { stroke: '#d9d9d9', lineWidth: 1 },
-          label: { fill: '#666', fontSize: 12 }
+          line: AXIS_LINE_STYLE,
+          tick: AXIS_TICK_STYLE,
+          label: AXIS_LABEL_STYLE
         })
         .axis('y', { title: false })
-        .legend('color', { position: 'bottom', layout: { justifyContent: 'center' } })
+        .legend('color', {
+          position: 'bottom',
+          layout: { justifyContent: 'center' }
+        })
         .tooltip((d: any) => {
-          // Calculate total value for this category
-          const categoryData = data.filter((item: any) => item.category === d.category);
-          const totalValue = categoryData.reduce((sum: any, item: any) => sum + item.value, 0);
-          
           return {
-            title: `${d.category} ${totalValue}`,
+            title: d.category,
             name: d.type,
             value: d.value
           };
@@ -62,11 +74,11 @@ const BarChart: React.FC<BarChartProps> = ({
         .interval()
         .encode('x', 'category')
         .encode('y', 'value')
-        .axis('x', { 
+        .axis('x', {
           title: false,
-          line: { stroke: '#d9d9d9', lineWidth: 1 },
-          tick: { stroke: '#d9d9d9', lineWidth: 1 },
-          label: { fill: '#666', fontSize: 12 }
+          line: AXIS_LINE_STYLE,
+          tick: AXIS_TICK_STYLE,
+          label: AXIS_LABEL_STYLE
         })
         .axis('y', { title: false });
     }
@@ -86,7 +98,7 @@ const BarChart: React.FC<BarChartProps> = ({
     return <div className="chart-loading">加载中...</div>;
   }
 
-  if (!data.length) {
+  if (!data || !data.length) {
     return <div className="chart-empty">暂无数据</div>;
   }
 
