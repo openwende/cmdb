@@ -9,6 +9,7 @@ export interface StatisticsCardProps {
     icon: React.ReactNode;
     color: string;
     tooltip?: string;
+    onClick?: () => void;
 }
 
 const StatisticsCard: React.FC<StatisticsCardProps> = ({
@@ -17,6 +18,7 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
     icon,
     color,
     tooltip,
+    onClick,
 }) => {
     const nameElement = (
         <div className="card-name">
@@ -32,6 +34,7 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
     return (
         <AntdCard
             className="statistics-card"
+            onClick={onClick}
             styles={{
                 body: {
                     padding: 20,

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import {
     AppstoreOutlined,
     BlockOutlined,
@@ -39,7 +40,14 @@ const STATISTICS_TOOLTIP_MAP = {
     inst: '不包含业务、主机模型及实例',
 };
 
+// Define route mapping
+const STATISTICS_ROUTE_MAP = {
+    biz: '/resource/business',
+    host: '/resource/host',
+};
+
 interface StatisticsData {
+    id: string;
     name: string;
     value: number;
     icon: React.ReactNode;
@@ -48,11 +56,13 @@ interface StatisticsData {
 }
 
 const Overview: React.FC = () => {
+    const navigate = useNavigate();
     const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([]);
 
     useEffect(() => {
         // Format data on mount
         const formattedData = mockStatisticsData.map((item) => ({
+            id: item.id,
             name: STATISTICS_NAME_MAP[item.id as keyof typeof STATISTICS_NAME_MAP],
             value: item.count,
             icon: STATISTICS_ICON_MAP[item.id as keyof typeof STATISTICS_ICON_MAP],
@@ -62,17 +72,31 @@ const Overview: React.FC = () => {
         setStatisticsData(formattedData);
     }, []);
 
+    const handleCardClick = (id: string) => {
+        const route = STATISTICS_ROUTE_MAP[id as keyof typeof STATISTICS_ROUTE_MAP];
+        if (route) {
+            navigate(route);
+        }
+    };
+
+    const getCardClickHandler = (id: string) => {
+        return STATISTICS_ROUTE_MAP[id as keyof typeof STATISTICS_ROUTE_MAP]
+            ? () => handleCardClick(id)
+            : undefined;
+    };
+
     return (
         <div className="statistics-overview">
             <Row gutter={[24, 24]}>
                 {statisticsData.map((data, index) => (
                     <Col key={index} span={6}>
-                        <StatisticsCard 
+                        <StatisticsCard
                             name={data.name}
                             value={data.value}
                             icon={data.icon}
                             color={data.color}
                             tooltip={data.tooltip}
+                            onClick={getCardClickHandler(data.id)}
                         />
                     </Col>
                 ))}
