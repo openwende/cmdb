@@ -1,6 +1,11 @@
 // Default height for charts
 export const DEFAULT_CHART_HEIGHT = 300;
 
+// X-axis count limits
+export const X_AXIS_COUNT_MIN = 1;
+export const X_AXIS_COUNT_MAX = 25;
+export const X_AXIS_COUNT_DEFAULT = 10;
+
 // Chart axis styling constants
 export const AXIS_LINE_STROKE = '#d9d9d9';
 export const AXIS_LINE_WIDTH = 1;

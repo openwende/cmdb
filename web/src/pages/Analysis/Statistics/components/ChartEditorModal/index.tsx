@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Radio, Select, InputNumber } from 'antd';
+import { Modal, Form, Input, Radio, Select, InputNumber, Tooltip } from 'antd';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../../Types';
 import { ModalMode, ChartType } from '@/pages/Analysis/Types';
+import { X_AXIS_COUNT_MIN, X_AXIS_COUNT_MAX, X_AXIS_COUNT_DEFAULT } from '../Charts/constants';
 import './style.css';
 
 const DEFAULT_WIDTH = 50;
-const DEFAULT_X_AXIS_COUNT = 10;
 const ChartSourceLabels: Record<ChartSourceType, string> = {
     [ChartSourceType.Custom]: '自定义',
     [ChartSourceType.Builtin]: '内置'
@@ -39,6 +40,7 @@ interface EditorModalProps {
     builtInOptions: BuiltInOption[];
     statObjOptions?: SelectOption[];
     statDimsOptions?: SelectOption[];
+    maxXAxisCount: number;
     onClose: () => void;
     onSubmit: (data: ChartConfig) => void;
 }
@@ -51,6 +53,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
     builtInOptions,
     statObjOptions = [],
     statDimsOptions = [],
+    maxXAxisCount,
     onClose,
     onSubmit,
 }) => {
@@ -60,17 +63,21 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
 
     useEffect(() => {
         if (visible) {
+            // Calculate the valid xAxisCount value
+            const currentXAxisCount = editData?.xAxisCount || X_AXIS_COUNT_DEFAULT;
+            const validXAxisCount = Math.min(currentXAxisCount, maxXAxisCount);
+
             form.setFieldsValue({
                 source: editData?.source || ChartSourceType.Custom,
                 name: editData?.name,
                 chartType: editData?.type || ChartType.Pie,
                 width: editData?.width || DEFAULT_WIDTH,
-                xAxisCount: editData?.xAxisCount || DEFAULT_X_AXIS_COUNT,
+                xAxisCount: validXAxisCount,
             });
             setSource(editData?.source || ChartSourceType.Custom);
             setChartType(editData?.type || ChartType.Pie);
         }
-    }, [visible, mode, editData, form]);
+    }, [visible, mode, editData, form, maxXAxisCount]);
 
     const handleSourceChange = (e: any) => {
         const value = e.target.value;
@@ -167,7 +174,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                     source: ChartSourceType.Custom,
                     chartType: ChartType.Pie,
                     width: DEFAULT_WIDTH,
-                    xAxisCount: DEFAULT_X_AXIS_COUNT,
+                    xAxisCount: X_AXIS_COUNT_DEFAULT,
                 }}
             >
                 {/* Chart source (Custom / Built-in).
@@ -291,8 +298,8 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                         label="横轴坐标数量"
                     >
                         <InputNumber
-                            min={1}
-                            max={100}
+                            min={X_AXIS_COUNT_MIN}
+                            max={maxXAxisCount || X_AXIS_COUNT_MAX}
                             style={{ width: '100%' }}
                             placeholder="请输入"
                         />

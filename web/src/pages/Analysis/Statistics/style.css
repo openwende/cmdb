@@ -1,7 +1,6 @@
 .statistics-container {
     padding: 16px 20px;
     background-color: #f5f5f5;
-    min-height: 100vh;
 
     .ant-divider-horizontal {
         margin: 16px 0;

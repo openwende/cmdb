@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Row, Col, message } from 'antd';
+import { Row, Col, message, Tooltip } from 'antd';
 import { PlusSquareOutlined } from '@ant-design/icons';
 import { ChartContainer, PieChart, BarChart } from '../components/Charts';
 import EditorModal, { SelectOption } from '../components/ChartEditorModal';
@@ -7,6 +7,7 @@ import ConfirmModal from '@/components/common/ConfirmModal';
 import { mockChartData, mockChartDetailData, mockStatisticsObjectData, instanceStatsDims } from '@/mock/Analysis';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
 import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
+import { X_AXIS_COUNT_MAX } from '../components/Charts/constants';
 import './style.css';
 
 // Built-in chart IDs for instance statistics
@@ -75,6 +76,15 @@ const InstanceStatistics: React.FC = () => {
       label: dim.bk_property_name
     }));
   }, []);
+
+  // Calculate max x-axis count for editing
+  const maxXAxisCount = useMemo(() => {
+    if (modalMode === ModalMode.Edit && editingChart) {
+      const actualDataLength = chartDatas[editingChart.configId]?.length || 0;
+      return Math.min(actualDataLength, X_AXIS_COUNT_MAX);
+    }
+    return X_AXIS_COUNT_MAX;
+  }, [modalMode, editingChart, chartDatas]);
 
   const handleAdd = () => {
     setModalMode(ModalMode.Add);
@@ -196,7 +206,9 @@ const InstanceStatistics: React.FC = () => {
     <div className="instance-statistics">
       <div className="section-header">
         <h3>实例统计</h3>
-        <PlusSquareOutlined className="add-icon" onClick={handleAdd} />
+        <Tooltip title="添加实例图表">
+          <PlusSquareOutlined className="add-icon" onClick={handleAdd} />
+        </Tooltip>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -229,6 +241,7 @@ const InstanceStatistics: React.FC = () => {
         builtInOptions={builtInOptions}
         statObjOptions={statObjOptions}
         statDimsOptions={statDimsOptions}
+        maxXAxisCount={maxXAxisCount}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
       />

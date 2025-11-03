@@ -3,6 +3,8 @@ import { Chart } from '@antv/g2';
 import { DEFAULT_CHART_HEIGHT, AXIS_LINE_STYLE, AXIS_TICK_STYLE, AXIS_LABEL_STYLE } from '../constants';
 import './style.css';
 
+const BAR_MAX_WIDTH = 60;
+
 interface BarChartData {
   category: string;
   value: number;
@@ -50,6 +52,8 @@ const BarChart: React.FC<BarChartProps> = ({
         .encode('x', 'category')
         .encode('y', 'value')
         .encode('color', 'type')
+        .style('maxWidth', BAR_MAX_WIDTH)
+        // .style('inset', BAR_INSET)
         .axis('x', {
           title: false,
           line: AXIS_LINE_STYLE,
@@ -74,6 +78,7 @@ const BarChart: React.FC<BarChartProps> = ({
         .interval()
         .encode('x', 'category')
         .encode('y', 'value')
+        .style('maxWidth', BAR_MAX_WIDTH)
         .axis('x', {
           title: false,
           line: AXIS_LINE_STYLE,

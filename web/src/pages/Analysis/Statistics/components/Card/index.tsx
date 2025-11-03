@@ -7,7 +7,7 @@ export interface StatisticsCardProps {
     name: string;
     value: number;
     icon: React.ReactNode;
-    color?: string;
+    color: string;
     tooltip?: string;
 }
 
@@ -30,21 +30,26 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
     );
 
     return (
-        <AntdCard 
+        <AntdCard
             className="statistics-card"
-            styles={{ body: { padding: 20 } }}
+            styles={{
+                body: {
+                    padding: 20,
+                    background: `linear-gradient(135deg, ${color}22 0%, #ffffff 55%, #ffffff 100%)`
+                }
+            }}
         >
             <div className="card-content">
                 <div className="card-info">
                     {nameElement}
-                    <div 
+                    <div
                         className="card-value"
-                        style={{ color}}
+                        style={{ color }}
                     >
                         {value}
                     </div>
                 </div>
-                <div className="card-icon">
+                <div className="card-icon" style={{ color }}>
                     {icon}
                 </div>
             </div>

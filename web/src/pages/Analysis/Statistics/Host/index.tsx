@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Row, Col, message } from 'antd';
+import { Row, Col, message, Tooltip } from 'antd';
 import { PlusSquareOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { ChartContainer, PieChart, BarChart, LineChart, ChartFilters } from '../components/Charts';
@@ -10,6 +10,7 @@ import { dynamicGroupCondition } from '@/mock/business';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
 import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
 import { PROPERTY_TYPES } from '@/pages/Business/constants';
+import { X_AXIS_COUNT_MAX } from '../components/Charts/constants';
 import './style.css';
 
 // Built-in chart IDs for host statistics
@@ -81,6 +82,15 @@ const HostStatistics: React.FC = () => {
         label: item.bk_property_name
       }));
   }, []);
+
+  // Calculate max x-axis count for editing
+  const maxXAxisCount = useMemo(() => {
+    if (modalMode === ModalMode.Edit && editingChart) {
+      const actualDataLength = chartDatas[editingChart.configId]?.length || 0;
+      return Math.min(actualDataLength, X_AXIS_COUNT_MAX);
+    }
+    return X_AXIS_COUNT_MAX;
+  }, [modalMode, editingChart, chartDatas]);
 
   const handleTimeRangeChange = (dates: any) => {
     // TODO: api
@@ -209,7 +219,9 @@ const HostStatistics: React.FC = () => {
     <div className="host-statistics">
       <div className="section-header">
         <h3>主机统计</h3>
-        <PlusSquareOutlined className="add-icon" onClick={handleAdd} />
+        <Tooltip title="添加主机图表">
+          <PlusSquareOutlined className="add-icon" onClick={handleAdd} />
+        </Tooltip>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -251,6 +263,7 @@ const HostStatistics: React.FC = () => {
         editData={editingChart}
         builtInOptions={builtInOptions}
         statDimsOptions={statDimsOptions}
+        maxXAxisCount={maxXAxisCount}
         onClose={handleModalClose}
         onSubmit={handleModalSubmit}
       />
