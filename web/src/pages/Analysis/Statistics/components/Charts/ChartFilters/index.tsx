@@ -1,5 +1,6 @@
 import React from 'react';
 import { DatePicker, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 interface ChartFiltersProps {
   type: 'dateRange' | 'select' | 'custom';
@@ -27,6 +28,7 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
   showTime = false,
   style,
 }) => {
+  const { t } = useTranslation();
   // Render date range picker
   const renderDateRange = () => (
     <RangePicker
@@ -34,7 +36,7 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
       onChange={onChange}
       format={dateFormat}
       showTime={showTime}
-      placeholder={['开始日期', '结束日期']}
+      placeholder={[t('analysis.statistics.chart.startDate'), t('analysis.statistics.chart.endDate')]}
       style={{ width: DATE_RANGE_WIDTH, ...style }}
     />
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
 import { DEFAULT_CHART_HEIGHT } from '../constants';
 import './style.css';
@@ -19,6 +20,7 @@ const PieChart: React.FC<PieChartProps> = ({
   height = DEFAULT_CHART_HEIGHT,
   loading = false,
 }) => {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
@@ -70,11 +72,11 @@ const PieChart: React.FC<PieChartProps> = ({
   }, [data, height, loading]);
 
   if (loading) {
-    return <div className="chart-loading">加载中...</div>;
+    return <div className="chart-loading">{t('analysis.statistics.chart.loading')}</div>;
   }
 
   if (!data || !data.length) {
-    return <div className="chart-empty">暂无数据</div>;
+    return <div className="chart-empty">{t('analysis.statistics.chart.noData')}</div>;
   }
 
   return <div ref={containerRef} className="pie-chart-container" />;

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Table } from 'antd';
+import { useTranslation } from 'react-i18next';
 import DetailDrawer from '../components/OperationDetail';
 import Pagination from '@/components/common/Pagination';
 import type { OperationDetail } from '@/pages/Analysis/Types';
@@ -28,6 +29,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
         onSizeChange
     },
 }) => {
+    const { t } = useTranslation();
     const [drawerVisible, setDrawerVisible] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<OperationDetail | null>(null);
 
@@ -45,43 +47,43 @@ const AuditTable: React.FC<AuditTableProps> = ({
 
     const columns = [
         {
-            title: '操作对象',
+            title: t('analysis.audit.columns.object'),
             dataIndex: 'object',
             key: 'object',
             width: 120,
         },
         {
-            title: '动作',
+            title: t('analysis.audit.columns.action'),
             dataIndex: 'action',
             key: 'action',
             width: 100,
         },
         {
-            title: '所属业务',
+            title: t('analysis.audit.columns.business'),
             dataIndex: 'business',
             key: 'business',
             width: 150,
         },
         {
-            title: '实例',
+            title: t('analysis.audit.columns.instance'),
             dataIndex: 'instance',
             key: 'instance',
             width: 200,
         },
         {
-            title: '操作描述',
+            title: t('analysis.audit.columns.description'),
             dataIndex: 'description',
             key: 'description',
             width: 200,
         },
         {
-            title: '时间',
+            title: t('analysis.audit.columns.time'),
             dataIndex: 'time',
             key: 'time',
             width: 180,
         },
         {
-            title: '操作账号',
+            title: t('analysis.audit.columns.account'),
             dataIndex: 'account',
             key: 'account',
             width: 120,

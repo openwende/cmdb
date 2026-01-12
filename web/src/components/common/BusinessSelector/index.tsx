@@ -1,5 +1,6 @@
 import React from 'react';
 import { Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { bizListMock } from '@/mock/resource';
 
 const { Option } = Select;
@@ -23,6 +24,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
   size = 'middle',
   className,
 }) => {
+  const { t } = useTranslation();
   const handleChange = (val: number) => {
     onChange?.(val);
   };
@@ -36,7 +38,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
     <Select
       value={value}
       onChange={handleChange}
-      placeholder="请选择业务"
+      placeholder={t('common.components.businessSelector.selectBusiness')}
       style={{ width: "100%" }}
       allowClear={allowClear}
       showSearch={showSearch}

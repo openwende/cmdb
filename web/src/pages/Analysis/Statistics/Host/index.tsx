@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Row, Col, message, Tooltip } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { PlusSquareOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { ChartContainer, PieChart, BarChart, LineChart, ChartFilters } from '../components/Charts';
@@ -19,6 +20,7 @@ const BUILTIN_CHART_IDS = [3, 4, 5, 6];
 const EXCLUDED_DIMENSION_IDS = [13, 14, 23, 40];
 
 const HostStatistics: React.FC = () => {
+  const { t } = useTranslation();
   const [charts, setCharts] = useState<ChartItem[]>([]);
   const [chartDatas, setChartDatas] = useState<Record<number, any[]>>({});
   const [timeRange, setTimeRange] = useState(() => {
@@ -125,7 +127,7 @@ const HostStatistics: React.FC = () => {
         chart.order = index + 1;
       });
       setCharts(newCharts);
-      message.success('删除成功');
+      message.success(t('analysis.statistics.messages.deleteSuccess'));
       setDeleteConfirmVisible(false);
       setDeletingChartId(undefined);
     }
@@ -178,7 +180,7 @@ const HostStatistics: React.FC = () => {
         stacked: false,
       };
       setCharts([...charts, newChart]);
-      message.success('添加成功');
+      message.success(t('analysis.statistics.messages.addSuccess'));
     } else {
       // Edit chart
       const newCharts = charts.map(chart => {
@@ -192,7 +194,7 @@ const HostStatistics: React.FC = () => {
         return chart;
       });
       setCharts(newCharts);
-      message.success('编辑成功');
+      message.success(t('analysis.statistics.messages.editSuccess'));
     }
     setModalVisible(false);
     setEditingChart(undefined);
@@ -213,13 +215,11 @@ const HostStatistics: React.FC = () => {
     }
   };
 
-  const deletingChartName = charts.find(c => c.id === deletingChartId)?.name;
-
   return (
     <div className="host-statistics">
       <div className="section-header">
-        <h3>主机统计</h3>
-        <Tooltip title="添加主机图表">
+        <h3>{t('analysis.statistics.host.title')}</h3>
+        <Tooltip title={t('analysis.statistics.modal.addHostChart')}>
           <PlusSquareOutlined className="add-icon" onClick={handleAdd} />
         </Tooltip>
       </div>
@@ -270,10 +270,10 @@ const HostStatistics: React.FC = () => {
 
       <ConfirmModal
         visible={deleteConfirmVisible}
-        title="是否确认删除?"
-        description={`确定要删除【${deletingChartName}】`}
-        okText="确定"
-        cancelText="取消"
+        title={t('analysis.statistics.confirm.deleteTitle')}
+        description={t('analysis.statistics.confirm.deleteContent')}
+        okText={t('common.confirm')}
+        cancelText={t('common.cancel')}
         onOk={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />

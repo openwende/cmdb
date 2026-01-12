@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     AppstoreOutlined,
     BlockOutlined,
@@ -10,14 +11,6 @@ import {
 import StatisticsCard from '../components/Card';
 import { mockStatisticsData } from '@/mock/Analysis';
 import './style.css';
-
-// Define name mapping
-const STATISTICS_NAME_MAP = {
-    biz: '业务总数',
-    host: '主机总数',
-    model: '模型总数',
-    inst: '实例总数',
-};
 
 // Define icon mapping
 const STATISTICS_ICON_MAP = {
@@ -33,11 +26,6 @@ const STATISTICS_COLOR_MAP = {
     host: '#13c2c2',
     model: '#52c41a',
     inst: '#fa8c16',
-};
-
-// Define tooltip mapping
-const STATISTICS_TOOLTIP_MAP = {
-    inst: '不包含业务、主机模型及实例',
 };
 
 // Define route mapping
@@ -56,10 +44,24 @@ interface StatisticsData {
 }
 
 const Overview: React.FC = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([]);
 
     useEffect(() => {
+        // Define name mapping with i18n
+        const STATISTICS_NAME_MAP = {
+            biz: t('analysis.statistics.overview.businessTotal'),
+            host: t('analysis.statistics.overview.hostTotal'),
+            model: t('analysis.statistics.overview.modelTotal'),
+            inst: t('analysis.statistics.overview.instanceTotal'),
+        };
+
+        // Define tooltip mapping with i18n
+        const STATISTICS_TOOLTIP_MAP = {
+            inst: t('analysis.statistics.overview.instanceTooltip'),
+        };
+
         // Format data on mount
         const formattedData = mockStatisticsData.map((item) => ({
             id: item.id,
@@ -70,7 +72,7 @@ const Overview: React.FC = () => {
             tooltip: STATISTICS_TOOLTIP_MAP[item.id as keyof typeof STATISTICS_TOOLTIP_MAP],
         }));
         setStatisticsData(formattedData);
-    }, []);
+    }, [t]);
 
     const handleCardClick = (id: string) => {
         const route = STATISTICS_ROUTE_MAP[id as keyof typeof STATISTICS_ROUTE_MAP];

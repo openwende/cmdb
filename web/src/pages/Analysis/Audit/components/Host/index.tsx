@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Select, Input, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 
@@ -20,6 +21,7 @@ interface HostInputProps {
 }
 
 const HostInput: React.FC<HostInputProps> = ({ value = { type: 'ip', value: '' }, onChange }) => {
+    const { t } = useTranslation();
     const handleTypeChange = (type: string) => {
         onChange?.({ ...value, type });
     };
@@ -30,10 +32,10 @@ const HostInput: React.FC<HostInputProps> = ({ value = { type: 'ip', value: '' }
 
     const getPlaceholder = () => {
         switch (value.type) {
-            case 'ip': return '请输入IP';
-            case 'ipv6': return '请输入IPv6';
-            case 'id': return '请输入ID';
-            default: return '请输入';
+            case 'ip': return t('analysis.audit.placeholders.enterIp');
+            case 'ipv6': return t('analysis.audit.placeholders.enterIpv6');
+            case 'id': return t('analysis.audit.placeholders.enterId');
+            default: return t('analysis.audit.placeholders.enter');
         }
     };
 
@@ -61,10 +63,11 @@ const HostInput: React.FC<HostInputProps> = ({ value = { type: 'ip', value: '' }
 };
 
 const HostFilter: React.FC = () => {
+    const { t } = useTranslation();
     return (
         <Form.Item
             name="host"
-            label="主机"
+            label={t('analysis.audit.filters.host')}
             initialValue={{ type: 'ip', value: '' }}
         >
             <HostInput />

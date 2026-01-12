@@ -1,26 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Radio, Select, InputNumber, Tooltip } from 'antd';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { Modal, Form, Input, Radio, Select, InputNumber } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../../Types';
 import { ModalMode, ChartType } from '@/pages/Analysis/Types';
 import { X_AXIS_COUNT_MIN, X_AXIS_COUNT_MAX, X_AXIS_COUNT_DEFAULT } from '../Charts/constants';
 import './style.css';
 
 const DEFAULT_WIDTH = 50;
-const ChartSourceLabels: Record<ChartSourceType, string> = {
-    [ChartSourceType.Custom]: '自定义',
-    [ChartSourceType.Builtin]: '内置'
-};
-const SOURCE_OPTIONS = [
-    {
-        value: ChartSourceType.Custom,
-        label: ChartSourceLabels[ChartSourceType.Custom],
-    },
-    {
-        value: ChartSourceType.Builtin,
-        label: ChartSourceLabels[ChartSourceType.Builtin],
-    },
-];
 
 interface BuiltInOption {
     value: number;
@@ -57,9 +43,21 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
     onClose,
     onSubmit,
 }) => {
+    const { t } = useTranslation();
     const [form] = Form.useForm();
     const [source, setSource] = useState<ChartSourceType>(ChartSourceType.Custom);
     const [chartType, setChartType] = useState<ChartType>(ChartType.Pie);
+
+    const SOURCE_OPTIONS = [
+        {
+            value: ChartSourceType.Custom,
+            label: t('analysis.statistics.chart.source.custom'),
+        },
+        {
+            value: ChartSourceType.Builtin,
+            label: t('analysis.statistics.chart.source.builtin'),
+        },
+    ];
 
     useEffect(() => {
         if (visible) {
@@ -149,8 +147,10 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
 
     const dialogTitle =
         mode === ModalMode.Add
-            ? `新增${type === 'host' ? '主机' : '实例'}统计图表`
-            : `编辑【${editData?.name}】`;
+            ? type === 'host' 
+                ? t('analysis.statistics.modal.addHostChart')
+                : t('analysis.statistics.modal.addInstanceChart')
+            : t('analysis.statistics.modal.editChart', { name: editData?.name });
 
     return (
         <Modal
@@ -159,8 +159,8 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
             onOk={handleSubmit}
             onCancel={handleCancel}
             width={600}
-            okText="提交"
-            cancelText="取消"
+            okText={t('analysis.statistics.modal.submit')}
+            cancelText={t('analysis.statistics.modal.cancel')}
             className="statistics-dialog"
         >
             <Form
@@ -181,7 +181,7 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                    Always visible. Disabled in Edit mode. */}
                 <Form.Item
                     name="source"
-                    label="图表来源"
+                    label={t('analysis.statistics.form.chartSource')}
                 >
                     <Radio.Group
                         disabled={visibleFields.isEdit}
@@ -197,11 +197,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.builtInChartSelect && (
                     <Form.Item
                         name="builtInChart"
-                        label="选择图表"
-                        rules={[{ required: true, message: '该字段是必填项' }]}
+                        label={t('analysis.statistics.form.selectChart')}
+                        rules={[{ required: true, message: t('analysis.statistics.form.required') }]}
                     >
                         <Select
-                            placeholder="请选择"
+                            placeholder={t('analysis.statistics.form.pleaseSelect')}
                             options={builtInOptions}
                             onChange={handleBuiltInChartSelect}
                         />
@@ -216,11 +216,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.nameInput && (
                     <Form.Item
                         name="name"
-                        label="图表名称"
-                        rules={[{ required: true, message: '该字段是必填项' }]}
+                        label={t('analysis.statistics.form.chartName')}
+                        rules={[{ required: true, message: t('analysis.statistics.form.required') }]}
                     >
                         <Input
-                            placeholder="请输入图表名称"
+                            placeholder={t('analysis.statistics.form.enterChartName')}
                             disabled={visibleFields.isEdit}
                         />
                     </Form.Item>
@@ -233,11 +233,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.statObjectSelect && (
                     <Form.Item
                         name="statisticsObject"
-                        label="统计对象"
-                        rules={[{ required: true, message: '该字段是必填项' }]}
+                        label={t('analysis.statistics.form.statisticsObject')}
+                        rules={[{ required: true, message: t('analysis.statistics.form.required') }]}
                     >
                         <Select
-                            placeholder="请选择"
+                            placeholder={t('analysis.statistics.form.pleaseSelect')}
                             options={statObjOptions}
                         />
                     </Form.Item>
@@ -250,11 +250,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.statDimensionSelect && (
                     <Form.Item
                         name="statisticsDimension"
-                        label="统计维度"
-                        rules={[{ required: true, message: '该字段是必填项' }]}
+                        label={t('analysis.statistics.form.statisticsDimension')}
+                        rules={[{ required: true, message: t('analysis.statistics.form.required') }]}
                     >
                         <Select
-                            placeholder="请选择"
+                            placeholder={t('analysis.statistics.form.pleaseSelect')}
                             options={statDimsOptions}
                         />
                     </Form.Item>
@@ -267,11 +267,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.chartTypeSelect && (
                     <Form.Item
                         name="chartType"
-                        label="图表类型"
+                        label={t('analysis.statistics.form.chartType')}
                     >
                         <Radio.Group onChange={handleChartTypeChange}>
-                            <Radio value={ChartType.Pie}>饼图</Radio>
-                            <Radio value={ChartType.Bar}>柱状图</Radio>
+                            <Radio value={ChartType.Pie}>{t('analysis.statistics.chart.type.pie')}</Radio>
+                            <Radio value={ChartType.Bar}>{t('analysis.statistics.chart.type.bar')}</Radio>
                         </Radio.Group>
                     </Form.Item>
                 )}
@@ -280,11 +280,11 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                    Always visible. */}
                 <Form.Item
                     name="width"
-                    label="图表宽度"
+                    label={t('analysis.statistics.form.chartWidth')}
                 >
                     <Radio.Group>
-                        <Radio value={50}>50%</Radio>
-                        <Radio value={100}>100%</Radio>
+                        <Radio value={50}>{t('analysis.statistics.chart.width.half')}</Radio>
+                        <Radio value={100}>{t('analysis.statistics.chart.width.full')}</Radio>
                     </Radio.Group>
                 </Form.Item>
 
@@ -295,13 +295,13 @@ const ChartEditorModal: React.FC<EditorModalProps> = ({
                 {visibleFields.xAxisCountInput && (
                     <Form.Item
                         name="xAxisCount"
-                        label="横轴坐标数量"
+                        label={t('analysis.statistics.form.xAxisCount')}
                     >
                         <InputNumber
                             min={X_AXIS_COUNT_MIN}
                             max={maxXAxisCount || X_AXIS_COUNT_MAX}
                             style={{ width: '100%' }}
-                            placeholder="请输入"
+                            placeholder={t('analysis.statistics.form.pleaseEnter')}
                         />
                     </Form.Item>
                 )}

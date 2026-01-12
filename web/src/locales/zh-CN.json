@@ -50,6 +50,7 @@
       "businessSelector": {
         "createBusiness": "新建业务",
         "placeholder": "请选择业务或业务集",
+        "selectBusiness": "请选择业务",
         "businessGroup": "业务",
         "businessSetGroup": "业务集"
       },
@@ -1168,5 +1169,161 @@
     "title": "404",
     "message": "抱歉，您访问的页面不存在。",
     "backToHome": "返回首页"
+  },
+  "analysis": {
+    "audit": {
+      "tabs": {
+        "host": "主机",
+        "business": "业务",
+        "resource": "资源"
+      },
+      "filters": {
+        "business": "业务",
+        "operationTarget": "操作对象",
+        "action": "动作",
+        "time": "时间",
+        "account": "账号",
+        "instance": "实例",
+        "host": "主机"
+      },
+      "columns": {
+        "object": "操作对象",
+        "action": "动作",
+        "business": "所属业务",
+        "instance": "实例",
+        "description": "操作描述",
+        "time": "时间",
+        "account": "操作账号",
+        "attribute": "属性",
+        "before": "变更前",
+        "after": "变更后"
+      },
+      "buttons": {
+        "search": "查询",
+        "reset": "清空",
+        "expand": "展开",
+        "collapse": "收起"
+      },
+      "placeholders": {
+        "selectOperationTarget": "请选择操作对象",
+        "selectOperationTargetFirst": "请先选择操作对象",
+        "selectAction": "请选择动作",
+        "selectStartDate": "请选择开始日期",
+        "selectEndDate": "请选择结束日期",
+        "enterAccount": "请输入账号",
+        "enterId": "请输入ID",
+        "enterName": "请输入名称",
+        "enterIp": "请输入IP",
+        "enterIpv6": "请输入IPv6",
+        "enter": "请输入"
+      },
+      "operationTargets": {
+        "module": "模块",
+        "cluster": "集群",
+        "node": "节点",
+        "serviceInstance": "服务实例",
+        "dynamicGroup": "动态分组",
+        "business": "业务",
+        "project": "项目"
+      },
+      "actions": {
+        "create": "新增",
+        "update": "修改",
+        "delete": "删除",
+        "archive": "归档",
+        "restore": "恢复",
+        "assignToBusiness": "分配到业务",
+        "returnToPool": "归还到资源池",
+        "transferModule": "转移模块"
+      },
+      "accountFilter": {
+        "include": "包含",
+        "exclude": "不包含"
+      },
+      "instanceFilter": {
+        "name": "名称",
+        "id": "ID",
+        "fuzzy": "模糊"
+      },
+      "detail": {
+        "title": "操作详情",
+        "business": "所属业务",
+        "object": "操作对象",
+        "action": "动作",
+        "modelType": "模型类型",
+        "instance": "操作实例",
+        "description": "操作描述",
+        "time": "操作时间",
+        "account": "操作账号"
+      }
+    },
+    "statistics": {
+      "overview": {
+        "businessTotal": "业务总数",
+        "hostTotal": "主机总数",
+        "modelTotal": "模型总数",
+        "instanceTotal": "实例总数",
+        "instanceTooltip": "不包含业务、主机模型及实例"
+      },
+      "host": {
+        "title": "主机统计"
+      },
+      "instance": {
+        "title": "实例统计"
+      },
+      "chart": {
+        "source": {
+          "custom": "自定义",
+          "builtin": "内置"
+        },
+        "type": {
+          "pie": "饼图",
+          "bar": "柱状图",
+          "line": "折线图"
+        },
+        "width": {
+          "half": "50%",
+          "full": "100%"
+        },
+        "loading": "加载中...",
+        "noData": "暂无数据",
+        "startDate": "开始日期",
+        "endDate": "结束日期"
+      },
+      "modal": {
+        "addHostChart": "新增主机统计图表",
+        "addInstanceChart": "新增实例统计图表",
+        "editChart": "编辑【{{name}}】",
+        "submit": "提交",
+        "cancel": "取消"
+      },
+      "form": {
+        "chartSource": "图表来源",
+        "selectChart": "选择图表",
+        "chartName": "图表名称",
+        "statisticsObject": "统计对象",
+        "statisticsDimension": "统计维度",
+        "chartType": "图表类型",
+        "chartWidth": "图表宽度",
+        "xAxisCount": "横轴坐标数量",
+        "required": "该字段是必填项",
+        "enterChartName": "请输入图表名称",
+        "pleaseSelect": "请选择",
+        "pleaseEnter": "请输入"
+      },
+      "container": {
+        "moveUpDisabled": "已置顶，无法上移",
+        "moveDownDisabled": "已置底，无法下移"
+      },
+      "messages": {
+        "deleteSuccess": "删除成功",
+        "addSuccess": "添加成功",
+        "editSuccess": "编辑成功"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除",
+        "deleteContent": "确定要删除该图表吗？"
+      }
+    }
   }
 }

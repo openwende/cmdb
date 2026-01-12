@@ -1,10 +1,11 @@
 import React, { useMemo } from 'react';
 import { Form, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import {
     AUDIT_TAB_KEYS,
-    COMMON_ACTIONS,
-    BUSINESS_ACTIONS,
-    HOST_ACTIONS,
+    getCommonActions,
+    getBusinessActions,
+    getHostActions,
 } from '@/pages/Analysis/constants';
 import { AuditTabKey } from '@/pages/Analysis/Types';
 
@@ -15,6 +16,7 @@ export interface OperationActionProps {
 }
 
 const OperationAction: React.FC<OperationActionProps> = ({ tab }) => {
+    const { t } = useTranslation();
     // Use Form.useWatch to monitor operationTarget
     const form = Form.useFormInstance();
     const operationTarget = Form.useWatch(['operationTarget'], form);
@@ -22,29 +24,29 @@ const OperationAction: React.FC<OperationActionProps> = ({ tab }) => {
     const actionOptions = useMemo(() => {
         switch (tab) {
             case AUDIT_TAB_KEYS.HOST:
-                return HOST_ACTIONS;
+                return getHostActions(t);
             case AUDIT_TAB_KEYS.BUSINESS:
-                return COMMON_ACTIONS;
+                return getCommonActions(t);
             case AUDIT_TAB_KEYS.RESOURCE:
                 // Select actions based on operation target
                 if (operationTarget === 'business') {
-                    return BUSINESS_ACTIONS;
+                    return getBusinessActions(t);
                 }
-                return COMMON_ACTIONS;
+                return getCommonActions(t);
             default:
-                return COMMON_ACTIONS;
+                return getCommonActions(t);
         }
-    }, [tab, operationTarget]);
+    }, [tab, operationTarget, t]);
 
     return (
         <Form.Item
             name="action"
-            label="动作"
+            label={t('analysis.audit.filters.action')}
         >
             <Select
                 mode="multiple"
                 allowClear
-                placeholder={!operationTarget ? "请先选择操作对象" : "请选择动作"}
+                placeholder={!operationTarget ? t('analysis.audit.placeholders.selectOperationTargetFirst') : t('analysis.audit.placeholders.selectAction')}
                 disabled={tab !== AUDIT_TAB_KEYS.HOST && !operationTarget}
             >
                 {actionOptions.map(option => (

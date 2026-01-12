@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Select, Input, Checkbox, Space } from 'antd';
-import { INSTANCE_FILTER_OPTIONS } from '@/pages/Analysis/constants';
+import { useTranslation } from 'react-i18next';
+import { getInstanceFilterOptions } from '@/pages/Analysis/constants';
 import './style.css';
 
 const { Option } = Select;
@@ -24,6 +25,7 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
     },
     onChange
 }) => {
+    const { t } = useTranslation();
     const handleTypeChange = (type: string) => {
         onChange?.({ ...value, type });
     };
@@ -36,6 +38,8 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
         onChange?.({ ...value, fuzzy: e.target.checked });
     };
 
+    const instanceFilterOptions = getInstanceFilterOptions(t);
+
     return (
         <Space className="instance-space">
             <Space.Compact className="instance-compact">
@@ -44,7 +48,7 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
                     onChange={handleTypeChange}
                     className="instance-select"
                 >
-                    {INSTANCE_FILTER_OPTIONS.map(option => (
+                    {instanceFilterOptions.map(option => (
                         <Option key={option.value} value={option.value}>
                             {option.label}
                         </Option>
@@ -54,7 +58,7 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
                     value={value.value}
                     onChange={handleValueChange}
                     className="instance-input"
-                    placeholder={value.type === 'id' ? '请输入ID' : '请输入名称'}
+                    placeholder={value.type === 'id' ? t('analysis.audit.placeholders.enterId') : t('analysis.audit.placeholders.enterName')}
                 />
             </Space.Compact>
             <Checkbox
@@ -62,17 +66,18 @@ const InstanceInput: React.FC<InstanceInputProps> = ({
                 onChange={handleFuzzyChange}
                 className="instance-checkbox"
             >
-                模糊
+                {t('analysis.audit.instanceFilter.fuzzy')}
             </Checkbox>
         </Space>
     );
 };
 
 const InstanceFilter: React.FC = () => {
+    const { t } = useTranslation();
     return (
         <Form.Item
             name="instance"
-            label="实例"
+            label={t('analysis.audit.filters.instance')}
             initialValue={{ type: 'name', value: '', fuzzy: false }}
         >
             <InstanceInput />

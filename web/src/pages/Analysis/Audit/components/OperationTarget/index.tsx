@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { Form, Select } from 'antd';
+import { useTranslation } from 'react-i18next';
 import {
     AUDIT_TAB_KEYS,
-    BUSINESS_OPERATION_TARGETS,
-    RESOURCE_OPERATION_TARGETS,
+    getBusinessOperationTargets,
+    getResourceOperationTargets,
 } from '@/pages/Analysis/constants';
 import { AuditTabKey } from '@/pages/Analysis/Types';
 
@@ -14,18 +15,19 @@ export interface OperationTargetProps {
 }
 
 const OperationTarget: React.FC<OperationTargetProps> = ({ tab }) => {
+    const { t } = useTranslation();
     const form = Form.useFormInstance();
     
     const operationTargets = useMemo(() => {
         switch (tab) {
             case AUDIT_TAB_KEYS.BUSINESS:
-                return BUSINESS_OPERATION_TARGETS;
+                return getBusinessOperationTargets(t);
             case AUDIT_TAB_KEYS.RESOURCE:
-                return RESOURCE_OPERATION_TARGETS;
+                return getResourceOperationTargets(t);
             default:
                 return [];
         }
-    }, [tab]);
+    }, [tab, t]);
 
     // If the tab is HOST, do not render the operation target selector
     if (tab === AUDIT_TAB_KEYS.HOST) {
@@ -35,10 +37,10 @@ const OperationTarget: React.FC<OperationTargetProps> = ({ tab }) => {
     return (
         <Form.Item
             name="operationTarget"
-            label="操作对象"
+            label={t('analysis.audit.filters.operationTarget')}
         >
             <Select
-                placeholder="请选择操作对象"
+                placeholder={t('analysis.audit.placeholders.selectOperationTarget')}
                 allowClear
                 onChange={() => {
                     // Reset action when operation target changes

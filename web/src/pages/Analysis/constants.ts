@@ -5,22 +5,46 @@ export const AUDIT_TAB_KEYS = {
   RESOURCE: 'resource',
 } as const;
 
-// Operation target options for business tab
-export const BUSINESS_OPERATION_TARGETS = [
-  { label: '模块', value: 'module' },
-  { label: '集群', value: 'cluster' },
-  { label: '节点', value: 'node' },
-  { label: '服务实例', value: 'service_instance' },
-  { label: '动态分组', value: 'dynamic_group' },
+// Operation target options for business tab - returns array with translated labels
+export const getBusinessOperationTargets = (t: (key: string) => string) => [
+  { label: t('analysis.audit.operationTargets.module'), value: 'module' },
+  { label: t('analysis.audit.operationTargets.cluster'), value: 'cluster' },
+  { label: t('analysis.audit.operationTargets.node'), value: 'node' },
+  { label: t('analysis.audit.operationTargets.serviceInstance'), value: 'service_instance' },
+  { label: t('analysis.audit.operationTargets.dynamicGroup'), value: 'dynamic_group' },
 ];
 
-// Operation target options for resource tab
-export const RESOURCE_OPERATION_TARGETS = [
-  { label: '业务', value: 'business' },
-  { label: '项目', value: 'project' },
+// Operation target options for resource tab - returns array with translated labels
+export const getResourceOperationTargets = (t: (key: string) => string) => [
+  { label: t('analysis.audit.operationTargets.business'), value: 'business' },
+  { label: t('analysis.audit.operationTargets.project'), value: 'project' },
 ];
 
-// Action options
+// Action options - returns array with translated labels
+export const getCommonActions = (t: (key: string) => string) => [
+  { label: t('analysis.audit.actions.create'), value: 'create' },
+  { label: t('analysis.audit.actions.update'), value: 'update' },
+  { label: t('analysis.audit.actions.delete'), value: 'delete' },
+];
+export const getBusinessActions = (t: (key: string) => string) => {
+  const common = getCommonActions(t);
+  return [
+    common[0],
+    common[1],
+    { label: t('analysis.audit.actions.archive'), value: 'archive' },
+    { label: t('analysis.audit.actions.restore'), value: 'restore' },
+  ];
+};
+export const getHostActions = (t: (key: string) => string) => {
+  const common = getCommonActions(t);
+  return [
+    ...common,
+    { label: t('analysis.audit.actions.assignToBusiness'), value: 'assign_to_business' },
+    { label: t('analysis.audit.actions.returnToPool'), value: 'return_to_pool' },
+    { label: t('analysis.audit.actions.transferModule'), value: 'transfer_module' },
+  ];
+};
+
 export const COMMON_ACTIONS = [
   { label: '新增', value: 'create' },
   { label: '修改', value: 'update' },
@@ -49,16 +73,16 @@ export const ACTION_LABELS = [
   return acc;
 }, {} as Record<string, string>);
 
-// Account filter options
-export const ACCOUNT_FILTER_OPTIONS = [
-  { label: '包含', value: 'include' },
-  { label: '不包含', value: 'exclude' },
+// Account filter options - returns array with translated labels
+export const getAccountFilterOptions = (t: (key: string) => string) => [
+  { label: t('analysis.audit.accountFilter.include'), value: 'include' },
+  { label: t('analysis.audit.accountFilter.exclude'), value: 'exclude' },
 ];
 
-// Instance filter options
-export const INSTANCE_FILTER_OPTIONS = [
-  { label: '名称', value: 'name' },
-  { label: 'ID', value: 'id' },
+// Instance filter options - returns array with translated labels
+export const getInstanceFilterOptions = (t: (key: string) => string) => [
+  { label: t('analysis.audit.instanceFilter.name'), value: 'name' },
+  { label: t('analysis.audit.instanceFilter.id'), value: 'id' },
 ];
 
 // Statistics dialog modes

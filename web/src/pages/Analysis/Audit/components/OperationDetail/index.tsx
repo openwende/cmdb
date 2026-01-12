@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Drawer, Descriptions, Table } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
 import { dynamicGroupCondition } from '@/mock/business';
 import type { OperationDetail } from '@/pages/Analysis/Types';
@@ -24,6 +25,7 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
     record,
     onClose,
 }) => {
+    const { t } = useTranslation();
     const [detailList, setDetailList] = useState<OperationDetail | null>(null);
     const [propertyList, setPropertyList] = useState<PropertyItem[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -85,7 +87,7 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
     const generateColumns = (): ColumnsType<PropertyItem> => {
         const columns: ColumnsType<PropertyItem> = [
             {
-                title: '属性',
+                title: t('analysis.audit.columns.attribute'),
                 dataIndex: 'propertyName',
                 key: 'propertyName',
             }
@@ -96,14 +98,14 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
 
             if (preData !== null) {
                 columns.push({
-                    title: '变更前',
+                    title: t('analysis.audit.columns.before'),
                     dataIndex: 'before',
                     key: 'before',
                 });
             }
             if (curData !== null) {
                 columns.push({
-                    title: '变更后',
+                    title: t('analysis.audit.columns.after'),
                     dataIndex: 'after',
                     key: 'after',
                 });
@@ -132,49 +134,49 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
     const descriptionItems = [
         {
             key: 'business',
-            label: '所属业务',
+            label: t('analysis.audit.detail.business'),
             children: detailList?.business || '--',
         },
         {
             key: 'object',
-            label: '操作对象',
+            label: t('analysis.audit.detail.object'),
             children: detailList?.object || '--',
         },
         {
             key: 'action',
-            label: '动作',
+            label: t('analysis.audit.detail.action'),
             children: detailList?.action || '--',
         },
         {
             key: 'modelType',
-            label: '模型类型',
+            label: t('analysis.audit.detail.modelType'),
             children: detailList?.modelType || '--',
         },
         {
             key: 'instance',
-            label: '操作实例',
+            label: t('analysis.audit.detail.instance'),
             children: detailList?.instance || '--',
         },
         {
             key: 'description',
-            label: '操作描述',
+            label: t('analysis.audit.detail.description'),
             children: detailList?.description || '--',
         },
         {
             key: 'time',
-            label: '操作时间',
+            label: t('analysis.audit.detail.time'),
             children: detailList?.time || '--',
         },
         {
             key: 'account',
-            label: '操作账号',
+            label: t('analysis.audit.detail.account'),
             children: detailList?.account || '--',
         },
     ];
 
     return (
         <Drawer
-            title="操作详情"
+            title={t('analysis.audit.detail.title')}
             placement="right"
             width={760}
             open={visible}
@@ -205,7 +207,7 @@ const OperationDetail: React.FC<OperationDetailProps> = ({
                         className="toggle-button"
                         onClick={() => setIsExpanded(!isExpanded)}
                     >
-                        {isExpanded ? '收起' : '展开'}
+                        {isExpanded ? t('analysis.audit.buttons.collapse') : t('analysis.audit.buttons.expand')}
                     </a>
                 </div>
             </>

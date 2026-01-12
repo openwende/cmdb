@@ -1,5 +1,6 @@
 import React from 'react';
 import { Card, Button, Tooltip, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { ArrowUpOutlined, ArrowDownOutlined, EditOutlined, CloseOutlined } from '@ant-design/icons';
 import './style.css';
 
@@ -36,6 +37,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
   loading = false,
   className,
 }) => {
+  const { t } = useTranslation();
 
   return (
     <Card className={`chart-container ${className || ''}`}>
@@ -44,7 +46,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
         <div className="chart-title-section">
           <h4 className="chart-title">{title}</h4>
           <div className="chart-actions">
-            <Tooltip title={!canMoveUp ? "已置顶，无法上移" : undefined}>
+            <Tooltip title={!canMoveUp ? t('analysis.statistics.container.moveUpDisabled') : undefined}>
               <Button
                 type="text"
                 size="small"
@@ -53,7 +55,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
                 onClick={() => onMoveUp?.(id)}
               />
             </Tooltip>
-            <Tooltip title={!canMoveDown ? "已置底，无法下移" : undefined}>
+            <Tooltip title={!canMoveDown ? t('analysis.statistics.container.moveDownDisabled') : undefined}>
               <Button
                 type="text"
                 size="small"

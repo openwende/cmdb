@@ -1,6 +1,7 @@
 import React from 'react';
 import { Form, Select, Input, Space } from 'antd';
-import { ACCOUNT_FILTER_OPTIONS } from '@/pages/Analysis/constants';
+import { useTranslation } from 'react-i18next';
+import { getAccountFilterOptions } from '@/pages/Analysis/constants';
 
 const { Option } = Select;
 
@@ -18,6 +19,7 @@ const AccountInput: React.FC<AccountInputProps> = ({
     value = { type: 'include', value: '' },
     onChange
 }) => {
+    const { t } = useTranslation();
     const handleTypeChange = (type: string) => {
         onChange?.({ ...value, type });
     };
@@ -26,6 +28,8 @@ const AccountInput: React.FC<AccountInputProps> = ({
         onChange?.({ ...value, value: e.target.value });
     };
 
+    const accountFilterOptions = getAccountFilterOptions(t);
+
     return (
         <Space.Compact style={{ width: '100%' }}>
             <Select
@@ -33,7 +37,7 @@ const AccountInput: React.FC<AccountInputProps> = ({
                 onChange={handleTypeChange}
                 style={{ width: 90 }}
             >
-                {ACCOUNT_FILTER_OPTIONS.map(option => (
+                {accountFilterOptions.map(option => (
                     <Option key={option.value} value={option.value}>
                         {option.label}
                     </Option>
@@ -42,7 +46,7 @@ const AccountInput: React.FC<AccountInputProps> = ({
             <Input
                 value={value.value}
                 onChange={handleValueChange}
-                placeholder="请输入账号"
+                placeholder={t('analysis.audit.placeholders.enterAccount')}
                 style={{ width: 'calc(100% - 90px)' }}
             />
         </Space.Compact>
@@ -50,10 +54,11 @@ const AccountInput: React.FC<AccountInputProps> = ({
 };
 
 const AccountFilter: React.FC = () => {
+    const { t } = useTranslation();
     return (
         <Form.Item
             name="account"
-            label="账号"
+            label={t('analysis.audit.filters.account')}
             initialValue={{ type: 'include', value: '' }}
         >
             <AccountInput />

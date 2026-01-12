@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Row, Col, Button, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import './style.css';
 
@@ -10,6 +11,7 @@ interface AuditFiltersProps {
 }
 
 const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, loading, children }) => {
+    const { t } = useTranslation();
     const [form] = Form.useForm();
 
     const handleSearch = () => {
@@ -34,10 +36,10 @@ const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, loading, children
         <Form.Item style={{ marginBottom: 0 }}>
             <Space>
                 <Button type="primary" onClick={handleSearch} loading={loading}>
-                    查询
+                    {t('analysis.audit.buttons.search')}
                 </Button>
                 <Button onClick={handleReset}>
-                    清空
+                    {t('analysis.audit.buttons.reset')}
                 </Button>
             </Space>
         </Form.Item>

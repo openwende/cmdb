@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Form } from 'antd';
+import { useTranslation } from 'react-i18next';
 import BusinessSelector from '@/components/common/BusinessSelector';
 import {
     AuditFilters,
@@ -16,6 +17,7 @@ import { mockOperationDetails } from '@/mock/Analysis';
 import { processDetailList } from '@/pages/Analysis/utils';
 
 const BusinessAudit: React.FC = () => {
+    const { t } = useTranslation();
     const [loading, setLoading] = useState(false);
     const [page, setPage] = useState(1);
     const [pageSize, setPageSize] = useState(20);
@@ -47,7 +49,7 @@ const BusinessAudit: React.FC = () => {
                 onSearch={handleSearch}
                 loading={loading}
             >
-                <Form.Item name="business" label="业务">
+                <Form.Item name="business" label={t('analysis.audit.filters.business')}>
                     <BusinessSelector allowClear />
                 </Form.Item>
                 <OperationTarget tab={AUDIT_TAB_KEYS.BUSINESS} />

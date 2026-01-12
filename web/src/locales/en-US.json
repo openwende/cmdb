@@ -50,6 +50,7 @@
       "businessSelector": {
         "createBusiness": "Create business",
         "placeholder": "Please select business or business set",
+        "selectBusiness": "Please select business",
         "businessGroup": "Business",
         "businessSetGroup": "Business set"
       },
@@ -1164,5 +1165,161 @@
     "title": "404",
     "message": "Sorry, the page you visited does not exist.",
     "backToHome": "Back to home"
+  },
+  "analysis": {
+    "audit": {
+      "tabs": {
+        "host": "Host",
+        "business": "Business",
+        "resource": "Resource"
+      },
+      "filters": {
+        "business": "Business",
+        "operationTarget": "Target",
+        "action": "Action",
+        "time": "Time",
+        "account": "Account",
+        "instance": "Instance",
+        "host": "Host"
+      },
+      "columns": {
+        "object": "Target",
+        "action": "Action",
+        "business": "Business",
+        "instance": "Instance",
+        "description": "Description",
+        "time": "Time",
+        "account": "Account",
+        "attribute": "Attribute",
+        "before": "Before",
+        "after": "After"
+      },
+      "buttons": {
+        "search": "Search",
+        "reset": "Reset",
+        "expand": "Expand",
+        "collapse": "Collapse"
+      },
+      "placeholders": {
+        "selectOperationTarget": "Please select operation target",
+        "selectOperationTargetFirst": "Please select operation target first",
+        "selectAction": "Please select action",
+        "selectStartDate": "Please select start date",
+        "selectEndDate": "Please select end date",
+        "enterAccount": "Please enter account",
+        "enterId": "Please enter ID",
+        "enterName": "Please enter name",
+        "enterIp": "Please enter IP",
+        "enterIpv6": "Please enter IPv6",
+        "enter": "Please enter"
+      },
+      "operationTargets": {
+        "module": "Module",
+        "cluster": "Cluster",
+        "node": "Node",
+        "serviceInstance": "Service Instance",
+        "dynamicGroup": "Dynamic Group",
+        "business": "Business",
+        "project": "Project"
+      },
+      "actions": {
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete",
+        "archive": "Archive",
+        "restore": "Restore",
+        "assignToBusiness": "Assign to Business",
+        "returnToPool": "Return to Pool",
+        "transferModule": "Transfer Module"
+      },
+      "accountFilter": {
+        "include": "Include",
+        "exclude": "Exclude"
+      },
+      "instanceFilter": {
+        "name": "Name",
+        "id": "ID",
+        "fuzzy": "Fuzzy"
+      },
+      "detail": {
+        "title": "Operation Details",
+        "business": "Business",
+        "object": "Target",
+        "action": "Action",
+        "modelType": "Model Type",
+        "instance": "Operation Instance",
+        "description": "Description",
+        "time": "Operation Time",
+        "account": "Account"
+      }
+    },
+    "statistics": {
+      "overview": {
+        "businessTotal": "Total Business",
+        "hostTotal": "Total Hosts",
+        "modelTotal": "Total Models",
+        "instanceTotal": "Total Instances",
+        "instanceTooltip": "Excluding business and host models and instances"
+      },
+      "host": {
+        "title": "Host Statistics"
+      },
+      "instance": {
+        "title": "Instance Statistics"
+      },
+      "chart": {
+        "source": {
+          "custom": "Custom",
+          "builtin": "Built-in"
+        },
+        "type": {
+          "pie": "Pie Chart",
+          "bar": "Bar Chart",
+          "line": "Line Chart"
+        },
+        "width": {
+          "half": "50%",
+          "full": "100%"
+        },
+        "loading": "Loading...",
+        "noData": "No data",
+        "startDate": "Start Date",
+        "endDate": "End Date"
+      },
+      "modal": {
+        "addHostChart": "Add Host Statistics Chart",
+        "addInstanceChart": "Add Instance Statistics Chart",
+        "editChart": "Edit [{{name}}]",
+        "submit": "Submit",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "chartSource": "Chart Source",
+        "selectChart": "Select Chart",
+        "chartName": "Chart Name",
+        "statisticsObject": "Statistics Object",
+        "statisticsDimension": "Statistics Dimension",
+        "chartType": "Chart Type",
+        "chartWidth": "Chart Width",
+        "xAxisCount": "X-Axis Count",
+        "required": "This field is required",
+        "enterChartName": "Please enter chart name",
+        "pleaseSelect": "Please select",
+        "pleaseEnter": "Please enter"
+      },
+      "container": {
+        "moveUpDisabled": "Already at top, cannot move up",
+        "moveDownDisabled": "Already at bottom, cannot move down"
+      },
+      "messages": {
+        "deleteSuccess": "Deleted successfully",
+        "addSuccess": "Added successfully",
+        "editSuccess": "Edited successfully"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm Delete",
+        "deleteContent": "Are you sure you want to delete this chart?"
+      }
+    }
   }
 }
