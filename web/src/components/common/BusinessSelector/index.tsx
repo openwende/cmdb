@@ -39,7 +39,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
       value={value}
       onChange={handleChange}
       placeholder={t('common.components.businessSelector.selectBusiness')}
-      style={{ width: "100%" }}
+      style={{ width: '100%' }}
       allowClear={allowClear}
       showSearch={showSearch}
       disabled={disabled}
@@ -47,7 +47,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
       className={className}
       filterOption={showSearch ? filterOption : false}
     >
-      {bizListMock.map(biz => (
+      {bizListMock.map((biz) => (
         <Option key={biz.bk_biz_id} value={biz.bk_biz_id}>
           {`[${biz.bk_biz_id}] ${biz.bk_biz_name}`}
         </Option>

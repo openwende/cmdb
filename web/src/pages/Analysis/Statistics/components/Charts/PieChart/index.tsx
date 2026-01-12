@@ -49,7 +49,7 @@ const PieChart: React.FC<PieChartProps> = ({
       .encode('color', 'type')
       .legend('color', {
         position: 'right',
-        layout: { justifyContent: 'center' }
+        layout: { justifyContent: 'center' },
       })
       .label({
         position: 'outside',

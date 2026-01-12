@@ -8,7 +8,7 @@ export const usePropertyInfo = (property: Property) => {
       bk_obj_id: objId,
       bk_property_id: propertyId,
       bk_property_type: propertyType,
-      option: options
+      option: options,
     } = property;
 
     const isSetName = objId === 'set' && propertyId === 'bk_set_name';

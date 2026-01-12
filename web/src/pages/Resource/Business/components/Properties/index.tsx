@@ -44,17 +44,19 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
 
     return {
       ...businessData,
-      lifecycle: LIFECYCLE_OPTIONS.find(opt => opt.value === businessData.lifecycle)?.label
-        ? t(LIFECYCLE_OPTIONS.find(opt => opt.value === businessData.lifecycle)!.label)
+      lifecycle: LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle)?.label
+        ? t(LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle)!.label)
         : businessData.lifecycle,
-      language: LANGUAGE_OPTIONS.find(opt => opt.value === businessData.language)?.label ||businessData.language,
+      language:
+        LANGUAGE_OPTIONS.find((opt) => opt.value === businessData.language)?.label ||
+        businessData.language,
       created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
       updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
       maintainers: businessData.maintainers.join(', ') || '',
       productManagers: businessData.productManagers?.join(', ') || '',
       testers: businessData.testers?.join(', ') || '',
       developers: businessData.developers?.join(', ') || '',
-      operators: businessData.operators?.join(', ') || ''
+      operators: businessData.operators?.join(', ') || '',
     };
   }, [businessData, t]);
 
@@ -71,7 +73,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       productManagers: businessData.productManagers || [],
       testers: businessData.testers || [],
       developers: businessData.developers || [],
-      operators: businessData.operators || []
+      operators: businessData.operators || [],
     };
 
     setEditValues(editData);
@@ -196,25 +198,15 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
         <div className="actions-divider"></div>
         <div className="actions-content">
           {!isEditing ? (
-            <Button
-              type="primary"
-              onClick={handleEdit}
-            >
+            <Button type="primary" onClick={handleEdit}>
               编辑
             </Button>
           ) : (
             <div className="editing-actions">
-              <Button
-                type="primary"
-                onClick={handleSave}
-              >
+              <Button type="primary" onClick={handleSave}>
                 保存
               </Button>
-              <Button
-                onClick={handleCancel}
-              >
-                取消
-              </Button>
+              <Button onClick={handleCancel}>取消</Button>
             </div>
           )}
         </div>

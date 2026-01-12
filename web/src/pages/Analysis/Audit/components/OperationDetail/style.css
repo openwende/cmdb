@@ -1,15 +1,15 @@
 .operation-details-drawer {
-    .description-list {
-        margin-bottom: 16px;
-    }
+  .description-list {
+    margin-bottom: 16px;
+  }
 
-    .details-toggle {
-        text-align: right;
-        margin-top: 8px;
+  .details-toggle {
+    text-align: right;
+    margin-top: 8px;
 
-        .toggle-button {
-            color: #1677ff;
-            cursor: pointer;
-        }
+    .toggle-button {
+      color: #1677ff;
+      cursor: pointer;
     }
+  }
 }

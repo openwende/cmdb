@@ -1,22 +1,22 @@
 .app-breadcrumb {
-    background-color: #fff;
-    overflow: hidden;
-    position: relative;
-    z-index: 100;
-    align-items: center;
-    background: #fff;
-    box-shadow: 0 2px 4px 0 #0000000f;
-    display: flex;
-    height: 53px;
-    flex-shrink: 0;
-    padding: 14px 20px;
-    font-size: 16px;
-    
-    .item-link {
-        color: #1677ff;
+  background-color: #fff;
+  overflow: hidden;
+  position: relative;
+  z-index: 100;
+  align-items: center;
+  background: #fff;
+  box-shadow: 0 2px 4px 0 #0000000f;
+  display: flex;
+  height: 53px;
+  flex-shrink: 0;
+  padding: 14px 20px;
+  font-size: 16px;
 
-        &:hover {
-            color: #1677ff;
-        }
+  .item-link {
+    color: #1677ff;
+
+    &:hover {
+      color: #1677ff;
     }
+  }
 }

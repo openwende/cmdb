@@ -20,7 +20,7 @@
 
 .properties-actions {
   margin-top: 24px;
-  
+
   .actions-divider {
     width: calc(100% - 32px);
     height: 1px;
@@ -28,7 +28,7 @@
     margin-bottom: 16px;
     margin-left: 16px;
   }
-  
+
   .actions-content {
     display: flex;
     justify-content: flex-start;

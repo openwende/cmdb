@@ -1,4 +1,4 @@
-import { CopyMenuItemKey, TransferMenuItemType } from "./Types";
+import { CopyMenuItemKey, TransferMenuItemType } from './Types';
 
 /**
  * "Copy" dropdown menu items
@@ -14,9 +14,15 @@ export const hostCopyMenuItems = [
     children: [
       { key: CopyMenuItemKey.CloudIdIPv4, label: 'business.topology.copyMenu.cloudIdIPv4' },
       { key: CopyMenuItemKey.CloudIdIPv6, label: 'business.topology.copyMenu.cloudIdIPv6' },
-      { key: CopyMenuItemKey.CloudIdIPIPv4First, label: 'business.topology.copyMenu.cloudIdIPIPv4First' },
-      { key: CopyMenuItemKey.CloudIdIPIPv6First, label: 'business.topology.copyMenu.cloudIdIPIPv6First' },
-    ]
+      {
+        key: CopyMenuItemKey.CloudIdIPIPv4First,
+        label: 'business.topology.copyMenu.cloudIdIPIPv4First',
+      },
+      {
+        key: CopyMenuItemKey.CloudIdIPIPv6First,
+        label: 'business.topology.copyMenu.cloudIdIPIPv6First',
+      },
+    ],
   },
   { key: CopyMenuItemKey.CloudRegion, label: 'business.topology.copyMenu.cloudRegion' },
   { key: CopyMenuItemKey.ModuleName, label: 'business.topology.copyMenu.moduleName' },
@@ -27,7 +33,7 @@ export const hostCopyMenuItems = [
  * Flattened list of copy keys, for easy inclusion checks
  */
 export const hostCopyKeys: CopyMenuItemKey[] = hostCopyMenuItems.flatMap((item: any) =>
-  item.children ? item.children.map((c: any) => c.key) : item.key
+  item.children ? item.children.map((c: any) => c.key) : item.key,
 ) as CopyMenuItemKey[];
 
 /**
@@ -36,27 +42,33 @@ export const hostCopyKeys: CopyMenuItemKey[] = hostCopyMenuItems.flatMap((item: 
  */
 export const transferBaseMenuItems = [
   { key: TransferMenuItemType.idlePool, label: 'business.topology.transferMenu.idlePool' },
-  { key: TransferMenuItemType.businessModule, label: 'business.topology.transferMenu.businessModule' },
+  {
+    key: TransferMenuItemType.businessModule,
+    label: 'business.topology.transferMenu.businessModule',
+  },
   { key: TransferMenuItemType.hostPool, label: 'business.topology.transferMenu.hostPool' },
-  { key: TransferMenuItemType.otherBusiness, label: 'business.topology.transferMenu.otherBusiness' },
+  {
+    key: TransferMenuItemType.otherBusiness,
+    label: 'business.topology.transferMenu.otherBusiness',
+  },
 ] as const;
 
 /**
  * Dynamic Group Constants
  */
 export const QUERY_OPERATOR = Object.freeze({
-  EQ: '$eq',          // Equals
-  NE: '$ne',          // Not Equals
-  IN: '$in',          // In
-  NIN: '$nin',        // Not In
-  LT: '$lt',          // Less Than
-  GT: '$gt',          // Greater Than
-  LTE: '$lte',        // Less Than or Equals
-  GTE: '$gte',        // Greater Than or Equals
-  RANGE: '$range',    // Range (constructed on the front-end, split into gte, lte on the back-end)
-  LIKE: '$regex',     // Fuzzy Match
-  CONTAINS: '$contains',     // Contains (case-insensitive)
-  CONTAINS_CS: '$contains_s' // Contains (case-sensitive)
+  EQ: '$eq', // Equals
+  NE: '$ne', // Not Equals
+  IN: '$in', // In
+  NIN: '$nin', // Not In
+  LT: '$lt', // Less Than
+  GT: '$gt', // Greater Than
+  LTE: '$lte', // Less Than or Equals
+  GTE: '$gte', // Greater Than or Equals
+  RANGE: '$range', // Range (constructed on the front-end, split into gte, lte on the back-end)
+  LIKE: '$regex', // Fuzzy Match
+  CONTAINS: '$contains', // Contains (case-insensitive)
+  CONTAINS_CS: '$contains_s', // Contains (case-sensitive)
 });
 export const QUERY_OPERATOR_SYMBOL = {
   [QUERY_OPERATOR.EQ]: '=',
@@ -71,7 +83,7 @@ export const QUERY_OPERATOR_SYMBOL = {
   [QUERY_OPERATOR.RANGE]: '≤ ≥',
   [QUERY_OPERATOR.CONTAINS]: 'contains',
   [QUERY_OPERATOR.CONTAINS_CS]: 'contains(CS)',
-}
+};
 /**
  * Query operator descriptions in Chinese
  * Note: For internationalization, use getQueryOperatorDesc() function from utils.ts instead
@@ -89,8 +101,8 @@ export const QUERY_OPERATOR_DESC = {
   [QUERY_OPERATOR.GTE]: '大于等于',
   [QUERY_OPERATOR.LIKE]: '模糊',
   [QUERY_OPERATOR.CONTAINS]: '匹配(大小写不敏感)',
-  [QUERY_OPERATOR.CONTAINS_CS]: '匹配(大小写敏感)'
-}
+  [QUERY_OPERATOR.CONTAINS_CS]: '匹配(大小写敏感)',
+};
 export const enum PROPERTY_TYPES {
   SINGLECHAR = 'singlechar',
   INT = 'int',
@@ -114,41 +126,41 @@ export const enum PROPERTY_TYPES {
   TOPOLOGY = 'topology',
   FOREIGNKEY = 'foreignkey',
   INNER_TABLE = 'innertable',
-  OBJNAME = 'objname'
+  OBJNAME = 'objname',
 }
 export enum BUILTIN_MODELS {
   BUSINESS_SET = 'bk_biz_set_obj',
   BUSINESS = 'biz',
   HOST = 'host',
   SET = 'set',
-  PROJECT = 'bk_project'
+  PROJECT = 'bk_project',
 }
 export const BUILTIN_MODEL_PROPERTY_KEYS = Object.freeze({
   [BUILTIN_MODELS.BUSINESS_SET]: {
     ID: 'bk_biz_set_id',
-    NAME: 'bk_biz_set_name'
+    NAME: 'bk_biz_set_name',
   },
   [BUILTIN_MODELS.BUSINESS]: {
     ID: 'bk_biz_id',
-    NAME: 'bk_biz_name'
+    NAME: 'bk_biz_name',
   },
   [BUILTIN_MODELS.HOST]: {
     ID: 'bk_host_id',
-    NAME: 'bk_host_name'
+    NAME: 'bk_host_name',
   },
   [BUILTIN_MODELS.PROJECT]: {
     ID: 'id',
-    NAME: 'bk_project_name'
-  }
-})
-export const availableModelIds = Object.freeze(['host', 'module', 'set'])
+    NAME: 'bk_project_name',
+  },
+});
+export const availableModelIds = Object.freeze(['host', 'module', 'set']);
 export const requestConfig = Object.freeze({
   mainline: Symbol('mainline'),
   property: Symbol('property'),
   details: Symbol('details'),
   create: Symbol('create'),
-  update: Symbol('update')
-})
+  update: Symbol('update'),
+});
 const { EQ, NE, IN, NIN, LTE, GTE, RANGE, LIKE } = QUERY_OPERATOR;
 export const DEFAULT_CONDITIONS_DATA = {
   [PROPERTY_TYPES.BOOL]: { operator: EQ, value: '' },
@@ -156,7 +168,7 @@ export const DEFAULT_CONDITIONS_DATA = {
   [PROPERTY_TYPES.FLOAT]: { operator: EQ, value: '' },
   [PROPERTY_TYPES.INT]: { operator: EQ, value: '' },
   [PROPERTY_TYPES.TIME]: { operator: RANGE, value: [] },
-  [PROPERTY_TYPES.SERVICE_TEMPLATE]: { operator: IN, value: [] }
+  [PROPERTY_TYPES.SERVICE_TEMPLATE]: { operator: IN, value: [] },
 };
 export const DEFAULT_OPERATOR_MAP = {
   [PROPERTY_TYPES.BOOL]: [EQ, NE],
@@ -178,5 +190,5 @@ export const DEFAULT_OPERATOR_MAP = {
   [PROPERTY_TYPES.SERVICE_TEMPLATE]: [IN],
   [PROPERTY_TYPES.ARRAY]: [IN, NIN, LIKE],
   [PROPERTY_TYPES.OBJECT]: [IN, NIN, LIKE],
-  [PROPERTY_TYPES.MAP]: [IN, NIN]
+  [PROPERTY_TYPES.MAP]: [IN, NIN],
 };

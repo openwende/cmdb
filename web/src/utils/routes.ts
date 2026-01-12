@@ -30,7 +30,10 @@ export const getBusinessSetTopologyPath = (id: number | string): string => {
  * @param isBusinessSet Whether it is a business set
  * @returns Corresponding topology page complete path
  */
-export const getEntityTopologyPath = (id: number | string, isBusinessSet: boolean = false): string => {
+export const getEntityTopologyPath = (
+  id: number | string,
+  isBusinessSet: boolean = false,
+): string => {
   return isBusinessSet ? getBusinessSetTopologyPath(id) : getBusinessTopologyPath(id);
 };
 
@@ -80,7 +83,7 @@ export const isBusinessRelatedPage = (pathname: string): boolean => {
 export const buildEntityPath = (
   pathSegments: string[],
   entityType: EntityRouteType,
-  itemPath: string
+  itemPath: string,
 ): string => {
   if (pathSegments.length >= 3) {
     const entityId = pathSegments[2];
@@ -96,7 +99,9 @@ export const buildEntityPath = (
  * @param pathname Current page path, uses window.location.pathname if not provided
  * @returns Object containing ID and type, or null if parsing fails
  */
-export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type: BusinessType } | null => {
+export const parseBusinessInfoFromUrl = (
+  pathname?: string,
+): { id: number; type: BusinessType } | null => {
   const path = pathname || window.location.pathname;
   const pathSegments = path.split('/');
 
@@ -107,7 +112,7 @@ export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type:
     if (id && !isNaN(Number(id))) {
       return {
         id: Number(id),
-        type: BusinessType.Business
+        type: BusinessType.Business,
       };
     }
   }
@@ -119,7 +124,7 @@ export const parseBusinessInfoFromUrl = (pathname?: string): { id: number; type:
     if (id && !isNaN(Number(id))) {
       return {
         id: Number(id),
-        type: BusinessType.BusinessSet
+        type: BusinessType.BusinessSet,
       };
     }
   }

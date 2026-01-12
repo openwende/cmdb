@@ -1,12 +1,12 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React from 'react';
+import { Outlet } from 'react-router-dom';
 
 const Analysis: React.FC = () => {
-    return (
-        <>
-            <Outlet />
-        </>
-    )
-}
+  return (
+    <>
+      <Outlet />
+    </>
+  );
+};
 
 export default Analysis;

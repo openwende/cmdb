@@ -32,14 +32,15 @@ const ObjUser: React.FC<FormComponentProps> = ({
       // await new Promise(resolve => setTimeout(resolve, 300));
 
       // Filter users based on search value (search both chinese and english names)
-      const filteredUsers = userListMock.filter(user =>
-        user.chinese_name.toLowerCase().includes(searchValue.toLowerCase()) ||
-        user.english_name.toLowerCase().includes(searchValue.toLowerCase())
+      const filteredUsers = userListMock.filter(
+        (user) =>
+          user.chinese_name.toLowerCase().includes(searchValue.toLowerCase()) ||
+          user.english_name.toLowerCase().includes(searchValue.toLowerCase()),
       );
 
-      const options = filteredUsers.map(user => ({
+      const options = filteredUsers.map((user) => ({
         label: user.chinese_name,
-        value: user.chinese_name
+        value: user.chinese_name,
       }));
 
       setSearchOptions(options);
@@ -64,9 +65,7 @@ const ObjUser: React.FC<FormComponentProps> = ({
       disabled={disabled}
       style={{ width: '100%' }}
       notFoundContent={
-        isSearching
-          ? <Spin size="small" />
-          : t('common.components.formComponents.noMatchPersonnel')
+        isSearching ? <Spin size="small" /> : t('common.components.formComponents.noMatchPersonnel')
       }
     />
   );

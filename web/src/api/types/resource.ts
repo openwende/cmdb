@@ -1,10 +1,10 @@
 /**
  * @description API types
  * Resource-related types
-*/
+ */
 /**
  * @description Business-related types
-*/
+ */
 export interface BusinessListParams {
   limit: number;
   offset: number;

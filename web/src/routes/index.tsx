@@ -1,7 +1,21 @@
 import React, { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
-import { NavigationItem, PrimaryNavKey, BusinessNavKey, BusinessSetNavKey, ResourceKey, AnalysisKey } from './Types';
-import { AppstoreOutlined, ContainerOutlined, DiffOutlined, BarChartOutlined, ProductOutlined, DatabaseOutlined } from '@ant-design/icons';
+import {
+  NavigationItem,
+  PrimaryNavKey,
+  BusinessNavKey,
+  BusinessSetNavKey,
+  ResourceKey,
+  AnalysisKey,
+} from './Types';
+import {
+  AppstoreOutlined,
+  ContainerOutlined,
+  DiffOutlined,
+  BarChartOutlined,
+  ProductOutlined,
+  DatabaseOutlined,
+} from '@ant-design/icons';
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
@@ -28,18 +42,19 @@ const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Wrap lazy-loaded components with Suspense
 const withSuspense = (Component: React.LazyExoticComponent<any>) => (
-  <Suspense fallback={
-    <div
-      style={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Spin size="large" />
-    </div>
-  }
+  <Suspense
+    fallback={
+      <div
+        style={{
+          height: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Spin size="large" />
+      </div>
+    }
   >
     <Component />
   </Suspense>
@@ -50,7 +65,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.home',
     key: PrimaryNavKey.Home,
     path: '/',
-    element: withSuspense(HomePage)
+    element: withSuspense(HomePage),
   },
   {
     name: 'routes.business',
@@ -69,16 +84,16 @@ export const routes: NavigationItem[] = [
             key: BusinessNavKey.TopologyView,
             element: withSuspense(TopologyView),
             index: true,
-            hideInMenu: true
+            hideInMenu: true,
           },
           {
             name: 'routes.transferHost',
             key: BusinessNavKey.TransferHost,
             path: 'transferHost',
             element: withSuspense(TransferHost),
-            hideInMenu: true
-          }
-        ]
+            hideInMenu: true,
+          },
+        ],
       },
       // {
       //   name: 'routes.serviceTemplate',
@@ -92,9 +107,9 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.DynamicGroup,
         path: 'dynamicGroup',
         element: withSuspense(DynamicGroup),
-        icon: <ProductOutlined />
-      }
-    ]
+        icon: <ProductOutlined />,
+      },
+    ],
   },
   {
     name: 'routes.businessSet',
@@ -109,8 +124,8 @@ export const routes: NavigationItem[] = [
         path: 'topology',
         element: withSuspense(BusinessTopology),
         icon: <ContainerOutlined />,
-      }
-    ]
+      },
+    ],
   },
   {
     name: 'routes.resource',
@@ -143,23 +158,23 @@ export const routes: NavigationItem[] = [
             key: ResourceKey.BusinessList,
             element: withSuspense(BusinessList),
             index: true,
-            hideInMenu: true
+            hideInMenu: true,
           },
           {
             name: 'routes.businessDetail',
             key: ResourceKey.BusinessDetail,
             path: 'businessDetail/:id',
             element: withSuspense(BusinessDetail),
-            hideInMenu: true
+            hideInMenu: true,
           },
           {
             name: 'routes.archivedBusiness',
             key: ResourceKey.ArchivedBusiness,
             path: 'archivedBusiness',
             element: withSuspense(ArchivedBusiness),
-            hideInMenu: true
+            hideInMenu: true,
           },
-        ]
+        ],
       },
       {
         name: 'routes.host',
@@ -172,18 +187,18 @@ export const routes: NavigationItem[] = [
             key: ResourceKey.HostView,
             element: withSuspense(ResourceHostView),
             index: true,
-            hideInMenu: true
+            hideInMenu: true,
           },
           {
             name: 'routes.deleteHistory',
             key: ResourceKey.DeleteHistory,
             path: 'deleteHistory',
             element: withSuspense(ResourceDelHistory),
-            hideInMenu: true
+            hideInMenu: true,
           },
-        ]
-      }
-    ]
+        ],
+      },
+    ],
   },
   {
     name: 'routes.analysis',
@@ -196,24 +211,24 @@ export const routes: NavigationItem[] = [
         key: AnalysisKey.Audit,
         path: 'audit',
         element: withSuspense(AuditLogs),
-        icon: <DiffOutlined />
+        icon: <DiffOutlined />,
       },
       {
         name: 'routes.operations',
         key: AnalysisKey.Statistics,
         path: 'statistics',
         element: withSuspense(Statistics),
-        icon: <BarChartOutlined />
-      }
-    ]
+        icon: <BarChartOutlined />,
+      },
+    ],
   },
   {
     name: 'routes.notFound',
     key: PrimaryNavKey.NotFound,
     path: '*',
     element: withSuspense(NotFoundPage),
-    hideInMenu: true
-  }
+    hideInMenu: true,
+  },
 ];
 
-export default routes; 
+export default routes;

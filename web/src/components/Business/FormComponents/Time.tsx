@@ -12,12 +12,7 @@ import './styles.css';
 const FORMAT = 'YYYY-MM-DD HH:mm:ss';
 const { RangePicker } = DatePicker;
 
-const Time: React.FC<FormComponentProps> = ({
-  value,
-  onChange,
-  placeholder,
-  disabled = false,
-}) => {
+const Time: React.FC<FormComponentProps> = ({ value, onChange, placeholder, disabled = false }) => {
   const handleChange = (_: any, dateStrings: [string, string]) => {
     if (dateStrings[0] && dateStrings[1]) {
       const startTime = dateStrings[0];
@@ -32,10 +27,7 @@ const Time: React.FC<FormComponentProps> = ({
     if (!value) return null;
     try {
       if (Array.isArray(value) && value.length === 2) {
-        return [
-          value[0] ? dayjs(value[0]) : null,
-          value[1] ? dayjs(value[1]) : null
-        ];
+        return [value[0] ? dayjs(value[0]) : null, value[1] ? dayjs(value[1]) : null];
       }
       return null;
     } catch (error) {

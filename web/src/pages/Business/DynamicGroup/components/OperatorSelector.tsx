@@ -25,7 +25,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
   property,
   value,
   disabled = false,
-  onChange
+  onChange,
 }) => {
   const [hoveredOption, setHoveredOption] = useState<string | null>(null);
   const { t } = useTranslation();
@@ -36,9 +36,9 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
     return operators.map((operator) => ({
       id: operator,
       name: QUERY_OPERATOR_SYMBOL[operator],
-      title: getQueryOperatorDesc(operator, t)
-    }))
-  }, [property, t])
+      title: getQueryOperatorDesc(operator, t),
+    }));
+  }, [property, t]);
 
   return (
     <Select
@@ -48,9 +48,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
       onChange={onChange}
       style={{ width: 120 }}
       optionLabelProp="name"
-      getPopupContainer={(triggerNode) => (
-        triggerNode.parentElement?.parentElement || document.body
-      )}
+      getPopupContainer={(triggerNode) => triggerNode.parentElement?.parentElement || document.body}
     >
       {options.map((operator: OperatorOption) => (
         <Select.Option
@@ -63,9 +61,7 @@ const OperatorSelector: React.FC<OperatorSelectorProps> = ({
           <span>
             {operator.name}
             {hoveredOption === operator.id && operator.title && (
-              <span className='operator-title'>
-                ({operator.title})
-              </span>
+              <span className="operator-title">({operator.title})</span>
             )}
           </span>
         </Select.Option>

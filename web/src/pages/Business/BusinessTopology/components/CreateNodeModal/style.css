@@ -1,17 +1,17 @@
 .create-modal {
-    .ant-modal-header {
-        margin-bottom: 24px;
-    }
+  .ant-modal-header {
+    margin-bottom: 24px;
+  }
 
-    .ant-form-item {
-        margin-bottom: 15px;
-    }
+  .ant-form-item {
+    margin-bottom: 15px;
+  }
 
-    .ant-modal-footer {
-        margin-top: 24px;
-    }
+  .ant-modal-footer {
+    margin-top: 24px;
+  }
 
-    .selected-tip {
-        margin-bottom: 15px;
-    }
+  .selected-tip {
+    margin-bottom: 15px;
+  }
 }

@@ -23,7 +23,7 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
   disabled = false,
   showModal = false,
   onChange,
-  onShowModal
+  onShowModal,
 }) => {
   const { t } = useTranslation();
 
@@ -31,13 +31,13 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
     {
       id: BUILTIN_MODELS.HOST,
       name: t('business.dynamicGroupForm.searchTarget.host.name'),
-      desc: t('business.dynamicGroupForm.searchTarget.host.desc')
+      desc: t('business.dynamicGroupForm.searchTarget.host.desc'),
     },
     {
       id: BUILTIN_MODELS.SET,
       name: t('business.dynamicGroupForm.searchTarget.set.name'),
-      desc: t('business.dynamicGroupForm.searchTarget.set.desc')
-    }
+      desc: t('business.dynamicGroupForm.searchTarget.set.desc'),
+    },
   ];
   const handleChange = (e: RadioChangeEvent) => {
     const newValue = e.target.value;
@@ -46,7 +46,7 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
     if (disabled) return;
 
     if (showModal) {
-      const item = list.find(item => item.id === newValue);
+      const item = list.find((item) => item.id === newValue);
       if (item?.id) onShowModal?.(item.id as BUILTIN_MODELS);
       return;
     }

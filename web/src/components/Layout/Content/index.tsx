@@ -1,16 +1,14 @@
- import React from 'react';
- import { Layout } from 'antd';
+import React from 'react';
+import { Layout } from 'antd';
 
- const { Content: AntContent } = Layout;
+const { Content: AntContent } = Layout;
 
- interface ContentProps {
-    children: React.ReactNode;
- }
+interface ContentProps {
+  children: React.ReactNode;
+}
 
- const Content: React.FC<ContentProps> = ({children}) => {
-    return <AntContent>
-        {children}
-    </AntContent>
- }
+const Content: React.FC<ContentProps> = ({ children }) => {
+  return <AntContent>{children}</AntContent>;
+};
 
- export default Content;
+export default Content;

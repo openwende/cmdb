@@ -1,12 +1,12 @@
 .confirm-modal {
-    text-align: center;
+  text-align: center;
 
-    .confirm-title {
-        font-size: 20px;
-        margin-bottom: 14px;
-    }
+  .confirm-title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
 
-    .confirm-desc {
-        margin: 14px 30px 20px;
-    }
+  .confirm-desc {
+    margin: 14px 30px 20px;
+  }
 }

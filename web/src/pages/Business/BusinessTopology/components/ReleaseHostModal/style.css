@@ -1,38 +1,38 @@
 .release-host-modal {
-    .release-modal-title {
-        font-size: 18px;
-        text-align: center;
-        margin-bottom: 16px;
-    }
+  .release-modal-title {
+    font-size: 18px;
+    text-align: center;
+    margin-bottom: 16px;
+  }
 
-    .release-modal-desc {
-        text-align: center;
-        margin-bottom: 24px;
-    }
+  .release-modal-desc {
+    text-align: center;
+    margin-bottom: 24px;
+  }
 
-    .release-modal-count {
-        color: #2dcb56;
-        font-weight: bold;
-        margin: 0 4px;
-    }
+  .release-modal-count {
+    color: #2dcb56;
+    font-weight: bold;
+    margin: 0 4px;
+  }
 
-    .release-modal-select-wrapper {
-        margin: 8px auto 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
+  .release-modal-select-wrapper {
+    margin: 8px auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 
-        .release-modal-select-label {
-            width: 120px;
-            text-align: right;
-        }
+    .release-modal-select-label {
+      width: 120px;
+      text-align: right;
     }
+  }
 
-    .release-modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        margin-top: 8px;
-    }
+  .release-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
 }

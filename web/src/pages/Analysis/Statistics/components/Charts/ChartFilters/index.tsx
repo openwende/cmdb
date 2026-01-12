@@ -6,7 +6,7 @@ interface ChartFiltersProps {
   type: 'dateRange' | 'select' | 'custom';
   value?: any;
   placeholder?: string;
-  options?: Array<{ label: string, value: any }>;
+  options?: Array<{ label: string; value: any }>;
   dateFormat?: string;
   showTime?: boolean;
   style?: React.CSSProperties;
@@ -36,7 +36,10 @@ const ChartFilters: React.FC<ChartFiltersProps> = ({
       onChange={onChange}
       format={dateFormat}
       showTime={showTime}
-      placeholder={[t('analysis.statistics.chart.startDate'), t('analysis.statistics.chart.endDate')]}
+      placeholder={[
+        t('analysis.statistics.chart.startDate'),
+        t('analysis.statistics.chart.endDate'),
+      ]}
       style={{ width: DATE_RANGE_WIDTH, ...style }}
     />
   );

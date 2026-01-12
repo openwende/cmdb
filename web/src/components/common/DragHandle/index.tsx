@@ -12,7 +12,7 @@ const DragHandle: React.FC<DragHandleProps> = ({
   minWidth,
   maxWidth,
   currentWidth,
-  onWidthChange
+  onWidthChange,
 }) => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -36,12 +36,12 @@ const DragHandle: React.FC<DragHandleProps> = ({
     const onMouseUp = () => {
       dragging.current = false;
       setIsDragging(false);
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
     };
 
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
   };
 
   return (

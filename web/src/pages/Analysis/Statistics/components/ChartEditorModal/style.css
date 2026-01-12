@@ -1,21 +1,21 @@
 .statistics-dialog {
-    .ant-modal-body {
-        padding: 24px 32px;
-    }
+  .ant-modal-body {
+    padding: 24px 32px;
+  }
 
-    .ant-form-item {
-        margin-bottom: 16px;
-    }
+  .ant-form-item {
+    margin-bottom: 16px;
+  }
 
-    .ant-radio-group {
-        width: 100%;
+  .ant-radio-group {
+    width: 100%;
 
-        .ant-radio-wrapper {
-            width: 30%;
-        }
+    .ant-radio-wrapper {
+      width: 30%;
     }
+  }
 
-    .ant-form-item-explain-error {
-        font-size: 12px;
-    }
+  .ant-form-item-explain-error {
+    font-size: 12px;
+  }
 }

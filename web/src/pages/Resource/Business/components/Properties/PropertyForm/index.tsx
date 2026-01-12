@@ -48,7 +48,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
   editValue,
   onValueChange,
   options,
-  hasError
+  hasError,
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { t } = useTranslation();
@@ -90,11 +90,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
     <div className="form-item">
       <div className="form-item-content">
         <div className="item-label">
-          <Popover
-            content={getPopoverContent()}
-            title={getPopoverTitle()}
-            placement="topRight"
-          >
+          <Popover content={getPopoverContent()} title={getPopoverTitle()} placement="topRight">
             <div className="label-content">{label}&nbsp;:</div>
           </Popover>
         </div>
@@ -118,22 +114,14 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
               <>
                 <span>{displayValue}</span>
                 {isHovered && value !== '--' && (
-                  <CopyOutlined
-                    className="copy-icon"
-                    onClick={handleCopy}
-                    title="复制"
-                  />
+                  <CopyOutlined className="copy-icon" onClick={handleCopy} title="复制" />
                 )}
               </>
             )}
           </div>
         </div>
       </div>
-      {hasError && (
-        <div className="form-item-error">
-          {t('common.form.rulesMessage')}
-        </div>
-      )}
+      {hasError && <div className="form-item-error">{t('common.form.rulesMessage')}</div>}
     </div>
   );
 };
@@ -144,7 +132,7 @@ const PropertyGrid: React.FC<PropertyGridProps> = ({
   isEditing = false,
   editValues,
   onValueChange,
-  errorFields = []
+  errorFields = [],
 }) => {
   const getFieldValue = (config: FieldConfig): string => {
     if (!data) return '--';

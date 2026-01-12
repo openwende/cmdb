@@ -61,13 +61,13 @@ const HostStatistics: React.FC = () => {
   // Host statistics object options Built-in options
   const builtInOptions = useMemo(() => {
     return charts
-      .filter(chart => BUILTIN_CHART_IDS.includes(chart.configId))
-      .map(chart => ({
+      .filter((chart) => BUILTIN_CHART_IDS.includes(chart.configId))
+      .map((chart) => ({
         value: chart.configId,
         label: chart.name,
         // Check if already exists
-        disabled: charts.some(c => c.configId === chart.configId),
-        chartData: chart
+        disabled: charts.some((c) => c.configId === chart.configId),
+        chartData: chart,
       }));
   }, [charts]);
 
@@ -75,13 +75,14 @@ const HostStatistics: React.FC = () => {
   const statDimsOptions = useMemo((): SelectOption[] => {
     // TODO: api
     return dynamicGroupCondition
-      .filter(item =>
-        item.bk_property_type === PROPERTY_TYPES.ENUM &&
-        !EXCLUDED_DIMENSION_IDS.includes(item.id)
+      .filter(
+        (item) =>
+          item.bk_property_type === PROPERTY_TYPES.ENUM &&
+          !EXCLUDED_DIMENSION_IDS.includes(item.id),
       )
-      .map(item => ({
+      .map((item) => ({
         value: item.bk_property_id,
-        label: item.bk_property_name
+        label: item.bk_property_name,
       }));
   }, []);
 
@@ -106,7 +107,7 @@ const HostStatistics: React.FC = () => {
   };
 
   const handleChartEdit = (chartId: string) => {
-    const chart = charts.find(c => c.id === chartId);
+    const chart = charts.find((c) => c.id === chartId);
     if (chart) {
       setEditingChart(chart);
       setModalMode(ModalMode.Edit);
@@ -121,7 +122,7 @@ const HostStatistics: React.FC = () => {
 
   const handleConfirmDelete = () => {
     if (deletingChartId) {
-      const newCharts = charts.filter(c => c.id !== deletingChartId);
+      const newCharts = charts.filter((c) => c.id !== deletingChartId);
       // Re-order
       newCharts.forEach((chart, index) => {
         chart.order = index + 1;
@@ -139,7 +140,7 @@ const HostStatistics: React.FC = () => {
   };
 
   const handleChartMove = (chartId: string, direction: ChartMoveDirection) => {
-    const currentIndex = charts.findIndex(chart => chart.id === chartId);
+    const currentIndex = charts.findIndex((chart) => chart.id === chartId);
     if (currentIndex === -1) return;
 
     const newCharts = [...charts];
@@ -147,8 +148,10 @@ const HostStatistics: React.FC = () => {
 
     if (targetIndex >= 0 && targetIndex < charts.length) {
       // Swap positions
-      [newCharts[currentIndex], newCharts[targetIndex]] =
-        [newCharts[targetIndex], newCharts[currentIndex]];
+      [newCharts[currentIndex], newCharts[targetIndex]] = [
+        newCharts[targetIndex],
+        newCharts[currentIndex],
+      ];
 
       // Update order
       newCharts.forEach((chart, index) => {
@@ -183,7 +186,7 @@ const HostStatistics: React.FC = () => {
       message.success(t('analysis.statistics.messages.addSuccess'));
     } else {
       // Edit chart
-      const newCharts = charts.map(chart => {
+      const newCharts = charts.map((chart) => {
         if (chart.id === editingChart?.id) {
           return {
             ...chart,
@@ -226,10 +229,7 @@ const HostStatistics: React.FC = () => {
 
       <Row gutter={[24, 24]}>
         {charts.map((chart, index) => (
-          <Col
-            key={chart.id}
-            span={chart.width === 50 ? 12 : 24}
-          >
+          <Col key={chart.id} span={chart.width === 50 ? 12 : 24}>
             <ChartContainer
               id={chart.id}
               title={chart.name}

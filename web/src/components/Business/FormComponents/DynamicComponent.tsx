@@ -7,16 +7,11 @@ interface DynamicComponentProps {
   [key: string]: any;
 }
 
-const DynamicComponent: React.FC<DynamicComponentProps> = ({
-  componentType,
-  ...props
-}) => {
+const DynamicComponent: React.FC<DynamicComponentProps> = ({ componentType, ...props }) => {
   const [Component, setComponent] = useState<React.ComponentType<any> | null>(null);
 
   useEffect(() => {
-    getFormComponent(componentType)
-      .then(setComponent)
-      .catch(console.error);
+    getFormComponent(componentType).then(setComponent).catch(console.error);
   }, [componentType]);
 
   if (!Component) {

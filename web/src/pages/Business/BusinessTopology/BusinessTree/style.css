@@ -1,36 +1,36 @@
 .business-tree-wrapper {
-    background: #fff;
-    border-right: 1px solid #eee;
-    position: relative;
-    user-select: none;
-    margin: 16px 20px 16px auto;
+  background: #fff;
+  border-right: 1px solid #eee;
+  position: relative;
+  user-select: none;
+  margin: 16px 20px 16px auto;
 
-    .search-wrapper {
-        padding: 16px 16px 10px;
+  .search-wrapper {
+    padding: 16px 16px 10px;
+  }
+
+  .ant-tree {
+    padding: 0 16px 16px;
+  }
+
+  .collapsed-button {
+    width: 16;
+    height: 100;
+    background: #e5e6eb;
+    color: #fff;
+    border-radius: 0 12px 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: none;
+
+    &:hover {
+      background-color: #1677ff;
+      opacity: 0.5;
+      box-shadow: 0 0 8px #1890ff55;
     }
-
-    .ant-tree {
-        padding: 0 16px 16px;
-    }
-
-    .collapsed-button {
-        width: 16;
-        height: 100;
-        background: #e5e6eb;
-        color: #fff;
-        border-radius: 0 12px 12px 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14;
-        cursor: pointer;
-        z-index: 20;
-        box-shadow: none;
-
-        &:hover {
-            background-color: #1677ff;
-            opacity: 0.5;
-            box-shadow: 0 0 8px #1890ff55;
-        }
-    }
+  }
 }

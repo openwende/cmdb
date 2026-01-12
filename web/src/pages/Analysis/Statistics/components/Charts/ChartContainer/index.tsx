@@ -46,7 +46,9 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
         <div className="chart-title-section">
           <h4 className="chart-title">{title}</h4>
           <div className="chart-actions">
-            <Tooltip title={!canMoveUp ? t('analysis.statistics.container.moveUpDisabled') : undefined}>
+            <Tooltip
+              title={!canMoveUp ? t('analysis.statistics.container.moveUpDisabled') : undefined}
+            >
               <Button
                 type="text"
                 size="small"
@@ -55,7 +57,9 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
                 onClick={() => onMoveUp?.(id)}
               />
             </Tooltip>
-            <Tooltip title={!canMoveDown ? t('analysis.statistics.container.moveDownDisabled') : undefined}>
+            <Tooltip
+              title={!canMoveDown ? t('analysis.statistics.container.moveDownDisabled') : undefined}
+            >
               <Button
                 type="text"
                 size="small"
@@ -80,11 +84,7 @@ const ChartContainer: React.FC<ChartContainerProps> = ({
         </div>
 
         {/* Filters on the right */}
-        {showFilters && filters && (
-          <div className="chart-filters-right">
-            {filters}
-          </div>
-        )}
+        {showFilters && filters && <div className="chart-filters-right">{filters}</div>}
       </div>
 
       {/* Chart content area */}

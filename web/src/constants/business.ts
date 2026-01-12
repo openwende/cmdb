@@ -5,7 +5,7 @@
  */
 
 export const CREATE_TYPES = {
-  BUSINESS: 1,        // Create business
-  BUSINESS_SET: 2,    // Create business set
-  OTHER_RESOURCE: 3,  // Create other types of resources
+  BUSINESS: 1, // Create business
+  BUSINESS_SET: 2, // Create business set
+  OTHER_RESOURCE: 3, // Create other types of resources
 } as const;

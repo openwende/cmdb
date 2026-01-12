@@ -1,32 +1,32 @@
 .list-wrapper {
-    background: #fff;
-    padding: 16px;
+  background: #fff;
+  padding: 16px;
 }
 
 .operation-bar {
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .search-bar {
-    margin-left: auto;
-    display: flex;
-    gap: 8px;
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
 }
 
 .pagination-wrapper {
-    margin-top: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  margin-top: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .selected-count {
-    font-weight: 700;
+  font-weight: 700;
 }
 
 .empty-wrapper {
-    margin-top: 15%;
+  margin-top: 15%;
 }

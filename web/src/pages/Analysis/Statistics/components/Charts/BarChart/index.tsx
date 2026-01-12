@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
-import { DEFAULT_CHART_HEIGHT, AXIS_LINE_STYLE, AXIS_TICK_STYLE, AXIS_LABEL_STYLE } from '../constants';
+import {
+  DEFAULT_CHART_HEIGHT,
+  AXIS_LINE_STYLE,
+  AXIS_TICK_STYLE,
+  AXIS_LABEL_STYLE,
+} from '../constants';
 import './style.css';
 
 const BAR_MAX_WIDTH = 60;
@@ -60,18 +65,18 @@ const BarChart: React.FC<BarChartProps> = ({
           title: false,
           line: AXIS_LINE_STYLE,
           tick: AXIS_TICK_STYLE,
-          label: AXIS_LABEL_STYLE
+          label: AXIS_LABEL_STYLE,
         })
         .axis('y', { title: false })
         .legend('color', {
           position: 'bottom',
-          layout: { justifyContent: 'center' }
+          layout: { justifyContent: 'center' },
         })
         .tooltip((d: any) => {
           return {
             title: d.category,
             name: d.type,
-            value: d.value
+            value: d.value,
           };
         });
     } else {
@@ -85,7 +90,7 @@ const BarChart: React.FC<BarChartProps> = ({
           title: false,
           line: AXIS_LINE_STYLE,
           tick: AXIS_TICK_STYLE,
-          label: AXIS_LABEL_STYLE
+          label: AXIS_LABEL_STYLE,
         })
         .axis('y', { title: false });
     }

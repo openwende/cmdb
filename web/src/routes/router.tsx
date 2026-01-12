@@ -5,7 +5,7 @@ import { NavigationItem } from './Types';
 import MainLayout from '@/components/Layout/MainLayout';
 
 function createRouteElements(items: NavigationItem[]): React.ReactNode[] {
-  return items.map(item => (
+  return items.map((item) => (
     <Route
       key={item.key}
       path={item.path}
@@ -24,8 +24,8 @@ const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<MainLayout />}>
       {createRouteElements(routes)}
-    </Route>
-  )
+    </Route>,
+  ),
 );
 
 export default router;

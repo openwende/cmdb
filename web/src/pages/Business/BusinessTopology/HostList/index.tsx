@@ -15,7 +15,7 @@ import {
   TransferMenuItemType,
   TransferHostType,
   TreeData,
-  CopyMenuItemKey as HostCopyKey
+  CopyMenuItemKey as HostCopyKey,
 } from '../../Types';
 import AddHostModal from '../components/AddHostModal';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -39,7 +39,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
 
-  const [searchValue, setSearchValue] = useState<string>("");
+  const [searchValue, setSearchValue] = useState<string>('');
   const [hostsList, setHostsList] = useState<any[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -53,26 +53,32 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
   useEffect(() => {
     // TODO: api
     setHostsList(allHosts2);
-  }, [searchValue, currentPage, pageSize])
+  }, [searchValue, currentPage, pageSize]);
 
   const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
-  const hostsNotInIdlePool = hostIdleStatuses.some(item => item.inIdlePool === false);
+  const hostsNotInIdlePool = hostIdleStatuses.some((item) => item.inIdlePool === false);
 
-  const copyHostData = useCallback((copyKey: HostCopyKey) => {
-    if (!selectedRowKeys.length) return;
-    const selectedHosts = hostsList.filter(h => selectedRowKeys.includes(h.host.bk_host_id));
+  const copyHostData = useCallback(
+    (copyKey: HostCopyKey) => {
+      if (!selectedRowKeys.length) return;
+      const selectedHosts = hostsList.filter((h) => selectedRowKeys.includes(h.host.bk_host_id));
 
-    const text = selectedHosts.map(rec => getHostCopyValue(rec, copyKey)).join('\n');
-    if (!text) {
-      message.warning(t('resource.host.messages.noCopyContent'));
-      return;
-    }
-    navigator.clipboard?.writeText(text).then(() => {
-      message.success(t('resource.host.messages.copySuccess'));
-    }).catch(() => {
-      message.error(t('resource.host.messages.copyFailed'));
-    });
-  }, [selectedRowKeys]);
+      const text = selectedHosts.map((rec) => getHostCopyValue(rec, copyKey)).join('\n');
+      if (!text) {
+        message.warning(t('resource.host.messages.noCopyContent'));
+        return;
+      }
+      navigator.clipboard
+        ?.writeText(text)
+        .then(() => {
+          message.success(t('resource.host.messages.copySuccess'));
+        })
+        .catch(() => {
+          message.error(t('resource.host.messages.copyFailed'));
+        });
+    },
+    [selectedRowKeys],
+  );
 
   const handleMenuClick = (key: string) => {
     // Copy menu iem
@@ -85,19 +91,23 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     if (key === TransferMenuItemType.hostPool) {
       setReleaseModalVisible(true);
     } else if (
-      Object.values(TransferMenuItemType).includes(key as TransferMenuItemType)
-      || key === AppendMenuItemKey.AppendToBusinessModule
+      Object.values(TransferMenuItemType).includes(key as TransferMenuItemType) ||
+      key === AppendMenuItemKey.AppendToBusinessModule
     ) {
       // Transfer and append menu item/
       setTransferModalVisible(true);
       setTransferModalType(key as TransferHostType);
     } else if (key === RemoveMenuItemKey.CurrentModule) {
       // Remove from current module
-      const enrichedHosts: TransferHostItem[] = selectedRowKeys.map(id => {
-        const hostInfo = hostsList.find(h => h.host.bk_host_id === id);
+      const enrichedHosts: TransferHostItem[] = selectedRowKeys.map((id) => {
+        const hostInfo = hostsList.find((h) => h.host.bk_host_id === id);
         const cloud = hostInfo?.host.bk_cloud_id?.[0];
         const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
-        return { id, ip: hostInfo?.host.bk_host_innerip || '', cloudInfo: region } as TransferHostItem;
+        return {
+          id,
+          ip: hostInfo?.host.bk_host_innerip || '',
+          cloudInfo: region,
+        } as TransferHostItem;
       });
       setTransferHostData(enrichedHosts, [selectedNode], RemoveMenuItemKey.CurrentModule);
       handleNavToTransferPage();
@@ -118,36 +128,42 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       params.set('node', selectedNode.key);
       navigate(transferPath + '?' + params.toString());
     }
-  }
+  };
 
-  const handleConfirmAddHosts = useCallback((hosts: TransferHostItem[]) => {
-    setTransferHostData(hosts, [selectedNode]);
-    handleNavToTransferPage();
-  }, [selectedNode])
+  const handleConfirmAddHosts = useCallback(
+    (hosts: TransferHostItem[]) => {
+      setTransferHostData(hosts, [selectedNode]);
+      handleNavToTransferPage();
+    },
+    [selectedNode],
+  );
 
-  const handleTransferHosts = useCallback((targetModules: TreeData[]) => {
-    if (
-      transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool
-      || transferModalType === TransferMenuItemType.otherBusiness
-    ) {
-      // TODO: api
-      setTransferModalVisible(false);
-      return;
-    }
+  const handleTransferHosts = useCallback(
+    (targetModules: TreeData[]) => {
+      if (
+        (transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool) ||
+        transferModalType === TransferMenuItemType.otherBusiness
+      ) {
+        // TODO: api
+        setTransferModalVisible(false);
+        return;
+      }
 
-    setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
-    handleNavToTransferPage();
-  }, [transferModalType, hostsNotInIdlePool, hostIdleStatuses])
+      setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
+      handleNavToTransferPage();
+    },
+    [transferModalType, hostsNotInIdlePool, hostIdleStatuses],
+  );
 
   const handleReleaseHosts = useCallback((dirId: number) => {
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);
-  }, [])
+  }, []);
 
   const handleSearch = (value: string) => {
     setSearchValue(value);
-  }
+  };
 
   const handleClearSearch = () => {
     setSearchValue('');
@@ -157,7 +173,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     {
       title: 'ID',
       dataIndex: ['host', 'bk_host_id'],
-      render: (id: number) => <a>{id}</a>
+      render: (id: number) => <a>{id}</a>,
     },
     {
       title: t('resource.host.columns.innerIpv4'),
@@ -166,94 +182,92 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     {
       title: t('resource.host.columns.innerIpv6'),
       dataIndex: ['host', 'bk_host_innerip_v6'],
-      render: (text: string) => text || '--'
+      render: (text: string) => text || '--',
     },
     {
       title: t('resource.host.columns.cloudArea'),
       render: (_: any, record: any) => {
         const cloudInfo = record.host.bk_cloud_id;
-        const region = cloudInfo.length > 0
-          ? <span>{`${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`}</span>
-          : null;
+        const region =
+          cloudInfo.length > 0 ? (
+            <span>{`${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`}</span>
+          ) : null;
         return region;
-      }
+      },
     },
     {
       title: t('business.topology.hostList.columns.moduleName'),
       render: (_: any, record: any) => {
         const moduleInfo = record.module;
         return moduleInfo.length > 0 ? <span>{moduleInfo[0].bk_module_name}</span> : '--';
-      }
+      },
     },
     {
       title: t('business.topology.hostList.columns.clusterName'),
       render: (_: any, record: any) => {
         const setInfo = record.set;
         return setInfo.length > 0 ? <span>{setInfo[0].bk_set_name}</span> : '--';
-      }
-    }
+      },
+    },
   ];
 
   const getDropdownMenu = (type: DropdownMenuType) => {
     const items = [];
 
     if (type === DropdownMenuType.Transfer) {
-      transferBaseMenuItems.forEach(base => {
+      transferBaseMenuItems.forEach((base) => {
         if (
-          base.key === TransferMenuItemType.hostPool
-          || base.key === TransferMenuItemType.otherBusiness
+          base.key === TransferMenuItemType.hostPool ||
+          base.key === TransferMenuItemType.otherBusiness
         ) {
           const disabled = hostsNotInIdlePool;
-          const tip = base.key === TransferMenuItemType.hostPool
-            ? t('business.topology.hostList.transfer.hostPoolTip')
-            : t('business.topology.hostList.transfer.otherBusinessTip');
-          items.push(
-            {
-              ...base,
-              label: disabled
-                ? <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
-                  {t(base.label)}
-                </Tooltip>
-                : t(base.label),
-              disabled
-            }
-          );
+          const tip =
+            base.key === TransferMenuItemType.hostPool
+              ? t('business.topology.hostList.transfer.hostPoolTip')
+              : t('business.topology.hostList.transfer.otherBusinessTip');
+          items.push({
+            ...base,
+            label: disabled ? (
+              <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
+                {t(base.label)}
+              </Tooltip>
+            ) : (
+              t(base.label)
+            ),
+            disabled,
+          });
         } else {
           items.push({
             ...base,
-            label: t(base.label)
+            label: t(base.label),
           } as any);
         }
       });
     } else if (type === DropdownMenuType.Append) {
-      items.push(
-        {
-          key: AppendMenuItemKey.AppendToBusinessModule,
-          label: t('business.topology.hostList.menus.businessModule')
-        }
-      );
+      items.push({
+        key: AppendMenuItemKey.AppendToBusinessModule,
+        label: t('business.topology.hostList.menus.businessModule'),
+      });
     } else if (type === DropdownMenuType.Remove) {
-      items.push(
-        {
-          key: RemoveMenuItemKey.CurrentModule,
-          label: t('business.topology.hostList.menus.currentModule')
-        }
-      );
+      items.push({
+        key: RemoveMenuItemKey.CurrentModule,
+        label: t('business.topology.hostList.menus.currentModule'),
+      });
     } else if (type === DropdownMenuType.Copy) {
-      const translatedCopyItems = hostCopyMenuItems.map(item => {
+      const translatedCopyItems = hostCopyMenuItems.map((item) => {
         if ('children' in item && item.children) {
           return {
             ...item,
             label: t(item.label),
-            children: item.children.map(child => ({
+            children: item.children.map((child) => ({
               ...child,
-              label: t(child.label)
-            }))
+              label: t(child.label),
+            })),
           };
         } else {
           return {
             ...item,
-            label: item.label === 'ID' ? 'ID' : t(item.label)
+            label: item.label === 'ID' ? 'ID' : t(item.label),
           };
         }
       });
@@ -263,16 +277,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
         {
           key: MoreMenuItemKey.ExportSelected,
           label: t('business.topology.hostList.menus.exportSelected'),
-          disabled: selectedRowKeys.length === 0
+          disabled: selectedRowKeys.length === 0,
         },
         {
           key: MoreMenuItemKey.ExportAll,
-          label: t('business.topology.hostList.menus.exportAll')
+          label: t('business.topology.hostList.menus.exportAll'),
         },
         {
           key: MoreMenuItemKey.ImportExcel,
-          label: t('business.topology.hostList.menus.importExcel')
-        }
+          label: t('business.topology.hostList.menus.importExcel'),
+        },
       );
     }
 
@@ -298,21 +312,23 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
 
   return (
     <>
-      {
-        isEmptySet ? <Empty
-          className='empty-wrapper'
-          description={<Typography.Text>
-            {t('business.topology.hostList.empty.noModuleCreated')}
-          </Typography.Text>}
+      {isEmptySet ? (
+        <Empty
+          className="empty-wrapper"
+          description={
+            <Typography.Text>
+              {t('business.topology.hostList.empty.noModuleCreated')}
+            </Typography.Text>
+          }
         >
-          <Button
-            type="primary"
-            onClick={() => setCreateModalVisible(true)}>
+          <Button type="primary" onClick={() => setCreateModalVisible(true)}>
             {t('business.topology.hostList.empty.createNow')}
           </Button>
-        </Empty> : <div className='list-wrapper'>
+        </Empty>
+      ) : (
+        <div className="list-wrapper">
           {/* The operation botton bar */}
-          <div className='operation-bar'>
+          <div className="operation-bar">
             {selectedNodeStatus.isModule ? (
               <Button type="primary" onClick={handleAddHosts}>
                 {t('business.topology.hostList.buttons.add')}
@@ -332,7 +348,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
             <Dropdown
               menu={{
                 ...getDropdownMenu(DropdownMenuType.Transfer),
-                onClick: ({ key }) => handleMenuClick(key)
+                onClick: ({ key }) => handleMenuClick(key),
               }}
               trigger={['click']}
             >
@@ -341,11 +357,11 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               </Button>
             </Dropdown>
 
-            {
-              !selectedNodeStatus.isIdle && <Dropdown
+            {!selectedNodeStatus.isIdle && (
+              <Dropdown
                 menu={{
                   ...getDropdownMenu(DropdownMenuType.Append),
-                  onClick: ({ key }) => handleMenuClick(key)
+                  onClick: ({ key }) => handleMenuClick(key),
                 }}
                 trigger={['click']}
               >
@@ -353,14 +369,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
                   {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
                 </Button>
               </Dropdown>
-            }
+            )}
 
-
-            {
-              selectedNodeStatus.isModule && <Dropdown
+            {selectedNodeStatus.isModule && (
+              <Dropdown
                 menu={{
                   ...getDropdownMenu(DropdownMenuType.Remove),
-                  onClick: ({ key }) => handleMenuClick(key)
+                  onClick: ({ key }) => handleMenuClick(key),
                 }}
                 trigger={['click']}
               >
@@ -368,12 +383,12 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
                   {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
                 </Button>
               </Dropdown>
-            }
+            )}
 
             <Dropdown
               menu={{
                 ...getDropdownMenu(DropdownMenuType.Copy),
-                onClick: ({ key }) => handleMenuClick(key as HostCopyKey)
+                onClick: ({ key }) => handleMenuClick(key as HostCopyKey),
               }}
               overlayStyle={{ width: 190 }}
               trigger={['click']}
@@ -386,7 +401,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
             <Dropdown
               menu={{
                 ...getDropdownMenu(DropdownMenuType.More),
-                onClick: ({ key }) => handleMenuClick(key)
+                onClick: ({ key }) => handleMenuClick(key),
               }}
               trigger={['click']}
             >
@@ -395,7 +410,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
               </Button>
             </Dropdown>
 
-            <div className='search-bar'>
+            <div className="search-bar">
               <Input.Search
                 placeholder={t('business.topology.hostList.search.placeholder')}
                 style={{ width: 300 }}
@@ -409,26 +424,25 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
           <Table
             rowSelection={{
               selectedRowKeys,
-              onChange: setSelectedRowKeys
+              onChange: setSelectedRowKeys,
             }}
             columns={columns}
             dataSource={hostsList}
             rowKey={(record) => record.host.bk_host_id}
             pagination={false}
             locale={{
-              emptyText: searchValue && hostsList.length === 0
-                ? <EmptySearchResult onClearFilter={handleClearSearch} />
-                : undefined
-            }
-            }
+              emptyText:
+                searchValue && hostsList.length === 0 ? (
+                  <EmptySearchResult onClearFilter={handleClearSearch} />
+                ) : undefined,
+            }}
           />
 
-          {
-            hostsList.length > 0 && <div className='pagination-wrapper'>
+          {hostsList.length > 0 && (
+            <div className="pagination-wrapper">
               <span>
                 {t('business.topology.hostList.pagination.selected')}
-                &nbsp;<span className='selected-count'>{selectedRowKeys.length}
-                </span>
+                &nbsp;<span className="selected-count">{selectedRowKeys.length}</span>
                 &nbsp;{t('business.topology.hostList.pagination.items')}
               </span>
               <Pagination
@@ -445,9 +459,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
                 }}
               />
             </div>
-          }
+          )}
         </div>
-      }
+      )}
 
       {/* Add host modal */}
       <AddHostModal

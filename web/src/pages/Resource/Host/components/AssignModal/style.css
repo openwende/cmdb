@@ -1,29 +1,29 @@
 .assign-modal {
-    .ant-modal-title {
-        font-size: 20px;
+  .ant-modal-title {
+    font-size: 20px;
+  }
+
+  .ant-modal-footer {
+    margin-top: 24px;
+  }
+
+  .selected-tip {
+    margin-top: 20px;
+    display: block;
+
+    .selected-count {
+      color: #2dcb56;
+      font-weight: bold;
+      margin: 0 4px;
+      font-weight: 700;
     }
+  }
 
-    .ant-modal-footer {
-        margin-top: 24px;
+  .assign-target {
+    margin: 20px auto 10px;
+
+    .target-label {
+      font-size: 16px;
     }
-
-    .selected-tip {
-        margin-top: 20px;
-        display: block;
-
-        .selected-count {
-            color: #2dcb56;
-            font-weight: bold;
-            margin: 0 4px;
-            font-weight: 700;
-        }
-    }
-
-    .assign-target {
-        margin: 20px auto 10px;
-
-        .target-label {
-            font-size: 16px;
-        }
-    }
+  }
 }

@@ -8,7 +8,11 @@ interface TransferHostState {
   idleSetID: number | null;
   transferHostType?: TransferHostType;
   setIdleSetID: (id: number) => void;
-  setTransferHostData: (hosts: TransferHostItem[], node: TreeData[], transferType?: TransferHostType) => void;
+  setTransferHostData: (
+    hosts: TransferHostItem[],
+    node: TreeData[],
+    transferType?: TransferHostType,
+  ) => void;
 }
 
 export const useTransferHostStore = create<TransferHostState>()(
@@ -18,23 +22,27 @@ export const useTransferHostStore = create<TransferHostState>()(
       targetModules: [],
       idleSetID: null,
 
-      setTransferHostData: (hosts: TransferHostItem[], modules: TreeData[], transferType?: TransferHostType) => {
+      setTransferHostData: (
+        hosts: TransferHostItem[],
+        modules: TreeData[],
+        transferType?: TransferHostType,
+      ) => {
         set({
           selectedHosts: hosts,
           targetModules: modules,
-          transferHostType: transferType
+          transferHostType: transferType,
         });
       },
 
       setIdleSetID: (id: number) => {
         set({
-          idleSetID: id
-        })
-      }
+          idleSetID: id,
+        });
+      },
     }),
     {
       name: 'transfer-host',
-      storage: createJSONStorage(() => sessionStorage)
-    }
-  )
+      storage: createJSONStorage(() => sessionStorage),
+    },
+  ),
 );

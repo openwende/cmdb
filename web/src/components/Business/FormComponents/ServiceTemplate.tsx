@@ -34,8 +34,8 @@ const ServiceTemplate: React.FC<FormComponentProps> = ({
 
   const getValue = () => {
     if (Array.isArray(value)) {
-      return value.map(id => {
-        const template = templates.find(t => t.id === id);
+      return value.map((id) => {
+        const template = templates.find((t) => t.id === id);
         return template ? template.name : '';
       });
     }

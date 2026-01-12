@@ -13,17 +13,17 @@ const WITHOUT_OPERATOR = [
   PROPERTY_TYPES.DATE,
   PROPERTY_TYPES.TIME,
   PROPERTY_TYPES.BOOL,
-  PROPERTY_TYPES.SERVICE_TEMPLATE
+  PROPERTY_TYPES.SERVICE_TEMPLATE,
 ];
 
 const EXCHANGE_TYPE = {
-    [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
-    [ConditionType.IMMUTABLE]: ConditionType.VARIABLE
-}
+  [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
+  [ConditionType.IMMUTABLE]: ConditionType.VARIABLE,
+};
 const SUPPORTED_OPERATORS = [
   QUERY_OPERATOR.LIKE,
   QUERY_OPERATOR.CONTAINS,
-  QUERY_OPERATOR.CONTAINS_CS
+  QUERY_OPERATOR.CONTAINS_CS,
 ] as OperatorType[];
 
 type DefaultMapKey = keyof typeof DEFAULT_CONDITIONS_DATA;
@@ -54,13 +54,13 @@ const PropertyList: React.FC<ListProps> = ({
   onRemove,
   onToggle,
   onConditionChange,
-  onUpdateErrors
+  onUpdateErrors,
 }) => {
   const { t } = useTranslation();
   const [hoveredProperty, setHoveredProperty] = useState<number | null>(null);
 
   const properties = useMemo(() => {
-    return selectedProperties.filter(property => {
+    return selectedProperties.filter((property) => {
       return property.conditionType === conditionType;
     });
   }, [selectedProperties, conditionType]);
@@ -81,13 +81,13 @@ const PropertyList: React.FC<ListProps> = ({
     const specificDefault = DEFAULT_CONDITIONS_DATA[property.bk_property_type as DefaultMapKey];
     return {
       operator: (specificDefault?.operator ?? QUERY_OPERATOR.IN) as OperatorType,
-      value: specificDefault?.value ?? []
+      value: specificDefault?.value ?? [],
     };
-  }
+  };
 
   const updateCondition = () => {
-    const newCondition: Record<string, Condition> = {}
-    
+    const newCondition: Record<string, Condition> = {};
+
     properties.forEach((property) => {
       if (storageConditions && storageConditions[property.id]) {
         // If the property already exists in storageConditions, use it
@@ -99,9 +99,9 @@ const PropertyList: React.FC<ListProps> = ({
           ...getDefaultData(property),
         };
       }
-    })
+    });
     onConditionChange(newCondition);
-  }
+  };
 
   const handleOperatorChange = (property: Property, operator: OperatorType) => {
     const currentItem = conditions[property.id];
@@ -111,7 +111,7 @@ const PropertyList: React.FC<ListProps> = ({
       newValue = [];
     } else if (SUPPORTED_OPERATORS.includes(operator)) {
       const currentValue = currentItem.value;
-      newValue = Array.isArray(currentValue) ? (currentValue[0] || '') : currentValue;
+      newValue = Array.isArray(currentValue) ? currentValue[0] || '' : currentValue;
     } else {
       const defaultValue = getDefaultData(property).value;
       const currentValue = currentItem.value;
@@ -124,7 +124,7 @@ const PropertyList: React.FC<ListProps> = ({
         ...currentItem,
         operator: operator,
         value: newValue,
-      }
+      },
     };
 
     onConditionChange(newCondition);
@@ -139,8 +139,8 @@ const PropertyList: React.FC<ListProps> = ({
     const newCondition = {
       [property.id]: {
         ...currentItem,
-        value: value
-      }
+        value: value,
+      },
     };
     onConditionChange(newCondition);
 
@@ -167,23 +167,20 @@ const PropertyList: React.FC<ListProps> = ({
         >
           {/* The first line */}
           <div className="item-header">
-            <div className="item-label">
-              {getPropertyLabel(property)}
-            </div>
+            <div className="item-label">{getPropertyLabel(property)}</div>
             {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
-                <Tooltip title={t('business.dynamicGroupForm.propertyList.toggleTooltip', {
-                  typeName: getConditionName(EXCHANGE_TYPE[conditionType], t)
-                })}>
+                <Tooltip
+                  title={t('business.dynamicGroupForm.propertyList.toggleTooltip', {
+                    typeName: getConditionName(EXCHANGE_TYPE[conditionType], t),
+                  })}
+                >
                   <SwapOutlined
                     className="item-toggle"
                     onClick={() => onToggle(property, EXCHANGE_TYPE[conditionType])}
                   />
                 </Tooltip>
-                <CloseOutlined
-                  className="item-remove"
-                  onClick={() => onRemove(property)}
-                />
+                <CloseOutlined className="item-remove" onClick={() => onRemove(property)} />
               </div>
             )}
           </div>

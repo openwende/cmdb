@@ -64,14 +64,13 @@ export const HOST_ACTIONS = [
 ];
 
 // Create action value to label mapping from all actions
-export const ACTION_LABELS = [
-  ...COMMON_ACTIONS,
-  ...BUSINESS_ACTIONS,
-  ...HOST_ACTIONS,
-].reduce((acc, action) => {
-  acc[action.value] = action.label;
-  return acc;
-}, {} as Record<string, string>);
+export const ACTION_LABELS = [...COMMON_ACTIONS, ...BUSINESS_ACTIONS, ...HOST_ACTIONS].reduce(
+  (acc, action) => {
+    acc[action.value] = action.label;
+    return acc;
+  },
+  {} as Record<string, string>,
+);
 
 // Account filter options - returns array with translated labels
 export const getAccountFilterOptions = (t: (key: string) => string) => [

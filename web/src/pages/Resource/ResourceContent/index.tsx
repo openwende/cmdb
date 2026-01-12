@@ -1,9 +1,7 @@
-import React from "react";
+import React from 'react';
 
-const ResourceContent:React.FC = () => {
-    return <div>
-        ResourceContent
-    </div>
-}
+const ResourceContent: React.FC = () => {
+  return <div>ResourceContent</div>;
+};
 
 export default ResourceContent;

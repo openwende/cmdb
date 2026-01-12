@@ -30,7 +30,7 @@ const DeleteHistory: React.FC = () => {
   }, []);
 
   const filtered = useMemo(() => {
-    return data.filter(item => {
+    return data.filter((item) => {
       let ok = true;
       if (keyword) {
         ok = item.resource_name.includes(keyword.trim());
@@ -121,4 +121,4 @@ const DeleteHistory: React.FC = () => {
   );
 };
 
-export default DeleteHistory; 
+export default DeleteHistory;

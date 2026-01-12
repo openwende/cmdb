@@ -16,7 +16,7 @@ const SingleChar: React.FC<FormComponentProps> = ({
   return (
     <Input
       value={value || ''}
-      onChange={e => onChange(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
       allowClear

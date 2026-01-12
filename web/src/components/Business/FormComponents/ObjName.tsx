@@ -14,11 +14,12 @@ import { QUERY_OPERATOR } from '../../../pages/Business/constants';
 const mockResults = [
   {
     id: 1,
-    name: 'module'
-  }, {
+    name: 'module',
+  },
+  {
     id: 2,
-    name: 'set'
-  }
+    name: 'set',
+  },
 ];
 
 interface ObjNameProps extends FormComponentProps {
@@ -34,7 +35,7 @@ const ObjName: React.FC<ObjNameProps> = ({
   disabled = false,
   operator,
   bizId,
-  property
+  property,
 }) => {
   const [searchOptions, setSearchOptions] = useState<Array<SelectOption>>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -65,18 +66,18 @@ const ObjName: React.FC<ObjNameProps> = ({
 
   const getDisplayOptions = () => {
     if (!isInputMode && Array.isArray(value)) {
-      const selectedOptions = value.map(id => {
-        const found = mockResults.find(item => item.id === id);
+      const selectedOptions = value.map((id) => {
+        const found = mockResults.find((item) => item.id === id);
         return {
           label: found ? found.name : '',
-          value: id
+          value: id,
         };
       });
 
       // Combine selected options with search options, avoid duplicates
       const allOptions = [...selectedOptions];
-      searchOptions.forEach(option => {
-        if (!allOptions.find(item => item.value === option.value)) {
+      searchOptions.forEach((option) => {
+        if (!allOptions.find((item) => item.value === option.value)) {
           allOptions.push(option);
         }
       });
@@ -86,27 +87,30 @@ const ObjName: React.FC<ObjNameProps> = ({
     return searchOptions;
   };
 
-  const handleSearch = useCallback(async (searchValue: string) => {
-    setIsSearching(true);
-    try {
-      // TODO: Replace with actual API call
-      // const response = await api, {
-      //   bk_obj_id: property.bk_obj_id,
-      //   bk_biz_id: bizId,
-      //   name: searchValue
-      // });
-      const options = mockResults.map(item => ({
-        label: item.name,
-        value: item.id
-      }));
-      setSearchOptions(options);
-    } catch (error) {
-      console.error(error);
-      setSearchOptions([]);
-    } finally {
-      setIsSearching(false);
-    }
-  }, [property, bizId]);
+  const handleSearch = useCallback(
+    async (searchValue: string) => {
+      setIsSearching(true);
+      try {
+        // TODO: Replace with actual API call
+        // const response = await api, {
+        //   bk_obj_id: property.bk_obj_id,
+        //   bk_biz_id: bizId,
+        //   name: searchValue
+        // });
+        const options = mockResults.map((item) => ({
+          label: item.name,
+          value: item.id,
+        }));
+        setSearchOptions(options);
+      } catch (error) {
+        console.error(error);
+        setSearchOptions([]);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [property, bizId],
+  );
 
   // If operator is LIKE, render Input component
   if (isInputMode) {
@@ -139,9 +143,7 @@ const ObjName: React.FC<ObjNameProps> = ({
       disabled={disabled}
       style={{ width: '100%' }}
       notFoundContent={
-        isSearching
-          ? <Spin size="small" />
-          : t('common.components.formComponents.noMatchData')
+        isSearching ? <Spin size="small" /> : t('common.components.formComponents.noMatchData')
       }
     />
   );

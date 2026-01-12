@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
-import { DEFAULT_CHART_HEIGHT, AXIS_LINE_STYLE, AXIS_TICK_STYLE, AXIS_LABEL_STYLE } from '../constants';
+import {
+  DEFAULT_CHART_HEIGHT,
+  AXIS_LINE_STYLE,
+  AXIS_TICK_STYLE,
+  AXIS_LABEL_STYLE,
+} from '../constants';
 import './style.css';
 
 interface LineChartData {
@@ -66,7 +71,7 @@ const LineChart: React.FC<LineChartProps> = ({
       title: false,
       line: AXIS_LINE_STYLE,
       tick: AXIS_TICK_STYLE,
-      label: AXIS_LABEL_STYLE
+      label: AXIS_LABEL_STYLE,
     });
     chart.axis('y', { title: false });
 

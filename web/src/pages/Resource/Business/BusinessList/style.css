@@ -1,37 +1,37 @@
 .business-list {
-    background-color: #fff;
-    margin: 16px 20px;
-    padding: 16px;
+  background-color: #fff;
+  margin: 16px 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  .list-header {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
+    justify-content: space-between;
+    align-items: center;
 
-    .list-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-
-        .list-operation {
-            display: flex;
-            gap: 10px;
-        }
-
-        .list-search {
-            display: flex;
-            gap: 10px;
-            
-            .search-select {
-                width: 120px;
-            }
-            
-            .search-input,
-            .search-date-picker {
-                width: 280px;
-            }
-        }
+    .list-operation {
+      display: flex;
+      gap: 10px;
     }
 
-    .table-spin {
-        margin: 50px 0;
+    .list-search {
+      display: flex;
+      gap: 10px;
+
+      .search-select {
+        width: 120px;
+      }
+
+      .search-input,
+      .search-date-picker {
+        width: 280px;
+      }
     }
+  }
+
+  .table-spin {
+    margin: 50px 0;
+  }
 }

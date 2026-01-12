@@ -5,7 +5,12 @@ import { PlusSquareOutlined } from '@ant-design/icons';
 import { ChartContainer, PieChart, BarChart } from '../components/Charts';
 import EditorModal, { SelectOption } from '../components/ChartEditorModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
-import { mockChartData, mockChartDetailData, mockStatisticsObjectData, instanceStatsDims } from '@/mock/Analysis';
+import {
+  mockChartData,
+  mockChartDetailData,
+  mockStatisticsObjectData,
+  instanceStatsDims,
+} from '@/mock/Analysis';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
 import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
 import { X_AXIS_COUNT_MAX } from '../components/Charts/constants';
@@ -51,31 +56,31 @@ const InstanceStatistics: React.FC = () => {
   // Instance statistics object options Built-in options
   const builtInOptions = useMemo(() => {
     return charts
-      .filter(chart => BUILTIN_CHART_IDS.includes(chart.configId))
-      .map(chart => ({
+      .filter((chart) => BUILTIN_CHART_IDS.includes(chart.configId))
+      .map((chart) => ({
         value: chart.configId,
         label: chart.name,
         // Check if already exists
-        disabled: charts.some(c => c.configId === chart.configId),
-        chartData: chart
+        disabled: charts.some((c) => c.configId === chart.configId),
+        chartData: chart,
       }));
   }, [charts]);
 
   // Instance statistics object options
   const statObjOptions = useMemo((): SelectOption[] => {
     // TODO: api
-    return mockStatisticsObjectData.map(obj => ({
+    return mockStatisticsObjectData.map((obj) => ({
       value: obj.bk_obj_id,
-      label: obj.bk_obj_name
+      label: obj.bk_obj_name,
     }));
   }, []);
 
   // Instance statistics dimension options
   const statDimsOptions = useMemo((): SelectOption[] => {
     // TODO: api
-    return instanceStatsDims.map(dim => ({
+    return instanceStatsDims.map((dim) => ({
       value: dim.bk_property_id,
-      label: dim.bk_property_name
+      label: dim.bk_property_name,
     }));
   }, []);
 
@@ -95,7 +100,7 @@ const InstanceStatistics: React.FC = () => {
   };
 
   const handleChartEdit = (chartId: string) => {
-    const chart = charts.find(c => c.id === chartId);
+    const chart = charts.find((c) => c.id === chartId);
     if (chart) {
       setEditingChart(chart);
       setModalMode(ModalMode.Edit);
@@ -110,7 +115,7 @@ const InstanceStatistics: React.FC = () => {
 
   const handleConfirmDelete = () => {
     if (deletingChartId) {
-      const newCharts = charts.filter(c => c.id !== deletingChartId);
+      const newCharts = charts.filter((c) => c.id !== deletingChartId);
       // Re-order
       newCharts.forEach((chart, index) => {
         chart.order = index + 1;
@@ -128,7 +133,7 @@ const InstanceStatistics: React.FC = () => {
   };
 
   const handleChartMove = (chartId: string, direction: ChartMoveDirection) => {
-    const currentIndex = charts.findIndex(chart => chart.id === chartId);
+    const currentIndex = charts.findIndex((chart) => chart.id === chartId);
     if (currentIndex === -1) return;
 
     const newCharts = [...charts];
@@ -136,8 +141,10 @@ const InstanceStatistics: React.FC = () => {
 
     if (targetIndex >= 0 && targetIndex < charts.length) {
       // Swap positions
-      [newCharts[currentIndex], newCharts[targetIndex]] =
-        [newCharts[targetIndex], newCharts[currentIndex]];
+      [newCharts[currentIndex], newCharts[targetIndex]] = [
+        newCharts[targetIndex],
+        newCharts[currentIndex],
+      ];
 
       // Update order
       newCharts.forEach((chart, index) => {
@@ -172,7 +179,7 @@ const InstanceStatistics: React.FC = () => {
       message.success(t('analysis.statistics.messages.addSuccess'));
     } else {
       // Edit chart
-      const newCharts = charts.map(chart => {
+      const newCharts = charts.map((chart) => {
         if (chart.id === editingChart?.id) {
           return {
             ...chart,
@@ -213,10 +220,7 @@ const InstanceStatistics: React.FC = () => {
 
       <Row gutter={[24, 24]}>
         {charts.map((chart, index) => (
-          <Col
-            key={chart.id}
-            span={chart.width === 50 ? 12 : 24}
-          >
+          <Col key={chart.id} span={chart.width === 50 ? 12 : 24}>
             <ChartContainer
               id={chart.id}
               title={chart.name}

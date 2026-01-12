@@ -18,22 +18,26 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
   isEditing = false,
   editValues,
   onValueChange,
-  errorFields = []
+  errorFields = [],
 }) => {
   const { t } = useTranslation();
 
-  const lifecycleOptions = useMemo(() =>
-    LIFECYCLE_OPTIONS.map(option => ({
-      id: option.value,
-      name: t(option.label)
-    })), [t]
+  const lifecycleOptions = useMemo(
+    () =>
+      LIFECYCLE_OPTIONS.map((option) => ({
+        id: option.value,
+        name: t(option.label),
+      })),
+    [t],
   );
 
-  const languageOptions = useMemo(() =>
-    LANGUAGE_OPTIONS.map(option => ({
-      id: option.value,
-      name: option.label
-    })), []
+  const languageOptions = useMemo(
+    () =>
+      LANGUAGE_OPTIONS.map((option) => ({
+        id: option.value,
+        name: option.label,
+      })),
+    [],
   );
 
   // Field configuration for basic info
@@ -43,52 +47,52 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
       field: 'name',
       type: 'singlechar',
       editable: true,
-      required: true
+      required: true,
     },
     {
       label: '创建时间',
       field: 'created_at',
       type: 'time',
-      editable: false
+      editable: false,
     },
     {
       label: '创建人',
       field: 'created_by',
       type: 'objuser',
-      editable: false
+      editable: false,
     },
     {
       label: '更新时间',
       field: 'updated_at',
       type: 'time',
-      editable: false
+      editable: false,
     },
     {
       label: '更新人',
       field: 'updated_by',
       type: 'objuser',
-      editable: false
+      editable: false,
     },
     {
       label: '生命周期',
       field: 'lifecycle',
       type: 'enum',
       editable: true,
-      options: lifecycleOptions
+      options: lifecycleOptions,
     },
     {
       label: '时区',
       field: 'timezone',
       type: 'enum',
-      editable: false
+      editable: false,
     },
     {
       label: '语言',
       field: 'language',
       type: 'enum',
       editable: true,
-      options: languageOptions
-    }
+      options: languageOptions,
+    },
   ];
 
   return (

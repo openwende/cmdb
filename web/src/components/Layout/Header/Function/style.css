@@ -1,23 +1,23 @@
 /* Language component styles */
 .language-container {
+  display: flex;
+  align-items: center;
+
+  .language-button {
+    color: #fff;
     display: flex;
     align-items: center;
+    gap: 2px;
+    padding: 0;
 
-    .language-button {
-        color: #fff;
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        padding: 0;
-
-        &:hover {
-            color: #fff !important;
-        }
-
-        .language-label {
-            width: 12px;
-            font-size: 10px;
-            margin-top: 6px;
-        }
+    &:hover {
+      color: #fff !important;
     }
+
+    .language-label {
+      width: 12px;
+      font-size: 10px;
+      margin-top: 6px;
+    }
+  }
 }

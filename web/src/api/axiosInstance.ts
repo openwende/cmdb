@@ -17,7 +17,7 @@ const axiosInstance = axios.create({
     // ANNOTATION: Sets the default 'Content-Type' header for all requests,
     // indicating that request bodies are in JSON format.
 
-    'Accept': 'application/json',
+    Accept: 'application/json',
     // ANNOTATION: Tells the server that the client prefers to receive responses in JSON format.
   },
 });
@@ -44,7 +44,7 @@ axiosInstance.interceptors.request.use(
     console.error('Request Interceptor Error:', error);
     return Promise.reject(error);
     // ANNOTATION: Rejects the promise to propagate the error.
-  }
+  },
 );
 
 // --- Response Interceptor ---
@@ -96,7 +96,7 @@ axiosInstance.interceptors.response.use(
     // ANNOTATION: It's crucial to reject the promise with the error object.
     // This allows individual API calls to still use .catch() for specific error
     // handling or to update UI based on the error, if needed.
-  }
+  },
 );
 
 export default axiosInstance;

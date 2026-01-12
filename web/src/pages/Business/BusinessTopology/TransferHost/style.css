@@ -1,170 +1,170 @@
 .transfer-container {
-    margin: 16px 20px;
-    padding: 16px;
-    background-color: #fff;
+  margin: 16px 20px;
+  padding: 16px;
+  background-color: #fff;
 
-    .info-item {
+  .info-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+
+    &.first-item {
+      margin-top: 24px;
+    }
+
+    .info-label {
+      color: #63656e;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+      width: 140px;
+    }
+
+    .ant-tabs-tab {
+      padding-top: 0;
+    }
+
+    .ant-tabs-nav {
+      margin-bottom: 10px;
+    }
+
+    .info-content {
+      width: 100%;
+
+      .edit-icon {
+        margin-left: 10px;
+        color: #1677ff;
+      }
+
+      .info-number {
+        color: #63656e;
+        font-weight: 700;
+      }
+
+      .del-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .inst-count {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background-color: #c4c6cc;
+          color: #fff;
+          font-size: 12px;
+
+          &.red-count {
+            background-color: #ff4d4f;
+          }
+        }
+      }
+
+      .info-button {
+        height: 26px;
+        line-height: 26px;
+        border-radius: 50px;
+        width: 70px;
+        cursor: default;
+      }
+
+      .info-button-right {
+        margin-left: 10px;
+      }
+
+      .options {
+        margin-top: 24px;
+        bottom: 0;
+        left: 0;
+        position: sticky;
         display: flex;
         gap: 8px;
-        margin-bottom: 24px;
 
-        &.first-item {
-            margin-top: 24px;
+        &::before {
+          content: '';
+          position: absolute;
+          top: -16px;
+          right: 0;
+          height: 1px;
+          background-color: #f0f0f0;
         }
 
-        .info-label {
-            color: #63656e;
-            font-size: 14px;
-            font-weight: 700;
-            text-align: right;
-            width: 140px;
+        &.sticky-active {
+          flex-shrink: 0;
+          padding: 8px 0;
+          background-color: #fff;
+          margin-left: 0;
+
+          &::before {
+            top: -1px;
+            left: 0;
+          }
         }
+      }
 
-        .ant-tabs-tab {
-            padding-top: 0;
-        }
+      .info-button-hover {
+        cursor: pointer;
+        background: #e5e6eb !important;
+      }
 
-        .ant-tabs-nav {
-            margin-bottom: 10px;
-        }
+      .info-button-tip {
+        margin-left: 8px;
+        color: #666;
+        font-size: 12px;
+      }
 
-        .info-content {
-            width: 100%;
-
-            .edit-icon {
-                margin-left: 10px;
-                color: #1677ff;
-            }
-
-            .info-number {
-                color: #63656e;
-                font-weight: 700;
-            }
-
-            .del-label {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-
-                .inst-count {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 14px;
-                    height: 14px;
-                    border-radius: 50%;
-                    background-color: #c4c6cc;
-                    color: #fff;
-                    font-size: 12px;
-
-                    &.red-count {
-                        background-color: #ff4d4f;
-                    }
-                }
-            }
-
-            .info-button {
-                height: 26px;
-                line-height: 26px;
-                border-radius: 50px;
-                width: 70px;
-                cursor: default;
-            }
-
-            .info-button-right {
-                margin-left: 10px;
-            }
-
-            .options {
-                margin-top: 24px;
-                bottom: 0;
-                left: 0;
-                position: sticky;
-                display: flex;
-                gap: 8px;
-
-                &::before {
-                    content: '';
-                    position: absolute;
-                    top: -16px;
-                    right: 0;
-                    height: 1px;
-                    background-color: #f0f0f0;
-                }
-
-                &.sticky-active {
-                    flex-shrink: 0;
-                    padding: 8px 0;
-                    background-color: #fff;
-                    margin-left: 0;
-
-                    &::before {
-                        top: -1px;
-                        left: 0;
-                    }
-                }
-            }
-
-            .info-button-hover {
-                cursor: pointer;
-                background: #e5e6eb !important;
-            }
-
-            .info-button-tip {
-                margin-left: 8px;
-                color: #666;
-                font-size: 12px;
-            }
-
-            .empty-wrapper {
-                background-color: #fafafa;
-                color: #63656e;
-                height: 60px;
-                line-height: 60px;
-                padding: 0 28px;
-            }
-        }
-
-        .add-inst-wrapper {
-            .ant-collapse-content-box {
-                padding: 0;
-            }
-
-            .host-content {
-                .add-button {
-                    font-size: 12px;
-                    line-height: 42px;
-                    text-align: center;
-                }
-
-                .bind-number {
-                    background-color: #f0f1f5;
-                    color: #888;
-                    border-radius: 8px;
-                    padding: 0 6px;
-                    margin-left: 6;
-                    font-size: 12;
-                    display: inline-block;
-                    min-width: 18;
-                    text-align: center;
-                }
-            }
-
-            .inst-panel {
-                margin-top: 15px;
-            }
-
-            .module-section {
-                margin-bottom: 15px;
-            }
-        }
-
-        .tip-text {
-            margin-bottom: 10px;
-        }
-
-        .del-action {
-            color: #ff4d4f;
-        }
+      .empty-wrapper {
+        background-color: #fafafa;
+        color: #63656e;
+        height: 60px;
+        line-height: 60px;
+        padding: 0 28px;
+      }
     }
+
+    .add-inst-wrapper {
+      .ant-collapse-content-box {
+        padding: 0;
+      }
+
+      .host-content {
+        .add-button {
+          font-size: 12px;
+          line-height: 42px;
+          text-align: center;
+        }
+
+        .bind-number {
+          background-color: #f0f1f5;
+          color: #888;
+          border-radius: 8px;
+          padding: 0 6px;
+          margin-left: 6;
+          font-size: 12;
+          display: inline-block;
+          min-width: 18;
+          text-align: center;
+        }
+      }
+
+      .inst-panel {
+        margin-top: 15px;
+      }
+
+      .module-section {
+        margin-bottom: 15px;
+      }
+    }
+
+    .tip-text {
+      margin-bottom: 10px;
+    }
+
+    .del-action {
+      color: #ff4d4f;
+    }
+  }
 }
