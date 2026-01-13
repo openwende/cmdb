@@ -22,6 +22,15 @@
   flex: 290px 0 0;
   font-size: 16px;
   color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.header-logo-image {
+  height: 48px;
+  width: auto;
+  background-color: transparent;
 }
 
 .header-function {

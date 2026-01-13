@@ -22,6 +22,9 @@
     "notFound": "404"
   },
   "common": {
+    "layout": {
+      "platformName": "Configuration Platform"
+    },
     "rename": "Rename",
     "delete": "Delete",
     "edit": "Edit",

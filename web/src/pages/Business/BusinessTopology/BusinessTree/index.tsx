@@ -143,7 +143,11 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
         }}
         onClick={() => setCollapsed((c) => !c)}
       >
-        {collapsed ? <RightOutlined /> : <LeftOutlined />}
+        {collapsed ? (
+          <RightOutlined className="collapsed-icon" />
+        ) : (
+          <LeftOutlined className="collapsed-icon" />
+        )}
       </div>
     </div>
   );
