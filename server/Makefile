@@ -11,7 +11,6 @@ GOMOD=$(GOCMD) mod
 # Binary names
 SERVER_BINARY=bin/cmdb-server
 DIST_DIR=dist
-DB_FILE?=./data/cmdb.db
 
 # Build info
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
@@ -22,7 +21,6 @@ BUILD_TIME ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 LDFLAGS=-ldflags "-X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.buildTime=$(BUILD_TIME)"
 
 .PHONY: all build clean test deps dev server help fmt vet lint
-.PHONY: sqlite-dev sqlite-build sqlite-run sqlite-build-all
 
 # Default target
 all: clean deps build
@@ -46,39 +44,19 @@ dev: deps
 	@echo "Starting development server..."
 	$(GOCMD) run ./cmd/business-server
 
+dev-db:
+	@echo "Starting development database..."
+	docker-compose up -d db
+
+dev-all:
+	@echo "Starting full stack (App + DB)..."
+	docker-compose up -d --build
+
 # Run server
 server: build-server
 	@echo "Starting server..."
 	./$(SERVER_BINARY)
 
-# SQLite (no Docker): run directly
-sqlite-dev: deps
-	@echo "Starting server in SQLite mode..."
-	@mkdir -p $(dir $(DB_FILE)) bin
-	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOCMD) run ./cmd/business-server
-
-sqlite-build: deps
-	@echo "Building server binary for SQLite..."
-	@mkdir -p bin $(dir $(DB_FILE))
-	# go-sqlite3 requires CGO. Ensure a C toolchain is available on your OS.
-	CGO_ENABLED?=1
-	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) CGO_ENABLED=$(CGO_ENABLED) $(GOBUILD) $(LDFLAGS) -o $(SERVER_BINARY) ./cmd/business-server
-
-sqlite-run: sqlite-build
-	@echo "Running server binary (SQLite mode)..."
-	DB_DRIVER=sqlite DB_NAME=$(DB_FILE) ./$(SERVER_BINARY)
-
-# Cross build for common OS/ARCH (requires CGO toolchains per target)
-sqlite-build-all: deps
-	@echo "Cross building server binaries for SQLite (requires CGO toolchains) ..."
-	@mkdir -p $(DIST_DIR) $(dir $(DB_FILE))
-	CGO_ENABLED=1 GOOS=linux  GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-linux-amd64-sqlite ./cmd/business-server
-	CGO_ENABLED=1 GOOS=linux  GOARCH=arm64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-linux-arm64-sqlite ./cmd/business-server
-	CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-darwin-amd64-sqlite ./cmd/business-server
-	CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-darwin-arm64-sqlite ./cmd/business-server
-	CGO_ENABLED=1 GOOS=windows GOARCH=amd64 DB_DRIVER=sqlite DB_NAME=$(DB_FILE) $(GOBUILD) $(LDFLAGS) -o $(DIST_DIR)/cmdb-server-windows-amd64-sqlite.exe ./cmd/business-server
-
-# Run CLI
 # Testing
 test:
 	@echo "Running unit tests..."
@@ -88,7 +66,7 @@ test-coverage: test
 	@echo "Generating coverage report..."
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 
-# Integration tests
+# Integration tests (tag-based)
 test-integration:
 	@echo "Running integration tests..."
 	$(GOTEST) -v -tags=integration ./test/integration/...
@@ -117,22 +95,26 @@ generate:
 	@echo "Running go generate..."
 	$(GOCMD) generate ./...
 
-# Database
+# Database Migrations
+# Database Migrations
+# Using go run to avoid system dependencies
+MIGRATE_CMD=$(GOCMD) run -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+DATABASE_URL=postgres://cmdb:password@localhost:5432/cmdb?sslmode=disable
+
 db-migrate-up:
 	@echo "Running database migrations..."
-	@which migrate > /dev/null || (echo "Install golang-migrate first" && exit 1)
-	migrate -path migrations -database "$(DATABASE_URL)" up
+	$(MIGRATE_CMD) -path migrations -database "$(DATABASE_URL)" up
 
 db-migrate-down:
 	@echo "Rolling back database migrations..."
-	migrate -path migrations -database "$(DATABASE_URL)" down
+	$(MIGRATE_CMD) -path migrations -database "$(DATABASE_URL)" down
 
 db-migrate-create:
 	@echo "Creating new migration..."
 	@read -p "Migration name: " name; \
-	migrate create -ext sql -dir migrations $$name
+	$(MIGRATE_CMD) create -ext sql -dir migrations -seq $$name
 
-# Release (optional)
+# Release
 release: clean build
 	@echo "Creating release artifacts..."
 	@mkdir -p $(DIST_DIR)
@@ -151,20 +133,11 @@ help:
 	@echo "Available targets:"
 	@echo "  all           - Clean, install deps, test, and build"
 	@echo "  build         - Build server binary"
-	@echo "  build-server  - Build server binary only"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  deps          - Install dependencies"
 	@echo "  dev           - Start development server"
-	@echo "  sqlite-dev    - Start dev server with SQLite (no Docker)"
-	@echo "  sqlite-build  - Build server binary for SQLite"
-	@echo "  sqlite-run    - Run built binary with SQLite"
-	@echo "  sqlite-build-all - Cross-build binaries for Linux/Darwin/Windows (CGO toolchains required)"
 	@echo "  fmt           - Format source code"
-	@echo "  generate      - Run go generate"
 	@echo "  lint          - Run linters"
 	@echo "  test          - Run unit tests"
-	@echo "  test-coverage - Run tests with coverage report"
-	@echo "  test-integration - Run integration tests"
-	@echo "  vet           - Run go vet"
+	@echo "  db-migrate-up - Run up migrations"
 	@echo "  release       - Create release artifacts"
-	@echo "  help          - Show this help message"

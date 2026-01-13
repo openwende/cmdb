@@ -54,8 +54,11 @@ COPY --from=builder /app/business-server .
 RUN chmod +x ./business-server
 
 # Create necessary directories and set permissions
-RUN mkdir -p /app/data /app/logs && \
+RUN mkdir -p /app/data /app/logs /app/config && \
     chown -R cmdb:cmdb /app
+
+# Copy example config as default (optional fallback)
+COPY --from=builder /app/config/config.example.yaml /app/config/config.yaml
 
 # Switch to the non-root user
 USER cmdb

@@ -22,6 +22,7 @@ go.work.sum
 
 # IDE files
 .vscode/
+!.vscode/launch.json
 .idea/
 *.swp
 *.swo
@@ -45,6 +46,8 @@ Thumbs.db
 *.env
 
 # Configuration files with secrets
+config.yaml
+config/config.yaml
 config/local.yaml
 config/production.yaml
 config/development.yaml

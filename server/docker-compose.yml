@@ -1,0 +1,80 @@
+version: '3.8'
+
+# Defined networks for internal container communication
+networks:
+  cmdb-network:
+    driver: bridge
+
+# Persistent volumes
+volumes:
+  cmdb_postgres_data:
+    name: cmdb_postgres_data
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database Service (PostgreSQL 15)
+  # Usage:
+  #   - Dev: docker-compose up -d db (Starts just DB for local Go dev)
+  #   - Full: docker-compose up -d (Starts DB + App)
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:18.1
+    container_name: cmdb-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cmdb
+      POSTGRES_USER: cmdb
+      POSTGRES_PASSWORD: password # Matches config/config.yaml default
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+      TZ: UTC
+    ports:
+      - "5432:5432" # Exposed for local dev tools (pgAdmin, DBeaver)
+    volumes:
+      - cmdb_postgres_data:/var/lib/postgresql
+      # - ./migrations:/docker-entrypoint-initdb.d # Optional: Auto-init with SQL
+    networks:
+      - cmdb-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U cmdb -d cmdb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Application Service (Business Server)
+  # Usage:
+  #   - Full: docker-compose up -d (Automatically builds and runs app)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.business
+      args:
+        GOPROXY: "https://goproxy.cn,direct"
+    container_name: cmdb-server
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Override config settings via env vars
+      SERVER_MODE: release
+      DATABASE_HOST: db # Connects to 'db' service alias
+      DATABASE_PASSWORD: password
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount config for runtime updates (Optional)
+      # - ./config/config.yaml:/app/config/config.yaml:ro
+      - ./logs:/app/logs
+    networks:
+      - cmdb-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.1'
+          memory: 128M

@@ -1,58 +1,75 @@
-# WEND CMDB Backend (Slim)
+# WEND CMDB Backend
 
-最小可用的 Business 域后端（REST），基于 Go + Gin + GORM + PostgreSQL。
+A strict, production-ready CMDB backend service built with Go, Gin, and PostgreSQL.
 
-## 目录结构（精简）
+## 🚀 Key Features
+
+*   **Clean Architecture**: Layered design (`handlers` -> `service` -> `repository`).
+*   **Strict SQL Migrations**: No ORM auto-migration. Schema managed by `golang-migrate` with timestamped SQL files.
+*   **PostgreSQL Native**: Optimized for Postgres (uses `uuid`, `text[]`, etc.). No SQLite legacy.
+*   **Unified Deployment**: Single `docker-compose.yml` for Dev, QuickStart, and Prod scenarios.
+
+## 📂 Project Structure
 
 ```
-├── cmd/business-server/     # 入口：业务服务 HTTP Server
-├── internal/core/business/  # 业务领域服务
-├── internal/storage/        # 数据库连接与仓储
-├── internal/types/          # 领域模型（业务）
-├── pkg/config/              # 配置加载
-├── migrations/              # 数据库迁移（SQL）
-├── docker-compose.business.yml
-├── Dockerfile.business
-└── docs/DELIVERY_NOTES.md   # 交付说明
+├── cmd/business-server/     # Entrypoint
+├── internal/
+│   ├── api/                 # HTTP Layer
+│   │   ├── handlers/        # Business logic handlers
+│   │   └── server/          # Server setup & routing
+│   ├── core/                # Business Service Layer
+│   ├── storage/             # Repository Layer (Postgres)
+│   └── types/               # Domain Models
+├── pkg/config/              # Configuration loading
+├── migrations/              # SQL Migration files
+├── config/                  # Configuration files
+│   ├── config.yaml          # Local config (gitignored)
+│   └── config.example.yaml  # Config template
+├── deploy/                  # Deployment docs & scripts
+├── docker-compose.yml       # Unified Docker Compose
+└── Makefile                 # Build & Dev commands
 ```
 
-## 本地运行
+## 🛠️ Getting Started
+
+### 1. Development (Local)
+Run the database in Docker, and the app locally.
 
 ```bash
-# 直接启动（读取 config.yaml）
+# Start Postgres only
+make dev-db
+
+# Run App
 make dev
-
-# 构建二进制
-make build
-make server
 ```
 
-## Docker Compose
+### 2. Quick Start (Full Stack)
+Run everything in Docker.
 
 ```bash
-docker compose -f docker-compose.business.yml up -d --build
-docker compose -f docker-compose.business.yml ps
-docker compose -f docker-compose.business.yml logs -f cmdb-business-server
+docker-compose up -d
+```
+Access API at `http://localhost:8080/health`
+
+### 3. Build & Test
+
+```bash
+# Build Binary
+make build
+
+# Run Unit Tests
+make test
 ```
 
-默认端口：`8080`（可在 `config.yaml` 或环境变量中覆盖）。
+## ⚙️ Configuration
 
-## API（当前范围）
+Copy the template to create your local config:
+```bash
+cp config/config.example.yaml config/config.yaml
+```
 
-- GET `/health`
-- POST `/api/v1/businesses`
-- GET `/api/v1/businesses`
-- GET `/api/v1/businesses/:id`
-- PUT `/api/v1/businesses/:id`
-- DELETE `/api/v1/businesses/:id`
-- POST `/api/v1/business-sets`
+The application loads configuration from `config/config.yaml`. See `config/config.example.yaml` for all available options.
 
-详情见 `docs/DELIVERY_NOTES.md`。
+## 📦 Deployment
 
-## 配置
-
-参考 `config.yaml` 或 `deploy/configs/business-config.yaml`（compose 会挂载至容器 `/app/config.yaml`）。
-
-## 说明
-
-此仓库已去除未使用的 GraphQL、插件系统、复杂查询、CLI 等模块，后续需要可按需逐步引入。仅保留 Business 域的最小可用实现与必要依赖。
+See [deploy/README.md](deploy/README.md) for detailed deployment guides (VM, Kubernetes, Docker).
