@@ -1,5 +1,6 @@
 .app-header {
   width: 100%;
+  padding: 0 24px;
   display: flex;
   justify-content: space-between;
 }
@@ -19,7 +20,7 @@
 }
 
 .header-logo {
-  flex: 290px 0 0;
+  flex: 260px 0 0;
   font-size: 16px;
   color: #fff;
   display: flex;
@@ -36,8 +37,5 @@
 .header-function {
   display: flex;
   color: #fff;
-
-  div {
-    margin: 0 20px 0 0;
-  }
+  gap: 20px;
 }
