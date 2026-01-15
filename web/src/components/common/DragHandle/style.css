@@ -20,7 +20,36 @@
     cursor: col-resize;
   }
 
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: #d9d9d9;
+    box-shadow: 
+      0 -6px 0 0 #d9d9d9,
+      0 -12px 0 0 #d9d9d9,
+      0 6px 0 0 #d9d9d9,
+      0 12px 0 0 #d9d9d9,
+      0 18px 0 0 #d9d9d9;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  &:hover::after,
+  &.active::after {
+    display: none;
+  }
+
+  &:hover,
   &.active {
     background: #1890ff;
+  }
+
+  &.no-grabber::after {
+    display: none;
   }
 }

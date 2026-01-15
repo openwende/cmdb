@@ -6,6 +6,7 @@ interface DragHandleProps {
   maxWidth: number;
   currentWidth: number;
   onWidthChange: (width: number) => void;
+  className?: string;
 }
 
 const DragHandle: React.FC<DragHandleProps> = ({
@@ -13,6 +14,7 @@ const DragHandle: React.FC<DragHandleProps> = ({
   maxWidth,
   currentWidth,
   onWidthChange,
+  className,
 }) => {
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -46,7 +48,7 @@ const DragHandle: React.FC<DragHandleProps> = ({
 
   return (
     <div
-      className={`drag-handle ${isDragging || isHover ? 'active' : ''}`}
+      className={`drag-handle ${isDragging || isHover ? 'active' : ''} ${className || ''}`}
       onMouseDown={onMouseDown}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}

@@ -141,11 +141,13 @@
     }
 
     .tree-wrapper {
+      position: relative;
       display: flex;
       flex-direction: column;
       width: 280px;
       padding-right: 20px;
       border-right: 1px solid #e6e6e6;
+      user-select: none;
 
       .ant-tree-list-holder-inner {
         max-height: 496px;
@@ -211,6 +213,7 @@
     flex-direction: column;
     flex: 1;
     margin-left: 20px;
+    user-select: none;
 
     .table-list {
       margin-bottom: 12px;

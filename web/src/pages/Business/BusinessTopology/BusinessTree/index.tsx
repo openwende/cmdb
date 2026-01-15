@@ -127,6 +127,7 @@ const BusinessTree: React.FC<Props> = ({ selectedNode, initialSelectedKey, onNod
             maxWidth={MAX_WIDTH}
             currentWidth={sidebarWidth}
             onWidthChange={setSidebarWidth}
+            className="no-grabber"
           />
         </Fragment>
       )}

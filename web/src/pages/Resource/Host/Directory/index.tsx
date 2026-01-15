@@ -389,6 +389,7 @@ const Directory: React.FC<{
         maxWidth={MAX_WIDTH}
         currentWidth={sidebarWidth}
         onWidthChange={setSidebarWidth}
+        className="no-grabber"
       />
       {/* The collapsed button */}
       <div

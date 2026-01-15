@@ -1,4 +1,6 @@
 .topology-tree {
+  user-select: none;
+
   .ant-tree {
     height: 100%;
   }
