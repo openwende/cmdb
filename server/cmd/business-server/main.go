@@ -12,6 +12,8 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/api/server"
 	"github.com/wend/cmdb-backend/internal/core/business"
+	"github.com/wend/cmdb-backend/internal/core/instance"
+	"github.com/wend/cmdb-backend/internal/core/model"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/pkg/config"
 )
@@ -62,11 +64,19 @@ func main() {
 	// Initialize Personnel Repository
 	personnelRepo := storage.NewBusinessPersonnelRepository(db.DB())
 
-	// Initialize Service
+	// Initialize Business Services
 	businessService := business.NewService(businessRepo, businessSetRepo, personnelRepo)
 
+	// Initialize Dynamic Engine Repositories
+	modelRepo := storage.NewModelRepository(db.DB())
+	instanceRepo := storage.NewInstanceRepository(db.DB())
+
+	// Initialize Dynamic Engine Services
+	modelService := model.NewService(modelRepo)
+	instanceService := instance.NewService(instanceRepo, modelRepo)
+
 	// 4. Initialize Server
-	srv := server.NewServer(cfg, businessService, db)
+	srv := server.NewServer(cfg, businessService, modelService, instanceService, db)
 
 	// 5. Start Server with Graceful Shutdown
 	go func() {

@@ -8,6 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/business"
+	"github.com/wend/cmdb-backend/internal/core/instance"
+	"github.com/wend/cmdb-backend/internal/core/model"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/pkg/config"
 )
@@ -17,9 +19,17 @@ type Server struct {
 	router          *gin.Engine
 	httpServer      *http.Server
 	businessHandler *handlers.BusinessHandler
+	modelHandler    *handlers.ModelHandler
+	instanceHandler *handlers.InstanceHandler
 }
 
-func NewServer(cfg *config.Config, businessService business.Service, db *storage.Database) *Server {
+func NewServer(
+	cfg *config.Config,
+	businessService business.Service,
+	modelService model.Service,
+	instanceService instance.Service,
+	db *storage.Database,
+) *Server {
 	if cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
@@ -28,11 +38,15 @@ func NewServer(cfg *config.Config, businessService business.Service, db *storage
 
 	// Create handlers
 	businessHandler := handlers.NewBusinessHandler(businessService)
+	modelHandler := handlers.NewModelHandler(modelService)
+	instanceHandler := handlers.NewInstanceHandler(instanceService)
 
 	s := &Server{
 		config:          cfg,
 		router:          router,
 		businessHandler: businessHandler,
+		modelHandler:    modelHandler,
+		instanceHandler: instanceHandler,
 	}
 
 	s.setupRoutes(db) // Pass db connection for health check
@@ -46,7 +60,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 		if cfg.Enabled {
 			c.Writer.Header().Set("Access-Control-Allow-Origin", "*") // Simplify for now
 			c.Writer.Header().Set("Access-Control-Allow-Credentials", "false")
-			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With, X-Tenant-ID")
 			c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 			if c.Request.Method == http.MethodOptions {
@@ -77,6 +91,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// API v1
 	v1 := s.router.Group("/api/v1")
 	{
+		// Business Domains
 		businessAPI := v1.Group("/businesses")
 		{
 			businessAPI.POST("", s.businessHandler.CreateBusiness)
@@ -98,6 +113,33 @@ func (s *Server) setupRoutes(db *storage.Database) {
 			businessSetAPI.POST("/:id/members", s.businessHandler.AddBusinessToSet)
 			businessSetAPI.GET("/:id/members", s.businessHandler.ListBusinessSetMembers)
 			businessSetAPI.DELETE("/:id/members/:business_id", s.businessHandler.RemoveBusinessFromSet)
+		}
+
+		// Legacy/Compatible Routes (if needed) or redirection
+
+		// ==========================
+		// Dynamic Engine APIs
+		// ==========================
+
+		// Metadata API
+		modelsAPI := v1.Group("/models")
+		{
+			modelsAPI.GET("", s.modelHandler.ListModels)
+			modelsAPI.POST("", s.modelHandler.CreateModel)
+			modelsAPI.GET("/:name", s.modelHandler.GetModel)
+
+			// Attributes
+			modelsAPI.POST("/:name/attributes", s.modelHandler.CreateAttribute)
+
+			// Generic Instance API under /models/:name/instances
+			// e.g. GET /api/v1/models/host/instances
+			instancesAPI := modelsAPI.Group("/:name/instances")
+			{
+				instancesAPI.POST("", s.instanceHandler.CreateInstance)
+				instancesAPI.POST("/batch", s.instanceHandler.BatchCreateInstances)
+				instancesAPI.GET("", s.instanceHandler.ListInstances)
+				// TODO: GET /:id, PUT /:id
+			}
 		}
 	}
 }
