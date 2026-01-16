@@ -50,14 +50,13 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
   options,
   hasError,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
   const { t } = useTranslation();
 
   const handleCopy = async () => {
     if (value && value !== '--') {
       try {
         await navigator.clipboard.writeText(String(value));
-        message.success('复制成功');
+        message.success(t('common.message.copySuccess'));
       } catch (error) {
         const textArea = document.createElement('textarea');
         textArea.value = String(value);
@@ -65,7 +64,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
         textArea.select();
         document.execCommand('copy');
         document.body.removeChild(textArea);
-        message.success('复制成功');
+        message.success(t('common.message.copySuccess'));
       }
     }
   };
@@ -95,11 +94,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
           </Popover>
         </div>
         <div className="item-value-container">
-          <div
-            className="item-value"
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
-          >
+          <div className="item-value">
             {isEditing && editable ? (
               <DynamicComponent
                 componentType={type}
@@ -113,8 +108,8 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
             ) : (
               <>
                 <span>{displayValue}</span>
-                {isHovered && value !== '--' && (
-                  <CopyOutlined className="copy-icon" onClick={handleCopy} title="复制" />
+                {value !== '--' && (
+                  <CopyOutlined className="copy-icon" onClick={handleCopy} />
                 )}
               </>
             )}

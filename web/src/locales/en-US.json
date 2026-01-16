@@ -44,7 +44,8 @@
       "createSuccess": "Created successfully",
       "createFailed": "Failed to create",
       "updateSuccess": "Updated successfully",
-      "updateFailed": "Failed to update"
+      "updateFailed": "Failed to update",
+      "copySuccess": "Copied successfully"
     },
     "form": {
       "rulesMessage": "This field is required"

@@ -44,7 +44,8 @@
       "createSuccess": "创建成功",
       "createFailed": "创建失败",
       "updateSuccess": "修改成功",
-      "updateFailed": "修改失败"
+      "updateFailed": "修改失败",
+      "copySuccess": "复制成功"
     },
     "form": {
       "rulesMessage": "该字段是必填项"

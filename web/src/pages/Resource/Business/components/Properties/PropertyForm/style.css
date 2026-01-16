@@ -2,14 +2,15 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  min-width: 800px;
 
   .form-item {
     display: flex;
     flex-direction: column;
-    flex: 0 0 50%;
-    max-width: 50%;
     padding-bottom: 8px;
     min-height: 32px;
+    width: 100%;
+    min-width: 0;
 
     .form-item-content {
       display: flex;
@@ -47,15 +48,19 @@
 
       .item-value {
         overflow: hidden;
-        display: -webkit-box;
-        -webkit-box-orient: vertical;
-        -webkit-line-clamp: 2;
-        word-break: break-all;
+        text-overflow: ellipsis;
+        white-space: nowrap;
 
         .copy-icon {
           margin-left: 8px;
           color: #1677ff;
           cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        &:hover .copy-icon {
+          opacity: 1;
         }
       }
 
