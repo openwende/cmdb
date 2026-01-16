@@ -5,15 +5,15 @@ import './style.css';
 
 // Define form field types
 export type FormFieldName =
-  | 'businessName'
+  | 'name'
   | 'lifecycle'
   | 'timezone'
   | 'language'
-  | 'maintainers'
-  | 'productManagers'
+  | 'sres'
+  | 'bizops'
   | 'testers'
   | 'developers'
-  | 'administrators';
+  | 'operators';
 
 // Form validation rule constants
 export const createRequiredRule = (t: (key: string) => string) => [

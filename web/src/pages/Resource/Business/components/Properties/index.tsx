@@ -52,11 +52,11 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
         businessData.language,
       created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
       updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
-      maintainers: businessData.maintainers.join(', ') || '',
-      productManagers: businessData.productManagers?.join(', ') || '',
-      testers: businessData.testers?.join(', ') || '',
-      developers: businessData.developers?.join(', ') || '',
-      operators: businessData.operators?.join(', ') || '',
+      sres: businessData.sres ? businessData.sres.join(', ') : '',
+      bizops: businessData.bizops ? businessData.bizops.join(', ') : '',
+      testers: businessData.testers ? businessData.testers.join(', ') : '',
+      developers: businessData.developers ? businessData.developers.join(', ') : '',
+      operators: businessData.operators ? businessData.operators.join(', ') : '',
     };
   }, [businessData, t]);
 
@@ -69,8 +69,8 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       language: enhancedBizData.language,
       created_at: enhancedBizData.created_at,
       updated_at: enhancedBizData.updated_at,
-      maintainers: businessData.maintainers || [],
-      productManagers: businessData.productManagers || [],
+      sres: businessData.sres || [],
+      bizops: businessData.bizops || [],
       testers: businessData.testers || [],
       developers: businessData.developers || [],
       operators: businessData.operators || [],
@@ -87,8 +87,8 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       if (editValues.name.trim() === '') {
         errors.push('name');
       }
-      if (editValues.maintainers.length === 0) {
-        errors.push('maintainers');
+      if (editValues.sres.length === 0) {
+        errors.push('sres');
       }
     }
 

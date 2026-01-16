@@ -151,7 +151,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const data = await createBusiness({ ...values, name: values.businessName });
+      const data = await createBusiness(values);
       if (data.success) {
         message.success(t('common.message.createSuccess'));
       } else {
@@ -203,17 +203,19 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
           <Panel header={t('resource.business.modify.sections.basic')} key="base">
             <div className="form-grid">
               <FormFieldItem
-                fieldName="businessName"
-                label={t('resource.business.modify.fields.businessName')}
+                fieldName="name"
+                label={t('resource.business.modify.fields.name')}
                 required={true}
                 type={type}
                 handleFieldChange={handleFieldChange}
                 selectedFields={selectedFields}
               >
                 <Input
-                  placeholder={t('resource.business.modify.placeholders.businessName')}
-                  disabled={isFieldDisabled('businessName')}
+                  placeholder={t('resource.business.modify.placeholders.name')}
+                  disabled={isFieldDisabled('name')}
                   className="select-input"
+                  maxLength={100}
+                  showCount
                 />
               </FormFieldItem>
               <FormFieldItem
@@ -272,8 +274,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
           <Panel header={t('resource.business.modify.sections.roles')} key="role">
             <div className="form-grid">
               <PersonnelSelectItem
-                fieldName="maintainers"
-                label={t('resource.business.modify.fields.maintainers')}
+                fieldName="sres"
+                label={t('resource.business.modify.fields.sres')}
                 required={true}
                 type={type}
                 isSearching={isSearching}
@@ -285,8 +287,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
               />
 
               <PersonnelSelectItem
-                fieldName="productManagers"
-                label={t('resource.business.modify.fields.productManagers')}
+                fieldName="bizops"
+                label={t('resource.business.modify.fields.bizops')}
                 type={type}
                 isSearching={isSearching}
                 searchOptions={searchOptions}
@@ -321,8 +323,8 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
               />
 
               <PersonnelSelectItem
-                fieldName="administrators"
-                label={t('resource.business.modify.fields.administrators')}
+                fieldName="operators"
+                label={t('resource.business.modify.fields.operators')}
                 type={type}
                 isSearching={isSearching}
                 searchOptions={searchOptions}

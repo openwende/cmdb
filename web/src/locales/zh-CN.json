@@ -897,18 +897,18 @@
           "roles": "角色"
         },
         "fields": {
-          "businessName": "业务名",
+          "name": "业务名",
           "lifecycle": "生命周期",
           "timezone": "时区",
           "language": "语言",
-          "maintainers": "运维人员",
-          "productManagers": "产品人员",
+          "sres": "运维人员",
+          "bizops": "产品人员",
           "testers": "测试人员",
           "developers": "开发人员",
-          "administrators": "操作人员"
+          "operators": "操作人员"
         },
         "placeholders": {
-          "businessName": "请输入业务名",
+          "name": "请输入业务名",
           "lifecycle": "请选择生命周期",
           "timezone": "请选择时区",
           "language": "请选择语言"

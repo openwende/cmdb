@@ -30,8 +30,8 @@ export interface BusinessDetail {
   created_by?: string;
   updated_at?: string;
   updated_by?: string;
-  maintainers: string[];
-  productManagers?: string[];
+  sres: string[];
+  bizops?: string[];
   testers?: string[];
   developers?: string[];
   operators?: string[];

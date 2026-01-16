@@ -22,14 +22,14 @@ const RoleInfo: React.FC<RoleInfoProps> = ({
   const roleInfoFields: FieldConfig[] = [
     {
       label: '运维人员',
-      field: 'maintainers',
+      field: 'sres',
       type: 'objuser',
       editable: true,
       required: true,
     },
     {
       label: '产品人员',
-      field: 'productManagers',
+      field: 'bizops',
       type: 'objuser',
       editable: true,
     },

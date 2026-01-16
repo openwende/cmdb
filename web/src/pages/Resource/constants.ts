@@ -134,7 +134,7 @@ export const searchFieldOptions = [
  */
 export const LIFECYCLE_OPTIONS = [
   { label: 'resource.business.modify.options.lifecycle.testing', value: 'testing' },
-  { label: 'resource.business.modify.options.lifecycle.online', value: 'production' },
+  { label: 'resource.business.modify.options.lifecycle.online', value: 'online' },
   { label: 'resource.business.modify.options.lifecycle.offline', value: 'offline' },
 ];
 

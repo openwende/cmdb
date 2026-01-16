@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Table,
@@ -69,10 +69,10 @@ const BusinessList: React.FC = () => {
     },
     {
       title: t('resource.business.columns.maintainer'),
-      dataIndex: 'maintainers',
+      dataIndex: 'sres',
       sorter: true,
       width: 300,
-      render: (val: string[]) => val.join(', '),
+      render: (val: string[]) => (val && val.length > 0 ? val.join(', ') : '--'),
     },
     {
       title: t('resource.business.columns.createdAt'),
@@ -85,7 +85,8 @@ const BusinessList: React.FC = () => {
       title: t('resource.business.columns.createdBy'),
       dataIndex: 'bk_created_by',
       key: 'bk_created_by',
-      width: 120,
+      width: 180,
+      render: (text: string) => (text ? text : '--'),
     },
     {
       title: t('resource.business.columns.updatedAt'),
@@ -103,27 +104,20 @@ const BusinessList: React.FC = () => {
     },
   ];
 
-  useEffect(() => {
-    fetchBusinessList();
-  }, []);
-
-  useEffect(() => {
-    fetchBusinessList();
-  }, [page, pageSize, searchDateRange]);
-
   const fetchBusinessList = async () => {
     try {
       setLoading(true);
-      const params = {
-        field: searchField,
-        textValue: searchText,
-        dateRange: searchDateRange
-          ? {
-              startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
-              endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss'),
-            }
-          : null,
-      };
+      // TODO: Use these params when backend API supports filtering
+      // const params = {
+      //   field: searchField,
+      //   textValue: searchText,
+      //   dateRange: searchDateRange
+      //     ? {
+      //         startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
+      //         endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss'),
+      //       }
+      //     : null,
+      // };
       const { data } = await getBusinessList({
         limit: pageSize,
         offset: (page - 1) * pageSize,
@@ -137,6 +131,10 @@ const BusinessList: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchBusinessList();
+  }, [page, pageSize]);
 
   // Handle URL parameters to auto-open drawer
   useEffect(() => {
@@ -196,9 +194,17 @@ const BusinessList: React.FC = () => {
   };
 
   const handleDateRangeSearch = (dates: [dayjs.Dayjs | null, dayjs.Dayjs | null] | null) => {
-    setSearchDateRange(dates);
+    if (dates && dates[0] && dates[1]) {
+      // Set start time to 00:00:00 and end time to 23:59:59
+      const startDate = dates[0].startOf('day');
+      const endDate = dates[1].hour(23).minute(59).second(59);
+      setSearchDateRange([startDate, endDate]);
+    } else {
+      setSearchDateRange(dates);
+    }
     setSearchText('');
     setPage(1);
+    fetchBusinessList();
   };
 
   const handleFieldChange = (value: string) => {
@@ -207,9 +213,9 @@ const BusinessList: React.FC = () => {
     setSearchDateRange(null);
   };
 
-  const handleSuccess = useCallback(() => {
+  const handleSuccess = () => {
     fetchBusinessList();
-  }, []);
+  };
 
   return (
     <div className="business-list">
@@ -244,6 +250,7 @@ const BusinessList: React.FC = () => {
                   t('resource.business.search.dateRange.startPlaceholder'),
                   t('resource.business.search.dateRange.endPlaceholder'),
                 ]}
+                format="YYYY-MM-DD HH:mm:ss"
                 allowClear
                 value={searchDateRange}
                 onChange={handleDateRangeSearch}

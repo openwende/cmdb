@@ -897,18 +897,18 @@
           "roles": "Roles"
         },
         "fields": {
-          "businessName": "Business name",
+          "name": "Business name",
           "lifecycle": "Lifecycle",
           "timezone": "Timezone",
           "language": "Language",
-          "maintainers": "Maintainers",
-          "productManagers": "Product managers",
+          "sres": "SRE",
+          "bizops": "Product managers",
           "testers": "Testers",
           "developers": "Developers",
-          "administrators": "Administrators"
+          "operators": "Operators"
         },
         "placeholders": {
-          "businessName": "Please enter business name",
+          "name": "Please enter business name",
           "lifecycle": "Please select lifecycle",
           "timezone": "Please select timezone",
           "language": "Please select language"
