@@ -66,6 +66,53 @@ func (m *MockService) CreateBusinessSet(ctx context.Context, req *types.CreateBu
 	return args.Get(0).(*types.BusinessSet), args.Error(1)
 }
 
+func (m *MockService) GetBusinessSet(ctx context.Context, tenantID, id string) (*types.BusinessSet, error) {
+	args := m.Called(ctx, tenantID, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.BusinessSet), args.Error(1)
+}
+
+func (m *MockService) ListBusinessSets(ctx context.Context, tenantID string, limit, offset int) ([]types.BusinessSet, int, error) {
+	args := m.Called(ctx, tenantID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, 0, args.Error(2)
+	}
+	return args.Get(0).([]types.BusinessSet), args.Int(1), args.Error(2)
+}
+
+func (m *MockService) UpdateBusinessSet(ctx context.Context, tenantID, id string, req *types.UpdateBusinessSetRequest) (*types.BusinessSet, error) {
+	args := m.Called(ctx, tenantID, id, req)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.BusinessSet), args.Error(1)
+}
+
+func (m *MockService) DeleteBusinessSet(ctx context.Context, tenantID, id string) error {
+	args := m.Called(ctx, tenantID, id)
+	return args.Error(0)
+}
+
+func (m *MockService) AddBusinessToSet(ctx context.Context, businessSetID uuid.UUID, req *types.AddBusinessToSetRequest) error {
+	args := m.Called(ctx, businessSetID, req)
+	return args.Error(0)
+}
+
+func (m *MockService) RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error {
+	args := m.Called(ctx, businessSetID, businessID)
+	return args.Error(0)
+}
+
+func (m *MockService) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error) {
+	args := m.Called(ctx, businessSetID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]uuid.UUID), args.Error(1)
+}
+
 func TestCreateBusiness(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -155,5 +202,84 @@ func TestGetBusiness(t *testing.T) {
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+}
+
+func TestDeleteBusiness(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("Success - Delete Offline Business", func(t *testing.T) {
+		mockService := new(MockService)
+		handler := NewBusinessHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/businesses/:id", handler.DeleteBusiness)
+
+		id := uuid.New().String()
+		mockService.On("DeleteBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).Return(nil)
+
+		req, _ := http.NewRequest(http.MethodDelete, "/businesses/"+id, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, true, response["success"])
+		assert.Equal(t, "Business deleted successfully", response["message"])
+	})
+
+	t.Run("Fail - Delete Online Business", func(t *testing.T) {
+		mockService := new(MockService)
+		handler := NewBusinessHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/businesses/:id", handler.DeleteBusiness)
+
+		id := uuid.New().String()
+		mockService.On("DeleteBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).
+			Return(errors.New("只能删除归档（offline）状态的业务，当前业务状态为: online"))
+
+		req, _ := http.NewRequest(http.MethodDelete, "/businesses/"+id, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "Cannot delete business", response["error"])
+		assert.Contains(t, response["details"], "只能删除归档")
+	})
+
+	t.Run("Fail - Business Not Found", func(t *testing.T) {
+		mockService := new(MockService)
+		handler := NewBusinessHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/businesses/:id", handler.DeleteBusiness)
+
+		id := uuid.New().String()
+		mockService.On("DeleteBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).
+			Return(errors.New("business not found"))
+
+		req, _ := http.NewRequest(http.MethodDelete, "/businesses/"+id, nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
+
+	t.Run("Fail - Invalid UUID", func(t *testing.T) {
+		mockService := new(MockService)
+		handler := NewBusinessHandler(mockService)
+		router := gin.Default()
+		router.DELETE("/businesses/:id", handler.DeleteBusiness)
+
+		req, _ := http.NewRequest(http.MethodDelete, "/businesses/invalid-uuid", nil)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }

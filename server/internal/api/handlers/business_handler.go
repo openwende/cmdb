@@ -191,6 +191,10 @@ func (h *BusinessHandler) DeleteBusiness(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Business not found", "details": err.Error()})
 			return
 		}
+		if strings.Contains(err.Error(), "只能删除归档") || strings.Contains(err.Error(), "业务状态为") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete business", "details": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete business", "details": err.Error()})
 		return
 	}

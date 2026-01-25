@@ -41,7 +41,8 @@ func (m *MockBusinessRepository) GetBusinessByIdentifier(ctx context.Context, te
 	return nil, nil
 }
 func (m *MockBusinessRepository) DeleteBusiness(ctx context.Context, tenantID, id string) error {
-	return nil
+	args := m.Called(ctx, tenantID, id)
+	return args.Error(0)
 }
 func (m *MockBusinessRepository) ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error) {
 	return nil, 0, nil
@@ -115,5 +116,78 @@ func TestLifecycleLogic(t *testing.T) {
 		_, err := service.UpdateBusiness(context.Background(), tn, id, req)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid lifecycle value")
+	})
+}
+
+func TestDeleteBusiness(t *testing.T) {
+	mockRepo := new(MockBusinessRepository)
+	service := NewService(mockRepo, nil, nil)
+
+	t.Run("Delete Offline Business - Success", func(t *testing.T) {
+		id := uuid.New().String()
+		tn := "00000000-0000-0000-0000-000000000001"
+		offlineBusiness := &types.Business{
+			ID:        uuid.MustParse(id),
+			TenantID:  uuid.MustParse(tn),
+			Name:      "Archived Business",
+			Lifecycle: types.BusinessLifecycleOffline,
+		}
+
+		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(offlineBusiness, nil)
+		mockRepo.On("DeleteBusiness", mock.Anything, tn, id).Return(nil)
+
+		err := service.DeleteBusiness(context.Background(), tn, id)
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
+	t.Run("Delete Online Business - Should Fail", func(t *testing.T) {
+		id := uuid.New().String()
+		tn := "00000000-0000-0000-0000-000000000001"
+		onlineBusiness := &types.Business{
+			ID:        uuid.MustParse(id),
+			TenantID:  uuid.MustParse(tn),
+			Name:      "Online Business",
+			Lifecycle: types.BusinessLifecycleOnline,
+		}
+
+		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(onlineBusiness, nil)
+
+		err := service.DeleteBusiness(context.Background(), tn, id)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "只能删除归档")
+		assert.Contains(t, err.Error(), "online")
+	})
+
+	t.Run("Delete Testing Business - Should Fail", func(t *testing.T) {
+		id := uuid.New().String()
+		tn := "00000000-0000-0000-0000-000000000001"
+		testingBusiness := &types.Business{
+			ID:        uuid.MustParse(id),
+			TenantID:  uuid.MustParse(tn),
+			Name:      "Testing Business",
+			Lifecycle: types.BusinessLifecycleTesting,
+		}
+
+		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(testingBusiness, nil)
+
+		err := service.DeleteBusiness(context.Background(), tn, id)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "只能删除归档")
+		assert.Contains(t, err.Error(), "testing")
+	})
+
+	t.Run("Delete Non-existent Business - Should Fail", func(t *testing.T) {
+		id := uuid.New().String()
+		tn := "00000000-0000-0000-0000-000000000001"
+
+		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(nil, assert.AnError)
+
+		err := service.DeleteBusiness(context.Background(), tn, id)
+		assert.Error(t, err)
 	})
 }

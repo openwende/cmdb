@@ -290,6 +290,11 @@ curl -X PUT http://localhost:8080/api/v1/businesses/a1b2c3d4-e5f6-7890-abcd-ef12
 DELETE /api/v1/businesses/:id
 ```
 
+**重要说明**:
+- ⚠️ **只能删除归档状态（lifecycle = "offline"）的业务**
+- 如果业务处于 `testing` 或 `online` 状态，删除请求将被拒绝
+- 建议在删除前先将业务更新为 `offline` 状态
+
 **成功响应** (200 OK):
 ```json
 {
@@ -299,11 +304,25 @@ DELETE /api/v1/businesses/:id
 ```
 
 **错误响应**:
-- `400 Bad Request` - 无效的UUID格式
+- `400 Bad Request` - 无效的UUID格式，或业务不是归档状态
 - `404 Not Found` - 业务不存在
+
+**错误示例** (业务状态不是offline):
+```json
+{
+  "error": "Cannot delete business",
+  "details": "只能删除归档（offline）状态的业务，当前业务状态为: online"
+}
+```
 
 **cURL 示例**:
 ```bash
+# 1. 首先将业务更新为offline状态
+curl -X PUT http://localhost:8080/api/v1/businesses/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
+  -H "Content-Type: application/json" \
+  -d '{"lifecycle": "offline"}'
+
+# 2. 然后删除业务
 curl -X DELETE http://localhost:8080/api/v1/businesses/a1b2c3d4-e5f6-7890-abcd-ef1234567890
 ```
 

@@ -174,6 +174,17 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 }
 
 func (s *service) DeleteBusiness(ctx context.Context, tenantID, id string) error {
+	// 首先获取业务信息以检查其生命周期状态
+	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
+	if err != nil {
+		return err
+	}
+
+	// 只允许删除归档（offline）状态的业务
+	if business.Lifecycle != types.BusinessLifecycleOffline {
+		return fmt.Errorf("只能删除归档（offline）状态的业务，当前业务状态为: %s", business.Lifecycle)
+	}
+
 	return s.businessRepo.DeleteBusiness(ctx, tenantID, id)
 }
 
