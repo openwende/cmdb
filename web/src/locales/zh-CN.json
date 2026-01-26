@@ -947,8 +947,10 @@
           "delete": "删除"
         },
         "messages": {
-          "restoreSuccess": "业务恢复成功",
-          "deleteSuccess": "业务已彻底删除"
+          "restoreSuccess": "恢复成功",
+          "restoreFailed": "恢复失败",
+          "deleteSuccess": "删除成功",
+          "deleteFailed": "删除失败"
         },
         "search": {
           "placeholder": "请输入业务名"

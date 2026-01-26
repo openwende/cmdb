@@ -1,6 +1,15 @@
 import { AssignType, ResourceCopyKey, ResourceMoreKey } from './Types';
 
 /**
+ * Business lifecycle enum
+ */
+export enum LIFECYCLE {
+  TESTING = 'testing',
+  ONLINE = 'online',
+  OFFLINE = 'offline',
+}
+
+/**
  * "Copy" dropdown menu**
  */
 export const resourceCopyMenuItems = [
@@ -133,9 +142,9 @@ export const searchFieldOptions = [
  * Business lifecycle options - will use i18n keys
  */
 export const LIFECYCLE_OPTIONS = [
-  { label: 'resource.business.modify.options.lifecycle.testing', value: 'testing' },
-  { label: 'resource.business.modify.options.lifecycle.online', value: 'online' },
-  { label: 'resource.business.modify.options.lifecycle.offline', value: 'offline' },
+  { label: 'resource.business.modify.options.lifecycle.testing', value: LIFECYCLE.TESTING },
+  { label: 'resource.business.modify.options.lifecycle.online', value: LIFECYCLE.ONLINE },
+  { label: 'resource.business.modify.options.lifecycle.offline', value: LIFECYCLE.OFFLINE },
 ];
 
 /**

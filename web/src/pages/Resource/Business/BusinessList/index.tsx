@@ -17,12 +17,13 @@ import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import ModifyDrawer from '../components/ModifyDrawer';
-import { getBusinessList } from '@/api';
+import { getBusinessList, updateBusiness } from '@/api';
 import './style.css';
 import { archivedBusinessPath, businessDetailPath } from '../index';
 import dayjs from 'dayjs';
-import { searchFieldOptions } from '../../constants';
+import { searchFieldOptions, LIFECYCLE } from '../../constants';
 import { CREATE_TYPES } from '@/constants/business';
+import { BusinessDetail } from '@/api/types/resource';
 
 const { Option } = Select;
 
@@ -35,12 +36,12 @@ const BusinessList: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [businessCount, setBusinessCount] = useState(0);
-  const [businessList, setBusinessList] = useState<any>([]);
+  const [businessList, setBusinessList] = useState<BusinessDetail[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerType, setDrawerType] = useState<'create' | 'edit'>('create');
   const [archiveModalVisible, setArchiveModalVisible] = useState(false);
-  const [archivingBusiness, setArchivingBusiness] = useState<any>(null);
+  const [archivingBusiness, setArchivingBusiness] = useState<BusinessDetail | null>(null);
   const [searchField, setSearchField] = useState<string>(searchFieldOptions[1].value);
   const [searchText, setSearchText] = useState<string>('');
   const [searchDateRange, setSearchDateRange] = useState<
@@ -76,29 +77,29 @@ const BusinessList: React.FC = () => {
     },
     {
       title: t('resource.business.columns.createdAt'),
-      dataIndex: 'bk_created_at',
-      key: 'bk_created_at',
+      dataIndex: 'created_at',
+      key: 'created_at',
       width: 180,
       render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: t('resource.business.columns.createdBy'),
-      dataIndex: 'bk_created_by',
-      key: 'bk_created_by',
+      dataIndex: 'created_by',
+      key: 'created_by',
       width: 180,
       render: (text: string) => (text ? text : '--'),
     },
     {
       title: t('resource.business.columns.updatedAt'),
-      dataIndex: 'bk_updated_at',
-      key: 'bk_updated_at',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
       width: 180,
       render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm:ss'),
     },
     {
       title: t('resource.business.columns.actions'),
       dataIndex: 'action',
-      render: (_: string, record: any) => (
+      render: (_: string, record: BusinessDetail) => (
         <a onClick={() => handleArchive(record)}>{t('resource.business.actions.archive')}</a>
       ),
     },
@@ -161,25 +162,36 @@ const BusinessList: React.FC = () => {
     navigate(`${businessDetailPath}/${id}`);
   };
 
-  const handleArchive = (business: any) => {
-    console.log(business);
+  const handleArchive = (business: BusinessDetail) => {
     setArchivingBusiness(business);
     setArchiveModalVisible(true);
   };
 
-  const confirmArchive = () => {
-    console.log('Archiving business:', archivingBusiness);
-    // API call to archive the business would go here
-    message.success(t('resource.business.messages.archiveSuccess'));
+  const confirmArchive = async () => {
+    if (!archivingBusiness) return;
+    try {
+      const data = await updateBusiness(archivingBusiness.id, {
+        ...archivingBusiness,
+        lifecycle: LIFECYCLE.OFFLINE,
+      });
+      if (data.success) {
+        message.success(t('resource.business.messages.archiveSuccess'));
 
-    // Remove the archived business from the table
-    const updatedList = businessList.filter(
-      (item: any) => item.bk_biz_id !== archivingBusiness.bk_biz_id,
-    );
-    setBusinessList(updatedList);
+        // Remove the archived business from the table
+        const updatedList = businessList.filter(
+          (item: BusinessDetail) => item.id !== archivingBusiness.id,
+        );
+        setBusinessList(updatedList);
+        setBusinessCount(businessCount - 1);
 
-    setArchiveModalVisible(false);
-    setArchivingBusiness(null);
+        setArchiveModalVisible(false);
+        setArchivingBusiness(null);
+      } else {
+        message.error(t('resource.business.messages.archiveFailed'));
+      }
+    } catch (error) {
+      message.error(t('resource.business.messages.archiveFailed'));
+    }
   };
 
   const handleArchivedBusiness = () => {
@@ -319,7 +331,7 @@ const BusinessList: React.FC = () => {
       <ConfirmModal
         visible={archiveModalVisible}
         title={t('resource.business.messages.confirmArchiveTitle', {
-          name: archivingBusiness?.bk_biz_name || '',
+          name: archivingBusiness?.name || '',
         })}
         description={t('resource.business.messages.confirmArchiveDescription')}
         onOk={confirmArchive}

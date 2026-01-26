@@ -9,19 +9,14 @@ export interface BusinessListParams {
   limit: number;
   offset: number;
 }
-export interface BusinessItem {
-  id: string;
-  name: string;
-  address: string;
-}
 export interface BusinessListResponse {
-  items: BusinessItem[];
+  items: BusinessDetail[];
   limit: number;
   offset: number;
   total: number;
 }
 export interface BusinessDetail {
-  id?: string;
+  id: string;
   name: string;
   language: string;
   lifecycle?: string;

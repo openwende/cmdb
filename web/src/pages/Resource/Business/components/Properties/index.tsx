@@ -42,14 +42,13 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
   const enhancedBizData = React.useMemo(() => {
     if (!businessData) return null;
 
+    const lifecycleOption = LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle);
+    const languageOption = LANGUAGE_OPTIONS.find((opt) => opt.value === businessData.language);
+
     return {
       ...businessData,
-      lifecycle: LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle)?.label
-        ? t(LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle)!.label)
-        : businessData.lifecycle,
-      language:
-        LANGUAGE_OPTIONS.find((opt) => opt.value === businessData.language)?.label ||
-        businessData.language,
+      lifecycle: lifecycleOption?.label ? t(lifecycleOption.label) : businessData.lifecycle,
+      language: languageOption?.label || businessData.language,
       created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
       updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
       sres: businessData.sres ? businessData.sres.join(', ') : '',
@@ -65,8 +64,9 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
 
     const editData = {
       ...businessData,
-      lifecycle: enhancedBizData.lifecycle,
-      language: enhancedBizData.language,
+      // Keep original values for editing, not the translated ones
+      lifecycle: businessData.lifecycle,
+      language: businessData.language,
       created_at: enhancedBizData.created_at,
       updated_at: enhancedBizData.updated_at,
       sres: businessData.sres || [],
@@ -97,19 +97,16 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       return;
     }
 
-    setIsEditing(false);
-    console.log('Saved values:', editValues);
-
     try {
       const data = await updateBusiness(businessId, editValues!);
-      fetchBusinessDetail();
       if (data.success) {
+        setIsEditing(false);
+        fetchBusinessDetail();
         message.success(t('common.message.updateSuccess'));
       } else {
         message.error(t('common.message.updateFailed'));
       }
     } catch (error) {
-      console.error(error);
       message.error(t('common.message.updateFailed'));
     }
   };
