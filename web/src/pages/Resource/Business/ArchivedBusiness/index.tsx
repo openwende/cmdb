@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Input, Space, message, Popconfirm, Modal, Form } from 'antd';
+import { Table, Input, Space, message, Popconfirm, Modal, Form, Empty, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import { deleteBusiness, getBusinessList } from '@/api';
@@ -201,6 +201,13 @@ const ArchivedBusiness: React.FC = () => {
         rowKey="id"
         bordered={true}
         pagination={false}
+        locale={{
+          emptyText: loading ? (
+            <Spin className="table-spin" />
+          ) : (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
+          ),
+        }}
       />
 
       <Pagination
