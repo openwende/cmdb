@@ -297,7 +297,7 @@ const AddHostModal: React.FC<Props> = ({
     try {
       await navigator.clipboard.writeText(selectedIPs);
       message.success(t('business.topology.addHostModal.messages.copySuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('business.topology.addHostModal.messages.copyFailed'));
     }
   };

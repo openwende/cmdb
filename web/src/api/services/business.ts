@@ -38,7 +38,7 @@ export const getHostList = (params: any) => {
  */
 export const batchSearchObjectAttribute = async ({
   params,
-  config,
+  _config,
   injectId,
 }: BatchSearchOptions): Promise<PropertyMap> => {
   try {

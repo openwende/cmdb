@@ -8,7 +8,6 @@ import {
   RightOutlined,
   LeftOutlined,
   ExclamationCircleFilled,
-  PushpinOutlined,
 } from '@ant-design/icons';
 import DragHandle from '@/components/common/DragHandle';
 import { hostDirectoryMock } from '@/mock/resource';
@@ -378,7 +377,7 @@ const Directory: React.FC<{
         blockNode={true}
         selectedKeys={selectedKeys}
         onSelect={(keys) => {
-          keys.length && onSelect(keys[0] as number);
+          void (keys.length && onSelect(keys[0] as number));
         }}
         titleRender={renderTitle}
         className="directory-tree"

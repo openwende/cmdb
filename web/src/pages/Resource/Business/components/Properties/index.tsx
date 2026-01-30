@@ -106,7 +106,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       } else {
         message.error(t('common.message.updateFailed'));
       }
-    } catch (error) {
+    } catch {
       message.error(t('common.message.updateFailed'));
     }
   };

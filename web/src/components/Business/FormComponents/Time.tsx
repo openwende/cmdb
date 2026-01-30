@@ -30,7 +30,7 @@ const Time: React.FC<FormComponentProps> = ({ value, onChange, placeholder, disa
         return [value[0] ? dayjs(value[0]) : null, value[1] ? dayjs(value[1]) : null];
       }
       return null;
-    } catch (error) {
+    } catch {
       console.warn(value);
       return null;
     }

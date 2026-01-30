@@ -10,7 +10,7 @@ interface Props {
   selectedNode: TreeData;
 }
 
-const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
+const BusinessNodeInfo: React.FC<Props> = () => {
   const { t } = useTranslation();
   const bizData = bizNodeInfo[0];
 

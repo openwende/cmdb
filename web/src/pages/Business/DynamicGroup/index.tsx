@@ -111,7 +111,7 @@ const DynamicGroup: React.FC = () => {
 
   const handleGroupData = () => {
     // Filter and search data
-    let filteredData = dynamicGroupList.info;
+    const filteredData = dynamicGroupList.info;
 
     setIsSearching(true);
     // TODO: Replace with API call

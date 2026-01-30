@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { CopyOutlined } from '@ant-design/icons';
 import { Popover, message, Descriptions } from 'antd';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +57,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
       try {
         await navigator.clipboard.writeText(String(value));
         message.success(t('common.message.copySuccess'));
-      } catch (error) {
+      } catch {
         const textArea = document.createElement('textarea');
         textArea.value = String(value);
         document.body.appendChild(textArea);

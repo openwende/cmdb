@@ -233,15 +233,15 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
     setDrawerVisible(true);
   };
 
-  const handleCloneInstance = (record: any) => {
+  const handleCloneInstance = (_record: any) => {
     message.info(t('business.topology.serviceInstance.instance.messages.cloneInstanceInfo'));
   };
 
-  const handleDeleteInstance = (record: any) => {
+  const handleDeleteInstance = (_record: any) => {
     message.success(t('business.topology.serviceInstance.instance.messages.deleteInstanceSuccess'));
   };
 
-  const handleDeleteProcess = (record: any) => {
+  const handleDeleteProcess = (_record: any) => {
     message.success(t('business.topology.serviceInstance.instance.messages.deleteProcessSuccess'));
   };
 

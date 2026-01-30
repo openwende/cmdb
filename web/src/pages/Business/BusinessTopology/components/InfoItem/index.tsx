@@ -17,7 +17,7 @@ const InfoItem: React.FC<Props> = ({ label, value }) => {
     try {
       await navigator.clipboard.writeText(text);
       message.success(t('resource.host.messages.copySuccess'));
-    } catch (error) {
+    } catch {
       message.error(t('resource.host.messages.copyFailed'));
     }
   };

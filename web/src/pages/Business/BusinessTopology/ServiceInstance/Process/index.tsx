@@ -116,7 +116,7 @@ const Process: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expandA
     setDrawerVisible(true);
   };
 
-  const handleDeleteProcess = (record: any) => {
+  const handleDeleteProcess = (_record: any) => {
     message.success(t('business.topology.serviceInstance.process.messages.deleteSuccess'));
   };
 

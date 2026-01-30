@@ -320,7 +320,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const { condition, variable_condition } = formatDynamicConditions(conditions);
 
-      const formData: DynamicGroupFormData = {
+      const _formData: DynamicGroupFormData = {
         name: values.groupName,
         bk_biz_id: currentBusiness?.id,
         bk_obj_id: values.groupObject,
@@ -351,7 +351,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const { condition, variable_condition } = formatDynamicConditions(conditions);
 
-      const previewData = {
+      const _previewData = {
         bk_biz_id: currentBusiness?.id,
         condition,
         variable_condition,
@@ -496,7 +496,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                       ),
                       children: (
                         <PropertyList
-                          bizId={currentBusiness?.id!}
+                          bizId={currentBusiness!.id}
                           conditionType={conditionType.key}
                           models={availableModels}
                           selectedProperties={selectedProperties}

@@ -88,7 +88,7 @@ const ObjName: React.FC<ObjNameProps> = ({
   };
 
   const handleSearch = useCallback(
-    async (searchValue: string) => {
+    async (_searchValue: string) => {
       setIsSearching(true);
       try {
         // TODO: Replace with actual API call

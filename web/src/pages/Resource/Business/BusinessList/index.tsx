@@ -189,7 +189,7 @@ const BusinessList: React.FC = () => {
       } else {
         message.error(t('resource.business.messages.archiveFailed'));
       }
-    } catch (error) {
+    } catch {
       message.error(t('resource.business.messages.archiveFailed'));
     }
   };

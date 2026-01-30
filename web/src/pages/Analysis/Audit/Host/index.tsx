@@ -33,7 +33,7 @@ const HostAudit: React.FC = () => {
     setAuditList(processedData);
   };
 
-  const handleSearch = (filters: any) => {
+  const handleSearch = (_filters: any) => {
     setLoading(true);
     // TODO: Unknown parameters
     fetchAuditList();

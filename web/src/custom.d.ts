@@ -4,7 +4,7 @@ declare module '*.xlsx' {
 }
 
 declare module '*.svg?react' {
-  import React = require('react');
+  import * as React from 'react';
   const ReactComponent: React.FunctionComponent<React.ComponentProps<'svg'>>;
   export default ReactComponent;
 }

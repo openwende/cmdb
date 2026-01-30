@@ -13,7 +13,7 @@ interface Props {
   selectedNode: TreeData;
 }
 
-const SetNodeInfo: React.FC<Props> = ({ selectedNode }) => {
+const SetNodeInfo: React.FC<Props> = () => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();

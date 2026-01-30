@@ -168,7 +168,7 @@ const ArchivedBusiness: React.FC = () => {
       } else {
         message.error(t('resource.business.archived.messages.deleteFailed'));
       }
-    } catch (error) {
+    } catch {
       message.error(t('resource.business.archived.messages.deleteFailed'));
     }
   };

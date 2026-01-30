@@ -155,7 +155,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
     [transferModalType, hostsNotInIdlePool, hostIdleStatuses],
   );
 
-  const handleReleaseHosts = useCallback((dirId: number) => {
+  const handleReleaseHosts = useCallback((_dirId: number) => {
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);

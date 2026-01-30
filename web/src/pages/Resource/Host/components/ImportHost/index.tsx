@@ -31,7 +31,7 @@ const { Link, Text } = Typography;
 
 interface ImportHostProps {
   visible: boolean;
-  selectedDirId?: Number;
+  selectedDirId?: number;
   onClose: () => void;
   onImportSuccess: () => void;
 }
