@@ -8,11 +8,11 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "typecheck": "tsc -b --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@ant-design/icons": "~5.6.1",
