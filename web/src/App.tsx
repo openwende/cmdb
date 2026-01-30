@@ -7,7 +7,7 @@ import router from './routes/router';
 
 function App() {
   const { i18n } = useTranslation();
-  
+
   // Map i18n language to Ant Design locale
   const antdLocale = i18n.language === 'en-US' ? enUS : zhCN;
 

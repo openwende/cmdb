@@ -108,9 +108,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
             ) : (
               <>
                 <span>{displayValue}</span>
-                {value !== '--' && (
-                  <CopyOutlined className="copy-icon" onClick={handleCopy} />
-                )}
+                {value !== '--' && <CopyOutlined className="copy-icon" onClick={handleCopy} />}
               </>
             )}
           </div>
