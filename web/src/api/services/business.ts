@@ -38,12 +38,13 @@ export const getHostList = (params: any) => {
  */
 export const batchSearchObjectAttribute = async ({
   params,
-  _config,
+  config,
   injectId,
 }: BatchSearchOptions): Promise<PropertyMap> => {
   try {
     // TODO: api
     // $http.post('find/objectattr/web', params, config)
+    console.log(config);
     const mockData = dynamicGroupCondition;
 
     const result: any = {};

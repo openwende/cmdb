@@ -320,13 +320,14 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const { condition, variable_condition } = formatDynamicConditions(conditions);
 
-      const _formData: DynamicGroupFormData = {
+      const formData: DynamicGroupFormData = {
         name: values.groupName,
         bk_biz_id: currentBusiness?.id,
         bk_obj_id: values.groupObject,
         condition,
         variable_condition,
       };
+      console.log('formData', formData);
 
       // Call service to get group data
       onDataChange();
@@ -351,11 +352,13 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const { condition, variable_condition } = formatDynamicConditions(conditions);
 
-      const _previewData = {
+      const previewData = {
         bk_biz_id: currentBusiness?.id,
         condition,
         variable_condition,
       };
+      console.log('Preview Data Sent to API:', previewData);
+
       // TODO: API
       setPreviewData(dynamicGroupPreviewResult);
       setLastUpdateTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
