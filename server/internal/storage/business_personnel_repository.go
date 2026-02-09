@@ -13,6 +13,7 @@ import (
 type BusinessPersonnelRepository interface {
 	Add(ctx context.Context, p *types.BusinessPersonnel) error
 	ListByBusiness(ctx context.Context, businessID uuid.UUID) ([]types.BusinessPersonnel, error)
+	ListByBusinessIDs(ctx context.Context, businessIDs []uuid.UUID) ([]types.BusinessPersonnel, error) // 批量查询，解决 N+1 问题
 	ListByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) ([]types.BusinessPersonnel, error)
 	Remove(ctx context.Context, id uuid.UUID) error
 	RemoveByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) error
@@ -38,6 +39,21 @@ func (r *businessPersonnelRepository) ListByBusiness(ctx context.Context, busine
 	var rows []types.BusinessPersonnel
 	if err := r.db.WithContext(ctx).Table("business_personnel").Where("business_id = ?", businessID).Order("created_at ASC").Find(&rows).Error; err != nil {
 		return nil, fmt.Errorf("list personnel: %w", err)
+	}
+	return rows, nil
+}
+
+// ListByBusinessIDs 批量查询多个业务的人员信息，解决 N+1 问题
+func (r *businessPersonnelRepository) ListByBusinessIDs(ctx context.Context, businessIDs []uuid.UUID) ([]types.BusinessPersonnel, error) {
+	if len(businessIDs) == 0 {
+		return nil, nil
+	}
+	var rows []types.BusinessPersonnel
+	if err := r.db.WithContext(ctx).Table("business_personnel").
+		Where("business_id IN ?", businessIDs).
+		Order("business_id, created_at ASC").
+		Find(&rows).Error; err != nil {
+		return nil, fmt.Errorf("batch list personnel: %w", err)
 	}
 	return rows, nil
 }

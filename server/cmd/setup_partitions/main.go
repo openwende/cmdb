@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings" // Added missing import
+	"os"
+	"strings"
 
 	"github.com/wend/cmdb-backend/internal/storage"
 	"gorm.io/driver/postgres"
@@ -12,7 +13,13 @@ import (
 )
 
 func main() {
-	dsn := "host=localhost user=cmdb password=password dbname=cmdb port=5432 sslmode=disable"
+	// 优先使用环境变量，避免硬编码密码
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		// 仅用于本地开发，生产环境必须设置 DATABASE_URL
+		dsn = "host=localhost user=cmdb password=password dbname=cmdb port=5432 sslmode=disable"
+		log.Println("WARNING: DATABASE_URL not set, using default DSN. Set DATABASE_URL in production!")
+	}
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)

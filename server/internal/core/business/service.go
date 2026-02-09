@@ -194,14 +194,50 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 		return nil, 0, err
 	}
 
-	for i := range businesses {
-		if err := s.populatePersonnel(ctx, &businesses[i]); err != nil {
-			fmt.Printf("ERROR populating personnel for %s: %v\n", businesses[i].ID, err)
+	// 使用批量查询解决 N+1 问题：1次查询代替 N 次
+	if s.personnelRepo != nil && len(businesses) > 0 {
+		businessIDs := make([]uuid.UUID, len(businesses))
+		for i, b := range businesses {
+			businessIDs[i] = b.ID
+		}
+
+		allPersonnel, err := s.personnelRepo.ListByBusinessIDs(ctx, businessIDs)
+		if err != nil {
+			fmt.Printf("ERROR batch fetching personnel: %v\n", err)
+		} else {
+			s.populatePersonnelBatch(businesses, allPersonnel)
 		}
 	}
 	return businesses, total, nil
 }
 
+// populatePersonnelBatch 批量填充人员信息到业务列表
+func (s *service) populatePersonnelBatch(businesses []types.Business, allPersonnel []types.BusinessPersonnel) {
+	// 按 businessID 分组人员
+	personnelByBusiness := make(map[uuid.UUID][]types.BusinessPersonnel)
+	for _, p := range allPersonnel {
+		personnelByBusiness[p.BusinessID] = append(personnelByBusiness[p.BusinessID], p)
+	}
+
+	// 填充到对应的业务
+	for i := range businesses {
+		personnel := personnelByBusiness[businesses[i].ID]
+		for _, p := range personnel {
+			switch p.Role {
+			case "sre":
+				businesses[i].Sres = append(businesses[i].Sres, p.Identity)
+			case "developer":
+				businesses[i].Developers = append(businesses[i].Developers, p.Identity)
+			case "tester":
+				businesses[i].Testers = append(businesses[i].Testers, p.Identity)
+			case "bizops":
+				businesses[i].Bizops = append(businesses[i].Bizops, p.Identity)
+			}
+		}
+	}
+}
+
+// populatePersonnel 单个业务填充人员（用于 GetBusiness 等单条查询场景）
 func (s *service) populatePersonnel(ctx context.Context, b *types.Business) error {
 	if s.personnelRepo == nil {
 		return nil
