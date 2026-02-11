@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/business"
+	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/core/instance"
 	"github.com/wend/cmdb-backend/internal/core/model"
 	"github.com/wend/cmdb-backend/internal/storage"
@@ -142,6 +143,36 @@ func (s *Server) setupRoutes(db *storage.Database) {
 			}
 		}
 	}
+
+	// ==========================
+	// Host Management APIs (New)
+	// ==========================
+	// Register host and network space routes
+	RegisterHostRoutes(s.router, db.DB())
+
+	// ==========================
+	// Dynamic Model APIs (New)
+	// ==========================
+	dynamicModelService := dynamic_model.NewService(db.DB())
+	RegisterDynamicModelRoutes(s.router, dynamicModelService)
+
+	// ==========================
+	// Import/Export APIs
+	// ==========================
+	uploadDir := "/tmp/cmdb-uploads" // 上传文件目录
+	RegisterImportExportRoutes(s.router, db.DB(), uploadDir)
+
+	// ==========================
+	// Business Topology APIs
+	// ==========================
+	RegisterTopologyRoutes(s.router, db.DB())
+
+	// ==========================
+	// Process & Template APIs
+	// ==========================
+	RegisterProcessRoutes(s.router, db.DB())
+	RegisterServiceTemplateRoutes(s.router, db.DB())
+	RegisterResourcePoolRoutes(s.router, db.DB())
 }
 
 func (s *Server) Run() error {

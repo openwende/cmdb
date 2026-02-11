@@ -36,18 +36,6 @@ CREATE TABLE model_attributes (
     UNIQUE(model_id, name)
 );
 
--- Model Relations: Defines valid relationships between models (e.g., Host belongs to Module)
-CREATE TABLE model_relations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_model_id UUID REFERENCES models(id) ON DELETE CASCADE,
-    target_model_id UUID REFERENCES models(id) ON DELETE CASCADE,
-    relation_type VARCHAR(50) NOT NULL,     -- composition, association
-    mapping_type VARCHAR(50) NOT NULL DEFAULT '1:n', 
-    description TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(source_model_id, target_model_id, relation_type)
-);
-
 -- ==========================================
 -- 2. Instance Storage Layer (Data)
 -- ==========================================
@@ -79,17 +67,3 @@ CREATE INDEX idx_model_instances_path_gist ON model_instances USING GIST (path);
 CREATE INDEX idx_model_instances_tenant ON model_instances (tenant_id);
 CREATE INDEX idx_model_instances_business ON model_instances (business_id);
 CREATE INDEX idx_model_instances_deleted ON model_instances (deleted_at) WHERE deleted_at IS NULL;
-
--- Instance Relations: Links specific instances (e.g., Host A -> Module B)
-CREATE TABLE instance_relations (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    source_instance_id UUID NOT NULL,
-    target_instance_id UUID NOT NULL,
-    source_model_id UUID NOT NULL,          -- Stored for potential partitioning alignment or quick lookup
-    target_model_id UUID NOT NULL,
-    relation_id UUID REFERENCES model_relations(id) ON DELETE CASCADE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_instance_relations_source ON instance_relations (source_instance_id);
-CREATE INDEX idx_instance_relations_target ON instance_relations (target_instance_id);
