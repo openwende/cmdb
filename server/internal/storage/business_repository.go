@@ -3,10 +3,10 @@ package storage
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -38,9 +38,9 @@ func (r *businessRepository) CreateBusiness(ctx context.Context, business *types
 	res := r.db.WithContext(ctx).Create(business)
 	if err := res.Error; err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return fmt.Errorf("business with identifier '%s' already exists", business.Identifier)
+			return apperrors.AlreadyExistsError("business", business.Identifier)
 		}
-		return fmt.Errorf("failed to create business: %w", err)
+		return apperrors.InternalError("create business", err)
 	}
 	return nil
 }
@@ -52,10 +52,10 @@ func (r *businessRepository) GetBusinessByID(ctx context.Context, tenantID, id s
 		Where("id = ? AND tenant_id = ? AND deleted_at IS NULL", id, tenantID).
 		Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("business with id '%s' not found", id)
+		return nil, apperrors.NotFoundError("business", id)
 	}
 	if db.Error != nil {
-		return nil, fmt.Errorf("failed to get business: %w", db.Error)
+		return nil, apperrors.InternalError("get business", db.Error)
 	}
 
 	return &business, nil
@@ -68,10 +68,10 @@ func (r *businessRepository) GetBusinessByIdentifier(ctx context.Context, tenant
 		Where("identifier = ? AND tenant_id = ? AND deleted_at IS NULL", identifier, tenantID).
 		Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
-		return nil, fmt.Errorf("business with identifier '%s' not found", identifier)
+		return nil, apperrors.NotFoundError("business", identifier)
 	}
 	if db.Error != nil {
-		return nil, fmt.Errorf("failed to get business: %w", db.Error)
+		return nil, apperrors.InternalError("get business by identifier", db.Error)
 	}
 
 	return &business, nil
@@ -91,10 +91,10 @@ func (r *businessRepository) UpdateBusiness(ctx context.Context, business *types
 			"maintainers": pq.Array(business.Maintainers),
 		})
 	if result.Error != nil {
-		return fmt.Errorf("failed to update business: %w", result.Error)
+		return apperrors.InternalError("update business", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("business with id '%s' not found or already deleted", business.ID)
+		return apperrors.NotFoundError("business", business.ID.String())
 	}
 
 	return nil
@@ -110,10 +110,10 @@ func (r *businessRepository) DeleteBusiness(ctx context.Context, tenantID, id st
 			"updated_at": now,
 		})
 	if result.Error != nil {
-		return fmt.Errorf("failed to delete business: %w", result.Error)
+		return apperrors.InternalError("delete business", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("business with id '%s' not found or already deleted", id)
+		return apperrors.NotFoundError("business", id)
 	}
 
 	return nil
@@ -127,7 +127,7 @@ func (r *businessRepository) CheckIdentifierExists(ctx context.Context, tenantID
 		query = query.Where("id != ?", excludeID)
 	}
 	if err := query.Count(&count).Error; err != nil {
-		return false, fmt.Errorf("failed to check identifier existence: %w", err)
+		return false, apperrors.InternalError("check identifier exists", err)
 	}
 	return count > 0, nil
 }
@@ -140,13 +140,13 @@ func (r *businessRepository) ListBusinesses(ctx context.Context, tenantID string
 	// total count
 	var total int64
 	if err := tx.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to count businesses: %w", err)
+		return nil, 0, apperrors.InternalError("count businesses", err)
 	}
 
 	// pagination + query
 	// Fixed: add maintainers to select list
 	if err := tx.Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").Order("created_at DESC").Limit(limit).Offset(offset).Find(&businesses).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to list businesses: %w", err)
+		return nil, 0, apperrors.InternalError("list businesses", err)
 	}
 
 	return businesses, int(total), nil

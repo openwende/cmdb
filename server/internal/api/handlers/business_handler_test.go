@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // MockService is a mock implementation of business.Service
@@ -161,6 +161,25 @@ func TestCreateBusiness(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
+
+	t.Run("Already Exists", func(t *testing.T) {
+		mockService := new(MockService)
+		handler := NewBusinessHandler(mockService)
+		router := gin.Default()
+		router.POST("/businesses", handler.CreateBusiness)
+
+		name := "Test Business"
+		reqBody := types.CreateBusinessRequest{Name: name}
+
+		mockService.On("CreateBusiness", mock.Anything, &reqBody).Return(nil, apperrors.AlreadyExistsError("business", name))
+
+		body, _ := json.Marshal(reqBody)
+		req, _ := http.NewRequest(http.MethodPost, "/businesses", bytes.NewBuffer(body))
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusConflict, w.Code)
+	})
 }
 
 func TestGetBusiness(t *testing.T) {
@@ -195,7 +214,7 @@ func TestGetBusiness(t *testing.T) {
 
 		id := uuid.New().String()
 
-		mockService.On("GetBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).Return(nil, errors.New("business not found"))
+		mockService.On("GetBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).Return(nil, apperrors.NotFoundError("business", id))
 
 		req, _ := http.NewRequest(http.MethodGet, "/businesses/"+id, nil)
 		w := httptest.NewRecorder()
@@ -238,7 +257,7 @@ func TestDeleteBusiness(t *testing.T) {
 
 		id := uuid.New().String()
 		mockService.On("DeleteBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).
-			Return(errors.New("只能删除归档（offline）状态的业务，当前业务状态为: online"))
+			Return(apperrors.InvalidStateError("business", "online", "offline"))
 
 		req, _ := http.NewRequest(http.MethodDelete, "/businesses/"+id, nil)
 		w := httptest.NewRecorder()
@@ -249,8 +268,8 @@ func TestDeleteBusiness(t *testing.T) {
 		var response map[string]interface{}
 		err := json.Unmarshal(w.Body.Bytes(), &response)
 		assert.NoError(t, err)
-		assert.Equal(t, "Cannot delete business", response["error"])
-		assert.Contains(t, response["details"], "只能删除归档")
+		assert.Equal(t, false, response["success"])
+		assert.Equal(t, "INVALID_STATE", response["error"])
 	})
 
 	t.Run("Fail - Business Not Found", func(t *testing.T) {
@@ -261,13 +280,19 @@ func TestDeleteBusiness(t *testing.T) {
 
 		id := uuid.New().String()
 		mockService.On("DeleteBusiness", mock.Anything, "00000000-0000-0000-0000-000000000001", id).
-			Return(errors.New("business not found"))
+			Return(apperrors.NotFoundError("business", id))
 
 		req, _ := http.NewRequest(http.MethodDelete, "/businesses/"+id, nil)
 		w := httptest.NewRecorder()
 		router.ServeHTTP(w, req)
 
 		assert.Equal(t, http.StatusNotFound, w.Code)
+
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		assert.NoError(t, err)
+		assert.Equal(t, false, response["success"])
+		assert.Equal(t, "NOT_FOUND", response["error"])
 	})
 
 	t.Run("Fail - Invalid UUID", func(t *testing.T) {

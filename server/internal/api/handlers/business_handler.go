@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/core/business"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 type BusinessHandler struct {
@@ -45,11 +46,8 @@ func (h *BusinessHandler) CreateBusiness(c *gin.Context) {
 
 	business, err := h.service.CreateBusiness(c.Request.Context(), &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Business identifier already exists", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create business", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -80,7 +78,8 @@ func (h *BusinessHandler) ListBusinesses(c *gin.Context) {
 
 	businesses, total, err := h.service.ListBusinesses(c.Request.Context(), tenantID, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list businesses", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -111,11 +110,8 @@ func (h *BusinessHandler) GetBusiness(c *gin.Context) {
 
 	business, err := h.service.GetBusiness(c.Request.Context(), tenantID, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business not found", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get business", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -152,15 +148,8 @@ func (h *BusinessHandler) UpdateBusiness(c *gin.Context) {
 
 	business, err := h.service.UpdateBusiness(c.Request.Context(), tenantID, id, &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business not found", "details": err.Error()})
-			return
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Business identifier already exists", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update business", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -187,15 +176,8 @@ func (h *BusinessHandler) DeleteBusiness(c *gin.Context) {
 
 	err := h.service.DeleteBusiness(c.Request.Context(), tenantID, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business not found", "details": err.Error()})
-			return
-		}
-		if strings.Contains(err.Error(), "只能删除归档") || strings.Contains(err.Error(), "业务状态为") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot delete business", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete business", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -224,15 +206,8 @@ func (h *BusinessHandler) CreateBusinessSet(c *gin.Context) {
 
 	businessSet, err := h.service.CreateBusinessSet(c.Request.Context(), &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Business set identifier already exists", "details": err.Error()})
-			return
-		}
-		if strings.Contains(strings.ToLower(err.Error()), "not found") {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Related business not found", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create business set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -259,11 +234,8 @@ func (h *BusinessHandler) GetBusinessSet(c *gin.Context) {
 
 	businessSet, err := h.service.GetBusinessSet(c.Request.Context(), tenantID, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business set not found", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get business set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -292,7 +264,8 @@ func (h *BusinessHandler) ListBusinessSets(c *gin.Context) {
 
 	businessSets, total, err := h.service.ListBusinessSets(c.Request.Context(), tenantID, limit, offset)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list business sets", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -334,15 +307,8 @@ func (h *BusinessHandler) UpdateBusinessSet(c *gin.Context) {
 
 	businessSet, err := h.service.UpdateBusinessSet(c.Request.Context(), tenantID, id, &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business set not found", "details": err.Error()})
-			return
-		}
-		if strings.Contains(err.Error(), "already exists") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Business set identifier already exists", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update business set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -369,11 +335,8 @@ func (h *BusinessHandler) DeleteBusinessSet(c *gin.Context) {
 
 	err := h.service.DeleteBusinessSet(c.Request.Context(), tenantID, id)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business set not found", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete business set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -409,15 +372,8 @@ func (h *BusinessHandler) AddBusinessToSet(c *gin.Context) {
 
 	err = h.service.AddBusinessToSet(c.Request.Context(), businessSetUUID, &req)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business not found", "details": err.Error()})
-			return
-		}
-		if strings.Contains(err.Error(), "already a member") {
-			c.JSON(http.StatusConflict, gin.H{"error": "Business is already a member of this business set", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add business to set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -455,11 +411,8 @@ func (h *BusinessHandler) RemoveBusinessFromSet(c *gin.Context) {
 
 	err = h.service.RemoveBusinessFromSet(c.Request.Context(), businessSetUUID, businessUUID)
 	if err != nil {
-		if strings.Contains(err.Error(), "not a member") {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Business is not a member of this business set", "details": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove business from set", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 
@@ -485,7 +438,8 @@ func (h *BusinessHandler) ListBusinessSetMembers(c *gin.Context) {
 
 	members, err := h.service.ListBusinessSetMembers(c.Request.Context(), businessSetUUID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to list business set members", "details": err.Error()})
+		status := apperrors.HTTPStatus(err)
+		c.JSON(status, apperrors.NewErrorResponse(err, ""))
 		return
 	}
 

@@ -2,10 +2,10 @@ package storage
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -48,9 +48,9 @@ func (r *businessSetRepository) CreateBusinessSet(ctx context.Context, businessS
 	}).Error
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return fmt.Errorf("business set with identifier '%s' already exists", businessSet.Identifier)
+			return apperrors.AlreadyExistsError("business set", businessSet.Identifier)
 		}
-		return fmt.Errorf("failed to create business set: %w", err)
+		return apperrors.InternalError("create business set", err)
 	}
 	return nil
 }
@@ -78,9 +78,9 @@ func (r *businessSetRepository) CreateBusinessSetWithMember(ctx context.Context,
 			"maintainers": pq.Array(businessSet.Maintainers),
 		}).Error; err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-				return fmt.Errorf("business set with identifier '%s' already exists", businessSet.Identifier)
+				return apperrors.AlreadyExistsError("business set", businessSet.Identifier)
 			}
-			return fmt.Errorf("failed to create business set: %w", err)
+			return apperrors.InternalError("create business set", err)
 		}
 
 		if err := tx.Table("business_set_members").Create(map[string]interface{}{
@@ -89,7 +89,7 @@ func (r *businessSetRepository) CreateBusinessSetWithMember(ctx context.Context,
 			"business_set_id": member.BusinessSetID,
 			"business_id":     member.BusinessID,
 		}).Error; err != nil {
-			return fmt.Errorf("failed to create business set member: %w", err)
+			return apperrors.InternalError("create business set member", err)
 		}
 		return nil
 	})
@@ -103,9 +103,9 @@ func (r *businessSetRepository) GetBusinessSetByID(ctx context.Context, tenantID
 
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("business set with id '%s' not found", id)
+			return nil, apperrors.NotFoundError("business set", id)
 		}
-		return nil, fmt.Errorf("failed to get business set: %w", err)
+		return nil, apperrors.InternalError("get business set", err)
 	}
 
 	return &businessSet, nil
@@ -120,7 +120,7 @@ func (r *businessSetRepository) ListBusinessSets(ctx context.Context, tenantID s
 
 	// Get total count
 	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to count business sets: %w", err)
+		return nil, 0, apperrors.InternalError("count business sets", err)
 	}
 
 	// Get paginated results
@@ -128,7 +128,7 @@ func (r *businessSetRepository) ListBusinessSets(ctx context.Context, tenantID s
 		Limit(limit).
 		Offset(offset).
 		Find(&businessSets).Error; err != nil {
-		return nil, 0, fmt.Errorf("failed to list business sets: %w", err)
+		return nil, 0, apperrors.InternalError("list business sets", err)
 	}
 
 	return businessSets, int(total), nil
@@ -146,10 +146,10 @@ func (r *businessSetRepository) UpdateBusinessSet(ctx context.Context, businessS
 		})
 
 	if result.Error != nil {
-		return fmt.Errorf("failed to update business set: %w", result.Error)
+		return apperrors.InternalError("update business set", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("business set with id '%s' not found or already deleted", businessSet.ID)
+		return apperrors.NotFoundError("business set", businessSet.ID.String())
 	}
 
 	return nil
@@ -165,10 +165,10 @@ func (r *businessSetRepository) DeleteBusinessSet(ctx context.Context, tenantID,
 		})
 
 	if result.Error != nil {
-		return fmt.Errorf("failed to delete business set: %w", result.Error)
+		return apperrors.InternalError("delete business set", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("business set with id '%s' not found or already deleted", id)
+		return apperrors.NotFoundError("business set", id)
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func (r *businessSetRepository) ListBusinessSetMembers(ctx context.Context, busi
 		Find(&members).Error
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to list business set members: %w", err)
+		return nil, apperrors.InternalError("list business set members", err)
 	}
 
 	businessIDs := make([]uuid.UUID, len(members))
@@ -206,9 +206,9 @@ func (r *businessSetRepository) AddBusinessToSet(ctx context.Context, member *ty
 
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
-			return fmt.Errorf("business is already a member of this business set")
+			return apperrors.AlreadyAMemberError("business", "business set")
 		}
-		return fmt.Errorf("failed to add business to set: %w", err)
+		return apperrors.InternalError("add business to set", err)
 	}
 
 	return nil
@@ -220,10 +220,10 @@ func (r *businessSetRepository) RemoveBusinessFromSet(ctx context.Context, busin
 		Delete(nil)
 
 	if result.Error != nil {
-		return fmt.Errorf("failed to remove business from set: %w", result.Error)
+		return apperrors.InternalError("remove business from set", result.Error)
 	}
 	if result.RowsAffected == 0 {
-		return fmt.Errorf("business is not a member of this business set")
+		return apperrors.NotAMemberError("business", "business set")
 	}
 
 	return nil
@@ -239,7 +239,7 @@ func (r *businessSetRepository) CheckIdentifierExists(ctx context.Context, tenan
 	}
 
 	if err := query.Count(&count).Error; err != nil {
-		return false, fmt.Errorf("failed to check identifier existence: %w", err)
+		return false, apperrors.InternalError("check identifier exists", err)
 	}
 
 	return count > 0, nil
