@@ -435,7 +435,7 @@ func (s *Service) validateUpdateHostRequest(ctx context.Context, hostID uuid.UUI
 }
 
 // AssignToBusiness 分配主机到业务
-func (s *Service) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uuid.UUID) error {
+func (s *Service) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
 	// 检查主机是否存在
 	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
 		return err

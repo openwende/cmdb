@@ -56,14 +56,24 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		lifecycle = *req.Lifecycle
 	}
 
+	// Handle business_id - 从 1000 开始自动递增
+	tenantID := "00000000-0000-0000-0000-000000000001" // Default tenant
+	var businessID *int64
+	nextID, err := s.businessRepo.GetNextBusinessID(ctx, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate business_id: %w", err)
+	}
+	businessID = &nextID
+
 	// Create the business object with defaults for required fields
 	business := &types.Business{
 		ID:          uuid.New(),
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		TenantID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"), // Default tenant
+		TenantID:    uuid.MustParse(tenantID),
 		Name:        req.Name,
 		Identifier:  identifier,
+		BusinessID:  businessID,
 		Description: req.Description,
 		Lifecycle:   lifecycle,
 		Timezone:    "UTC",         // Default value
@@ -72,7 +82,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		IsBuiltIn:   false,
 	}
 
-	err := s.businessRepo.CreateBusiness(ctx, business)
+	err = s.businessRepo.CreateBusiness(ctx, business)
 	if err != nil {
 		return nil, err
 	}

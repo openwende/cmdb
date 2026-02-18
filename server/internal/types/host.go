@@ -22,24 +22,24 @@ const (
 
 // Host 云主机
 type Host struct {
-	ID         uuid.UUID  `json:"id" db:"id" gorm:"primaryKey;type:uuid"`
-	CreatedAt  time.Time  `json:"created_at" db:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at" db:"updated_at"`
-	DeletedAt  *time.Time `json:"-" db:"deleted_at"`
-	TenantID   uuid.UUID  `json:"tenant_id" db:"tenant_id"`
-	CreatedBy  *uuid.UUID `json:"created_by,omitempty" db:"created_by"`
-	UpdatedBy  *uuid.UUID `json:"updated_by,omitempty" db:"updated_by"`
+	ID        uuid.UUID  `json:"id" db:"id" gorm:"primaryKey;type:uuid"`
+	CreatedAt time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt *time.Time `json:"-" db:"deleted_at"`
+	TenantID  uuid.UUID  `json:"tenant_id" db:"tenant_id"`
+	CreatedBy *uuid.UUID `json:"created_by,omitempty" db:"created_by"`
+	UpdatedBy *uuid.UUID `json:"updated_by,omitempty" db:"updated_by"`
 
 	// 核心维度1：云区域（用于IP隔离，类似蓝鲸的bk_cloud_id）
 	CloudAreaID *uuid.UUID `json:"cloud_area_id,omitempty" db:"cloud_area_id"`
 
 	// 核心维度2：业务归属（NULL = 资源池）
-	BusinessID *uuid.UUID `json:"business_id,omitempty" db:"business_id"`
+	BusinessID *int64 `json:"business_id,omitempty" db:"business_id"`
 
 	// 核心字段
-	HostName    string     `json:"host_name" db:"host_name"`
-	PrimaryIP   string     `json:"primary_ip" db:"primary_ip"` // INET type in DB
-	IPAddresses []string   `json:"ip_addresses,omitempty" db:"ip_addresses" gorm:"type:inet[]"`
+	HostName    string   `json:"host_name" db:"host_name"`
+	PrimaryIP   string   `json:"primary_ip" db:"primary_ip"` // INET type in DB
+	IPAddresses []string `json:"ip_addresses,omitempty" db:"ip_addresses" gorm:"type:inet[]"`
 
 	// 云平台相关（可选，手动导入时可为空）
 	CloudVendor     *string `json:"cloud_vendor,omitempty" db:"cloud_vendor"`
@@ -49,10 +49,10 @@ type Host struct {
 	SubnetID        *string `json:"subnet_id,omitempty" db:"subnet_id"` // 子网ID
 
 	// 硬件配置
-	CPU      *int    `json:"cpu,omitempty" db:"cpu"`
-	Memory   *int    `json:"memory,omitempty" db:"memory"`         // MB
-	DiskSize *int    `json:"disk_size,omitempty" db:"disk_size"`   // GB
-	OSType   *string `json:"os_type,omitempty" db:"os_type"`
+	CPU       *int    `json:"cpu,omitempty" db:"cpu"`
+	Memory    *int    `json:"memory,omitempty" db:"memory"`       // MB
+	DiskSize  *int    `json:"disk_size,omitempty" db:"disk_size"` // GB
+	OSType    *string `json:"os_type,omitempty" db:"os_type"`
 	OSVersion *string `json:"os_version,omitempty" db:"os_version"`
 
 	// 状态
@@ -76,8 +76,8 @@ func (Host) TableName() string {
 // CreateHostRequest 创建主机请求
 type CreateHostRequest struct {
 	HostName    string     `json:"host_name" validate:"required"`
-	CloudAreaID *uuid.UUID `json:"cloud_area_id"`  // 可选，不指定则使用默认云区域
-	BusinessID  *uuid.UUID `json:"business_id"`    // 可选，NULL表示在资源池
+	CloudAreaID *uuid.UUID `json:"cloud_area_id"` // 可选，不指定则使用默认云区域
+	BusinessID  *int64     `json:"business_id"`   // 可选，NULL表示在资源池
 	PrimaryIP   string     `json:"primary_ip" validate:"required,ip"`
 	IPAddresses []string   `json:"ip_addresses" validate:"omitempty,dive,ip"`
 
@@ -101,7 +101,7 @@ type CreateHostRequest struct {
 type UpdateHostRequest struct {
 	HostName    *string    `json:"host_name"`
 	CloudAreaID *uuid.UUID `json:"cloud_area_id"`
-	BusinessID  *uuid.UUID `json:"business_id"`
+	BusinessID  *int64     `json:"business_id"`
 	PrimaryIP   *string    `json:"primary_ip" validate:"omitempty,ip"`
 	IPAddresses *[]string  `json:"ip_addresses" validate:"omitempty,dive,ip"`
 
@@ -122,14 +122,14 @@ type UpdateHostCustomFieldsRequest struct {
 
 // AssignHostToBusinessRequest 分配主机到业务请求
 type AssignHostToBusinessRequest struct {
-	BusinessID uuid.UUID `json:"business_id" validate:"required"`
+	BusinessID int64 `json:"business_id" validate:"required"`
 }
 
 // BatchImportHostsRequest 批量导入主机请求
 type BatchImportHostsRequest struct {
-	Hosts              []CreateHostRequest `json:"hosts" validate:"required,min=1,dive"`
-	SkipErrors         bool                `json:"skip_errors"`          // 是否跳过错误继续导入
-	UseDefaultCloudArea bool               `json:"use_default_cloud_area"` // 如果未指定cloud_area_id，是否使用默认云区域
+	Hosts               []CreateHostRequest `json:"hosts" validate:"required,min=1,dive"`
+	SkipErrors          bool                `json:"skip_errors"`            // 是否跳过错误继续导入
+	UseDefaultCloudArea bool                `json:"use_default_cloud_area"` // 如果未指定cloud_area_id，是否使用默认云区域
 }
 
 // BatchImportResult 批量导入结果
@@ -150,14 +150,14 @@ type ImportError struct {
 
 // HostQueryParams 主机查询参数
 type HostQueryParams struct {
-	CloudAreaID     *uuid.UUID `form:"cloud_area_id"`
-	BusinessID      *uuid.UUID `form:"business_id"`
-	InPool          *bool      `form:"in_pool"` // 是否在资源池（business_id IS NULL）
-	CloudVendor     *string    `form:"cloud_vendor" validate:"omitempty,oneof=aws tencent_cloud aliyun custom"`
-	CloudInstanceID *string    `form:"cloud_instance_id"`
-	Status          *string    `form:"status" validate:"omitempty,oneof=running stopped terminated"`
-	IncludeDestroyed bool      `form:"include_destroyed"` // 是否包含已销毁主机
-	OSType          *string    `form:"os_type" validate:"omitempty,oneof=linux windows"`
+	CloudAreaID      *uuid.UUID `form:"cloud_area_id"`
+	BusinessID       *int64     `form:"business_id"`
+	InPool           *bool      `form:"in_pool"` // 是否在资源池（business_id IS NULL）
+	CloudVendor      *string    `form:"cloud_vendor" validate:"omitempty,oneof=aws tencent_cloud aliyun custom"`
+	CloudInstanceID  *string    `form:"cloud_instance_id"`
+	Status           *string    `form:"status" validate:"omitempty,oneof=running stopped terminated"`
+	IncludeDestroyed bool       `form:"include_destroyed"` // 是否包含已销毁主机
+	OSType           *string    `form:"os_type" validate:"omitempty,oneof=linux windows"`
 
 	// 分页
 	Page     int `form:"page" validate:"min=1"`

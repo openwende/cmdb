@@ -16,10 +16,13 @@ type BusinessRepository interface {
 	CreateBusiness(ctx context.Context, business *types.Business) error
 	GetBusinessByID(ctx context.Context, tenantID, id string) (*types.Business, error)
 	GetBusinessByIdentifier(ctx context.Context, tenantID, identifier string) (*types.Business, error)
+	GetBusinessByBusinessID(ctx context.Context, tenantID string, businessID int64) (*types.Business, error)
 	UpdateBusiness(ctx context.Context, business *types.Business) error
 	DeleteBusiness(ctx context.Context, tenantID, id string) error
 	ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error)
 	CheckIdentifierExists(ctx context.Context, tenantID, identifier string, excludeID string) (bool, error)
+	CheckBusinessIDExists(ctx context.Context, tenantID string, businessID int64, excludeID string) (bool, error)
+	GetNextBusinessID(ctx context.Context, tenantID string) (int64, error)
 }
 
 type businessRepository struct {
@@ -48,7 +51,7 @@ func (r *businessRepository) CreateBusiness(ctx context.Context, business *types
 func (r *businessRepository) GetBusinessByID(ctx context.Context, tenantID, id string) (*types.Business, error) {
 	var business types.Business
 	db := r.db.WithContext(ctx).Table("businesses").
-		Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").
+		Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "business_id", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").
 		Where("id = ? AND tenant_id = ? AND deleted_at IS NULL", id, tenantID).
 		Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
@@ -64,7 +67,7 @@ func (r *businessRepository) GetBusinessByID(ctx context.Context, tenantID, id s
 func (r *businessRepository) GetBusinessByIdentifier(ctx context.Context, tenantID, identifier string) (*types.Business, error) {
 	var business types.Business
 	db := r.db.WithContext(ctx).Table("businesses").
-		Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").
+		Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "business_id", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").
 		Where("identifier = ? AND tenant_id = ? AND deleted_at IS NULL", identifier, tenantID).
 		Take(&business)
 	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
@@ -132,6 +135,51 @@ func (r *businessRepository) CheckIdentifierExists(ctx context.Context, tenantID
 	return count > 0, nil
 }
 
+func (r *businessRepository) GetBusinessByBusinessID(ctx context.Context, tenantID string, businessID int64) (*types.Business, error) {
+	var business types.Business
+	db := r.db.WithContext(ctx).Table("businesses").
+		Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "business_id", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").
+		Where("business_id = ? AND tenant_id = ? AND deleted_at IS NULL", businessID, tenantID).
+		Take(&business)
+	if errors.Is(db.Error, gorm.ErrRecordNotFound) {
+		return nil, fmt.Errorf("business with business_id '%d' not found", businessID)
+	}
+	if db.Error != nil {
+		return nil, fmt.Errorf("failed to get business: %w", db.Error)
+	}
+
+	return &business, nil
+}
+
+func (r *businessRepository) CheckBusinessIDExists(ctx context.Context, tenantID string, businessID int64, excludeID string) (bool, error) {
+	var count int64
+	query := r.db.WithContext(ctx).Table("businesses").
+		Where("business_id = ? AND tenant_id = ? AND deleted_at IS NULL", businessID, tenantID)
+	if excludeID != "" {
+		query = query.Where("id != ?", excludeID)
+	}
+	if err := query.Count(&count).Error; err != nil {
+		return false, fmt.Errorf("failed to check business_id existence: %w", err)
+	}
+	return count > 0, nil
+}
+
+func (r *businessRepository) GetNextBusinessID(ctx context.Context, tenantID string) (int64, error) {
+	var maxBusinessID *int64
+	if err := r.db.WithContext(ctx).Table("businesses").
+		Where("tenant_id = ? AND deleted_at IS NULL", tenantID).
+		Select("MAX(business_id)").
+		Scan(&maxBusinessID).Error; err != nil {
+		return 0, fmt.Errorf("failed to get max business_id: %w", err)
+	}
+
+	const startBusinessID = 1000
+	if maxBusinessID == nil {
+		return startBusinessID, nil
+	}
+	return *maxBusinessID + 1, nil
+}
+
 func (r *businessRepository) ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error) {
 	var businesses []types.Business
 	tx := r.db.WithContext(ctx).Table("businesses").
@@ -145,7 +193,7 @@ func (r *businessRepository) ListBusinesses(ctx context.Context, tenantID string
 
 	// pagination + query
 	// Fixed: add maintainers to select list
-	if err := tx.Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").Order("created_at DESC").Limit(limit).Offset(offset).Find(&businesses).Error; err != nil {
+	if err := tx.Select("id", "created_at", "updated_at", "deleted_at", "created_by", "updated_by", "tenant_id", "name", "identifier", "business_id", "description", "lifecycle", "timezone", "language", "maintainers", "is_built_in").Order("created_at DESC").Limit(limit).Offset(offset).Find(&businesses).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to list businesses: %w", err)
 	}
 

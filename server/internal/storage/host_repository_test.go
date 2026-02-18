@@ -213,7 +213,7 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 
 	hostID := uuid.New()
 	tenantID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1000)
 	cloudAreaID := uuid.New()
 
 	// 创建测试主机（在资源池中）
@@ -253,7 +253,7 @@ func TestHostRepository_ReclaimToPool(t *testing.T) {
 
 	hostID := uuid.New()
 	tenantID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1001)
 	cloudAreaID := uuid.New()
 
 	// 创建已分配给业务的主机
@@ -337,7 +337,7 @@ func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 	ctx := context.Background()
 
 	tenantID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1002)
 	cloudAreaID := uuid.New()
 
 	// 创建资源池主机

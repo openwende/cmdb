@@ -78,7 +78,7 @@ func (a *DynamicModelAdapter) ListHosts(ctx context.Context, tenantID uuid.UUID,
 		filters["cloud_area_id"] = params.CloudAreaID.String()
 	}
 	if params.BusinessID != nil {
-		filters["business_id"] = params.BusinessID.String()
+		filters["business_id"] = fmt.Sprintf("%d", *params.BusinessID)
 	}
 	if params.CloudVendor != nil {
 		filters["cloud_vendor"] = *params.CloudVendor
@@ -194,7 +194,7 @@ func (a *DynamicModelAdapter) convertCreateRequestToData(req *types.CreateHostRe
 
 	// 业务ID
 	if req.BusinessID != nil {
-		data["business_id"] = req.BusinessID.String()
+		data["business_id"] = fmt.Sprintf("%d", *req.BusinessID)
 	}
 
 	// IP地址列表
@@ -262,7 +262,7 @@ func (a *DynamicModelAdapter) applyUpdateRequest(data map[string]interface{}, re
 		data["cloud_area_id"] = req.CloudAreaID.String()
 	}
 	if req.BusinessID != nil {
-		data["business_id"] = req.BusinessID.String()
+		data["business_id"] = fmt.Sprintf("%d", *req.BusinessID)
 	}
 	if req.PrimaryIP != nil {
 		data["primary_ip"] = *req.PrimaryIP
@@ -331,8 +331,9 @@ func (a *DynamicModelAdapter) convertResourceToHost(resource *types.Resource) (*
 
 	// 业务ID
 	if businessIDStr, ok := configs["business_id"].(string); ok {
-		id, _ := uuid.Parse(businessIDStr)
-		host.BusinessID = &id
+		if id, err := strconv.ParseInt(businessIDStr, 10, 64); err == nil {
+			host.BusinessID = &id
+		}
 	}
 
 	// IP地址列表
@@ -399,10 +400,10 @@ func (a *DynamicModelAdapter) convertResourceToHost(resource *types.Resource) (*
 // convertHostToData 将 Host 转换为动态模型数据格式
 func (a *DynamicModelAdapter) convertHostToData(host *types.Host) map[string]interface{} {
 	data := map[string]interface{}{
-		"id":         host.ID.String(),
-		"host_name":  host.HostName,
-		"primary_ip": host.PrimaryIP,
-		"status":     host.Status,
+		"id":           host.ID.String(),
+		"host_name":    host.HostName,
+		"primary_ip":   host.PrimaryIP,
+		"status":       host.Status,
 		"is_destroyed": host.IsDestroyed,
 	}
 
@@ -410,7 +411,7 @@ func (a *DynamicModelAdapter) convertHostToData(host *types.Host) map[string]int
 		data["cloud_area_id"] = host.CloudAreaID.String()
 	}
 	if host.BusinessID != nil {
-		data["business_id"] = host.BusinessID.String()
+		data["business_id"] = fmt.Sprintf("%d", *host.BusinessID)
 	}
 
 	// 其他字段...（省略，同 convertCreateRequestToData）

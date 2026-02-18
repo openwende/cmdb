@@ -22,7 +22,7 @@ type HostRepository interface {
 	ListHosts(ctx context.Context, tenantID uuid.UUID, params *types.HostQueryParams) ([]types.Host, int64, error)
 	UpdateHost(ctx context.Context, id uuid.UUID, req *types.UpdateHostRequest, updatedBy *uuid.UUID) (*types.Host, error)
 	UpdateCustomFields(ctx context.Context, id uuid.UUID, customFields map[string]interface{}, updatedBy *uuid.UUID) (*types.Host, error)
-	AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uuid.UUID) error
+	AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error
 	ReclaimToPool(ctx context.Context, id uuid.UUID) error
 	MarkAsDestroyed(ctx context.Context, id uuid.UUID) error
 	DeleteHost(ctx context.Context, id uuid.UUID) error
@@ -359,7 +359,7 @@ func (r *hostRepository) DeleteHost(ctx context.Context, id uuid.UUID) error {
 }
 
 // AssignToBusiness 分配主机到业务
-func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uuid.UUID) error {
+func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
 	result := r.db.WithContext(ctx).
 		Model(&types.Host{}).
 		Where("id = ? AND deleted_at IS NULL", id).

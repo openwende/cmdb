@@ -74,7 +74,7 @@ func (m *MockHostRepository) UpdateCustomFields(ctx context.Context, id uuid.UUI
 	return args.Get(0).(*types.Host), args.Error(1)
 }
 
-func (m *MockHostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uuid.UUID) error {
+func (m *MockHostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
 	args := m.Called(ctx, id, businessID)
 	return args.Error(0)
 }
@@ -357,7 +357,7 @@ func TestAssignToBusiness(t *testing.T) {
 
 	ctx := context.Background()
 	hostID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1000)
 
 	existingHost := &types.Host{
 		ID:         hostID,
@@ -385,7 +385,7 @@ func TestReclaimToPool(t *testing.T) {
 
 	ctx := context.Background()
 	hostID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1001)
 
 	existingHost := &types.Host{
 		ID:         hostID,
@@ -413,7 +413,7 @@ func TestAssignToBusiness_HostNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	hostID := uuid.New()
-	businessID := uuid.New()
+	businessID := int64(1002)
 
 	// Mock 主机不存在
 	mockHostRepo.On("GetHost", ctx, hostID).Return(nil, errors.New("host not found"))

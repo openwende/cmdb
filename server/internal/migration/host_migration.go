@@ -303,7 +303,7 @@ func (m *HostMigration) migrateOneHost(ctx context.Context, host *types.Host) er
 
 	// 业务ID
 	if host.BusinessID != nil {
-		data["business_id"] = host.BusinessID.String()
+		data["business_id"] = fmt.Sprintf("%d", *host.BusinessID)
 	}
 
 	// IP地址列表

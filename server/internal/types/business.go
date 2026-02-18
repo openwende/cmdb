@@ -23,6 +23,7 @@ type Business struct {
 	TenantID    uuid.UUID   `json:"tenant_id" db:"tenant_id"`
 	Name        string      `json:"name" db:"name"`
 	Identifier  string      `json:"identifier" db:"identifier"`
+	BusinessID  *int64      `json:"business_id,omitempty" db:"business_id"` // 业务ID，类似蓝鲸的 bk_biz_id
 	Description *string     `json:"description" db:"description"`
 	Lifecycle   string      `json:"lifecycle" db:"lifecycle"`
 	Timezone    string      `json:"timezone" db:"timezone"`

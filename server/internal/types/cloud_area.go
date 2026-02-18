@@ -28,7 +28,7 @@ type CloudArea struct {
 	// 云平台信息（可选）
 	CloudVendor *string `json:"cloud_vendor,omitempty" db:"cloud_vendor"`
 	VPCID       *string `json:"vpc_id,omitempty" db:"vpc_id"`
-	CIDRBlock   *string `json:"cidr_block,omitempty" db:"cidr_block"`
+	CIDRBlock   *string `json:"cidr_block,omitempty" db:"cidr_block" gorm:"column:cidr_block"`
 	Region      *string `json:"region,omitempty" db:"region"`
 
 	CloudMetadata map[string]interface{} `json:"cloud_metadata,omitempty" db:"cloud_metadata" gorm:"type:jsonb;serializer:json"`

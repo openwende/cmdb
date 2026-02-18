@@ -36,13 +36,21 @@ func (m *MockBusinessPersonnelRepository) ListByBusinessIDs(ctx context.Context,
 	return args.Get(0).([]types.BusinessPersonnel), args.Error(1)
 }
 
-func (m *MockBusinessPersonnelRepository) Remove(ctx context.Context, businessID uuid.UUID, identity string, role string) error {
-	args := m.Called(ctx, businessID, identity, role)
+func (m *MockBusinessPersonnelRepository) ListByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) ([]types.BusinessPersonnel, error) {
+	args := m.Called(ctx, businessID, role)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]types.BusinessPersonnel), args.Error(1)
+}
+
+func (m *MockBusinessPersonnelRepository) Remove(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *MockBusinessPersonnelRepository) RemoveAll(ctx context.Context, businessID uuid.UUID) error {
-	args := m.Called(ctx, businessID)
+func (m *MockBusinessPersonnelRepository) RemoveByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) error {
+	args := m.Called(ctx, businessID, role)
 	return args.Error(0)
 }
 

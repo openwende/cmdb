@@ -45,7 +45,29 @@ func (m *MockBusinessRepository) DeleteBusiness(ctx context.Context, tenantID, i
 	return args.Error(0)
 }
 func (m *MockBusinessRepository) ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error) {
-	return nil, 0, nil
+	args := m.Called(ctx, tenantID, limit, offset)
+	if args.Get(0) == nil {
+		return nil, args.Int(1), args.Error(2)
+	}
+	return args.Get(0).([]types.Business), args.Int(1), args.Error(2)
+}
+
+func (m *MockBusinessRepository) GetBusinessByBusinessID(ctx context.Context, tenantID string, businessID int64) (*types.Business, error) {
+	args := m.Called(ctx, tenantID, businessID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*types.Business), args.Error(1)
+}
+
+func (m *MockBusinessRepository) CheckBusinessIDExists(ctx context.Context, tenantID string, businessID int64, excludeID string) (bool, error) {
+	args := m.Called(ctx, tenantID, businessID, excludeID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockBusinessRepository) GetNextBusinessID(ctx context.Context, tenantID string) (int64, error) {
+	args := m.Called(ctx, tenantID)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 func TestLifecycleLogic(t *testing.T) {
@@ -59,8 +81,9 @@ func TestLifecycleLogic(t *testing.T) {
 		mockRepo.ExpectedCalls = nil
 		// Must use On just before call if reusing, or clear
 
+		mockRepo.On("GetNextBusinessID", mock.Anything, mock.Anything).Return(int64(1000), nil)
 		mockRepo.On("CreateBusiness", mock.Anything, mock.MatchedBy(func(b *types.Business) bool {
-			return b.Lifecycle == types.BusinessLifecycleOnline
+			return b.Lifecycle == types.BusinessLifecycleOnline && b.BusinessID != nil && *b.BusinessID == 1000
 		})).Return(nil)
 
 		_, err := service.CreateBusiness(context.Background(), req)
@@ -73,8 +96,9 @@ func TestLifecycleLogic(t *testing.T) {
 		req := &types.CreateBusinessRequest{Name: "test-test", Lifecycle: &lc}
 
 		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetNextBusinessID", mock.Anything, mock.Anything).Return(int64(1001), nil)
 		mockRepo.On("CreateBusiness", mock.Anything, mock.MatchedBy(func(b *types.Business) bool {
-			return b.Lifecycle == types.BusinessLifecycleTesting
+			return b.Lifecycle == types.BusinessLifecycleTesting && b.BusinessID != nil && *b.BusinessID == 1001
 		})).Return(nil)
 
 		_, err := service.CreateBusiness(context.Background(), req)
