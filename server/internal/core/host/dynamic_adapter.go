@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -197,10 +198,9 @@ func (a *DynamicModelAdapter) convertCreateRequestToData(req *types.CreateHostRe
 		data["business_id"] = fmt.Sprintf("%d", *req.BusinessID)
 	}
 
-	// IP地址列表
+	// IP地址列表 - 使用 PostgreSQL 数组类型
 	if len(req.IPAddresses) > 0 {
-		ipsJSON, _ := json.Marshal(req.IPAddresses)
-		data["ip_addresses"] = string(ipsJSON)
+		data["ip_addresses"] = pq.StringArray(req.IPAddresses)
 	}
 
 	// 云平台信息
@@ -268,8 +268,7 @@ func (a *DynamicModelAdapter) applyUpdateRequest(data map[string]interface{}, re
 		data["primary_ip"] = *req.PrimaryIP
 	}
 	if req.IPAddresses != nil {
-		ipsJSON, _ := json.Marshal(*req.IPAddresses)
-		data["ip_addresses"] = string(ipsJSON)
+		data["ip_addresses"] = pq.StringArray(*req.IPAddresses)
 	}
 	if req.CPU != nil {
 		data["cpu"] = *req.CPU
@@ -336,12 +335,8 @@ func (a *DynamicModelAdapter) convertResourceToHost(resource *types.Resource) (*
 		}
 	}
 
-	// IP地址列表
-	if ipsStr, ok := configs["ip_addresses"].(string); ok {
-		var ips []string
-		json.Unmarshal([]byte(ipsStr), &ips)
-		host.IPAddresses = ips
-	}
+	// IP地址列表 - 支持 PostgreSQL 数组或 JSON 数组
+	host.IPAddresses = getStringSliceFromConfig(configs, "ip_addresses")
 
 	// 云平台信息
 	if vendor, ok := configs["cloud_vendor"].(string); ok {
@@ -413,10 +408,36 @@ func (a *DynamicModelAdapter) convertHostToData(host *types.Host) map[string]int
 	if host.BusinessID != nil {
 		data["business_id"] = fmt.Sprintf("%d", *host.BusinessID)
 	}
-
-	// 其他字段...（省略，同 convertCreateRequestToData）
+	if len(host.IPAddresses) > 0 {
+		data["ip_addresses"] = pq.StringArray(host.IPAddresses)
+	}
 
 	return data
+}
+
+// getStringSliceFromConfig 从配置中安全获取字符串数组
+func getStringSliceFromConfig(configs map[string]interface{}, key string) []string {
+	if val, ok := configs[key]; ok {
+		switch v := val.(type) {
+		case []interface{}:
+			result := make([]string, len(v))
+			for i, item := range v {
+				if s, ok := item.(string); ok {
+					result[i] = s
+				}
+			}
+			return result
+		case []string:
+			return v
+		case string:
+			// 尝试解析 JSON 数组
+			var ips []string
+			if err := json.Unmarshal([]byte(v), &ips); err == nil {
+				return ips
+			}
+		}
+	}
+	return nil
 }
 
 // getIntFromConfig 从配置中安全获取整数
