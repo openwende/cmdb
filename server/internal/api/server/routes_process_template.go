@@ -103,6 +103,7 @@ func RegisterResourcePoolRoutes(router *gin.Engine, db *gorm.DB) {
 		hosts := v1.Group("/hosts")
 		{
 			hosts.GET("", handler.ListPoolHosts)
+			hosts.GET("/:id/lifecycle", handler.GetHostLifecycle)
 			hosts.POST("/import", handler.ImportHostsToPool)
 			hosts.POST("/move", handler.MoveHostsInPool)
 			hosts.POST("/allocate", handler.AllocateHosts)
