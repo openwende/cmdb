@@ -36,6 +36,7 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			modelsAPI.PUT("/:uid/associations/:id", handler.UpdateModelAssociation)
 			modelsAPI.DELETE("/:uid/associations/:id", handler.DeleteModelAssociation)
 			modelsAPI.GET("/:uid/available-relations", handler.GetAvailableRelations)
+			modelsAPI.GET("/:uid/relation-capabilities", handler.GetModelRelationCapabilities)
 
 			// ========== 唯一规则管理 ==========
 			modelsAPI.GET("/:uid/unique-rules", handler.ListUniqueRules)
@@ -53,6 +54,7 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 				instancesAPI.DELETE("/:id", handler.DeleteInstance) // 删除实例
 
 				// 实例关联关系
+				instancesAPI.GET("/:id/relation-capabilities", handler.GetInstanceRelationCapabilities)
 				instancesAPI.GET("/:id/relations", handler.ListRelations)    // 查询关联关系
 				instancesAPI.GET("/:id/topology", handler.GetTopology)       // 查询拓扑关系
 				instancesAPI.GET("/:id/history", handler.GetResourceHistory) // 查询变更历史
