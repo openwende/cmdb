@@ -157,7 +157,7 @@ export interface DynamicGroupFormData {
   bk_obj_id: string;
   bk_biz_id?: number;
   condition: DynamicGroupConditionGroup[];
-  variable_condition?: DynamicGroupConditionGroup[];
+  variable_condition: DynamicGroupConditionGroup[];
 }
 export interface PropertyCondition {
   id: string;

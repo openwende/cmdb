@@ -13,7 +13,6 @@ import {
 } from './Types';
 import {
   AppstoreOutlined,
-  ApartmentOutlined,
   ContainerOutlined,
   DiffOutlined,
   BarChartOutlined,
@@ -36,7 +35,6 @@ const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
 const ResourceModel = lazy(() => import('../pages/Resource/Model'));
 const ModelList = lazy(() => import('../pages/Resource/Model/ModelList'));
 const ModelGroups = lazy(() => import('../pages/Resource/Model/pages/Groups'));
-const ModelTemplates = lazy(() => import('../pages/Resource/Model/pages/Templates'));
 const ModelRelations = lazy(() => import('../pages/Resource/Model/pages/Relations'));
 const ModelLayout = lazy(() => import('../pages/Resource/Model/ModelLayout'));
 const LegacyModelRedirect = lazy(() => import('../pages/Resource/Model/pages/LegacyRedirect'));

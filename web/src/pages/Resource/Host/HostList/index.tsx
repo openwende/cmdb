@@ -59,7 +59,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   // Host list
   const [hostsList, setHostsList] = useState<any>([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
 
   useEffect(() => {
     if (tabKey !== TabsKey.Unassigned) {
@@ -100,8 +100,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   // If even one host is in a host pool, then not all are in the business host pool
   const hostsNotAllInBizPool = hostPoolStatuses.some((item) => item.inHostPool === true);
 
-  const handleSelectedRows = (rowKeys: any, rows: any) => {
-    setSelectedRowKeys(rowKeys);
+  const handleSelectedRows = (rowKeys: React.Key[], _rows: any) => {
+    setSelectedRowKeys(rowKeys.map((key) => Number(key)));
   };
 
   const handleTransferMenuClick = (key: string) => {
@@ -172,7 +172,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
     [transferModalType, hostsNotInIdlePool, hostIdleStatuses],
   );
 
-  const handleReleaseHosts = useCallback((dirId: number) => {
+  const handleReleaseHosts = useCallback((_dirId: number) => {
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);

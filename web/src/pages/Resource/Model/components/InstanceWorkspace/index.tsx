@@ -242,7 +242,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     setHistoryPageSize(DETAIL_HISTORY_PAGE_SIZE);
     setSelectedRelationDefinitionKey(undefined);
     setSelectedTargetInstanceID(undefined);
-    setTargetInstances([]);
   };
 
   const closeDrawer = () => {
@@ -290,7 +289,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       message.success(t('resource.model.messages.createInstanceRelationSuccess'));
       setSelectedRelationDefinitionKey(undefined);
       setSelectedTargetInstanceID(undefined);
-      setTargetInstances([]);
       await loadInstanceRelations(selectedInstance.id);
       await loadInstanceTopology(selectedInstance.id);
     } catch (error) {

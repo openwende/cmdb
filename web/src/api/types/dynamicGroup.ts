@@ -117,3 +117,10 @@ export interface UpsertDynamicGroupPayload {
   variable_condition: DynamicGroupConditionGroup[];
   description?: string;
 }
+
+export interface PreviewDynamicGroupPayload {
+  bk_obj_id: string;
+  condition: DynamicGroupConditionGroup[];
+  variable_condition: DynamicGroupConditionGroup[];
+  limit?: number;
+}

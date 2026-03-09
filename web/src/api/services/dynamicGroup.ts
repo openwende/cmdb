@@ -4,6 +4,7 @@ import {
   DynamicGroupMetaResponse,
   ListDynamicGroupsResponse,
   PreviewDynamicGroupResponse,
+  PreviewDynamicGroupPayload,
   UpsertDynamicGroupPayload,
 } from '../types/dynamicGroup';
 
@@ -44,7 +45,7 @@ export const deleteDynamicGroup = async (
 
 export const previewDynamicGroup = async (
   businessID: string,
-  payload: UpsertDynamicGroupPayload & { limit?: number },
+  payload: PreviewDynamicGroupPayload,
 ): Promise<PreviewDynamicGroupResponse> => {
   return axios.post(`/v1/businesses/${businessID}/dynamic-groups/preview`, payload);
 };
