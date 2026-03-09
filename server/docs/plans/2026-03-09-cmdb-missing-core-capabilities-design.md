@@ -255,11 +255,12 @@ P0 先闭环前两层，第三层至少完成真实接口与空态返回。
 建议接口：
 
 - `GET /api/v1/relation-types`
-- `GET /api/v1/models/:modelUID/relation-capabilities`
+- `GET /api/v1/dynamic-models/:uid/relation-capabilities`
+- `GET /api/v1/dynamic-models/:uid/instances/:id/relation-capabilities`
 - `GET /api/v1/instances/:instanceKey/relation-capabilities`
 - `POST /api/v1/instances/:instanceKey/relations`
 - `DELETE /api/v1/instances/:instanceKey/relations/:relationId`
-- `POST /api/v1/models/:modelUID/relations/validate`
+- `POST /api/v1/dynamic-models/:uid/relations/validate`
 
 统一返回：
 
@@ -374,11 +375,11 @@ P0 先闭环前两层，第三层至少完成真实接口与空态返回。
 
 建议接口：
 
-- `GET /api/v1/models/:modelUID/schema`
-- `GET /api/v1/models/:modelUID/form-schema?scene=...`
-- `POST /api/v1/models/:modelUID/schema/validate-change`
-- `GET /api/v1/models/:modelUID/capabilities`
-- `GET /api/v1/models/schema-bundle`
+- `GET /api/v1/dynamic-models/:uid/schema`
+- `GET /api/v1/dynamic-models/:uid/form-schema?scene=...`
+- `POST /api/v1/dynamic-models/:uid/schema/validate-change`
+- `GET /api/v1/dynamic-models/:uid/capabilities`
+- `GET /api/v1/dynamic-models/schema-bundle`
 
 统一字段分类：
 

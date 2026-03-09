@@ -432,8 +432,8 @@ Expected: FAIL with missing schema service and store.
 
 **Step 3: Write minimal implementation**
 
-- Add `/api/v1/models/:modelUID/schema`
-- Add `/api/v1/models/:modelUID/form-schema`
+- Add `/api/v1/dynamic-models/:uid/schema`
+- Add `/api/v1/dynamic-models/:uid/form-schema`
 - Merge dynamic model fields and business custom fields by scene
 - Update `CreateNodeModal` to stop branching between built-in and generic field sources
 
