@@ -29,6 +29,8 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			modelsAPI.GET("/:uid/attributes", handler.ListAttributes)                // 列出属性
 			modelsAPI.PUT("/:uid/attributes/:field_uid", handler.UpdateAttribute)    // 更新属性
 			modelsAPI.DELETE("/:uid/attributes/:field_uid", handler.DeleteAttribute) // 删除属性
+			modelsAPI.GET("/:uid/schema", handler.GetSchema)
+			modelsAPI.GET("/:uid/form-schema", handler.GetFormSchema)
 
 			// ========== 模型关系管理 ==========
 			modelsAPI.GET("/:uid/associations", handler.ListModelAssociations)

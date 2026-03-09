@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/gorm"
@@ -17,6 +18,7 @@ import (
 type DynamicModelHandler struct {
 	service         *dynamic_model.Service
 	relationService *dynamic_model.RelationAggregateService
+	schemaService   *dynamic_model.SchemaService
 }
 
 // NewDynamicModelHandler 创建 Handler
@@ -24,6 +26,7 @@ func NewDynamicModelHandler(service *dynamic_model.Service) *DynamicModelHandler
 	return &DynamicModelHandler{
 		service:         service,
 		relationService: dynamic_model.NewRelationAggregateService(service.DB(), service),
+		schemaService:   dynamic_model.NewSchemaService(service.DB(), service),
 	}
 }
 
@@ -713,6 +716,49 @@ func (h *DynamicModelHandler) GetAggregateInstanceRelationCapabilities(c *gin.Co
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetSchema(c *gin.Context) {
+	data, err := h.schemaService.GetSchema(c.Request.Context(), c.Param("uid"))
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetFormSchema(c *gin.Context) {
+	var businessID uuid.UUID
+	if rawBusinessID := strings.TrimSpace(c.Query("business_id")); rawBusinessID != "" {
+		parsed, err := uuid.Parse(rawBusinessID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
+			return
+		}
+		businessID = parsed
+	}
+
+	data, err := h.schemaService.GetFormSchema(
+		c.Request.Context(),
+		c.Param("uid"),
+		c.DefaultQuery("scene", "default"),
+		businessID,
+	)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 
