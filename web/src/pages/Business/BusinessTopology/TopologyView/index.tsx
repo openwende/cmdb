@@ -9,29 +9,20 @@ import NodeInfo from '../NodeInfo';
 import './style.css';
 import { TreeData } from '../../Types';
 import { getBusinessTopologyPath, getBusinessIdFromUrl } from '@/utils/routes';
-
-const DEFAULT_SELECTION = {
-  selectedNode: null,
-  parentNodes: [],
-};
-
-interface NodeSelection {
-  selectedNode: TreeData | null;
-  parentNodes: TreeData[];
-}
+import { useTopologySceneStore } from '@/store/TopologySceneStore';
 
 const BusinessTopology: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('hostList');
-  const [nodeSelection, setNodeSelection] = useState<NodeSelection>(DEFAULT_SELECTION);
   const [view, setView] = useState<'instance' | 'process'>('instance');
   const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
   const [topologyVersion, setTopologyVersion] = useState(0);
   const businessId = getBusinessIdFromUrl();
   const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
   const prevPathnameRef = useRef<string>('');
+  const { selectedNode, parentNodes, selectNode, reset } = useTopologySceneStore();
 
   useEffect(() => {
     const isJustSwitchedToCurPath =
@@ -70,17 +61,14 @@ const BusinessTopology: React.FC = () => {
   };
 
   const handleNodeSelect = useCallback(
-    (selectedNode: TreeData, parentNodes: TreeData[]) => {
+    async (nextNode: TreeData, nextParents: TreeData[]) => {
       const params = new URLSearchParams(searchParams);
-      params.set('node', selectedNode.key);
+      params.set('node', nextNode.key);
       setSearchParams(params);
 
-      setNodeSelection({
-        selectedNode,
-        parentNodes,
-      });
+      await selectNode(nextNode, nextParents);
     },
-    [searchParams, setSearchParams],
+    [searchParams, selectNode, setSearchParams],
   );
 
   const handleViewChange = (v: 'instance' | 'process') => {
@@ -94,7 +82,7 @@ const BusinessTopology: React.FC = () => {
     setTopologyVersion((current) => current + 1);
   }, []);
 
-  const { selectedNode, parentNodes } = nodeSelection;
+  useEffect(() => reset, [reset]);
 
   const items = [
     {
@@ -119,7 +107,7 @@ const BusinessTopology: React.FC = () => {
     {
       key: 'nodeInfo',
       label: t('business.topology.tabs.nodeInfo'),
-      children: selectedNode && <NodeInfo selectedNode={selectedNode} />,
+      children: <NodeInfo />,
     },
   ];
 

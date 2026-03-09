@@ -76,6 +76,31 @@ export const getTopologyTree = async (
   }
 };
 
+export interface TopologyNodePathItem {
+  node_id: string;
+  node_type: string;
+  name: string;
+  model_uid?: string;
+}
+
+export interface TopologyNodeDetail {
+  node_id: string;
+  node_type?: string;
+  name?: string;
+  model_uid: string;
+  path: TopologyNodePathItem[];
+  statistics?: Record<string, any>;
+  allowed_actions: string[];
+  form_schema_ref?: string;
+  binding_summary?: Record<string, any>;
+}
+
+export const getTopologyNodeDetail = async (
+  nodeId: string,
+): Promise<{ code: number; data: TopologyNodeDetail; message?: string }> => {
+  return axios.get(`/v1/topology/nodes/${encodeURIComponent(nodeId)}`);
+};
+
 export const createTopologySet = async (payload: CreateTopologySetPayload) => {
   return axios.post('/v1/topology/sets', payload);
 };
