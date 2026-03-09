@@ -30,6 +30,8 @@ export {
 export {
   listModelAssociations,
   getAvailableRelations,
+  getModelRelationCapabilities,
+  getInstanceRelationCapabilities,
   createModelAssociation,
   updateModelAssociation,
   deleteModelAssociation,

@@ -21,7 +21,6 @@ import {
   createModelInstance,
   createModelInstanceRelation,
   deleteModelInstanceRelation,
-  getAvailableRelations,
   getModelInstanceTopology,
   listModelInstanceHistory,
   listModelInstanceRelations,
@@ -31,7 +30,6 @@ import {
   CreateModelInstancePayload,
   ModelInstance,
 } from '@/api/types/model';
-import { ModelAssociation } from '@/api/types/modelRelation';
 import {
   InstanceHistoryItem,
   InstanceRelationItem,
@@ -41,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 import CreateInstanceDrawer from '../CreateInstanceDrawer';
 import { useModelPageContext } from '../../context';
 import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
+import { useInstanceRelationStore } from '@/store/InstanceRelationStore';
 
 const DEFAULT_PAGE_SIZE = 20;
 const DETAIL_HISTORY_PAGE_SIZE = 10;
@@ -71,7 +70,10 @@ const getInstanceName = (record: ModelInstance) => {
   return String(record.id);
 };
 
-const buildRelationDefinitionKey = (definition: ModelAssociation) => {
+const buildRelationDefinitionKey = (definition: {
+  target_model_uid: string;
+  association_uid: string;
+}) => {
   return `${definition.target_model_uid}::${definition.association_uid}`;
 };
 
@@ -93,13 +95,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [createDrawerVisible, setCreateDrawerVisible] = useState(false);
 
-  const [relationDefinitionsLoading, setRelationDefinitionsLoading] = useState(false);
-  const [relationDefinitions, setRelationDefinitions] = useState<ModelAssociation[]>([]);
   const [instanceRelationsLoading, setInstanceRelationsLoading] = useState(false);
   const [instanceRelations, setInstanceRelations] = useState<InstanceRelationItem[]>([]);
   const [selectedRelationDefinitionKey, setSelectedRelationDefinitionKey] = useState<string>();
-  const [targetInstanceLoading, setTargetInstanceLoading] = useState(false);
-  const [targetInstances, setTargetInstances] = useState<ModelInstance[]>([]);
   const [selectedTargetInstanceID, setSelectedTargetInstanceID] = useState<number>();
   const [relationSubmitting, setRelationSubmitting] = useState(false);
 
@@ -115,6 +113,11 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const instanceDetail = useInstanceSceneStore((state) => state.detail);
   const openInstance = useInstanceSceneStore((state) => state.openInstance);
   const resetInstanceScene = useInstanceSceneStore((state) => state.reset);
+  const instanceRelationDetail = useInstanceRelationStore((state) => state.detail);
+  const relationCapabilities = useInstanceRelationStore((state) => state.capabilities);
+  const relationCapabilitiesLoading = useInstanceRelationStore((state) => state.loading);
+  const loadInstanceCapabilities = useInstanceRelationStore((state) => state.loadCapabilities);
+  const resetInstanceCapabilities = useInstanceRelationStore((state) => state.reset);
 
   const modelDisplayNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -125,10 +128,10 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   }, [allModels]);
 
   const selectedRelationDefinition = useMemo(() => {
-    return relationDefinitions.find(
+    return (instanceRelationDetail?.constraints?.associations || []).find(
       (item) => buildRelationDefinitionKey(item) === selectedRelationDefinitionKey,
     );
-  }, [relationDefinitions, selectedRelationDefinitionKey]);
+  }, [instanceRelationDetail?.constraints?.associations, selectedRelationDefinitionKey]);
 
   const fetchInstances = async () => {
     try {
@@ -147,20 +150,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     }
   };
 
-  const loadRelationDefinitions = async () => {
-    try {
-      setRelationDefinitionsLoading(true);
-      const response = await getAvailableRelations(detailModel.name);
-      setRelationDefinitions(response.data.existing || []);
-    } catch (error) {
-      console.error(error);
-      message.error(t('resource.model.messages.loadRelationDefinitionsFailed'));
-      setRelationDefinitions([]);
-    } finally {
-      setRelationDefinitionsLoading(false);
-    }
-  };
-
   const loadInstanceRelations = async (instanceID: string | number) => {
     try {
       setInstanceRelationsLoading(true);
@@ -174,23 +163,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       setInstanceRelations([]);
     } finally {
       setInstanceRelationsLoading(false);
-    }
-  };
-
-  const loadTargetInstances = async (modelUID: string) => {
-    try {
-      setTargetInstanceLoading(true);
-      const response = await listModelInstances(modelUID, {
-        page: 1,
-        page_size: 100,
-      });
-      setTargetInstances(response.data || []);
-    } catch (error) {
-      console.error(error);
-      message.error(t('resource.model.messages.loadTargetInstancesFailed'));
-      setTargetInstances([]);
-    } finally {
-      setTargetInstanceLoading(false);
     }
   };
 
@@ -247,8 +219,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     }
 
     if (drawerTab === 'relations') {
-      loadRelationDefinitions();
-      loadInstanceRelations(selectedInstance.id);
+      void loadInstanceCapabilities(`${detailModel.name}:${selectedInstance.id}`);
+      void loadInstanceRelations(selectedInstance.id);
       return;
     }
 
@@ -261,16 +233,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       loadInstanceTopology(selectedInstance.id);
     }
   }, [drawerVisible, drawerTab, selectedInstance?.id, historyPage, historyPageSize, detailModel.name]);
-
-  useEffect(() => {
-    if (!selectedRelationDefinition?.target_model_uid) {
-      setTargetInstances([]);
-      setSelectedTargetInstanceID(undefined);
-      return;
-    }
-
-    loadTargetInstances(selectedRelationDefinition.target_model_uid);
-  }, [selectedRelationDefinition?.target_model_uid]);
 
   const openInstanceDrawer = (record: ModelInstance, tab: DrawerTabKey = defaultDrawerTab) => {
     setSelectedInstance(record);
@@ -292,8 +254,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     setTopologyGraph(null);
     setSelectedRelationDefinitionKey(undefined);
     setSelectedTargetInstanceID(undefined);
-    setTargetInstances([]);
     resetInstanceScene();
+    resetInstanceCapabilities();
   };
 
   const handleCreateInstance = async (payload: CreateModelInstancePayload) => {
@@ -544,16 +506,17 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     ? `${getInstanceName(selectedInstance)} (${selectedInstance.id})`
     : t('resource.model.tabs.instances');
 
-  const relationDefinitionOptions = relationDefinitions.map((definition) => ({
+  const relationDefinitionOptions = (instanceRelationDetail?.constraints?.associations || []).map((definition) => ({
     label: `${modelDisplayNameMap.get(definition.target_model_uid) || definition.target_model_uid} / ${definition.association_uid} / ${definition.mapping}`,
     value: buildRelationDefinitionKey(definition),
   }));
 
-  const targetInstanceOptions = targetInstances
-    .filter((item) => String(item.id) !== String(selectedInstance?.id))
+  const targetInstanceOptions = relationCapabilities
+    .filter((item) => buildRelationDefinitionKey(item as { target_model_uid: string; association_uid: string }) === selectedRelationDefinitionKey)
+    .filter((item) => item.relation_allowed !== false)
     .map((item) => ({
-      label: `${getInstanceName(item)} (${item.id})`,
-      value: Number(item.id),
+      label: `${item.name || item.resource_id} (${item.resource_id})`,
+      value: Number(item.resource_id),
     }));
 
   return (
@@ -710,7 +673,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         value={selectedRelationDefinitionKey}
                         placeholder={t('resource.model.placeholders.relationDefinition')}
                         options={relationDefinitionOptions}
-                        loading={relationDefinitionsLoading}
+                        loading={relationCapabilitiesLoading}
                         onChange={(value) => setSelectedRelationDefinitionKey(value)}
                         allowClear
                       />
@@ -719,7 +682,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         value={selectedTargetInstanceID}
                         placeholder={t('resource.model.placeholders.targetInstance')}
                         options={targetInstanceOptions}
-                        loading={targetInstanceLoading}
+                        loading={relationCapabilitiesLoading}
                         onChange={(value) => setSelectedTargetInstanceID(value)}
                         allowClear
                         showSearch

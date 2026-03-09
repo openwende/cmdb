@@ -20,16 +20,17 @@ import {
   createModelAssociation,
   deleteModelAssociation,
   getAvailableRelations,
+  listModelAssociations,
   updateModelAssociation,
 } from '@/api';
 import {
   AssociationType,
   CreateModelAssociationPayload,
-  DynamicModelSummary,
   ModelAssociation,
   UpdateModelAssociationPayload,
 } from '@/api/types/modelRelation';
 import { useModelPageContext } from '../../context';
+import { useModelRelationStore } from '@/store/ModelRelationStore';
 
 const mappingOptions: Array<{ value: '1:1' | '1:N' | 'N:N'; label: string }> = [
   { value: '1:1', label: '1:1' },
@@ -55,8 +56,9 @@ const RelationDetailPage: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [editingAssociation, setEditingAssociation] = useState<ModelAssociation | null>(null);
   const [associations, setAssociations] = useState<ModelAssociation[]>([]);
-  const [targetModels, setTargetModels] = useState<DynamicModelSummary[]>([]);
   const [associationTypes, setAssociationTypes] = useState<AssociationType[]>([]);
+  const modelCapabilities = useModelRelationStore((state) => state.capabilities);
+  const loadModelCapabilities = useModelRelationStore((state) => state.loadCapabilities);
 
   const selectedAssociationUID = Form.useWatch('association_uid', form);
   const selectedAssociationType = useMemo(
@@ -66,8 +68,13 @@ const RelationDetailPage: React.FC = () => {
 
   const targetModelMap = useMemo(() => {
     const map = new Map<string, string>();
-    targetModels.forEach((model) => {
-      map.set(model.uid, `${model.name} (${model.uid})`);
+    modelCapabilities.forEach((item) => {
+      if (item.target_model_uid) {
+        map.set(
+          item.target_model_uid,
+          `${item.target_model_name || item.target_model_uid} (${item.target_model_uid})`,
+        );
+      }
     });
     allModels.forEach((model) => {
       if (!map.has(model.name)) {
@@ -75,20 +82,35 @@ const RelationDetailPage: React.FC = () => {
       }
     });
     return map;
-  }, [allModels, targetModels]);
+  }, [allModels, modelCapabilities]);
+
+  const targetModelOptions = useMemo(() => {
+    const seen = new Set<string>();
+    return modelCapabilities
+      .filter((item) => item.target_model_uid && !seen.has(item.target_model_uid))
+      .map((item) => {
+        seen.add(item.target_model_uid as string);
+        return {
+          value: item.target_model_uid as string,
+          label: `${item.target_model_name || item.target_model_uid} (${item.target_model_uid})`,
+        };
+      });
+  }, [modelCapabilities]);
 
   const loadRelationData = async () => {
     try {
       setLoading(true);
-      const response = await getAvailableRelations(detailModel.name);
-      setAssociations(response.data.existing || []);
-      setTargetModels(response.data.target_models || []);
-      setAssociationTypes(response.data.association_types || []);
+      const [associationResponse, availableResponse] = await Promise.all([
+        listModelAssociations(detailModel.name),
+        getAvailableRelations(detailModel.name),
+        loadModelCapabilities(detailModel.name),
+      ]);
+      setAssociations(associationResponse.data.items || []);
+      setAssociationTypes(availableResponse.data.association_types || []);
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.loadRelationsFailed'));
       setAssociations([]);
-      setTargetModels([]);
       setAssociationTypes([]);
     } finally {
       setLoading(false);
@@ -249,7 +271,7 @@ const RelationDetailPage: React.FC = () => {
             <Button
               type="primary"
               onClick={openCreateDrawer}
-              disabled={associationTypes.length === 0 || targetModels.length === 0}
+              disabled={associationTypes.length === 0 || targetModelOptions.length === 0}
             >
               {t('resource.model.actions.createRelation')}
             </Button>
@@ -298,10 +320,7 @@ const RelationDetailPage: React.FC = () => {
             <Select
               showSearch
               optionFilterProp="label"
-              options={targetModels.map((model) => ({
-                value: model.uid,
-                label: `${model.name} (${model.uid})`,
-              }))}
+              options={targetModelOptions}
             />
           </Form.Item>
 
