@@ -10,11 +10,37 @@ import {
   ListModelInstanceRelationsResponse,
 } from '../types/modelInstance';
 
+export interface AggregateInstanceDetail {
+  instance_key: string;
+  model?: {
+    model_uid: string;
+    display_name?: string;
+    icon?: string;
+  };
+  properties?: Record<string, unknown> | null;
+  binding_context?: Record<string, unknown> | null;
+  relation_summary?: {
+    total?: number;
+    items?: unknown[];
+  } | null;
+  history_summary?: {
+    total?: number;
+    items?: unknown[];
+  } | null;
+  allowed_actions?: string[];
+}
+
 export const getModelInstanceDetail = async (
   modelUID: string,
   instanceID: string | number,
 ): Promise<GetModelInstanceDetailResponse> => {
   return axios.get(`/v1/dynamic-models/${modelUID}/instances/${instanceID}`);
+};
+
+export const getAggregateInstanceDetail = async (
+  instanceKey: string,
+): Promise<{ code: number; data: AggregateInstanceDetail; message?: string }> => {
+  return axios.get(`/v1/instances/${encodeURIComponent(instanceKey)}`);
 };
 
 export const listModelInstanceRelations = async (

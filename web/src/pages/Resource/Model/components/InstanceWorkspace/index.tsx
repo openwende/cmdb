@@ -22,7 +22,6 @@ import {
   createModelInstanceRelation,
   deleteModelInstanceRelation,
   getAvailableRelations,
-  getModelInstanceDetail,
   getModelInstanceTopology,
   listModelInstanceHistory,
   listModelInstanceRelations,
@@ -34,7 +33,6 @@ import {
 } from '@/api/types/model';
 import { ModelAssociation } from '@/api/types/modelRelation';
 import {
-  DynamicModelInstanceDetail,
   InstanceHistoryItem,
   InstanceRelationItem,
   InstanceTopologyGraph,
@@ -42,6 +40,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import CreateInstanceDrawer from '../CreateInstanceDrawer';
 import { useModelPageContext } from '../../context';
+import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
 
 const DEFAULT_PAGE_SIZE = 20;
 const DETAIL_HISTORY_PAGE_SIZE = 10;
@@ -54,18 +53,6 @@ interface InstanceWorkspaceProps {
   mode?: WorkspaceMode;
   defaultDrawerTab?: DrawerTabKey;
 }
-
-const HEALTH_STATUS_COLORS: Record<number, string> = {
-  0: 'green',
-  1: 'orange',
-  2: 'red',
-};
-
-const HEALTH_STATUS_LABELS: Record<number, string> = {
-  0: 'OK',
-  1: 'Warn',
-  2: 'Error',
-};
 
 const renderJSONPreview = (value?: Record<string, unknown> | null) => {
   if (!value || Object.keys(value).length === 0) {
@@ -106,9 +93,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [createDrawerVisible, setCreateDrawerVisible] = useState(false);
 
-  const [instanceDetailLoading, setInstanceDetailLoading] = useState(false);
-  const [instanceDetail, setInstanceDetail] = useState<DynamicModelInstanceDetail | null>(null);
-
   const [relationDefinitionsLoading, setRelationDefinitionsLoading] = useState(false);
   const [relationDefinitions, setRelationDefinitions] = useState<ModelAssociation[]>([]);
   const [instanceRelationsLoading, setInstanceRelationsLoading] = useState(false);
@@ -127,6 +111,10 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
 
   const [topologyLoading, setTopologyLoading] = useState(false);
   const [topologyGraph, setTopologyGraph] = useState<InstanceTopologyGraph | null>(null);
+  const instanceDetailLoading = useInstanceSceneStore((state) => state.loading);
+  const instanceDetail = useInstanceSceneStore((state) => state.detail);
+  const openInstance = useInstanceSceneStore((state) => state.openInstance);
+  const resetInstanceScene = useInstanceSceneStore((state) => state.reset);
 
   const modelDisplayNameMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -156,20 +144,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       message.error(t('resource.model.messages.loadInstancesFailed'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadInstanceDetail = async (instanceID: string | number) => {
-    try {
-      setInstanceDetailLoading(true);
-      const response = await getModelInstanceDetail(detailModel.name, instanceID);
-      setInstanceDetail(response.data);
-    } catch (error) {
-      console.error(error);
-      message.error(t('resource.model.messages.loadInstanceDetailFailed'));
-      setInstanceDetail(null);
-    } finally {
-      setInstanceDetailLoading(false);
     }
   };
 
@@ -264,8 +238,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       return;
     }
 
-    loadInstanceDetail(selectedInstance.id);
-  }, [drawerVisible, selectedInstance?.id, detailModel.name]);
+    void openInstance(`${detailModel.name}:${selectedInstance.id}`);
+  }, [detailModel.name, drawerVisible, openInstance, selectedInstance]);
 
   useEffect(() => {
     if (!drawerVisible || !selectedInstance) {
@@ -312,7 +286,6 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const closeDrawer = () => {
     setDrawerVisible(false);
     setSelectedInstance(null);
-    setInstanceDetail(null);
     setInstanceRelations([]);
     setHistoryItems([]);
     setHistoryTotal(0);
@@ -320,6 +293,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     setSelectedRelationDefinitionKey(undefined);
     setSelectedTargetInstanceID(undefined);
     setTargetInstances([]);
+    resetInstanceScene();
   };
 
   const handleCreateInstance = async (payload: CreateModelInstancePayload) => {
@@ -664,48 +638,48 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                 ) : instanceDetail ? (
                   <Space direction="vertical" size="large" style={{ width: '100%' }}>
                     <Descriptions bordered column={2}>
-                      <Descriptions.Item label="ID">{instanceDetail.id}</Descriptions.Item>
+                      <Descriptions.Item label="Key">{instanceDetail.instance_key}</Descriptions.Item>
                       <Descriptions.Item label={t('resource.model.fields.name')}>
-                        {instanceDetail.name || '--'}
+                        {typeof instanceDetail.properties?.name === 'string'
+                          ? instanceDetail.properties.name
+                          : '--'}
                       </Descriptions.Item>
                       <Descriptions.Item label={t('resource.model.columns.modelName')}>
-                        {modelDisplayNameMap.get(instanceDetail.model_uid) || instanceDetail.model_uid}
+                        {instanceDetail.model?.display_name
+                          || modelDisplayNameMap.get(instanceDetail.model?.model_uid || '')
+                          || instanceDetail.model?.model_uid
+                          || '--'}
                       </Descriptions.Item>
-                      <Descriptions.Item label={t('resource.model.fields.updatedAt')}>
-                        {instanceDetail.updated_at
-                          ? dayjs(instanceDetail.updated_at).format('YYYY-MM-DD HH:mm:ss')
-                          : '--'}
+                      <Descriptions.Item label="Model UID">
+                        {instanceDetail.model?.model_uid || '--'}
                       </Descriptions.Item>
-                      <Descriptions.Item label={t('resource.model.fields.createdAt')}>
-                        {instanceDetail.created_at
-                          ? dayjs(instanceDetail.created_at).format('YYYY-MM-DD HH:mm:ss')
-                          : '--'}
+                      <Descriptions.Item label={t('resource.model.tabs.instanceRelations')}>
+                        {instanceDetail.relation_summary?.total ?? 0}
                       </Descriptions.Item>
-                      <Descriptions.Item label={t('resource.model.fields.healthStatus')}>
-                        {instanceDetail.state ? (
-                          <Tag color={HEALTH_STATUS_COLORS[instanceDetail.state.health_status || 0] || 'default'}>
-                            {HEALTH_STATUS_LABELS[instanceDetail.state.health_status || 0]
-                              || String(instanceDetail.state.health_status ?? '--')}
-                          </Tag>
+                      <Descriptions.Item label={t('resource.model.tabs.instanceHistory')}>
+                        {instanceDetail.history_summary?.total ?? 0}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="Allowed Actions" span={2}>
+                        {(instanceDetail.allowed_actions || []).length > 0 ? (
+                          <Space wrap>
+                            {(instanceDetail.allowed_actions || []).map((action) => (
+                              <Tag key={action}>{action}</Tag>
+                            ))}
+                          </Space>
                         ) : (
                           '--'
                         )}
                       </Descriptions.Item>
-                      <Descriptions.Item label={t('resource.model.fields.lastCheckTime')} span={2}>
-                        {instanceDetail.state?.last_check_time
-                          ? dayjs(instanceDetail.state.last_check_time).format('YYYY-MM-DD HH:mm:ss')
-                          : '--'}
-                      </Descriptions.Item>
                     </Descriptions>
 
                     <div>
-                      <div className="model-page-note">{t('resource.model.helper.instanceConfigBlock')}</div>
-                      {renderJSONPreview(instanceDetail.configs || {})}
+                      <div className="model-page-note">{t('resource.model.tabs.instanceDetail')}</div>
+                      {renderJSONPreview(instanceDetail.properties || {})}
                     </div>
 
                     <div>
-                      <div className="model-page-note">{t('resource.model.helper.instanceMetricsBlock')}</div>
-                      {renderJSONPreview(instanceDetail.state?.metrics || {})}
+                      <div className="model-page-note">Binding Context</div>
+                      {renderJSONPreview(instanceDetail.binding_context || {})}
                     </div>
                   </Space>
                 ) : (

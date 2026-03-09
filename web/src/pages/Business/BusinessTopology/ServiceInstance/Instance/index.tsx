@@ -1,9 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Drawer, Form, Input, Modal, message, Popconfirm, Tag } from 'antd';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Table,
+  Button,
+  Space,
+  Drawer,
+  Form,
+  Input,
+  Modal,
+  message,
+  Popconfirm,
+  Tag,
+  Empty,
+  Spin,
+} from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, MinusOutlined } from '@ant-design/icons';
-import { serviceInst, processInst } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
+import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
 
 interface Props {
   selectedNode?: any;
@@ -13,8 +26,12 @@ interface Props {
   setExpandAll: (expand: boolean) => void;
 }
 
-const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expandAll }) => {
+const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRowKeys, expandAll }) => {
   const { t } = useTranslation();
+  const detail = useInstanceSceneStore((state) => state.detail);
+  const loading = useInstanceSceneStore((state) => state.loading);
+  const error = useInstanceSceneStore((state) => state.error);
+  const openInstance = useInstanceSceneStore((state) => state.openInstance);
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -25,14 +42,49 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
   const [labelModalVisible, setLabelModalVisible] = useState(false);
   const [labelList, setLabelList] = useState<Array<{ key: string; value: string }>>([]);
 
+  const dataSource = useMemo(() => {
+    if (!detail) {
+      return [];
+    }
+
+    return [
+      {
+        id: detail.instance_key,
+        name:
+          detail.properties && typeof detail.properties.name === 'string'
+            ? detail.properties.name
+            : detail.instance_key,
+        process_count: detail.relation_summary?.total || 0,
+        labels: detail.binding_context || {},
+      },
+    ];
+  }, [detail]);
+
+  const processItems = useMemo(() => {
+    if (!Array.isArray(detail?.relation_summary?.items)) {
+      return [];
+    }
+
+    return detail.relation_summary.items as any[];
+  }, [detail]);
+
+  useEffect(() => {
+    if (!selectedNode?.nodeId) {
+      return;
+    }
+
+    const modelUID = selectedNode.backendType || selectedNode.type;
+    void openInstance(`${modelUID}:${selectedNode.nodeId}`);
+  }, [openInstance, selectedNode?.backendType, selectedNode?.nodeId, selectedNode?.type]);
+
   useEffect(() => {
     if (expandAll) {
-      const allKeys = serviceInst.map((item) => item.id);
+      const allKeys = detail ? [detail.instance_key] : [];
       setExpandedRowKeys(allKeys);
     } else {
       setExpandedRowKeys([]);
     }
-  }, [expandAll]);
+  }, [detail, expandAll]);
 
   const instanceColumns = [
     {
@@ -178,10 +230,10 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
     return (
       <Table
         columns={columns}
-        dataSource={processInst}
+        dataSource={processItems}
         pagination={false}
         size="small"
-        rowKey={(record) => record.property.bk_process_id}
+        rowKey={(record) => record.property?.bk_process_id || record.id}
       />
     );
   };
@@ -345,8 +397,9 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
           selectedRowKeys,
           onChange: setSelectedRowKeys,
         }}
+        loading={loading}
         columns={instanceColumns}
-        dataSource={serviceInst}
+        dataSource={dataSource}
         rowKey="id"
         expandable={{
           expandedRowRender,
@@ -356,6 +409,15 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
         }}
         pagination={false}
         bordered
+        locale={{
+          emptyText: loading ? (
+            <Spin />
+          ) : error ? (
+            <Empty description={error} />
+          ) : (
+            <Empty description={t('business.topology.serviceInstance.process.table.noData')} />
+          ),
+        }}
       />
 
       {/* The pagination */}
@@ -373,7 +435,7 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
           &nbsp;{t('business.topology.serviceInstance.instance.pagination.items')}
         </span>
         <Pagination
-          total={serviceInst.length}
+          total={dataSource.length}
           pageSize={pageSize}
           current={current}
           onChange={(page, size) => {

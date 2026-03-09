@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Radio, Button, Dropdown, Checkbox, Input, message, Empty, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { InstanceMenuItemKey, TreeData } from '../../Types';
@@ -6,6 +6,7 @@ import { getSelectedNodeStatus } from '../../utils';
 import Instance from './Instance';
 import Process from './Process';
 import { DownOutlined } from '@ant-design/icons';
+import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
 
 interface Props {
   selectedNode: TreeData;
@@ -17,6 +18,7 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
   const { t } = useTranslation();
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [expandAll, setExpandAll] = useState(false);
+  const resetInstanceScene = useInstanceSceneStore((state) => state.reset);
 
   const dropdownMenuItems = {
     items: [
@@ -52,6 +54,10 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
         break;
     }
   };
+
+  useEffect(() => {
+    resetInstanceScene();
+  }, [resetInstanceScene, selectedNode?.key]);
 
   return (
     <>
