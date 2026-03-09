@@ -44,11 +44,14 @@ type CreateBusinessRequest struct {
 	Description *string `json:"description"`
 	Identifier  string  `json:"identifier"` // Optional, can be generated from name
 	Lifecycle   *string `json:"lifecycle" validate:"omitempty,oneof=testing online offline"`
+	Timezone    *string `json:"timezone"`  // Timezone, e.g., "Asia/Shanghai", "UTC"
+	Language    *string `json:"language"`  // Language, e.g., "zh", "en"
 	// Optional initial personnel identities by role (e.g., emails/usernames)
-	Sres       []string `json:"sres"`
-	Developers []string `json:"developers"`
-	Testers    []string `json:"testers"`
-	Bizops     []string `json:"bizops"`
+	// Aligned with BlueKing CMDB v3 business roles
+	Sres       []string `json:"sres"`       // Operations/SRE (bk_biz_maintainer)
+	Developers []string `json:"developers"` // Developers (bk_biz_developer)
+	Testers    []string `json:"testers"`    // Testers (bk_biz_tester)
+	Bizops     []string `json:"bizops"`     // Product managers (bk_biz_productor)
 }
 
 // UpdateBusinessRequest - For updating business information

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/core/instance"
+	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/driver/postgres"
@@ -23,7 +24,7 @@ func main() {
 
 	modelRepo := storage.NewModelRepository(db)
 	instanceRepo := storage.NewInstanceRepository(db)
-	instanceService := instance.NewService(instanceRepo, modelRepo)
+	instanceService := instance.NewService(instanceRepo, modelRepo, db, mainline.NewService(db))
 
 	ctx := context.Background()
 	tenantID := uuid.New().String() // Random tenant for test

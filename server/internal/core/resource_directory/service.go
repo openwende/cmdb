@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -307,8 +308,14 @@ func (s *Service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 			continue
 		}
 
-		// 检查主机是否已分配到业务
-		if host.BusinessID != nil {
+		// 检查主机是否已分配到业务（多对多关系）
+		var bizRelCount int64
+		if err := s.db.Model(&types.HostBusinessRelation{}).Where("host_id = ?", hostID).Count(&bizRelCount).Error; err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+			continue
+		}
+		if bizRelCount > 0 {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: 已分配到业务，请先回收", hostID))
 			continue
@@ -399,11 +406,21 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 				return fmt.Errorf("主机不在资源池中")
 			}
 
-			// 更新主机的业务和模块
-			if err := tx.Model(&types.Host{}).Where("id = ?", hostID).Updates(map[string]interface{}{
-				"business_id": module.BusinessID,
-				"module_id":   req.TargetModuleID,
-			}).Error; err != nil {
+			// 建立主机与模块的关联（多对多）
+			moduleRel := &types.HostModuleRelation{
+				HostID:   hostID,
+				ModuleID: req.TargetModuleID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(moduleRel).Error; err != nil {
+				return err
+			}
+
+			// 建立主机与业务的关联（多对多）
+			bizRel := &types.HostBusinessRelation{
+				HostID:     hostID,
+				BusinessID: module.BusinessID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(bizRel).Error; err != nil {
 				return err
 			}
 
@@ -437,11 +454,11 @@ func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsReque
 
 	for _, hostID := range req.HostIDs {
 		err := s.db.Transaction(func(tx *gorm.DB) error {
-			// 清除主机的业务和模块关联
-			if err := tx.Model(&types.Host{}).Where("id = ?", hostID).Updates(map[string]interface{}{
-				"business_id": nil,
-				"module_id":   nil,
-			}).Error; err != nil {
+			// 清除主机的业务和模块关联（多对多）
+			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostModuleRelation{}).Error; err != nil {
+				return err
+			}
+			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error; err != nil {
 				return err
 			}
 

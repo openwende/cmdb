@@ -65,6 +65,16 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 	}
 	businessID = &nextID
 
+	// Determine timezone and language with defaults
+	timezone := "UTC"
+	if req.Timezone != nil && *req.Timezone != "" {
+		timezone = *req.Timezone
+	}
+	language := "en"
+	if req.Language != nil && *req.Language != "" {
+		language = *req.Language
+	}
+
 	// Create the business object with defaults for required fields
 	business := &types.Business{
 		ID:          uuid.New(),
@@ -76,8 +86,8 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		BusinessID:  businessID,
 		Description: req.Description,
 		Lifecycle:   lifecycle,
-		Timezone:    "UTC",         // Default value
-		Language:    "en",          // Default value
+		Timezone:    timezone, // Use from request or default
+		Language:    language, // Use from request or default
 		Maintainers: []uuid.UUID{}, // Default to an empty array
 		IsBuiltIn:   false,
 	}

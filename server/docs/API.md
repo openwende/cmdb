@@ -81,6 +81,8 @@ Content-Type: application/json
   "identifier": "ecommerce-platform",
   "description": "公司主要的电商业务平台",
   "lifecycle": "online",
+  "timezone": "Asia/Shanghai",
+  "language": "zh",
   "sres": ["alice@example.com", "bob@example.com"],
   "developers": ["charlie@example.com", "david@example.com"],
   "testers": ["eve@example.com"],
@@ -93,10 +95,16 @@ Content-Type: application/json
 - `identifier` (可选): 业务标识符，不填写则自动生成
 - `description` (可选): 业务描述，最大500字符
 - `lifecycle` (可选): 生命周期状态，可选值: `testing`, `online`, `offline`，默认 `online`
+- `timezone` (可选): 时区，示例 `Asia/Shanghai`、`UTC`，默认 `UTC`
+- `language` (可选): 语言，当前支持 `zh`、`en`，默认 `en`
 - `sres` (可选): SRE人员列表
 - `developers` (可选): 开发人员列表
 - `testers` (可选): 测试人员列表
 - `bizops` (可选): 运维人员列表
+
+**注意**:
+- `lifecycle` 和 `language` 必须是字符串值，不接受 `{ "label": "...", "value": "..." }` 这类前端选项对象
+- 创建接口不接收 `operators`
 
 **成功响应** (201 Created):
 ```json
@@ -111,8 +119,8 @@ Content-Type: application/json
     "identifier": "ecommerce-platform",
     "description": "公司主要的电商业务平台",
     "lifecycle": "online",
-    "timezone": "UTC",
-    "language": "en",
+    "timezone": "Asia/Shanghai",
+    "language": "zh",
     "maintainers": [],
     "is_built_in": false,
     "sres": ["alice@example.com", "bob@example.com"],

@@ -53,7 +53,12 @@ func MigrateProcessAndTemplates(db *gorm.DB) error {
 		return err
 	}
 
-	// 10. 创建默认资源目录
+	// 10. 主机与业务/模块多对多关系表
+	if err := db.AutoMigrate(&types.HostBusinessRelation{}, &types.HostModuleRelation{}); err != nil {
+		return err
+	}
+
+	// 11. 创建默认资源目录
 	if err := createDefaultResourceDirectory(db); err != nil {
 		return err
 	}

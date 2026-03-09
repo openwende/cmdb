@@ -30,6 +30,20 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			modelsAPI.PUT("/:uid/attributes/:field_uid", handler.UpdateAttribute)    // 更新属性
 			modelsAPI.DELETE("/:uid/attributes/:field_uid", handler.DeleteAttribute) // 删除属性
 
+			// ========== 模型关系管理 ==========
+			modelsAPI.GET("/:uid/associations", handler.ListModelAssociations)
+			modelsAPI.POST("/:uid/associations", handler.CreateModelAssociation)
+			modelsAPI.PUT("/:uid/associations/:id", handler.UpdateModelAssociation)
+			modelsAPI.DELETE("/:uid/associations/:id", handler.DeleteModelAssociation)
+			modelsAPI.GET("/:uid/available-relations", handler.GetAvailableRelations)
+
+			// ========== 唯一规则管理 ==========
+			modelsAPI.GET("/:uid/unique-rules", handler.ListUniqueRules)
+			modelsAPI.POST("/:uid/unique-rules", handler.CreateUniqueRule)
+			modelsAPI.PUT("/:uid/unique-rules/:id", handler.UpdateUniqueRule)
+			modelsAPI.DELETE("/:uid/unique-rules/:id", handler.DeleteUniqueRule)
+			modelsAPI.POST("/:uid/validate-unique", handler.ValidateUnique)
+
 			// ========== 资源实例管理 ==========
 			instancesAPI := modelsAPI.Group("/:uid/instances")
 			{
@@ -43,6 +57,15 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 				instancesAPI.GET("/:id/topology", handler.GetTopology)       // 查询拓扑关系
 				instancesAPI.GET("/:id/history", handler.GetResourceHistory) // 查询变更历史
 			}
+		}
+
+		// ========== 关联类型管理 ==========
+		associationTypesAPI := v1.Group("/association-types")
+		{
+			associationTypesAPI.GET("", handler.ListAssociationTypes)
+			associationTypesAPI.POST("", handler.CreateAssociationType)
+			associationTypesAPI.PUT("/:uid", handler.UpdateAssociationType)
+			associationTypesAPI.DELETE("/:uid", handler.DeleteAssociationType)
 		}
 
 		// ========== 关联关系管理（独立路由）==========

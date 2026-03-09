@@ -51,7 +51,7 @@ type Module struct {
 
 	// 关联
 	Set   *Set   `gorm:"foreignKey:SetID" json:"set,omitempty"`
-	Hosts []Host `gorm:"foreignKey:ModuleID" json:"hosts,omitempty"`
+	Hosts []Host `gorm:"many2many:host_module_relations;joinForeignKey:ModuleID;joinReferences:HostID" json:"hosts,omitempty"`
 
 	// 统计（非持久化）
 	HostCount int `gorm:"-" json:"host_count,omitempty"`
@@ -75,18 +75,18 @@ const (
 
 // TopologyTreeNode 拓扑树节点（用于前端渲染）
 type TopologyTreeNode struct {
-	ID          string             `json:"id"`           // 唯一标识，格式：{type}_{id}
-	NodeID      interface{}        `json:"node_id"`      // 原始ID（uint64 或 uuid）
-	Name        string             `json:"name"`         // 显示名称
-	NodeType    TopologyNodeType   `json:"node_type"`    // 节点类型
-	ParentID    string             `json:"parent_id"`    // 父节点ID
-	Icon        string             `json:"icon"`         // 图标标识
-	IsLeaf      bool               `json:"is_leaf"`      // 是否叶子节点
-	IsDefault   bool               `json:"is_default"`   // 是否默认节点
-	Expandable  bool               `json:"expandable"`   // 是否可展开
-	ChildCount  int                `json:"child_count"`  // 子节点数量
-	Children    []TopologyTreeNode `json:"children,omitempty"`
-	Extra       map[string]interface{} `json:"extra,omitempty"` // 额外信息
+	ID         string                 `json:"id"`          // 唯一标识，格式：{type}_{id}
+	NodeID     interface{}            `json:"node_id"`     // 原始ID（uint64 或 uuid）
+	Name       string                 `json:"name"`        // 显示名称
+	NodeType   TopologyNodeType       `json:"node_type"`   // 节点类型
+	ParentID   string                 `json:"parent_id"`   // 父节点ID
+	Icon       string                 `json:"icon"`        // 图标标识
+	IsLeaf     bool                   `json:"is_leaf"`     // 是否叶子节点
+	IsDefault  bool                   `json:"is_default"`  // 是否默认节点
+	Expandable bool                   `json:"expandable"`  // 是否可展开
+	ChildCount int                    `json:"child_count"` // 子节点数量
+	Children   []TopologyTreeNode     `json:"children,omitempty"`
+	Extra      map[string]interface{} `json:"extra,omitempty"` // 额外信息
 }
 
 // ========== 请求/响应结构 ==========
@@ -133,18 +133,18 @@ type TransferHostsRequest struct {
 
 // MoveNodeRequest 移动节点请求
 type MoveNodeRequest struct {
-	NodeType     TopologyNodeType `json:"node_type" binding:"required"`
-	NodeID       uint64           `json:"node_id" binding:"required"`
-	TargetID     uint64           `json:"target_id" binding:"required"` // 目标父节点ID
-	Position     int              `json:"position"`                     // 排序位置（可选）
+	NodeType TopologyNodeType `json:"node_type" binding:"required"`
+	NodeID   uint64           `json:"node_id" binding:"required"`
+	TargetID uint64           `json:"target_id" binding:"required"` // 目标父节点ID
+	Position int              `json:"position"`                     // 排序位置（可选）
 }
 
 // GetTopologyTreeRequest 获取拓扑树请求
 type GetTopologyTreeRequest struct {
-	BusinessID    *uuid.UUID `form:"business_id"`
-	IncludeHosts  bool       `form:"include_hosts"`   // 是否包含主机节点
-	MaxDepth      int        `form:"max_depth"`       // 最大深度（1=业务，2=集群，3=模块，4=主机）
-	ExpandNodeID  string     `form:"expand_node_id"`  // 展开指定节点
+	BusinessID   *uuid.UUID `form:"business_id"`
+	IncludeHosts bool       `form:"include_hosts"`  // 是否包含主机节点
+	MaxDepth     int        `form:"max_depth"`      // 最大深度（1=业务，2=集群，3=模块，4=主机）
+	ExpandNodeID string     `form:"expand_node_id"` // 展开指定节点
 }
 
 // TopologyStatistics 拓扑统计信息

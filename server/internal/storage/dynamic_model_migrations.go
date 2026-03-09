@@ -20,6 +20,8 @@ func MigrateDynamicModels(db *gorm.DB) error {
 		&ModelAssociation{},
 		&Relation{},
 		&ResourceHistory{},
+		&ModelUniqueRule{},
+		&ModelUniqueRuleField{},
 	); err != nil {
 		return fmt.Errorf("自动迁移失败: %w", err)
 	}
@@ -105,6 +107,20 @@ func createSpecialIndexes(db *gorm.DB) error {
 		// 模型关联的唯一约束（防止重复定义）
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_model_association
 		 ON model_associations (source_model_uid, target_model_uid, association_uid)`,
+
+		`CREATE UNIQUE INDEX IF NOT EXISTS uk_model_unique_rules_name_active
+		 ON model_unique_rules (model_uid, name)
+		 WHERE deleted_at IS NULL`,
+
+		`CREATE INDEX IF NOT EXISTS idx_model_unique_rules_model
+		 ON model_unique_rules (model_uid, enabled)
+		 WHERE deleted_at IS NULL`,
+
+		`CREATE UNIQUE INDEX IF NOT EXISTS uk_model_unique_rule_fields
+		 ON model_unique_rule_fields (rule_id, field_uid)`,
+
+		`CREATE INDEX IF NOT EXISTS idx_model_unique_rule_fields_rule_sort
+		 ON model_unique_rule_fields (rule_id, sort_order)`,
 	}
 
 	for _, sql := range sqls {
@@ -179,7 +195,7 @@ func isIndexExistsError(err error) bool {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) &&
 		(s == substr || len(s) > len(substr) &&
-		stringContains(toLower(s), toLower(substr)))
+			stringContains(toLower(s), toLower(substr)))
 }
 
 func stringContains(s, substr string) bool {
@@ -266,22 +282,22 @@ type Model struct {
 }
 
 type Attribute struct {
-	ID          uint64
-	ModelUID    string
-	FieldUID    string
-	FieldName   string
-	FieldType   string
-	Category    string
-	IsRequired  bool
-	IsUnique    bool
-	UniqueGroup string
-	IsReadOnly  bool
+	ID           uint64
+	ModelUID     string
+	FieldUID     string
+	FieldName    string
+	FieldType    string
+	Category     string
+	IsRequired   bool
+	IsUnique     bool
+	UniqueGroup  string
+	IsReadOnly   bool
 	DefaultValue string
 	Placeholder  string
 	Unit         string
-	Validators  interface{}
-	CreatedAt   interface{}
-	UpdatedAt   interface{}
+	Validators   interface{}
+	CreatedAt    interface{}
+	UpdatedAt    interface{}
 }
 
 type Resource struct {
@@ -354,3 +370,27 @@ type ResourceHistory struct {
 }
 
 var BuiltinAssociationTypes = []AssociationType{}
+
+type ModelUniqueRule struct {
+	ID               uint64
+	ModelUID         string
+	Name             string
+	IsDefault        bool
+	IsAuxiliary      bool
+	Enabled          bool
+	IgnoreIfAllEmpty bool
+	Description      string
+	CreatedBy        string
+	UpdatedBy        string
+	CreatedAt        interface{}
+	UpdatedAt        interface{}
+	DeletedAt        interface{}
+}
+
+type ModelUniqueRuleField struct {
+	ID        uint64
+	RuleID    uint64
+	FieldUID  string
+	SortOrder int
+	CreatedAt interface{}
+}

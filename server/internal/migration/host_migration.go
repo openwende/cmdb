@@ -365,7 +365,7 @@ func (m *HostMigration) migrateOneHost(ctx context.Context, host *types.Host) er
 	}
 
 	// 执行Upsert
-	_, err := m.dynamicService.UpsertInstance(ctx, "host", data, auditCtx)
+	_, err := m.dynamicService.UpsertInstance(ctx, "host", nil, data, auditCtx)
 	return err
 }
 

@@ -125,6 +125,8 @@ func (s *Server) setupRoutes(db *storage.Database) {
 		// Metadata API
 		modelsAPI := v1.Group("/models")
 		{
+			modelsAPI.GET("/groups", s.modelHandler.ListModelGroups)
+			modelsAPI.POST("/groups", s.modelHandler.CreateModelGroup)
 			modelsAPI.GET("", s.modelHandler.ListModels)
 			modelsAPI.POST("", s.modelHandler.CreateModel)
 			modelsAPI.GET("/:name", s.modelHandler.GetModel)
@@ -166,6 +168,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// Business Topology APIs
 	// ==========================
 	RegisterTopologyRoutes(s.router, db.DB())
+	RegisterMainlineRoutes(s.router, db.DB())
 
 	// ==========================
 	// Process & Template APIs
@@ -173,6 +176,8 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	RegisterProcessRoutes(s.router, db.DB())
 	RegisterServiceTemplateRoutes(s.router, db.DB())
 	RegisterResourcePoolRoutes(s.router, db.DB())
+	RegisterDynamicGroupRoutes(s.router, db.DB())
+	RegisterBusinessCustomFieldRoutes(s.router, db.DB())
 }
 
 func (s *Server) Run() error {

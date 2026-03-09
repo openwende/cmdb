@@ -97,6 +97,8 @@ curl -X POST "http://localhost:8080/api/v1/businesses" \
     "identifier": "test-business-full-params",
     "description": "这是一个包含所有参数的测试业务，用于验证Go 1.26.0兼容性",
     "lifecycle": "testing",
+    "timezone": "Asia/Shanghai",
+    "language": "zh",
     "sres": ["sre1@example.com", "sre2@example.com", "sre3@example.com"],
     "developers": ["dev1@example.com", "dev2@example.com", "dev3@example.com", "dev4@example.com"],
     "testers": ["qa1@example.com", "qa2@example.com"],

@@ -10,8 +10,15 @@ import (
 )
 
 type ModelRepository interface {
+	// Model Groups
+	CreateModelGroup(ctx context.Context, group *types.ModelGroup) error
+	GetModelGroupByID(ctx context.Context, id string) (*types.ModelGroup, error)
+	GetModelGroupByName(ctx context.Context, name string) (*types.ModelGroup, error)
+	ListModelGroups(ctx context.Context) ([]types.ModelGroup, error)
+
 	// Models
 	CreateModel(ctx context.Context, model *types.Model) error
+	EnsureInstancePartition(ctx context.Context, model *types.Model) error
 	GetModelByID(ctx context.Context, id string) (*types.Model, error)
 	GetModelByName(ctx context.Context, name string) (*types.Model, error)
 	ListModels(ctx context.Context) ([]types.Model, error)
@@ -36,8 +43,63 @@ func NewModelRepository(db *gorm.DB) ModelRepository {
 }
 
 // ==========================================
+// Model Group Operations
+// ==========================================
+
+func (r *modelRepository) CreateModelGroup(ctx context.Context, group *types.ModelGroup) error {
+	res := r.db.WithContext(ctx).Create(group)
+	if err := res.Error; err != nil {
+		return fmt.Errorf("failed to create model group: %w", err)
+	}
+	return nil
+}
+
+func (r *modelRepository) GetModelGroupByID(ctx context.Context, id string) (*types.ModelGroup, error) {
+	var group types.ModelGroup
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&group).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("model group with id '%s' not found", id)
+		}
+		return nil, fmt.Errorf("failed to get model group: %w", err)
+	}
+	return &group, nil
+}
+
+func (r *modelRepository) GetModelGroupByName(ctx context.Context, name string) (*types.ModelGroup, error) {
+	var group types.ModelGroup
+	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&group).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("model group with name '%s' not found", name)
+		}
+		return nil, fmt.Errorf("failed to get model group: %w", err)
+	}
+	return &group, nil
+}
+
+func (r *modelRepository) ListModelGroups(ctx context.Context) ([]types.ModelGroup, error) {
+	var groups []types.ModelGroup
+	if err := r.db.WithContext(ctx).
+		Table("model_groups").
+		Select("model_groups.*, COUNT(models.id) AS model_count").
+		Joins("LEFT JOIN models ON models.group_id = model_groups.id").
+		Group("model_groups.id").
+		Order("model_groups.sort_order ASC, model_groups.created_at ASC").
+		Find(&groups).Error; err != nil {
+		return nil, fmt.Errorf("failed to list model groups: %w", err)
+	}
+	return groups, nil
+}
+
+// ==========================================
 // Model Operations
 // ==========================================
+
+func (r *modelRepository) modelQuery(ctx context.Context) *gorm.DB {
+	return r.db.WithContext(ctx).
+		Table("models").
+		Select("models.*, model_groups.name AS group_name, model_groups.display_name AS group_display_name").
+		Joins("LEFT JOIN model_groups ON model_groups.id = models.group_id")
+}
 
 func (r *modelRepository) CreateModel(ctx context.Context, model *types.Model) error {
 	res := r.db.WithContext(ctx).Create(model)
@@ -47,9 +109,13 @@ func (r *modelRepository) CreateModel(ctx context.Context, model *types.Model) e
 	return nil
 }
 
+func (r *modelRepository) EnsureInstancePartition(ctx context.Context, model *types.Model) error {
+	return EnsureModelInstancePartition(r.db.WithContext(ctx), model)
+}
+
 func (r *modelRepository) GetModelByID(ctx context.Context, id string) (*types.Model, error) {
 	var model types.Model
-	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
+	if err := r.modelQuery(ctx).Where("models.id = ?", id).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("model with id '%s' not found", id)
 		}
@@ -60,7 +126,7 @@ func (r *modelRepository) GetModelByID(ctx context.Context, id string) (*types.M
 
 func (r *modelRepository) GetModelByName(ctx context.Context, name string) (*types.Model, error) {
 	var model types.Model
-	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&model).Error; err != nil {
+	if err := r.modelQuery(ctx).Where("models.name = ?", name).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("model with name '%s' not found", name)
 		}
@@ -71,7 +137,7 @@ func (r *modelRepository) GetModelByName(ctx context.Context, name string) (*typ
 
 func (r *modelRepository) ListModels(ctx context.Context) ([]types.Model, error) {
 	var models []types.Model
-	if err := r.db.WithContext(ctx).Order("created_at DESC").Find(&models).Error; err != nil {
+	if err := r.modelQuery(ctx).Order("models.created_at DESC").Find(&models).Error; err != nil {
 		return nil, fmt.Errorf("failed to list models: %w", err)
 	}
 	return models, nil

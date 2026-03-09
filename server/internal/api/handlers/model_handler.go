@@ -16,6 +16,34 @@ func NewModelHandler(service model.Service) *ModelHandler {
 	return &ModelHandler{service: service}
 }
 
+// ListModelGroups - GET /api/v1/models/groups
+func (h *ModelHandler) ListModelGroups(c *gin.Context) {
+	groups, err := h.service.ListModelGroups(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, groups)
+}
+
+// CreateModelGroup - POST /api/v1/models/groups
+func (h *ModelHandler) CreateModelGroup(c *gin.Context) {
+	var req types.CreateModelGroupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	group, err := h.service.CreateModelGroup(c.Request.Context(), &req)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, group)
+}
+
 // CreateModel - POST /api/v1/models
 func (h *ModelHandler) CreateModel(c *gin.Context) {
 	var req types.CreateModelRequest

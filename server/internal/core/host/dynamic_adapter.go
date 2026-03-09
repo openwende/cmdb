@@ -42,7 +42,7 @@ func (a *DynamicModelAdapter) CreateHost(ctx context.Context, tenantID uuid.UUID
 	}
 
 	// 3. 调用动态模型创建
-	resourceID, err := a.dynamicService.UpsertInstance(ctx, "host", data, auditCtx)
+	resourceID, err := a.dynamicService.UpsertInstance(ctx, "host", nil, data, auditCtx)
 	if err != nil {
 		return nil, err
 	}
@@ -142,19 +142,26 @@ func (a *DynamicModelAdapter) UpdateHost(ctx context.Context, id uuid.UUID, req 
 		auditCtx.UserID = updatedBy.String()
 	}
 
-	// 4. 执行更新
-	resourceID, err := a.dynamicService.UpsertInstance(ctx, "host", data, auditCtx)
+	// 4. 查询动态模型资源 ID
+	var resource types.Resource
+	err = a.dynamicService.DB().Where("model_uid = 'host' AND configs->>'id' = ?", id.String()).First(&resource).Error
+	if err != nil {
+		return nil, fmt.Errorf("host not found")
+	}
+
+	// 5. 执行更新
+	resourceID, err := a.dynamicService.UpsertInstance(ctx, "host", &resource.ID, data, auditCtx)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. 返回更新后的数据
-	resource, err := a.dynamicService.GetInstance(ctx, resourceID)
+	// 6. 返回更新后的数据
+	updatedResource, err := a.dynamicService.GetInstance(ctx, resourceID)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.convertResourceToHost(resource)
+	return a.convertResourceToHost(updatedResource)
 }
 
 // DeleteHost 删除主机

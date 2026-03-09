@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strconv"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/types"
+	"gorm.io/gorm"
 )
 
 // DynamicModelHandler 动态模型 HTTP Handler
@@ -27,11 +29,11 @@ func NewDynamicModelHandler(service *dynamic_model.Service) *DynamicModelHandler
 
 // CreateModelRequest 创建模型请求
 type CreateModelRequest struct {
-	UID          string                        `json:"uid" binding:"required"`
-	Name         string                        `json:"name" binding:"required"`
-	Description  string                        `json:"description"`
-	Icon         string                        `json:"icon"`
-	UniqueFields *types.UniqueFieldConfig      `json:"unique_fields"`
+	UID          string                   `json:"uid" binding:"required"`
+	Name         string                   `json:"name" binding:"required"`
+	Description  string                   `json:"description"`
+	Icon         string                   `json:"icon"`
+	UniqueFields *types.UniqueFieldConfig `json:"unique_fields"`
 }
 
 // CreateModel 创建模型
@@ -153,18 +155,18 @@ func (h *DynamicModelHandler) DeleteModel(c *gin.Context) {
 
 // CreateAttributeRequest 创建属性请求
 type CreateAttributeRequest struct {
-	FieldUID     string                  `json:"field_uid" binding:"required"`
-	FieldName    string                  `json:"field_name" binding:"required"`
-	FieldType    string                  `json:"field_type" binding:"required"`
-	Category     string                  `json:"category" binding:"required"`
-	IsRequired   bool                    `json:"is_required"`
-	IsUnique     bool                    `json:"is_unique"`
-	UniqueGroup  string                  `json:"unique_group"`
-	IsReadOnly   bool                    `json:"is_read_only"`
-	DefaultValue string                  `json:"default_value"`
-	Placeholder  string                  `json:"placeholder"`
-	Unit         string                  `json:"unit"`
-	Validators   *types.FieldValidators  `json:"validators"`
+	FieldUID     string                 `json:"field_uid" binding:"required"`
+	FieldName    string                 `json:"field_name" binding:"required"`
+	FieldType    string                 `json:"field_type" binding:"required"`
+	Category     string                 `json:"category" binding:"required"`
+	IsRequired   bool                   `json:"is_required"`
+	IsUnique     bool                   `json:"is_unique"`
+	UniqueGroup  string                 `json:"unique_group"`
+	IsReadOnly   bool                   `json:"is_read_only"`
+	DefaultValue string                 `json:"default_value"`
+	Placeholder  string                 `json:"placeholder"`
+	Unit         string                 `json:"unit"`
+	Validators   *types.FieldValidators `json:"validators"`
 }
 
 // CreateAttribute 创建属性
@@ -278,11 +280,395 @@ func (h *DynamicModelHandler) DeleteAttribute(c *gin.Context) {
 	})
 }
 
+// ========== 唯一规则 API ==========
+
+type CreateUniqueRuleRequest struct {
+	Name             string   `json:"name" binding:"required"`
+	IsDefault        bool     `json:"is_default"`
+	IsAuxiliary      bool     `json:"is_auxiliary"`
+	Enabled          bool     `json:"enabled"`
+	IgnoreIfAllEmpty bool     `json:"ignore_if_all_empty"`
+	Description      string   `json:"description"`
+	Fields           []string `json:"fields" binding:"required"`
+}
+
+type UpdateUniqueRuleRequest struct {
+	Name             string   `json:"name" binding:"required"`
+	IsAuxiliary      bool     `json:"is_auxiliary"`
+	Enabled          bool     `json:"enabled"`
+	IgnoreIfAllEmpty bool     `json:"ignore_if_all_empty"`
+	Description      string   `json:"description"`
+	Fields           []string `json:"fields" binding:"required"`
+}
+
+type ValidateUniqueRequest struct {
+	ResourceID *uint64                `json:"resource_id,omitempty"`
+	Data       map[string]interface{} `json:"data" binding:"required"`
+}
+
+func (h *DynamicModelHandler) ListUniqueRules(c *gin.Context) {
+	uid := c.Param("uid")
+	items, err := h.service.ListUniqueRules(c.Request.Context(), uid)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"items": items}})
+}
+
+func (h *DynamicModelHandler) CreateUniqueRule(c *gin.Context) {
+	uid := c.Param("uid")
+	var req CreateUniqueRuleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	rule, err := h.service.CreateUniqueRule(c.Request.Context(), &types.ModelUniqueRule{
+		ModelUID:         uid,
+		Name:             req.Name,
+		IsDefault:        req.IsDefault,
+		IsAuxiliary:      req.IsAuxiliary,
+		Enabled:          req.Enabled,
+		IgnoreIfAllEmpty: req.IgnoreIfAllEmpty,
+		Description:      req.Description,
+		CreatedBy:        c.GetHeader("X-User-ID"),
+		UpdatedBy:        c.GetHeader("X-User-ID"),
+	}, req.Fields)
+	if err != nil {
+		status := http.StatusBadRequest
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, gin.H{"code": 0, "data": rule})
+}
+
+func (h *DynamicModelHandler) UpdateUniqueRule(c *gin.Context) {
+	uid := c.Param("uid")
+	ruleID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的规则 ID"})
+		return
+	}
+	var req UpdateUniqueRuleRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	rule, err := h.service.UpdateUniqueRule(c.Request.Context(), uid, ruleID, &types.ModelUniqueRule{
+		Name:             req.Name,
+		IsAuxiliary:      req.IsAuxiliary,
+		Enabled:          req.Enabled,
+		IgnoreIfAllEmpty: req.IgnoreIfAllEmpty,
+		Description:      req.Description,
+		UpdatedBy:        c.GetHeader("X-User-ID"),
+	}, req.Fields)
+	if err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": rule})
+}
+
+func (h *DynamicModelHandler) DeleteUniqueRule(c *gin.Context) {
+	uid := c.Param("uid")
+	ruleID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的规则 ID"})
+		return
+	}
+	if err := h.service.DeleteUniqueRule(c.Request.Context(), uid, ruleID); err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
+}
+
+func (h *DynamicModelHandler) ValidateUnique(c *gin.Context) {
+	uid := c.Param("uid")
+	var req ValidateUniqueRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	violations, err := h.service.ValidateUnique(c.Request.Context(), uid, req.ResourceID, req.Data)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+	if len(violations) > 0 {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "唯一校验冲突",
+			"code":  "UNIQUE_RULE_VIOLATION",
+			"details": gin.H{
+				"violations": violations,
+			},
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"valid": true, "violations": []interface{}{}}})
+}
+
+// ========== 关联类型与模型关系 API ==========
+
+type CreateAssociationTypeRequest struct {
+	UID              string `json:"uid" binding:"required"`
+	Name             string `json:"name" binding:"required"`
+	SourceToDestDesc string `json:"source_to_dest_desc"`
+	DestToSourceDesc string `json:"dest_to_source_desc"`
+	Description      string `json:"description"`
+}
+
+type UpdateAssociationTypeRequest struct {
+	Name             *string `json:"name,omitempty"`
+	SourceToDestDesc *string `json:"source_to_dest_desc,omitempty"`
+	DestToSourceDesc *string `json:"dest_to_source_desc,omitempty"`
+	Description      *string `json:"description,omitempty"`
+}
+
+type CreateModelAssociationRequest struct {
+	TargetModelUID string `json:"target_model_uid" binding:"required"`
+	AssociationUID string `json:"association_uid" binding:"required"`
+	Mapping        string `json:"mapping"`
+	OnDelete       string `json:"on_delete"`
+	Description    string `json:"description"`
+}
+
+type UpdateModelAssociationRequest struct {
+	TargetModelUID *string `json:"target_model_uid,omitempty"`
+	AssociationUID *string `json:"association_uid,omitempty"`
+	Mapping        *string `json:"mapping,omitempty"`
+	OnDelete       *string `json:"on_delete,omitempty"`
+	Description    *string `json:"description,omitempty"`
+}
+
+func (h *DynamicModelHandler) ListAssociationTypes(c *gin.Context) {
+	items, err := h.service.ListAssociationTypes(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"items": items}})
+}
+
+func (h *DynamicModelHandler) CreateAssociationType(c *gin.Context) {
+	var req CreateAssociationTypeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	item := &types.AssociationType{
+		UID:              req.UID,
+		Name:             req.Name,
+		SourceToDestDesc: req.SourceToDestDesc,
+		DestToSourceDesc: req.DestToSourceDesc,
+		Description:      req.Description,
+	}
+	if err := h.service.CreateAssociationType(c.Request.Context(), item); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"code": 0, "data": item})
+}
+
+func (h *DynamicModelHandler) UpdateAssociationType(c *gin.Context) {
+	uid := c.Param("uid")
+	var req UpdateAssociationTypeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.Name != nil {
+		updates["name"] = *req.Name
+	}
+	if req.SourceToDestDesc != nil {
+		updates["source_to_dest_desc"] = *req.SourceToDestDesc
+	}
+	if req.DestToSourceDesc != nil {
+		updates["dest_to_source_desc"] = *req.DestToSourceDesc
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+
+	item, err := h.service.UpdateAssociationType(c.Request.Context(), uid, updates)
+	if err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": item})
+}
+
+func (h *DynamicModelHandler) DeleteAssociationType(c *gin.Context) {
+	uid := c.Param("uid")
+	if err := h.service.DeleteAssociationType(c.Request.Context(), uid); err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
+}
+
+func (h *DynamicModelHandler) ListModelAssociations(c *gin.Context) {
+	uid := c.Param("uid")
+	items, err := h.service.ListModelAssociations(c.Request.Context(), uid)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"items": items}})
+}
+
+func (h *DynamicModelHandler) CreateModelAssociation(c *gin.Context) {
+	uid := c.Param("uid")
+	var req CreateModelAssociationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	item := &types.DynamicModelAssociation{
+		SourceModelUID: uid,
+		TargetModelUID: req.TargetModelUID,
+		AssociationUID: req.AssociationUID,
+		Mapping:        req.Mapping,
+		OnDelete:       req.OnDelete,
+		Description:    req.Description,
+	}
+	if err := h.service.CreateModelAssociation(c.Request.Context(), item); err != nil {
+		status := http.StatusBadRequest
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"code": 0, "data": item})
+}
+
+func (h *DynamicModelHandler) UpdateModelAssociation(c *gin.Context) {
+	uid := c.Param("uid")
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的关联 ID"})
+		return
+	}
+
+	var req UpdateModelAssociationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.TargetModelUID != nil {
+		updates["target_model_uid"] = *req.TargetModelUID
+	}
+	if req.AssociationUID != nil {
+		updates["association_uid"] = *req.AssociationUID
+	}
+	if req.Mapping != nil {
+		updates["mapping"] = *req.Mapping
+	}
+	if req.OnDelete != nil {
+		updates["on_delete"] = *req.OnDelete
+	}
+	if req.Description != nil {
+		updates["description"] = *req.Description
+	}
+
+	item, err := h.service.UpdateModelAssociation(c.Request.Context(), uid, id, updates)
+	if err != nil {
+		status := http.StatusBadRequest
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": item})
+}
+
+func (h *DynamicModelHandler) DeleteModelAssociation(c *gin.Context) {
+	uid := c.Param("uid")
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的关联 ID"})
+		return
+	}
+
+	if err := h.service.DeleteModelAssociation(c.Request.Context(), uid, id); err != nil {
+		status := http.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
+}
+
+func (h *DynamicModelHandler) GetAvailableRelations(c *gin.Context) {
+	uid := c.Param("uid")
+	data, err := h.service.GetAvailableRelations(c.Request.Context(), uid)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if _, ok := err.(*dynamic_model.ModelNotFoundError); ok || errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
 // ========== 资源实例管理 API ==========
 
 // UpsertInstanceRequest 创建/更新实例请求
 type UpsertInstanceRequest struct {
-	Data map[string]interface{} `json:"data" binding:"required"`
+	ResourceID *uint64                `json:"resource_id,omitempty"`
+	Data       map[string]interface{} `json:"data" binding:"required"`
 }
 
 // UpsertInstance 创建或更新资源实例
@@ -303,7 +689,7 @@ func (h *DynamicModelHandler) UpsertInstance(c *gin.Context) {
 		UserAgent: c.Request.UserAgent(),
 	}
 
-	resourceID, err := h.service.UpsertInstance(c.Request.Context(), modelUID, req.Data, auditCtx)
+	resourceID, err := h.service.UpsertInstance(c.Request.Context(), modelUID, req.ResourceID, req.Data, auditCtx)
 	if err != nil {
 		// 处理特定错误
 		switch e := err.(type) {
@@ -334,13 +720,14 @@ func (h *DynamicModelHandler) UpsertInstance(c *gin.Context) {
 // GetInstance 获取资源实例
 // GET /api/v1/dynamic-models/:uid/instances/:id
 func (h *DynamicModelHandler) GetInstance(c *gin.Context) {
+	modelUID := c.Param("uid")
 	resourceID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的资源 ID"})
 		return
 	}
 
-	resource, err := h.service.GetInstance(c.Request.Context(), resourceID)
+	resource, err := h.service.GetInstanceView(c.Request.Context(), modelUID, resourceID)
 	if err != nil {
 		if _, ok := err.(*dynamic_model.ResourceNotFoundError); ok {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -474,6 +861,7 @@ func (h *DynamicModelHandler) CreateRelation(c *gin.Context) {
 // ListRelations 查询资源的关联关系
 // GET /api/v1/dynamic-models/instances/:id/relations
 func (h *DynamicModelHandler) ListRelations(c *gin.Context) {
+	modelUID := c.Param("uid")
 	resourceID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的资源 ID"})
@@ -481,17 +869,27 @@ func (h *DynamicModelHandler) ListRelations(c *gin.Context) {
 	}
 
 	direction := c.DefaultQuery("direction", "both") // source, target, both
+	if direction != "source" && direction != "target" && direction != "both" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 direction，只允许 source、target、both"})
+		return
+	}
 	associationUID := c.Query("association_uid")
 
-	relations, err := h.service.ListRelations(c.Request.Context(), resourceID, direction, associationUID)
+	relations, err := h.service.ListInstanceRelations(c.Request.Context(), modelUID, resourceID, direction, associationUID)
 	if err != nil {
+		if _, ok := err.(*dynamic_model.ResourceNotFoundError); ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": relations,
+		"data": gin.H{
+			"items": relations,
+		},
 	})
 }
 
@@ -520,6 +918,7 @@ func (h *DynamicModelHandler) DeleteRelation(c *gin.Context) {
 // GetTopology 查询拓扑关系
 // GET /api/v1/dynamic-models/instances/:id/topology
 func (h *DynamicModelHandler) GetTopology(c *gin.Context) {
+	modelUID := c.Param("uid")
 	startID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的资源 ID"})
@@ -535,15 +934,19 @@ func (h *DynamicModelHandler) GetTopology(c *gin.Context) {
 		associationUIDs = splitAndTrim(assocStr, ",")
 	}
 
-	nodes, err := h.service.GetTopology(c.Request.Context(), startID, maxDepth, associationUIDs, reverse)
+	graph, err := h.service.GetTopologyGraph(c.Request.Context(), modelUID, startID, maxDepth, associationUIDs, reverse)
 	if err != nil {
+		if _, ok := err.(*dynamic_model.ResourceNotFoundError); ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
-		"data": nodes,
+		"data": graph,
 	})
 }
 
@@ -552,6 +955,7 @@ func (h *DynamicModelHandler) GetTopology(c *gin.Context) {
 // GetResourceHistory 获取资源变更历史
 // GET /api/v1/dynamic-models/instances/:id/history
 func (h *DynamicModelHandler) GetResourceHistory(c *gin.Context) {
+	modelUID := c.Param("uid")
 	resourceID, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的资源 ID"})
@@ -561,8 +965,19 @@ func (h *DynamicModelHandler) GetResourceHistory(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	histories, total, err := h.service.GetResourceHistory(c.Request.Context(), resourceID, page, pageSize)
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	histories, total, err := h.service.GetResourceHistoryView(c.Request.Context(), modelUID, resourceID, page, pageSize)
 	if err != nil {
+		if _, ok := err.(*dynamic_model.ResourceNotFoundError); ok {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

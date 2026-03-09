@@ -492,7 +492,10 @@ func (h *TopologyHandler) GetModuleHosts(c *gin.Context) {
 	var hosts []types.Host
 	var total int64
 
-	query := h.service.DB().Model(&types.Host{}).Where("module_id = ?", id)
+	query := h.service.DB().
+		Model(&types.Host{}).
+		Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", id)
 	query.Count(&total)
 
 	offset := (page - 1) * pageSize

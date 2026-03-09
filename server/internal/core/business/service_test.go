@@ -106,6 +106,32 @@ func TestLifecycleLogic(t *testing.T) {
 		mockRepo.AssertExpectations(t)
 	})
 
+	t.Run("Create With Timezone And Language", func(t *testing.T) {
+		lc := types.BusinessLifecycleOnline
+		tz := "Asia/Shanghai"
+		lang := "zh"
+		req := &types.CreateBusinessRequest{
+			Name:      "regional-test",
+			Lifecycle: &lc,
+			Timezone:  &tz,
+			Language:  &lang,
+		}
+
+		mockRepo.ExpectedCalls = nil
+		mockRepo.On("GetNextBusinessID", mock.Anything, mock.Anything).Return(int64(1002), nil)
+		mockRepo.On("CreateBusiness", mock.Anything, mock.MatchedBy(func(b *types.Business) bool {
+			return b.Lifecycle == types.BusinessLifecycleOnline &&
+				b.Timezone == tz &&
+				b.Language == lang &&
+				b.BusinessID != nil &&
+				*b.BusinessID == 1002
+		})).Return(nil)
+
+		_, err := service.CreateBusiness(context.Background(), req)
+		assert.NoError(t, err)
+		mockRepo.AssertExpectations(t)
+	})
+
 	t.Run("Update Valid", func(t *testing.T) {
 		id := uuid.New().String()
 		tn := "00000000-0000-0000-0000-000000000001"

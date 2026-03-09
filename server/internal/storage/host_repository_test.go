@@ -12,80 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// testHostRepository 测试专用的host repository，禁用Preload以避免关联表问题
-type testHostRepository struct {
-	*hostRepository
-}
-
-func newTestHostRepository(db *gorm.DB) *testHostRepository {
-	return &testHostRepository{
-		hostRepository: &hostRepository{db: db},
-	}
-}
-
-// ListHosts 重写ListHosts方法，去掉Preload避免SQLite测试环境的关联问题
-func (r *testHostRepository) ListHosts(ctx context.Context, tenantID uuid.UUID, params *types.HostQueryParams) ([]types.Host, int64, error) {
-	query := r.db.WithContext(ctx).
-		Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
-
-	// 应用过滤条件
-	if params.CloudAreaID != nil {
-		query = query.Where("cloud_area_id = ?", *params.CloudAreaID)
-	}
-	if params.BusinessID != nil {
-		query = query.Where("business_id = ?", *params.BusinessID)
-	}
-	// 资源池查询（business_id IS NULL）
-	if params.InPool != nil && *params.InPool {
-		query = query.Where("business_id IS NULL")
-	}
-	if params.CloudVendor != nil {
-		query = query.Where("cloud_vendor = ?", *params.CloudVendor)
-	}
-	if params.CloudInstanceID != nil {
-		query = query.Where("cloud_instance_id = ?", *params.CloudInstanceID)
-	}
-	if params.Status != nil {
-		query = query.Where("status = ?", *params.Status)
-	}
-	if params.OSType != nil {
-		query = query.Where("os_type = ?", *params.OSType)
-	}
-	if !params.IncludeDestroyed {
-		query = query.Where("is_destroyed = false")
-	}
-
-	// 获取总数
-	var total int64
-	if err := query.Model(&types.Host{}).Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// 应用分页
-	page := 1
-	pageSize := 20
-	if params.Page > 0 {
-		page = params.Page
-	}
-	if params.PageSize > 0 {
-		pageSize = params.PageSize
-	}
-
-	var hosts []types.Host
-	// 注意：去掉了 Preload，避免SQLite测试环境的关联问题
-	err := query.
-		Order("created_at DESC").
-		Offset((page - 1) * pageSize).
-		Limit(pageSize).
-		Find(&hosts).Error
-
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return hosts, total, nil
-}
-
 // setupHostTestDB 创建主机测试数据库
 func setupHostTestDB(t *testing.T) *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
@@ -139,8 +65,30 @@ func setupHostTestDB(t *testing.T) *gorm.DB {
 	err = db.Exec(`
 		CREATE TABLE businesses (
 			id TEXT PRIMARY KEY,
+			deleted_at DATETIME,
 			name TEXT NOT NULL,
-			identifier TEXT NOT NULL
+			identifier TEXT NOT NULL,
+			business_id INTEGER
+		)
+	`).Error
+	require.NoError(t, err)
+
+	err = db.Exec(`
+		CREATE TABLE host_business_relations (
+			host_id TEXT NOT NULL,
+			business_id TEXT NOT NULL,
+			created_at DATETIME,
+			PRIMARY KEY (host_id, business_id)
+		)
+	`).Error
+	require.NoError(t, err)
+
+	err = db.Exec(`
+		CREATE TABLE host_module_relations (
+			host_id TEXT NOT NULL,
+			module_id INTEGER NOT NULL,
+			created_at DATETIME,
+			PRIMARY KEY (host_id, module_id)
 		)
 	`).Error
 	require.NoError(t, err)
@@ -214,6 +162,7 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 	hostID := uuid.New()
 	tenantID := uuid.New()
 	businessID := int64(1000)
+	businessUUID := uuid.New()
 	cloudAreaID := uuid.New()
 
 	// 创建测试主机（在资源池中）
@@ -228,16 +177,21 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 	}
 	err := db.Create(host).Error
 	require.NoError(t, err)
+	err = db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
+		businessUUID.String(), "biz-1000", "biz-1000", businessID).Error
+	require.NoError(t, err)
 
 	t.Run("成功分配到业务", func(t *testing.T) {
 		err := repo.AssignToBusiness(ctx, hostID, businessID)
 		assert.NoError(t, err)
 
-		// 验证业务ID已更新
-		var updated types.Host
-		db.First(&updated, "id = ?", hostID)
-		assert.NotNil(t, updated.BusinessID)
-		assert.Equal(t, businessID, *updated.BusinessID)
+		// 验证关系表已建立
+		var cnt int64
+		err = db.Table("host_business_relations").
+			Where("host_id = ? AND business_id = ?", hostID, businessUUID).
+			Count(&cnt).Error
+		assert.NoError(t, err)
+		assert.Equal(t, int64(1), cnt)
 	})
 
 	t.Run("分配不存在的主机", func(t *testing.T) {
@@ -254,6 +208,7 @@ func TestHostRepository_ReclaimToPool(t *testing.T) {
 	hostID := uuid.New()
 	tenantID := uuid.New()
 	businessID := int64(1001)
+	businessUUID := uuid.New()
 	cloudAreaID := uuid.New()
 
 	// 创建已分配给业务的主机
@@ -268,15 +223,24 @@ func TestHostRepository_ReclaimToPool(t *testing.T) {
 	}
 	err := db.Create(host).Error
 	require.NoError(t, err)
+	err = db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
+		businessUUID.String(), "biz-1001", "biz-1001", businessID).Error
+	require.NoError(t, err)
+	err = db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?, ?)`,
+		hostID.String(), businessUUID.String()).Error
+	require.NoError(t, err)
 
 	t.Run("成功回收到资源池", func(t *testing.T) {
 		err := repo.ReclaimToPool(ctx, hostID)
 		assert.NoError(t, err)
 
-		// 验证 business_id 已设为 NULL
-		var updated types.Host
-		db.First(&updated, "id = ?", hostID)
-		assert.Nil(t, updated.BusinessID, "business_id 应该为 NULL")
+		// 验证业务关系已清除
+		var cnt int64
+		err = db.Table("host_business_relations").
+			Where("host_id = ?", hostID).
+			Count(&cnt).Error
+		assert.NoError(t, err)
+		assert.Equal(t, int64(0), cnt)
 	})
 }
 
@@ -333,11 +297,12 @@ func TestHostRepository_GetHostByCloudAreaIP(t *testing.T) {
 
 func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 	db := setupHostTestDB(t)
-	repo := newTestHostRepository(db) // 使用测试版本的repository
+	repo := NewHostRepository(db)
 	ctx := context.Background()
 
 	tenantID := uuid.New()
 	businessID := int64(1002)
+	businessUUID := uuid.New()
 	cloudAreaID := uuid.New()
 
 	// 创建资源池主机
@@ -359,11 +324,14 @@ func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 		HostName:    "business-host",
 		PrimaryIP:   "192.168.1.2",
 		Status:      types.HostStatusRunning,
-		BusinessID:  &businessID, // 已分配
 	}
 
 	db.Create(poolHost)
 	db.Create(businessHost)
+	db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
+		businessUUID.String(), "biz-1002", "biz-1002", businessID)
+	db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?, ?)`,
+		businessHost.ID.String(), businessUUID.String())
 
 	t.Run("查询资源池主机", func(t *testing.T) {
 		inPool := true

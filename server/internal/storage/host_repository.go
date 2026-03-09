@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -51,7 +52,6 @@ func (r *hostRepository) CreateHost(ctx context.Context, tenantID uuid.UUID, req
 		TenantID:        tenantID,
 		CreatedBy:       createdBy,
 		CloudAreaID:     req.CloudAreaID,
-		BusinessID:      req.BusinessID,
 		HostName:        req.HostName,
 		PrimaryIP:       req.PrimaryIP,
 		IPAddresses:     req.IPAddresses,
@@ -72,11 +72,30 @@ func (r *hostRepository) CreateHost(ctx context.Context, tenantID uuid.UUID, req
 		UpdatedAt:       time.Now(),
 	}
 
-	if err := r.db.WithContext(ctx).Create(host).Error; err != nil {
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(host).Error; err != nil {
+			return err
+		}
+		if req.BusinessID != nil {
+			bizUUID, err := r.resolveBusinessUUID(tx, *req.BusinessID)
+			if err != nil {
+				return err
+			}
+			rel := &types.HostBusinessRelation{
+				HostID:     host.ID,
+				BusinessID: bizUUID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
-	return host, nil
+	return r.GetHost(ctx, host.ID)
 }
 
 // BatchCreateHosts 批量创建主机
@@ -96,17 +115,41 @@ func (r *hostRepository) BatchCreateHosts(ctx context.Context, tenantID uuid.UUI
 		host.UpdatedAt = now
 	}
 
+	bizByHostID := make(map[uuid.UUID]int64, len(hosts))
+	for _, host := range hosts {
+		if host.BusinessID != nil {
+			bizByHostID[host.ID] = *host.BusinessID
+			host.BusinessID = nil
+		}
+	}
+
 	// 批量插入（每次500条）
 	batchSize := 500
-	return r.db.WithContext(ctx).CreateInBatches(hosts, batchSize).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.CreateInBatches(hosts, batchSize).Error; err != nil {
+			return err
+		}
+		for hostID, bizID := range bizByHostID {
+			bizUUID, err := r.resolveBusinessUUID(tx, bizID)
+			if err != nil {
+				return err
+			}
+			rel := &types.HostBusinessRelation{
+				HostID:     hostID,
+				BusinessID: bizUUID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // GetHost 根据ID获取主机
 func (r *hostRepository) GetHost(ctx context.Context, id uuid.UUID) (*types.Host, error) {
 	var host types.Host
 	err := r.db.WithContext(ctx).
-		Preload("CloudArea").
-		Preload("Business").
 		Where("id = ? AND deleted_at IS NULL", id).
 		First(&host).Error
 
@@ -117,6 +160,9 @@ func (r *hostRepository) GetHost(ctx context.Context, id uuid.UUID) (*types.Host
 		return nil, err
 	}
 
+	if err := r.fillHostRelations(ctx, []*types.Host{&host}); err != nil {
+		return nil, err
+	}
 	return &host, nil
 }
 
@@ -157,38 +203,44 @@ func (r *hostRepository) GetHostByCloudAreaIP(ctx context.Context, cloudAreaID u
 // ListHosts 获取主机列表
 func (r *hostRepository) ListHosts(ctx context.Context, tenantID uuid.UUID, params *types.HostQueryParams) ([]types.Host, int64, error) {
 	query := r.db.WithContext(ctx).
-		Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+		Model(&types.Host{}).
+		Where("hosts.tenant_id = ? AND hosts.deleted_at IS NULL", tenantID)
 
 	// 应用过滤条件
 	if params.CloudAreaID != nil {
 		query = query.Where("cloud_area_id = ?", *params.CloudAreaID)
 	}
 	if params.BusinessID != nil {
-		query = query.Where("business_id = ?", *params.BusinessID)
+		query = query.
+			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
+			Joins("JOIN businesses b ON b.id = hbr.business_id").
+			Where("b.business_id = ?", *params.BusinessID)
 	}
 	// 资源池查询（business_id IS NULL）
 	if params.InPool != nil && *params.InPool {
-		query = query.Where("business_id IS NULL")
+		query = query.
+			Joins("LEFT JOIN host_business_relations hbr_pool ON hbr_pool.host_id = hosts.id").
+			Where("hbr_pool.host_id IS NULL")
 	}
 	if params.CloudVendor != nil {
-		query = query.Where("cloud_vendor = ?", *params.CloudVendor)
+		query = query.Where("hosts.cloud_vendor = ?", *params.CloudVendor)
 	}
 	if params.CloudInstanceID != nil {
-		query = query.Where("cloud_instance_id = ?", *params.CloudInstanceID)
+		query = query.Where("hosts.cloud_instance_id = ?", *params.CloudInstanceID)
 	}
 	if params.Status != nil {
-		query = query.Where("status = ?", *params.Status)
+		query = query.Where("hosts.status = ?", *params.Status)
 	}
 	if params.OSType != nil {
-		query = query.Where("os_type = ?", *params.OSType)
+		query = query.Where("hosts.os_type = ?", *params.OSType)
 	}
 	if !params.IncludeDestroyed {
-		query = query.Where("is_destroyed = false")
+		query = query.Where("hosts.is_destroyed = false")
 	}
 
 	// 获取总数
 	var total int64
-	if err := query.Model(&types.Host{}).Count(&total).Error; err != nil {
+	if err := query.Distinct("hosts.id").Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -204,14 +256,22 @@ func (r *hostRepository) ListHosts(ctx context.Context, tenantID uuid.UUID, para
 
 	var hosts []types.Host
 	err := query.
-		Preload("CloudArea").
-		Preload("Business").
-		Order("created_at DESC").
+		Select("hosts.*").
+		Distinct().
+		Order("hosts.created_at DESC").
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).
 		Find(&hosts).Error
 
 	if err != nil {
+		return nil, 0, err
+	}
+
+	hostPtrs := make([]*types.Host, 0, len(hosts))
+	for i := range hosts {
+		hostPtrs = append(hostPtrs, &hosts[i])
+	}
+	if err := r.fillHostRelations(ctx, hostPtrs); err != nil {
 		return nil, 0, err
 	}
 
@@ -238,9 +298,6 @@ func (r *hostRepository) UpdateHost(ctx context.Context, id uuid.UUID, req *type
 	}
 	if req.CloudAreaID != nil {
 		updates["cloud_area_id"] = *req.CloudAreaID
-	}
-	if req.BusinessID != nil {
-		updates["business_id"] = *req.BusinessID
 	}
 	if req.PrimaryIP != nil {
 		updates["primary_ip"] = *req.PrimaryIP
@@ -271,10 +328,27 @@ func (r *hostRepository) UpdateHost(ctx context.Context, id uuid.UUID, req *type
 	}
 
 	// 执行更新
-	if err := r.db.WithContext(ctx).
-		Model(&types.Host{}).
-		Where("id = ?", id).
-		Updates(updates).Error; err != nil {
+	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(&types.Host{}).
+			Where("id = ?", id).
+			Updates(updates).Error; err != nil {
+			return err
+		}
+		if req.BusinessID != nil {
+			bizUUID, err := r.resolveBusinessUUID(tx, *req.BusinessID)
+			if err != nil {
+				return err
+			}
+			rel := &types.HostBusinessRelation{
+				HostID:     id,
+				BusinessID: bizUUID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	}); err != nil {
 		return nil, err
 	}
 
@@ -360,44 +434,47 @@ func (r *hostRepository) DeleteHost(ctx context.Context, id uuid.UUID) error {
 
 // AssignToBusiness 分配主机到业务
 func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
-	result := r.db.WithContext(ctx).
-		Model(&types.Host{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Updates(map[string]interface{}{
-			"business_id": businessID,
-			"updated_at":  time.Now(),
-		})
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&types.Host{}).
+			Where("id = ? AND deleted_at IS NULL", id).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return errors.New("host not found")
+		}
 
-	if result.Error != nil {
-		return result.Error
-	}
+		bizUUID, err := r.resolveBusinessUUID(tx, businessID)
+		if err != nil {
+			return err
+		}
 
-	if result.RowsAffected == 0 {
-		return errors.New("host not found")
-	}
-
-	return nil
+		rel := &types.HostBusinessRelation{
+			HostID:     id,
+			BusinessID: bizUUID,
+		}
+		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error
+	})
 }
 
 // ReclaimToPool 回收主机到资源池
 func (r *hostRepository) ReclaimToPool(ctx context.Context, id uuid.UUID) error {
-	result := r.db.WithContext(ctx).
-		Model(&types.Host{}).
-		Where("id = ? AND deleted_at IS NULL", id).
-		Updates(map[string]interface{}{
-			"business_id": nil,
-			"updated_at":  time.Now(),
-		})
-
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return errors.New("host not found")
-	}
-
-	return nil
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&types.Host{}).
+			Where("id = ? AND deleted_at IS NULL", id).
+			Count(&count).Error; err != nil {
+			return err
+		}
+		if count == 0 {
+			return errors.New("host not found")
+		}
+		if err := tx.Where("host_id = ?", id).Delete(&types.HostModuleRelation{}).Error; err != nil {
+			return err
+		}
+		return tx.Where("host_id = ?", id).Delete(&types.HostBusinessRelation{}).Error
+	})
 }
 
 // CheckIPConflict 检查IP冲突（按云区域隔离，类似蓝鲸的 bk_cloud_id + bk_host_innerip）
@@ -420,4 +497,65 @@ func (r *hostRepository) CheckIPConflict(ctx context.Context, cloudAreaID *uuid.
 	}
 
 	return count > 0, nil
+}
+
+func (r *hostRepository) resolveBusinessUUID(tx *gorm.DB, businessID int64) (uuid.UUID, error) {
+	var biz types.Business
+	if err := tx.Model(&types.Business{}).
+		Where("business_id = ? AND deleted_at IS NULL", businessID).
+		First(&biz).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return uuid.Nil, fmt.Errorf("business with business_id %d not found", businessID)
+		}
+		return uuid.Nil, err
+	}
+	return biz.ID, nil
+}
+
+func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.Host) error {
+	if len(hosts) == 0 {
+		return nil
+	}
+
+	hostIDs := make([]uuid.UUID, 0, len(hosts))
+	for i := range hosts {
+		hostIDs = append(hostIDs, hosts[i].ID)
+	}
+
+	var bizRows []struct {
+		HostID     uuid.UUID `gorm:"column:host_id"`
+		BusinessID uuid.UUID `gorm:"column:business_id"`
+	}
+	if err := r.db.WithContext(ctx).
+		Table("host_business_relations").
+		Where("host_id IN ?", hostIDs).
+		Find(&bizRows).Error; err != nil {
+		return err
+	}
+	bizMap := make(map[uuid.UUID][]uuid.UUID, len(hosts))
+	for _, row := range bizRows {
+		bizMap[row.HostID] = append(bizMap[row.HostID], row.BusinessID)
+	}
+
+	var modRows []struct {
+		HostID   uuid.UUID `gorm:"column:host_id"`
+		ModuleID uint64    `gorm:"column:module_id"`
+	}
+	if err := r.db.WithContext(ctx).
+		Table("host_module_relations").
+		Where("host_id IN ?", hostIDs).
+		Find(&modRows).Error; err != nil {
+		return err
+	}
+	modMap := make(map[uuid.UUID][]uint64, len(hosts))
+	for _, row := range modRows {
+		modMap[row.HostID] = append(modMap[row.HostID], row.ModuleID)
+	}
+
+	for i := range hosts {
+		hosts[i].BusinessIDs = bizMap[hosts[i].ID]
+		hosts[i].ModuleIDs = modMap[hosts[i].ID]
+	}
+
+	return nil
 }

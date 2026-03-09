@@ -93,12 +93,12 @@ func main() {
 			}),
 		},
 		{
-			ModelUID: "host",
-			FieldUID: "cpu_cores",
+			ModelUID:  "host",
+			FieldUID:  "cpu_cores",
 			FieldName: "CPU 核数",
 			FieldType: "int",
-			Category: "config",
-			Unit:     "核",
+			Category:  "config",
+			Unit:      "核",
 			Validators: marshalJSON(types.FieldValidators{
 				Min:          float64Ptr(1),
 				Max:          float64Ptr(256),
@@ -106,23 +106,23 @@ func main() {
 			}),
 		},
 		{
-			ModelUID: "host",
-			FieldUID: "memory_gb",
+			ModelUID:  "host",
+			FieldUID:  "memory_gb",
 			FieldName: "内存大小",
 			FieldType: "float",
-			Category: "config",
-			Unit:     "GB",
+			Category:  "config",
+			Unit:      "GB",
 			Validators: marshalJSON(types.FieldValidators{
 				Min: float64Ptr(0.5),
 				Max: float64Ptr(1024),
 			}),
 		},
 		{
-			ModelUID: "host",
-			FieldUID: "os_type",
+			ModelUID:  "host",
+			FieldUID:  "os_type",
 			FieldName: "操作系统类型",
 			FieldType: "enum",
-			Category: "config",
+			Category:  "config",
 			Validators: marshalJSON(types.FieldValidators{
 				EnumValues:   []string{"linux", "windows", "aix", "unix"},
 				ErrorMessage: "不支持的操作系统类型",
@@ -177,12 +177,12 @@ func main() {
 
 	hostData := map[string]interface{}{
 		// 配置数据
-		"cloud_id":   0,
-		"inner_ip":   "192.168.1.100",
-		"hostname":   "web-server-01",
-		"cpu_cores":  16,
-		"memory_gb":  64.0,
-		"os_type":    "linux",
+		"cloud_id":  0,
+		"inner_ip":  "192.168.1.100",
+		"hostname":  "web-server-01",
+		"cpu_cores": 16,
+		"memory_gb": 64.0,
+		"os_type":   "linux",
 
 		// 状态数据
 		"cpu_usage":    45.5,
@@ -196,20 +196,20 @@ func main() {
 		UserAgent: "Example/1.0",
 	}
 
-	resourceID, err := service.UpsertInstance(ctx, "host", hostData, auditCtx)
+	resourceID, err := service.UpsertInstance(ctx, "host", nil, hostData, auditCtx)
 	if err != nil {
 		log.Fatal("创建主机失败:", err)
 	}
 	fmt.Printf("✅ 创建主机成功，资源 ID: %d\n", resourceID)
 
-	// ========== 示例 3: 更新主机实例（自动识别为更新操作）==========
+	// ========== 示例 3: 更新主机实例（显式指定 resource_id）==========
 	fmt.Println("\n========== 示例 3: 更新主机实例 ==========")
 
 	updatedData := map[string]interface{}{
 		"cloud_id":     0,
-		"inner_ip":     "192.168.1.100", // 相同的唯一键
+		"inner_ip":     "192.168.1.100", // 显式更新同一资源
 		"hostname":     "web-server-01",
-		"cpu_cores":    32, // 升级了 CPU
+		"cpu_cores":    32,    // 升级了 CPU
 		"memory_gb":    128.0, // 升级了内存
 		"os_type":      "linux",
 		"cpu_usage":    25.3, // 更新状态
@@ -217,7 +217,7 @@ func main() {
 		"disk_usage":   35.0,
 	}
 
-	resourceID, err = service.UpsertInstance(ctx, "host", updatedData, auditCtx)
+	resourceID, err = service.UpsertInstance(ctx, "host", &resourceID, updatedData, auditCtx)
 	if err != nil {
 		log.Fatal("更新主机失败:", err)
 	}

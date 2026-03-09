@@ -144,7 +144,7 @@ type AuditContext struct {
 
 // UpsertInstance 智能写入/更新资源实例
 // 自动分流配置数据和状态数据，支持审计日志
-func (s *Service) UpsertInstance(ctx context.Context, modelUID string, data map[string]interface{}, auditCtx *AuditContext) (uint64, error) {
+func (s *Service) UpsertInstance(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}, auditCtx *AuditContext) (uint64, error) {
 	// 1. 检查模型是否存在
 	model, err := s.modelCache.Get(modelUID)
 	if err != nil {
@@ -174,30 +174,42 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, data map[
 	// 4. 分流数据：config（主表） vs state（侧车表）
 	configData, stateData := SplitDataByCategory(validatedData, attributes)
 
+	violations, err := s.ValidateUnique(ctx, modelUID, resourceID, configData)
+	if err != nil {
+		return 0, err
+	}
+	if len(violations) > 0 {
+		duplicateErr := NewDuplicateError(modelUID, violations[0].Fields, violations[0].ConflictValues)
+		duplicateErr.Details["violations"] = violations
+		return 0, duplicateErr
+	}
+
 	// 5. 事务写入
-	var resourceID uint64
+	var persistedResourceID uint64
 	err = s.db.Transaction(func(tx *gorm.DB) error {
-		// 5.1 Upsert resources 表
 		resource := &types.Resource{
 			ModelUID: modelUID,
 			Name:     getResourceName(configData),
 			Configs:  marshalJSON(configData),
 		}
 
-		// 检查是否是更新操作（通过唯一键查找）
-		existingResource, findErr := s.findExistingResource(tx, modelUID, configData, model)
-		if findErr == nil && existingResource != nil {
-			// 更新操作
+		if resourceID != nil {
+			var existingResource types.Resource
+			if err := tx.First(&existingResource, *resourceID).Error; err != nil {
+				if err == gorm.ErrRecordNotFound {
+					return NewResourceNotFoundError(*resourceID)
+				}
+				return err
+			}
+			if existingResource.ModelUID != modelUID {
+				return fmt.Errorf("resource %d does not belong to model %s", *resourceID, modelUID)
+			}
 			resource.ID = existingResource.ID
-
-			// 记录审计日志（变更前的数据）
 			if auditCtx != nil {
 				if err := s.recordHistory(tx, existingResource.ID, modelUID, "update", existingResource.Configs, resource.Configs, auditCtx); err != nil {
 					return err
 				}
 			}
-
-			// 更新
 			if err := tx.Model(&types.Resource{}).Where("id = ?", resource.ID).Updates(map[string]interface{}{
 				"name":       resource.Name,
 				"configs":    resource.Configs,
@@ -206,12 +218,9 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, data map[
 				return ParseDBError(err, modelUID)
 			}
 		} else {
-			// 创建操作
 			if err := tx.Create(resource).Error; err != nil {
 				return ParseDBError(err, modelUID)
 			}
-
-			// 记录审计日志
 			if auditCtx != nil {
 				if err := s.recordHistory(tx, resource.ID, modelUID, "create", nil, resource.Configs, auditCtx); err != nil {
 					return err
@@ -219,12 +228,12 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, data map[
 			}
 		}
 
-		resourceID = resource.ID
+		persistedResourceID = resource.ID
 
 		// 5.2 Upsert resource_states 表（如果有状态数据）
 		if len(stateData) > 0 {
 			state := &types.ResourceState{
-				ResourceID:    resourceID,
+				ResourceID:    persistedResourceID,
 				LastCheckTime: time.Now(),
 				HealthStatus:  0, // 默认健康
 				Metrics:       marshalJSON(stateData),
@@ -245,7 +254,7 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, data map[
 		return 0, err
 	}
 
-	return resourceID, nil
+	return persistedResourceID, nil
 }
 
 // findExistingResource 根据唯一键查找已存在的资源

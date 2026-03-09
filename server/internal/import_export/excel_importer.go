@@ -28,37 +28,37 @@ func NewExcelImporter(dynamicService *dynamic_model.Service) *ExcelImporter {
 
 // ImportResult 导入结果
 type ImportResult struct {
-	Total          int              `json:"total"`           // 总行数
-	Successful     int              `json:"successful"`      // 成功数
-	Failed         int              `json:"failed"`          // 失败数
-	Skipped        int              `json:"skipped"`         // 跳过数（空行）
-	Errors         []ImportError    `json:"errors"`          // 错误详情
-	CreatedIDs     []uint64         `json:"created_ids"`     // 成功创建的资源ID列表
-	TemplateValid  bool             `json:"template_valid"`  // 模板是否有效
-	TemplateHash   string           `json:"template_hash"`   // 模板哈希值
-	FieldsChanged  bool             `json:"fields_changed"`  // 字段是否变更
-	MissingFields  []string         `json:"missing_fields"`  // 缺失的字段
-	ObsoleteFields []string         `json:"obsolete_fields"` // 废弃的字段
+	Total          int           `json:"total"`           // 总行数
+	Successful     int           `json:"successful"`      // 成功数
+	Failed         int           `json:"failed"`          // 失败数
+	Skipped        int           `json:"skipped"`         // 跳过数（空行）
+	Errors         []ImportError `json:"errors"`          // 错误详情
+	CreatedIDs     []uint64      `json:"created_ids"`     // 成功创建的资源ID列表
+	TemplateValid  bool          `json:"template_valid"`  // 模板是否有效
+	TemplateHash   string        `json:"template_hash"`   // 模板哈希值
+	FieldsChanged  bool          `json:"fields_changed"`  // 字段是否变更
+	MissingFields  []string      `json:"missing_fields"`  // 缺失的字段
+	ObsoleteFields []string      `json:"obsolete_fields"` // 废弃的字段
 }
 
 // ImportError 导入错误
 type ImportError struct {
-	Row      int               `json:"row"`       // 行号（Excel中的实际行号）
-	RowData  map[string]string `json:"row_data"`  // 该行的数据
-	Field    string            `json:"field"`     // 出错字段
-	Error    string            `json:"error"`     // 错误信息
-	ErrorType string           `json:"error_type"` // 错误类型：validation, duplicate, system
+	Row       int               `json:"row"`        // 行号（Excel中的实际行号）
+	RowData   map[string]string `json:"row_data"`   // 该行的数据
+	Field     string            `json:"field"`      // 出错字段
+	Error     string            `json:"error"`      // 错误信息
+	ErrorType string            `json:"error_type"` // 错误类型：validation, duplicate, system
 }
 
 // ImportOptions 导入选项
 type ImportOptions struct {
-	SkipErrors       bool   `json:"skip_errors"`        // 遇到错误是否继续导入
-	UpdateExisting   bool   `json:"update_existing"`    // 是否更新已存在的记录
-	ValidateOnly     bool   `json:"validate_only"`      // 仅验证，不实际导入
-	UserID           string `json:"user_id"`            // 操作用户ID
-	ClientIP         string `json:"client_ip"`          // 客户端IP
-	BatchSize        int    `json:"batch_size"`         // 批量处理大小（默认100）
-	IgnoreEmptyRows  bool   `json:"ignore_empty_rows"`  // 忽略空行（默认true）
+	SkipErrors      bool   `json:"skip_errors"`       // 遇到错误是否继续导入
+	UpdateExisting  bool   `json:"update_existing"`   // 是否更新已存在的记录
+	ValidateOnly    bool   `json:"validate_only"`     // 仅验证，不实际导入
+	UserID          string `json:"user_id"`           // 操作用户ID
+	ClientIP        string `json:"client_ip"`         // 客户端IP
+	BatchSize       int    `json:"batch_size"`        // 批量处理大小（默认100）
+	IgnoreEmptyRows bool   `json:"ignore_empty_rows"` // 忽略空行（默认true）
 }
 
 // ImportFromExcel 从 Excel 文件导入数据
@@ -161,7 +161,7 @@ func (imp *ExcelImporter) ImportFromExcel(ctx context.Context, filePath string, 
 		}
 
 		// 执行导入
-		resourceID, err := imp.dynamicService.UpsertInstance(ctx, modelUID, data, auditCtx)
+		resourceID, err := imp.dynamicService.UpsertInstance(ctx, modelUID, nil, data, auditCtx)
 		if err != nil {
 			result.Failed++
 
@@ -446,8 +446,8 @@ func (imp *ExcelImporter) ExportToExcel(ctx context.Context, modelUID string, fi
 
 	// 4. 写入表头
 	headerStyle, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true, Size: 12},
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"4472C4"}, Pattern: 1},
+		Font:      &excelize.Font{Bold: true, Size: 12},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"4472C4"}, Pattern: 1},
 		Alignment: &excelize.Alignment{Horizontal: "center"},
 	})
 

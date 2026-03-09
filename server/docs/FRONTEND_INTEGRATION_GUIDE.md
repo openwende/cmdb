@@ -151,9 +151,16 @@ Content-Type: application/json
 {
   "name": "新业务",
   "description": "业务描述",
-  "maintainers": ["admin"]
+  "lifecycle": "online",
+  "timezone": "Asia/Shanghai",
+  "language": "zh",
+  "sres": ["admin"]
 }
 ```
+
+说明:
+- `lifecycle`、`language` 传字符串值，不传前端 `Select` 的 `{ label, value }` 对象
+- 创建接口不接收 `operators`
 
 #### 更新业务
 

@@ -1,0 +1,10 @@
+DROP INDEX IF EXISTS idx_business_custom_fields_options_gin;
+DROP INDEX IF EXISTS idx_business_custom_fields_validators_gin;
+DROP INDEX IF EXISTS idx_business_custom_fields_business_object_group;
+DROP INDEX IF EXISTS uk_business_custom_fields_name_active;
+DROP INDEX IF EXISTS uk_business_custom_fields_uid_active;
+DROP TABLE IF EXISTS business_custom_fields;
+
+DROP INDEX IF EXISTS idx_business_custom_field_groups_business_object;
+DROP INDEX IF EXISTS uk_business_custom_field_groups_name_active;
+DROP TABLE IF EXISTS business_custom_field_groups;

@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+
+	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -20,12 +23,19 @@ type Service interface {
 type service struct {
 	instanceRepo storage.InstanceRepository
 	modelRepo    storage.ModelRepository
+	db           *gorm.DB
+	mainline     *mainline.Service
 }
 
-func NewService(instanceRepo storage.InstanceRepository, modelRepo storage.ModelRepository) Service {
+func NewService(instanceRepo storage.InstanceRepository, modelRepo storage.ModelRepository, db *gorm.DB, mainlineSvc *mainline.Service) Service {
+	if mainlineSvc == nil && db != nil {
+		mainlineSvc = mainline.NewService(db)
+	}
 	return &service{
 		instanceRepo: instanceRepo,
 		modelRepo:    modelRepo,
+		db:           db,
+		mainline:     mainlineSvc,
 	}
 }
 
@@ -48,6 +58,7 @@ func (s *service) CreateInstance(ctx context.Context, tenantID string, modelName
 	tenantUUID, _ := uuid.Parse(tenantID)
 
 	instance := &types.Instance{
+		ID:         uuid.New(),
 		ModelID:    model.ID,
 		TenantID:   tenantUUID, // Assume valid UUID
 		Properties: propsJSON,
@@ -61,7 +72,30 @@ func (s *service) CreateInstance(ctx context.Context, tenantID string, modelName
 		}
 	}
 
+	if model.IsMainline && req.MainlineParentRefID == nil && model.MainlineParentModelID != nil {
+		return nil, fmt.Errorf("mainline_parent_ref_id is required for model %q", model.Name)
+	}
+	if !model.IsMainline && req.MainlineParentRefID != nil {
+		return nil, fmt.Errorf("mainline_parent_ref_id is only supported for mainline models")
+	}
+
 	// 4. Persist
+	if model.IsMainline {
+		if s.db == nil || s.mainline == nil {
+			return nil, fmt.Errorf("mainline service is not configured")
+		}
+		if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(instance).Error; err != nil {
+				return err
+			}
+			_, err := s.mainline.WithDB(tx).SyncModelInstance(ctx, model, instance, req.MainlineParentRefID)
+			return err
+		}); err != nil {
+			return nil, err
+		}
+		return instance, nil
+	}
+
 	if err := s.instanceRepo.CreateInstance(ctx, instance); err != nil {
 		return nil, err
 	}
@@ -105,10 +139,37 @@ func (s *service) BatchCreateInstances(ctx context.Context, tenantID string, mod
 			}
 		}
 
+		if model.IsMainline && item.MainlineParentRefID == nil && model.MainlineParentModelID != nil {
+			return nil, fmt.Errorf("mainline_parent_ref_id is required at index %d", i)
+		}
+		if !model.IsMainline && item.MainlineParentRefID != nil {
+			return nil, fmt.Errorf("mainline_parent_ref_id is only supported for mainline models")
+		}
+
 		instances = append(instances, inst)
 	}
 
 	// 3. Persist Batch
+	if model.IsMainline {
+		if s.db == nil || s.mainline == nil {
+			return nil, fmt.Errorf("mainline service is not configured")
+		}
+		if err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			for i := range instances {
+				if err := tx.Create(&instances[i]).Error; err != nil {
+					return err
+				}
+				if _, err := s.mainline.WithDB(tx).SyncModelInstance(ctx, model, &instances[i], req.Instances[i].MainlineParentRefID); err != nil {
+					return err
+				}
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
+		return instances, nil
+	}
+
 	if err := s.instanceRepo.BatchCreateInstance(ctx, instances); err != nil {
 		return nil, err
 	}

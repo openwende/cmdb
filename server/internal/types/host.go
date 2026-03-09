@@ -66,6 +66,9 @@ type Host struct {
 	// 关联数据（transient，不存储到数据库）
 	CloudArea *CloudArea `json:"cloud_area,omitempty" gorm:"-"`
 	Business  *Business  `json:"business,omitempty" gorm:"-"`
+	// 多对多关联（transient，仅用于返回）
+	BusinessIDs []uuid.UUID `json:"business_ids,omitempty" gorm:"-"`
+	ModuleIDs   []uint64    `json:"module_ids,omitempty" gorm:"-"`
 }
 
 // TableName specifies the table name for GORM
@@ -170,4 +173,26 @@ type HostListResponse struct {
 	Page     int    `json:"page"`
 	PageSize int    `json:"page_size"`
 	Hosts    []Host `json:"hosts"`
+}
+
+// HostBusinessRelation 主机-业务多对多关联
+type HostBusinessRelation struct {
+	HostID     uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
+	BusinessID uuid.UUID `gorm:"type:uuid;primaryKey;comment:业务ID" json:"business_id"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+func (HostBusinessRelation) TableName() string {
+	return "host_business_relations"
+}
+
+// HostModuleRelation 主机-模块多对多关联
+type HostModuleRelation struct {
+	HostID    uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
+	ModuleID  uint64    `gorm:"primaryKey;comment:模块ID" json:"module_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (HostModuleRelation) TableName() string {
+	return "host_module_relations"
 }
