@@ -1,18 +1,25 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Empty, Table, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useTranslation } from 'react-i18next';
 import { createModelAttribute } from '@/api';
-import { CreateModelAttributePayload, ModelAttribute } from '@/api/types/model';
+import { CreateModelAttributePayload } from '@/api/types/model';
 import CreateAttributeDrawer from '../../components/CreateAttributeDrawer';
 import { useModelPageContext } from '../../context';
 import { formatAttributeOptions } from '../../shared';
+import { SchemaCenterField, useSchemaCenterStore } from '@/store/SchemaCenterStore';
 
 const FieldDesignerPage: React.FC = () => {
   const { t } = useTranslation();
   const { detailModel, attributes, refreshDetail } = useModelPageContext();
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const schemas = useSchemaCenterStore((state) => state.schemas);
+  const loadSchema = useSchemaCenterStore((state) => state.loadSchema);
+
+  useEffect(() => {
+    void loadSchema(detailModel.name);
+  }, [detailModel.name, loadSchema]);
 
   const nextSortOrder = useMemo(() => {
     if (attributes.length === 0) {
@@ -21,6 +28,10 @@ const FieldDesignerPage: React.FC = () => {
 
     return Math.max(...attributes.map((item) => item.sort_order)) + 10;
   }, [attributes]);
+
+  const schemaFields = useMemo(() => {
+    return schemas[detailModel.name]?.fields || [];
+  }, [detailModel.name, schemas]);
 
   const handleCreateAttribute = async (payload: CreateModelAttributePayload) => {
     try {
@@ -38,7 +49,7 @@ const FieldDesignerPage: React.FC = () => {
     }
   };
 
-  const attributeColumns: ColumnsType<ModelAttribute> = [
+  const attributeColumns: ColumnsType<SchemaCenterField> = [
     {
       title: t('resource.model.columns.attributeDisplayName'),
       dataIndex: 'display_name',
@@ -87,7 +98,7 @@ const FieldDesignerPage: React.FC = () => {
     {
       title: t('resource.model.columns.attributeOptions'),
       key: 'options',
-      render: (_value, record) => formatAttributeOptions(record),
+      render: (_value, record) => formatAttributeOptions(record as any),
     },
   ];
 
@@ -109,14 +120,14 @@ const FieldDesignerPage: React.FC = () => {
         </div>
       </div>
 
-      {attributes.length === 0 ? (
+      {schemaFields.length === 0 ? (
         <Empty description={t('resource.model.empty.noAttributes')} />
       ) : (
         <Table
-          rowKey="id"
+          rowKey="name"
           pagination={false}
           scroll={{ x: 1100 }}
-          dataSource={attributes}
+          dataSource={schemaFields}
           columns={attributeColumns}
         />
       )}

@@ -5,18 +5,13 @@ import {
   createModelInstance,
   createTopologyModule,
   createTopologySet,
-  getBusinessFormSchema,
-  getModelDetail,
 } from '@/api';
-import {
-  BusinessFormSchemaField,
-  BusinessFormSchemaGroup,
-} from '@/api/types/businessCustomField';
-import { CreateModelInstancePayload, ModelAttribute, ModelAttributeOptions } from '@/api/types/model';
+import { CreateModelInstancePayload, ModelAttributeOptions } from '@/api/types/model';
 import { MainlineModel } from '@/api/types/mainline';
 import { TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import { useBusinessStore } from '@/store/BusinessStore';
 import { useMainlineStore } from '@/store/MainlineStore';
+import { SchemaCenterField, useSchemaCenterStore } from '@/store/SchemaCenterStore';
 import './style.css';
 
 interface CreateModalProps {
@@ -37,20 +32,10 @@ const normalizeAttributeOptions = (
   return options as ModelAttributeOptions;
 };
 
-const buildAttributeDefaultValues = (attributes: ModelAttribute[]) => {
-  return attributes.reduce<Record<string, string | number | boolean>>((acc, attribute) => {
-    const options = normalizeAttributeOptions(attribute.options);
-    if (options.default !== undefined) {
-      acc[attribute.name] = options.default;
-    }
-    return acc;
-  }, {});
-};
-
-const buildSchemaDefaultValues = (fields: BusinessFormSchemaField[]) => {
+const buildSchemaDefaultValues = (fields: SchemaCenterField[]) => {
   return fields.reduce<Record<string, string | number | boolean>>((acc, field) => {
-    if (field.default_value !== undefined) {
-      acc[field.name] = field.default_value;
+    if (field.default !== undefined) {
+      acc[field.name] = field.default;
     } else if (field.name === 'sort_order') {
       acc[field.name] = 0;
     }
@@ -89,10 +74,9 @@ const CreateModal: React.FC<CreateModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [selectedModelName, setSelectedModelName] = useState('');
   const [selectedModel, setSelectedModel] = useState<MainlineModel | null>(null);
-  const [selectedAttributes, setSelectedAttributes] = useState<ModelAttribute[]>([]);
-  const [builtinSchemaGroups, setBuiltinSchemaGroups] = useState<BusinessFormSchemaGroup[]>([]);
-  const [builtinSchemaFields, setBuiltinSchemaFields] = useState<BusinessFormSchemaField[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  const formSchemas = useSchemaCenterStore((state) => state.formSchemas);
+  const loadFormSchema = useSchemaCenterStore((state) => state.loadFormSchema);
 
   const topoPath = useMemo(() => {
     return parentNodes.length > 0
@@ -111,12 +95,12 @@ const CreateModal: React.FC<CreateModalProps> = ({
   }, [getChildModels, mainlineModels.length, parentModelName]);
 
   const hasNameAttribute = useMemo(
-    () => selectedAttributes.some((attribute) => attribute.name === 'name'),
-    [selectedAttributes],
+    () => (selectedModelName ? (formSchemas[`${selectedModelName}:topology_create`]?.fields || []) : []).some((field) => field.name === 'name'),
+    [formSchemas, selectedModelName],
   );
   const hasSortOrderAttribute = useMemo(
-    () => selectedAttributes.some((attribute) => attribute.name === 'sort_order'),
-    [selectedAttributes],
+    () => (selectedModelName ? (formSchemas[`${selectedModelName}:topology_create`]?.fields || []) : []).some((field) => field.name === 'sort_order'),
+    [formSchemas, selectedModelName],
   );
 
   const isBuiltinSet = selectedModel?.uid === 'set';
@@ -128,9 +112,6 @@ const CreateModal: React.FC<CreateModalProps> = ({
       form.resetFields();
       setSelectedModelName('');
       setSelectedModel(null);
-      setSelectedAttributes([]);
-      setBuiltinSchemaGroups([]);
-      setBuiltinSchemaFields([]);
       return;
     }
 
@@ -157,9 +138,6 @@ const CreateModal: React.FC<CreateModalProps> = ({
     if (availableModels.length === 0) {
       setSelectedModelName('');
       setSelectedModel(null);
-      setSelectedAttributes([]);
-      setBuiltinSchemaGroups([]);
-      setBuiltinSchemaFields([]);
       return;
     }
 
@@ -176,9 +154,6 @@ const CreateModal: React.FC<CreateModalProps> = ({
     const model = availableModels.find((item) => item.uid === selectedModelName) || null;
     setSelectedModel(model);
     form.resetFields();
-    setSelectedAttributes([]);
-    setBuiltinSchemaGroups([]);
-    setBuiltinSchemaFields([]);
     form.setFieldsValue({
       sort_order: 0,
       properties: {},
@@ -187,35 +162,19 @@ const CreateModal: React.FC<CreateModalProps> = ({
     const loadModelSchema = async () => {
       try {
         setDetailLoading(true);
-        if (currentBusiness && (selectedModelName === 'set' || selectedModelName === 'module')) {
-          const schema = await getBusinessFormSchema(currentBusiness.id, selectedModelName);
-          const builtinFields = schema.data.builtin_fields || [];
-          setBuiltinSchemaFields(builtinFields);
-          setBuiltinSchemaGroups(
-            builtinFields.length > 0
-              ? [
-                  {
-                    group_name: t('business.dynamicGroupForm.sections.basicInfo'),
-                    collapsed_by_default: false,
-                    fields: builtinFields,
-                  },
-                ]
-              : [],
-          );
-          form.setFieldsValue(buildSchemaDefaultValues(builtinFields));
-          return;
-        }
+        await loadFormSchema(selectedModelName, 'topology_create', currentBusiness?.id);
 
-        const detail = await getModelDetail(selectedModelName);
-        setSelectedAttributes(detail.attributes || []);
-        form.setFieldsValue({
-          properties: buildAttributeDefaultValues(detail.attributes || []),
-        });
+        const loadedSchema = useSchemaCenterStore.getState().formSchemas[`${selectedModelName}:topology_create`];
+        const defaults = buildSchemaDefaultValues(loadedSchema?.fields || []);
+        form.setFieldsValue(
+          isBuiltinTopologyModel
+            ? defaults
+            : {
+                properties: defaults,
+              },
+        );
       } catch (error) {
         console.error(error);
-        setSelectedAttributes([]);
-        setBuiltinSchemaGroups([]);
-        setBuiltinSchemaFields([]);
         message.error(t('business.topology.tree.create.messages.loadModelDetailFailed'));
       } finally {
         setDetailLoading(false);
@@ -293,101 +252,12 @@ const CreateModal: React.FC<CreateModalProps> = ({
     }
   };
 
-  const renderBuiltinFields = () => {
-    if (!isBuiltinTopologyModel || builtinSchemaGroups.length === 0) {
-      return null;
-    }
+  const renderSchemaFields = () => {
+    const schemaFields = selectedModelName
+      ? formSchemas[`${selectedModelName}:topology_create`]?.fields || []
+      : [];
 
-    return builtinSchemaGroups.map((group) => (
-      <React.Fragment key={group.group_name || 'builtin'}>
-        {group.group_name ? (
-          <div className="selected-model-summary" style={{ marginBottom: 12 }}>
-            <span>{group.group_name}</span>
-          </div>
-        ) : null}
-        {group.fields.map((field) => {
-          const rules = field.is_required
-            ? [{ required: true, message: t('common.form.rulesMessage') }]
-            : [];
-
-          if (field.field_type === 'bool') {
-            return (
-              <Form.Item
-                key={field.name}
-                label={field.display_name}
-                name={field.name}
-                valuePropName="checked"
-                rules={
-                  field.is_required
-                    ? [
-                        {
-                          validator: (_rule, value) =>
-                            value === undefined
-                              ? Promise.reject(new Error(t('common.form.rulesMessage')))
-                              : Promise.resolve(),
-                        },
-                      ]
-                    : []
-                }
-              >
-                <Switch disabled={!field.is_editable} />
-              </Form.Item>
-            );
-          }
-
-          if (field.field_type === 'int') {
-            return (
-              <Form.Item key={field.name} label={field.display_name} name={field.name} rules={rules}>
-                <InputNumber
-                  min={0}
-                  style={{ width: '100%' }}
-                  placeholder={field.placeholder}
-                  disabled={!field.is_editable}
-                />
-              </Form.Item>
-            );
-          }
-
-          if (field.field_type === 'enum') {
-            return (
-              <Form.Item key={field.name} label={field.display_name} name={field.name} rules={rules}>
-                <Select
-                  allowClear={!field.is_required}
-                  placeholder={field.placeholder}
-                  disabled={!field.is_editable}
-                  options={((field.options?.enum_values as string[]) || []).map((item) => ({
-                    value: item,
-                    label: item,
-                  }))}
-                />
-              </Form.Item>
-            );
-          }
-
-          if (field.field_type === 'text') {
-            return (
-              <Form.Item key={field.name} label={field.display_name} name={field.name} rules={rules}>
-                <Input.TextArea
-                  rows={3}
-                  placeholder={field.placeholder}
-                  disabled={!field.is_editable}
-                />
-              </Form.Item>
-            );
-          }
-
-          return (
-            <Form.Item key={field.name} label={field.display_name} name={field.name} rules={rules}>
-              <Input placeholder={field.placeholder} disabled={!field.is_editable} />
-            </Form.Item>
-          );
-        })}
-      </React.Fragment>
-    ));
-  };
-
-  const renderDynamicFields = () => {
-    if (!selectedModel) {
+    if (!selectedModel || schemaFields.length === 0) {
       return null;
     }
 
@@ -409,21 +279,22 @@ const CreateModal: React.FC<CreateModalProps> = ({
           </Form.Item>
         ) : null}
 
-        {selectedAttributes.map((attribute) => {
-          const options = normalizeAttributeOptions(attribute.options);
-          const rules = attribute.is_required
+        {schemaFields.map((field) => {
+          const options = normalizeAttributeOptions(field.options);
+          const rules = field.is_required
             ? [{ required: true, message: t('common.form.rulesMessage') }]
             : [];
+          const fieldName = isBuiltinTopologyModel ? field.name : ['properties', field.name];
 
-          if (attribute.field_type === 'bool') {
+          if (field.field_type === 'bool') {
             return (
               <Form.Item
-                key={attribute.id}
-                label={attribute.display_name}
-                name={['properties', attribute.name]}
+                key={field.name}
+                label={field.display_name}
+                name={fieldName}
                 valuePropName="checked"
                 rules={
-                  attribute.is_required
+                  field.is_required
                     ? [
                         {
                           validator: (_rule, value) =>
@@ -436,38 +307,62 @@ const CreateModal: React.FC<CreateModalProps> = ({
                 }
                 extra={options.help_text}
               >
-                <Switch />
+                <Switch disabled={!field.is_editable} />
               </Form.Item>
             );
           }
 
-          if (attribute.field_type === 'int') {
+          if (field.field_type === 'int') {
             return (
               <Form.Item
-                key={attribute.id}
-                label={attribute.display_name}
-                name={['properties', attribute.name]}
+                key={field.name}
+                label={field.display_name}
+                name={fieldName}
                 rules={rules}
                 extra={options.help_text}
               >
-                <InputNumber min={0} style={{ width: '100%' }} placeholder={options.placeholder} />
+                <InputNumber
+                  min={0}
+                  style={{ width: '100%' }}
+                  placeholder={field.placeholder || options.placeholder}
+                  disabled={!field.is_editable}
+                />
               </Form.Item>
             );
           }
 
-          if (attribute.field_type === 'enum') {
+          if (field.field_type === 'enum') {
             return (
               <Form.Item
-                key={attribute.id}
-                label={attribute.display_name}
-                name={['properties', attribute.name]}
+                key={field.name}
+                label={field.display_name}
+                name={fieldName}
                 rules={rules}
                 extra={options.help_text}
               >
                 <Select
-                  allowClear={!attribute.is_required}
-                  placeholder={options.placeholder}
+                  allowClear={!field.is_required}
+                  placeholder={field.placeholder || options.placeholder}
+                  disabled={!field.is_editable}
                   options={(options.enum_values || []).map((item) => ({ value: item, label: item }))}
+                />
+              </Form.Item>
+            );
+          }
+
+          if (field.field_type === 'text') {
+            return (
+              <Form.Item
+                key={field.name}
+                label={field.display_name}
+                name={fieldName}
+                rules={rules}
+                extra={options.help_text}
+              >
+                <Input.TextArea
+                  rows={3}
+                  placeholder={field.placeholder || options.placeholder}
+                  disabled={!field.is_editable}
                 />
               </Form.Item>
             );
@@ -475,13 +370,13 @@ const CreateModal: React.FC<CreateModalProps> = ({
 
           return (
             <Form.Item
-              key={attribute.id}
-              label={attribute.display_name}
-              name={['properties', attribute.name]}
+              key={field.name}
+              label={field.display_name}
+              name={fieldName}
               rules={rules}
               extra={options.help_text}
             >
-              <Input placeholder={options.placeholder} />
+              <Input placeholder={field.placeholder || options.placeholder} disabled={!field.is_editable} />
             </Form.Item>
           );
         })}
@@ -521,7 +416,7 @@ const CreateModal: React.FC<CreateModalProps> = ({
             style={{ marginBottom: 16 }}
           />
 
-          {isBuiltinTopologyModel && builtinSchemaFields.length > 0 ? (
+          {selectedModelName && formSchemas[`${selectedModelName}:topology_create`]?.fields?.length ? (
             <Alert
               type="info"
               showIcon
@@ -563,10 +458,8 @@ const CreateModal: React.FC<CreateModalProps> = ({
             <div className="create-modal-loading">
               <Spin />
             </div>
-          ) : isBuiltinTopologyModel ? (
-            renderBuiltinFields()
           ) : (
-            renderDynamicFields()
+            renderSchemaFields()
           )}
         </Form>
       )}
