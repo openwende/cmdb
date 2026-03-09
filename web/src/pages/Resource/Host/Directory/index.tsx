@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message, InputRef } from 'antd';
 import {
@@ -10,11 +10,11 @@ import {
   ExclamationCircleFilled,
 } from '@ant-design/icons';
 import DragHandle from '@/components/common/DragHandle';
-import { hostDirectoryMock } from '@/mock/resource';
 import { DirectoryData, DirMenuKey } from '../../Types';
 import PinSvg from '@/assets/icons/pin.svg?react';
 import UnpinSvg from '@/assets/icons/unpin.svg?react';
 import './style.css';
+import { useDirectoryStore } from '@/store/DirectoryStore';
 
 // The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
@@ -32,20 +32,31 @@ const Directory: React.FC<{
 }> = ({ selectedId, onSelect }) => {
   const { t } = useTranslation();
   const { confirm } = Modal;
-  const [dirs, setDirs] = useState(hostDirectoryMock);
+  const directories = useDirectoryStore((state) => state.directories);
+  const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
+  const [dirs, setDirs] = useState<any[]>([]);
   // State for adding and editing directories
   const [editDirId, setEditDirId] = useState<number | null>(null);
   const [newDir, setNewDir] = useState<boolean>(false);
   const inputRef = useRef<InputRef>(null);
   const [inputValue, setInputValue] = useState<string>('');
   // State for the pinned directory
-  const [pinnedDirs, setPinnedDirs] = useState(hostDirectoryMock);
+  const [pinnedDirs, setPinnedDirs] = useState<any[]>([]);
   const [hoverId, setHoverId] = useState<number | null>(null);
   const [pinnedOrder, setPinnedOrder] = useState<number[]>([]);
   // State for the sidebar
   const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
   // State for the collapsed
   const [collapsed, setCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    void fetchDirectories();
+  }, [fetchDirectories]);
+
+  useEffect(() => {
+    setDirs(directories);
+    setPinnedDirs(directories);
+  }, [directories]);
 
   // Directory to be created
   const handleAdd = () => {
@@ -168,7 +179,9 @@ const Directory: React.FC<{
         // TODO: api
         setDirs(dirs.filter((d) => d.bk_module_id !== id));
         setPinnedDirs(pinnedDirs.filter((d) => d.bk_module_id !== id));
-        if (selectedId === id) onSelect(unmodifiableDirIds[0]);
+        if (selectedId === id) {
+          void onSelect(unmodifiableDirIds[0]);
+        }
         message.success(t('host.directory.message.deleteSuccess'));
       },
       onCancel() {},
@@ -299,27 +312,19 @@ const Directory: React.FC<{
   };
 
   const getDirectoryData = (): DirectoryData[] => {
-    // Get the idle directory
-    const idle = dirs.find((d) => d.bk_module_id === unmodifiableDirIds[1])!;
-    // Get the rest of the directories
-    const rest = dirs.filter((d) => d.bk_module_id !== unmodifiableDirIds[1]);
-
     const children: DirectoryData[] = [
       // Pinned directories
       ...pinnedOrder.map((id) => {
-        const dir = rest.find((d) => d.bk_module_id === id)!;
+        const dir = dirs.find((d) => d.bk_module_id === id);
+        if (!dir) {
+          return null;
+        }
         return {
           key: dir.bk_module_id,
           title: dir.bk_module_name,
           count: dir.host_count,
         };
-      }),
-      // Idle directory
-      {
-        key: idle.bk_module_id,
-        title: idle.bk_module_name,
-        count: idle.host_count,
-      },
+      }).filter(Boolean) as DirectoryData[],
     ];
 
     // New directory
@@ -331,7 +336,7 @@ const Directory: React.FC<{
     }
 
     // The rest of the directory
-    rest
+    dirs
       .filter((dir) => !pinnedOrder.includes(dir.bk_module_id))
       .forEach((dir) => {
         children.push({
@@ -377,7 +382,9 @@ const Directory: React.FC<{
         blockNode={true}
         selectedKeys={selectedKeys}
         onSelect={(keys) => {
-          void (keys.length && onSelect(keys[0] as number));
+          if (keys.length) {
+            void onSelect(keys[0] as number);
+          }
         }}
         titleRender={renderTitle}
         className="directory-tree"

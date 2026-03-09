@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Directory, { unmodifiableDirIds } from '../Directory';
 import HostList from '../HostList';
 import { TabsKey, TabsProps } from '../../Types';
 import './style.css';
+import { useResourcePoolSceneStore } from '@/store/ResourcePoolSceneStore';
+import { useDirectoryStore } from '@/store/DirectoryStore';
 
 const HostPage: React.FC = () => {
   const { t } = useTranslation();
-  const [tab, setTab] = useState(TabsKey.Unassigned);
-  const [selectedId, setSelectedId] = useState<number>(unmodifiableDirIds[0]);
+  const tab = useResourcePoolSceneStore((state) => state.tab);
+  const setTab = useResourcePoolSceneStore((state) => state.setTab);
+  const selectedId = useDirectoryStore((state) => state.activeDirectoryId) || unmodifiableDirIds[0];
+  const setSelectedId = useDirectoryStore((state) => state.setActiveDirectory);
 
   const items: TabsProps[] = [
     {

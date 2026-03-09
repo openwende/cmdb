@@ -2,9 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Table, Button, Input, Dropdown, message, Modal, Tooltip } from 'antd';
 import { DownOutlined, ExclamationCircleFilled, HistoryOutlined } from '@ant-design/icons';
 import {
-  idleHostMock,
-  dbaHostMock,
-  devHostMock,
   assignedListMock,
   allListMock,
 } from '@/mock/resource';
@@ -27,16 +24,16 @@ import TransferHostModal from '@/pages/Business/BusinessTopology/components/Tran
 import ReleaseHostModal from '@/pages/Business/BusinessTopology/components/ReleaseHostModal';
 import { getTransferHostPath } from '@/utils/routes';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { hostDirectoryMock } from '@/mock/resource';
 import ImportHost from '../components/ImportHost';
 import './style.css';
+import { useDirectoryStore } from '@/store/DirectoryStore';
+import { usePoolHostStore } from '@/store/PoolHostStore';
 
 interface HostListProps {
   selectedId?: number;
   tabKey: TabsKey;
 }
 
-const PAGE_SIZE = 20;
 export const hostResourcePath = '/resource/host';
 export const deleteHistoryPath = hostResourcePath + '/deleteHistory';
 
@@ -46,6 +43,14 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const [searchParams] = useSearchParams();
   const { confirm } = Modal;
   const { idleSetID, setTransferHostData } = useTransferHostStore();
+  const directories = useDirectoryStore((state) => state.directories);
+  const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
+  const poolHosts = usePoolHostStore((state) => state.hosts);
+  const poolHostTotal = usePoolHostStore((state) => state.total);
+  const poolHostLoading = usePoolHostStore((state) => state.loading);
+  const query = usePoolHostStore((state) => state.query);
+  const setPoolHostQuery = usePoolHostStore((state) => state.setQuery);
+  const fetchPoolHosts = usePoolHostStore((state) => state.fetchHosts);
   // import、assign、transfer host
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
@@ -54,44 +59,40 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   // Host list
   const [hostsList, setHostsList] = useState<any>([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   useEffect(() => {
-    let hostMock = [];
-    if (tabKey === TabsKey.Unassigned) {
-      switch (selectedId) {
-        case 0:
-          hostMock = idleHostMock.concat(dbaHostMock).concat(devHostMock);
-          break;
-        case 1:
-          hostMock = idleHostMock;
-          break;
-        case 16:
-          hostMock = dbaHostMock;
-          break;
-        case 11:
-          hostMock = devHostMock;
-          break;
-        default:
-          hostMock = idleHostMock;
-      }
-    } else if (tabKey === TabsKey.Assigned) {
-      hostMock = assignedListMock;
-    } else {
-      hostMock = allListMock;
+    if (tabKey !== TabsKey.Unassigned) {
+      setHostsList(tabKey === TabsKey.Assigned ? assignedListMock : allListMock);
+      return;
     }
 
-    setHostsList(hostMock);
-  }, [selectedId, tabKey]);
+    setPoolHostQuery({
+      directoryId: selectedId && selectedId > 0 ? selectedId : undefined,
+      page: 1,
+    });
+  }, [selectedId, setPoolHostQuery, tabKey]);
+
+  useEffect(() => {
+    if (tabKey !== TabsKey.Unassigned) {
+      return;
+    }
+
+    void fetchPoolHosts();
+  }, [fetchPoolHosts, query.directoryId, query.page, query.pageSize, tabKey]);
+
+  useEffect(() => {
+    if (tabKey === TabsKey.Unassigned) {
+      setHostsList(poolHosts);
+    }
+  }, [poolHosts, tabKey]);
 
   // Check if all hosts are in the idle pool
   const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
   const hostsNotInIdlePool = hostIdleStatuses.some((item) => item.inIdlePool === false);
 
   // Check if all hosts are in the host pool (only used in "all" TAB)
-  const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, hostsList, hostDirectoryMock);
+  const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, hostsList, directories);
   const hostsNotAllInHostPool = hostPoolStatuses.some((item) => item.inHostPool === false);
   const isHostPoolHost = tabKey === TabsKey.All && hostsNotAllInHostPool;
 
@@ -182,7 +183,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   };
 
   const handleImportSuccess = () => {
-    // TODO: fetch hosts list and dirs
+    void fetchDirectories();
+    void fetchPoolHosts();
   };
 
   const columns = [
@@ -379,6 +381,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       <Table
         columns={columns}
         dataSource={hostsList}
+        loading={tabKey === TabsKey.Unassigned ? poolHostLoading : false}
         rowKey={(record) => record.host.bk_host_id}
         showSorterTooltip={false}
         pagination={false}
@@ -389,13 +392,20 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       />
 
       <Pagination
-        total={hostsList.length}
-        pageSize={pageSize}
-        current={page}
-        onChange={setPage}
+        total={tabKey === TabsKey.Unassigned ? poolHostTotal : hostsList.length}
+        pageSize={query.pageSize}
+        current={query.page}
+        onChange={(nextPage, nextPageSize) =>
+          setPoolHostQuery({
+            page: nextPage,
+            pageSize: nextPageSize,
+          })
+        }
         onSizeChange={(_, size) => {
-          setPage(1);
-          setPageSize(size);
+          setPoolHostQuery({
+            page: 1,
+            pageSize: size,
+          });
         }}
       />
 
