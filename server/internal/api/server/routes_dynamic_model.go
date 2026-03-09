@@ -75,4 +75,6 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			relationsAPI.DELETE("/:id", handler.DeleteRelation) // 删除关联
 		}
 	}
+
+	RegisterInstanceAggregateRoutes(router, service)
 }

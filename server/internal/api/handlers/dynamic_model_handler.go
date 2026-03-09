@@ -1003,6 +1003,20 @@ func marshalJSON(v interface{}) []byte {
 	return b
 }
 
+func parsePaginationParams(c *gin.Context, defaultPageSize, maxPageSize int) (int, int) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", strconv.Itoa(defaultPageSize)))
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
+		pageSize = defaultPageSize
+	}
+
+	return page, pageSize
+}
+
 func splitAndTrim(s, sep string) []string {
 	parts := strings.Split(s, sep)
 	result := make([]string, 0, len(parts))
