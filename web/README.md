@@ -155,6 +155,10 @@ pnpm test:ui          # 测试 UI 界面
 
 ## 🏗 架构与规范
 
+### 规划文档
+
+- [CMDB P0 规划与研发任务单](./docs/cmdb-p0-plan.md)
+
 ### 项目结构
 
 ```

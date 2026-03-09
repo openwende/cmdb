@@ -31,9 +31,10 @@ import EmptySearchResult from '@/components/common/EmptySearchResult';
 interface Props {
   selectedNode: TreeData;
   parentNodes: TreeData[];
+  onTopologyChanged: () => void;
 }
 
-const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
+const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChanged }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
@@ -490,9 +491,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes }) => {
       {/* Creating set and module modal*/}
       <CreateNodeModal
         visible={createModalVisible}
-        type={TopoTreeNodeType.Module}
         selectedNode={selectedNode}
         parentNodes={parentNodes}
+        onCreated={onTopologyChanged}
         onClose={() => setCreateModalVisible(false)}
       />
     </>

@@ -157,7 +157,7 @@ const Directory: React.FC<{
       title: (
         <span>
           {t('host.directory.confirm.title')}
-          <span style={{ color: '#ff4d4f' }}> [{name}]</span>
+          <span style={{ color: 'var(--color-error)' }}> [{name}]</span>
         </span>
       ),
       icon: <ExclamationCircleFilled />,

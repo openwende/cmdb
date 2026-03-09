@@ -29,7 +29,7 @@
       .ant-tabs-content {
         height: 100%;
         padding: 12px 16px;
-        border: 1px solid #e6e6e6;
+        border: 1px solid var(--color-border);
         border-right: none;
 
         .ant-tabs-tabpane {
@@ -43,7 +43,7 @@
 
       .ant-tabs-content {
         height: 100%;
-        border: 1px solid #e6e6e6;
+        border: 1px solid var(--color-border);
 
         .ant-tabs-tabpane {
           height: 100%;
@@ -54,7 +54,7 @@
         font-weight: 500;
 
         .selected-count {
-          color: #1677ff;
+          color: var(--color-primary);
         }
       }
 
@@ -95,11 +95,11 @@
       .result-item {
         padding: 8px 12px;
         cursor: pointer;
-        background-color: #f5f5f5;
+        background-color: var(--color-bg-spotlight);
         margin-bottom: 2px;
 
         &:hover {
-          background-color: #f2f2f2;
+          background-color: var(--color-border-secondary);
         }
 
         .item-content {
@@ -109,7 +109,7 @@
           width: 100%;
 
           .remove-icon {
-            color: #1677ff;
+            color: var(--color-primary);
           }
         }
       }
@@ -124,8 +124,8 @@
         font-size: 16px;
 
         &:hover {
-          background-color: #e1ecff;
-          color: #3a84ff;
+          background-color: var(--color-primary-bg);
+          color: var(--color-primary);
         }
       }
     }
@@ -146,7 +146,7 @@
       flex-direction: column;
       width: 280px;
       padding-right: 20px;
-      border-right: 1px solid #e6e6e6;
+      border-right: 1px solid var(--color-border);
       user-select: none;
 
       .ant-tree-list-holder-inner {
@@ -202,7 +202,7 @@
       }
 
       .error-text {
-        color: #ea3636;
+        color: var(--color-error);
         font-size: 12px;
       }
     }

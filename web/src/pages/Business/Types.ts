@@ -91,6 +91,12 @@ export interface TreeData {
   objName?: string;
   children?: TreeData[];
   parentPath?: string[];
+  nodeId?: string;
+  backendType?: string;
+  icon?: string;
+  isLeaf?: boolean;
+  expandable?: boolean;
+  extra?: Record<string, any>;
 }
 export enum TopoTreeNodeType {
   Biz = 'biz',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
 import {
   DynamicGroupFormData,
   ObjectMainLine,
@@ -9,7 +10,7 @@ import {
   ConditionType,
   Condition,
 } from '../../Types';
-import { availableModelIds, requestConfig, BUILTIN_MODELS } from '../../constants';
+import { availableModelIds, BUILTIN_MODELS } from '../../constants';
 import {
   createServiceTemplateProperty,
   formatDynamicConditions,
@@ -23,10 +24,14 @@ import PropertyList from './PropertyList';
 import PreviewResult from './PreviewResult';
 import DragHandle from '@/components/common/DragHandle';
 import ConfirmModal from '@/components/common/ConfirmModal';
-import { getAvailableModels, batchSearchObjectAttribute } from '@/api';
+import {
+  createDynamicGroup,
+  getDynamicGroupMeta,
+  previewDynamicGroup,
+  updateDynamicGroup,
+} from '@/api';
 import { useBusinessStore } from '@/store/BusinessStore';
 import dayjs from 'dayjs';
-import { dynamicGroupPreviewResult } from '@/mock/business';
 import './style.css';
 
 const DRAWER_WIDTH = 1200;
@@ -45,7 +50,7 @@ interface DynamicGroupFormProps {
   mode: FormMode;
   initialData: any;
   onClose: () => void;
-  onDataChange: () => void;
+  onDataChange: () => Promise<void> | void;
   onModeChange: (mode: FormMode) => void;
 }
 
@@ -96,14 +101,8 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
   ];
 
   useEffect(() => {
-    getMainLineModels();
-  }, []);
-
-  useEffect(() => {
-    if (availableModels.length) {
-      getModelProperties();
-    }
-  }, [availableModels]);
+    void loadMeta();
+  }, [currentBusiness?.id]);
 
   useEffect(() => {
     if (
@@ -129,40 +128,34 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     }
   }, [conditions, mode]);
 
-  const getMainLineModels = async () => {
-    try {
-      // TODO: api
-      const models = await getAvailableModels();
-      // eslint-disable-next-line max-len
-      const availableModels = availableModelIds.map((modelId) => {
-        return models.find((model) => model.bk_obj_id === modelId);
-      });
-      setAvailableModels(Object.freeze(availableModels) as readonly ObjectMainLine[]);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const getModelProperties = async () => {
-    try {
-      // TODO: api
-      const propertyMap = await batchSearchObjectAttribute({
-        params: {
-          bk_biz_id: currentBusiness?.id,
-          bk_obj_id: { $in: availableModels.map((model) => model.bk_obj_id) },
-          // TODO: Get from windown supplier
-          bk_supplier_account: '0',
-        },
-        config: {
-          requestId: requestConfig.property,
-          fromCache: true,
-        },
-      });
-      propertyMap.module.unshift(createServiceTemplateProperty(t));
-      setPropertyMap(Object.freeze(propertyMap));
-    } catch (error) {
-      console.error(error);
+  const loadMeta = async () => {
+    if (!currentBusiness?.id) {
+      setAvailableModels([]);
       setPropertyMap({});
+      return;
+    }
+
+    try {
+      const response = await getDynamicGroupMeta(currentBusiness.id);
+      const models = (response.data.models || []).filter((model) =>
+        availableModelIds.includes(model.bk_obj_id),
+      );
+      const orderedModels = availableModelIds
+        .map((modelId) => models.find((model) => model.bk_obj_id === modelId))
+        .filter(Boolean) as ObjectMainLine[];
+
+      const nextPropertyMap = { ...(response.data.property_map || {}) };
+      if (nextPropertyMap.module) {
+        nextPropertyMap.module = [createServiceTemplateProperty(t), ...nextPropertyMap.module];
+      }
+
+      setAvailableModels(Object.freeze(orderedModels) as readonly ObjectMainLine[]);
+      setPropertyMap(Object.freeze(nextPropertyMap));
+    } catch (error) {
+      console.error(error);
+      setAvailableModels([]);
+      setPropertyMap({});
+      message.error(t('business.dynamicGroup.messages.loadMetaFailed'));
     }
   };
 
@@ -308,9 +301,13 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
   const handleSubmit = async () => {
     try {
-      // TODO: api
       setLoading(true);
       const values = await form.validateFields();
+
+      if (!currentBusiness?.id) {
+        message.error(t('business.dynamicGroup.messages.noBusinessSelected'));
+        return;
+      }
 
       // Validate all conditions
       if (!validateAllConditions()) {
@@ -322,19 +319,29 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const formData: DynamicGroupFormData = {
         name: values.groupName,
-        bk_biz_id: currentBusiness?.id,
         bk_obj_id: values.groupObject,
         condition,
         variable_condition,
       };
-      console.log('formData', formData);
 
-      // Call service to get group data
-      onDataChange();
+      if (mode === FormMode.EDIT && initialData?.id) {
+        await updateDynamicGroup(currentBusiness.id, initialData.id, formData);
+        message.success(t('common.message.updateSuccess'));
+      } else {
+        await createDynamicGroup(currentBusiness.id, formData);
+        message.success(t('common.message.createSuccess'));
+      }
+
+      await Promise.resolve(onDataChange());
 
       handleActualClose();
     } catch (error) {
       console.error(error);
+      message.error(
+        mode === FormMode.EDIT
+          ? t('business.dynamicGroup.messages.updateFailed')
+          : t('business.dynamicGroup.messages.createFailed'),
+      );
     } finally {
       setLoading(false);
     }
@@ -344,6 +351,11 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     try {
       setLoading(true);
 
+      if (!currentBusiness?.id) {
+        message.error(t('business.dynamicGroup.messages.noBusinessSelected'));
+        return;
+      }
+
       // Validate all conditions
       if (!validateAllConditions()) {
         setLoading(false);
@@ -352,18 +364,19 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const { condition, variable_condition } = formatDynamicConditions(conditions);
 
-      const previewData = {
-        bk_biz_id: currentBusiness?.id,
+      const previewPayload = {
+        bk_obj_id: form.getFieldValue('groupObject') || groupObject,
         condition,
         variable_condition,
+        limit: 100,
       };
-      console.log('Preview Data Sent to API:', previewData);
 
-      // TODO: API
-      setPreviewData(dynamicGroupPreviewResult);
+      const response = await previewDynamicGroup(currentBusiness.id, previewPayload);
+      setPreviewData(response.data.items || []);
       setLastUpdateTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
     } catch (error) {
       console.error(error);
+      message.error(t('business.dynamicGroup.messages.previewFailed'));
     } finally {
       setLoading(false);
     }
@@ -382,6 +395,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     handleClearConditions();
     form.resetFields();
     form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
+    setGroupObject(BUILTIN_MODELS.HOST);
   };
 
   const handleLeaveConfirmOk = () => {
@@ -499,7 +513,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                       ),
                       children: (
                         <PropertyList
-                          bizId={currentBusiness!.id}
+                          bizId={currentBusiness?.id || ''}
                           conditionType={conditionType.key}
                           models={availableModels}
                           selectedProperties={selectedProperties}

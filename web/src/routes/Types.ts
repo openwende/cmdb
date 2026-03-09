@@ -21,6 +21,7 @@ export enum PrimaryNavKey {
   Home = 'home',
   Business = 'business',
   BusinessSet = 'businessSet',
+  Model = 'model',
   Resource = 'resource',
   Analysis = 'analysis',
   NotFound = 'notfound',
@@ -36,6 +37,22 @@ export enum BusinessNavKey {
 
 export enum BusinessSetNavKey {
   Topology = 'topology',
+}
+
+export enum ModelKey {
+  Overview = 'modelOverview',
+  Groups = 'modelGroups',
+  Templates = 'modelTemplates',
+  Topology = 'modelTopology',
+  Detail = 'modelDetail',
+  Basic = 'modelBasic',
+  Fields = 'modelFields',
+  Uniques = 'modelUniques',
+  Preview = 'modelPreview',
+  Instances = 'modelInstances',
+  RelationDetail = 'modelRelationDetail',
+  History = 'modelHistory',
+  LegacyDetail = 'modelLegacyDetail',
 }
 
 export enum ResourceKey {

@@ -28,7 +28,7 @@ const SUPPORTED_OPERATORS = [
 
 type DefaultMapKey = keyof typeof DEFAULT_CONDITIONS_DATA;
 interface ListProps {
-  bizId: number;
+  bizId: number | string;
   conditionType: ConditionType;
   models: readonly ObjectMainLine[];
   selectedProperties: Property[];

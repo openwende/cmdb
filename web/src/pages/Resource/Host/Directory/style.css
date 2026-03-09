@@ -1,6 +1,6 @@
 .directory-wrapper {
-  background: #fff;
-  border-right: 1px solid #eee;
+  background: var(--color-bg-container);
+  border-right: 1px solid var(--color-border);
   position: relative;
   height: 100%;
   user-select: none;
@@ -12,7 +12,7 @@
 
     .directory-add {
       font-size: 18px;
-      color: #1976d2;
+      color: var(--color-primary);
       margin-left: 8px;
       cursor: pointer;
     }
@@ -21,8 +21,8 @@
   .collapsed-button {
     width: 16;
     height: 100;
-    background: #e5e6eb;
-    color: #fff;
+    background: var(--color-bg-spotlight);
+    color: var(--color-text-secondary);
     border-radius: 0 12px 12px 0;
     display: flex;
     align-items: center;
@@ -33,9 +33,10 @@
     box-shadow: none;
 
     &:hover {
-      background: #3a84ff;
+      background: var(--color-primary);
+      color: var(--color-header-text);
       opacity: 0.5;
-      box-shadow: 0 0 8px #1890ff55;
+      box-shadow: 0 0 8px var(--color-primary-glow);
     }
   }
 
@@ -72,7 +73,7 @@
         display: flex;
 
         .pin-to-top {
-          color: #1677ff;
+          color: var(--color-primary);
           width: 24px;
           height: 24px;
           display: inline-flex;
@@ -87,7 +88,7 @@
         .more-operation {
           margin-left: 4px;
           font-size: 20px;
-          color: #1677ff;
+          color: var(--color-primary);
           width: 24px;
           height: 24px;
           display: inline-flex;
@@ -98,9 +99,9 @@
         .pin-to-top,
         .more-operation {
           &:hover {
-            background: #fff;
+            background: var(--color-bg-container);
             border-radius: 50%;
-            border: 1px solid #eaf3ff;
+            border: 1px solid var(--color-primary-border);
           }
         }
       }
@@ -112,22 +113,22 @@
         width: 20px;
         height: 20px;
         border-radius: 2px;
-        background-color: #f1f0f5;
-        color: #979ba5;
+        background-color: var(--color-bg-spotlight);
+        color: var(--color-text-tertiary);
         opacity: 0.5;
         margin-left: 4px;
       }
     }
 
     .selected {
-      background-color: #1677ff !important;
-      color: #fff !important;
+      background-color: var(--color-primary) !important;
+      color: var(--color-bg-container) !important;
     }
 
     &:hover {
       .right-count {
-        background-color: #1677ff !important;
-        color: #fff !important;
+        background-color: var(--color-primary) !important;
+        color: var(--color-bg-container) !important;
       }
     }
   }

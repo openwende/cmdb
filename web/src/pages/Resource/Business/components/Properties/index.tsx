@@ -55,7 +55,6 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       bizops: businessData.bizops ? businessData.bizops.join(', ') : '',
       testers: businessData.testers ? businessData.testers.join(', ') : '',
       developers: businessData.developers ? businessData.developers.join(', ') : '',
-      operators: businessData.operators ? businessData.operators.join(', ') : '',
     };
   }, [businessData, t]);
 
@@ -73,7 +72,6 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
       bizops: businessData.bizops || [],
       testers: businessData.testers || [],
       developers: businessData.developers || [],
-      operators: businessData.operators || [],
     };
 
     setEditValues(editData);

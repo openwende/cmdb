@@ -1,11 +1,11 @@
 .app-breadcrumb {
-  background-color: #fff;
+  background-color: var(--color-bg-container);
   overflow: hidden;
   position: relative;
   z-index: 100;
   align-items: center;
-  background: #fff;
-  box-shadow: 0 2px 4px 0 #0000000f;
+  background: var(--color-bg-container);
+  box-shadow: var(--shadow-sm);
   display: flex;
   height: 53px;
   flex-shrink: 0;
@@ -13,10 +13,10 @@
   font-size: 16px;
 
   .item-link {
-    color: #1677ff;
+    color: var(--color-primary);
 
     &:hover {
-      color: #1677ff;
+      color: var(--color-primary);
     }
   }
 }

@@ -58,7 +58,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border: 1px solid #d9d9d9;
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     padding: 10px 16px;
     margin-bottom: 12px;
@@ -66,7 +66,7 @@
     height: 60px;
 
     &:hover {
-      background: #f5f5f5;
+      background: var(--color-bg-spotlight);
 
       .file-remove {
         opacity: 1;
@@ -76,22 +76,22 @@
     & > *:first-child {
       font-size: 26px;
       margin-right: 10px;
-      color: rgb(151, 155, 165);
+      color: var(--color-text-tertiary);
     }
 
     .file-name {
       font-weight: 700;
-      color: #63656e;
+      color: var(--color-text-secondary);
     }
 
     .file-size {
       margin-left: auto;
       margin-right: 20px;
-      color: #666;
+      color: var(--color-text-secondary);
     }
 
     .file-remove {
-      color: #999;
+      color: var(--color-text-tertiary);
       cursor: pointer;
       opacity: 0;
       transition: opacity 0.2s;
@@ -103,7 +103,7 @@
   }
 
   .host-info-card {
-    border: 1px solid rgb(220, 222, 229);
+    border: 1px solid var(--color-border);
     border-radius: 3px;
     display: flex;
     align-items: center;
@@ -119,7 +119,7 @@
 
     .host-label {
       align-items: center;
-      background: rgb(240, 241, 245);
+      background: var(--color-bg-layout);
       border-radius: 50%;
       display: inline-flex;
       height: 26px;
@@ -130,7 +130,7 @@
 
     .host-text {
       .host-model-text {
-        color: #c4c6cc;
+        color: var(--color-text-quaternary);
       }
     }
   }
@@ -140,7 +140,7 @@
   }
 
   .error-icon {
-    color: #ff4d4f;
+    color: var(--color-error);
   }
 
   .unique-label::after {

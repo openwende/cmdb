@@ -28,6 +28,7 @@ const BusinessTopology: React.FC = () => {
   const [nodeSelection, setNodeSelection] = useState<NodeSelection>(DEFAULT_SELECTION);
   const [view, setView] = useState<'instance' | 'process'>('instance');
   const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
+  const [topologyVersion, setTopologyVersion] = useState(0);
   const businessId = getBusinessIdFromUrl();
   const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
   const prevPathnameRef = useRef<string>('');
@@ -89,13 +90,24 @@ const BusinessTopology: React.FC = () => {
     setSearchParams(params);
   };
 
+  const handleTopologyChanged = useCallback(() => {
+    setTopologyVersion((current) => current + 1);
+  }, []);
+
   const { selectedNode, parentNodes } = nodeSelection;
 
   const items = [
     {
       key: 'hostList',
       label: t('business.topology.tabs.hostList'),
-      children: selectedNode && <HostList selectedNode={selectedNode} parentNodes={parentNodes} />,
+      children:
+        selectedNode && (
+          <HostList
+            selectedNode={selectedNode}
+            parentNodes={parentNodes}
+            onTopologyChanged={handleTopologyChanged}
+          />
+        ),
     },
     {
       key: 'serviceInstance',
@@ -119,6 +131,8 @@ const BusinessTopology: React.FC = () => {
         <BusinessTree
           selectedNode={selectedNode}
           initialSelectedKey={initialSelectedKey}
+          topologyVersion={topologyVersion}
+          onTopologyChanged={handleTopologyChanged}
           onNodeSelect={handleNodeSelect}
         />
         <Tabs

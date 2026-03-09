@@ -5,6 +5,8 @@ import { userListMock } from '@/mock/resource';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { createBusiness } from '@/api';
 import { LIFECYCLE_OPTIONS, LANGUAGE_OPTIONS } from '@/pages/Resource/constants';
+import { CreateBusinessRequest } from '@/api/types/resource';
+import { useResponsive } from '@/utils/useResponsive';
 import {
   FormFieldItem,
   PersonnelSelectItem,
@@ -31,6 +33,7 @@ interface DrawerProps {
 
 const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess }) => {
   const { t } = useTranslation();
+  const { isMobile } = useResponsive();
   const [lang, setLang] = useState<string>('chinese');
   const [searchOptions, setSearchOptions] = useState<{ value: string; label: string }[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -73,19 +76,26 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
   };
 
   const buildUserOptions = (keyword: string, lang: string) => {
-    if (!keyword) return [];
-
     const isChineseLang = lang === languageOptions[0].value;
 
-    return userListMock
-      .filter((u) => {
+    const filtered = keyword
+      ? userListMock.filter((u) => {
         const name = isChineseLang ? u.chinese_name : u.english_name;
         return name.toLowerCase().includes(keyword.toLowerCase());
       })
-      .map((u) => {
-        const name = isChineseLang ? u.chinese_name : u.english_name;
-        return { value: name, label: name };
-      });
+      : userListMock;
+
+    return filtered.map((u) => {
+      const name = isChineseLang ? u.chinese_name : u.english_name;
+      return { value: name, label: name };
+    });
+  };
+
+  // 下拉框打开时展示全量用户
+  const handleDropdownOpen = (open: boolean) => {
+    if (open) {
+      setSearchOptions(buildUserOptions('', lang));
+    }
   };
 
   const handleSearch = (val: string) => {
@@ -108,13 +118,14 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
 
       if (isCreateMode(type)) {
         form.setFieldsValue({
-          language: languageOptions[0],
-          lifecycle: lifecycleOptions[1],
+          language: languageOptions[0].value,
+          lifecycle: lifecycleOptions[1].value,
           timezone: defaultTimeZone,
         });
+        setLang(languageOptions[0].value);
       }
     }
-  }, [visible, type, form]);
+  }, [visible, type, form, languageOptions, lifecycleOptions]);
 
   useEffect(() => {
     if (isEditMode(type)) {
@@ -151,7 +162,23 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
-      const data = await createBusiness(values);
+
+      // 构造符合后端契约的 payload
+      const payload: CreateBusinessRequest = {
+        name: values.name,
+        description: values.description,
+        identifier: values.identifier,
+        lifecycle: values.lifecycle,
+        timezone: values.timezone,
+        language: values.language,
+        // 业务角色
+        sres: values.sres || [],
+        developers: values.developers || [],
+        testers: values.testers || [],
+        bizops: values.bizops || [],
+      };
+
+      const data = await createBusiness(payload);
       if (data.success) {
         message.success(t('common.message.createSuccess'));
       } else {
@@ -192,7 +219,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
           ? t('resource.business.modify.title.create')
           : t('resource.business.modify.title.edit')
       }
-      width={800}
+      width={isMobile ? '100%' : 800}
       onClose={handleClose}
       open={visible}
       maskClosable={false}
@@ -284,6 +311,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                 handleFieldChange={handleFieldChange}
                 isFieldDisabled={isFieldDisabled}
                 selectedFields={selectedFields}
+                onDropdownVisibleChange={handleDropdownOpen}
               />
 
               <PersonnelSelectItem
@@ -296,6 +324,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                 handleFieldChange={handleFieldChange}
                 isFieldDisabled={isFieldDisabled}
                 selectedFields={selectedFields}
+                onDropdownVisibleChange={handleDropdownOpen}
               />
 
               <PersonnelSelectItem
@@ -308,6 +337,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                 handleFieldChange={handleFieldChange}
                 isFieldDisabled={isFieldDisabled}
                 selectedFields={selectedFields}
+                onDropdownVisibleChange={handleDropdownOpen}
               />
 
               <PersonnelSelectItem
@@ -320,18 +350,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
                 handleFieldChange={handleFieldChange}
                 isFieldDisabled={isFieldDisabled}
                 selectedFields={selectedFields}
-              />
-
-              <PersonnelSelectItem
-                fieldName="operators"
-                label={t('resource.business.modify.fields.operators')}
-                type={type}
-                isSearching={isSearching}
-                searchOptions={searchOptions}
-                handleSearch={handleSearch}
-                handleFieldChange={handleFieldChange}
-                isFieldDisabled={isFieldDisabled}
-                selectedFields={selectedFields}
+                onDropdownVisibleChange={handleDropdownOpen}
               />
             </div>
           </Panel>

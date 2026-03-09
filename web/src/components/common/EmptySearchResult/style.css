@@ -3,34 +3,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px 24px;
+  padding: 48px var(--space-xl);
   text-align: center;
 }
 
 .empty-icon {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-lg);
 }
 
 .empty-title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #1d2129;
-  margin-bottom: 8px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
 }
 
 .empty-description {
-  font-size: 14px;
-  color: #86909c;
-  line-height: 1.5;
+  font-size: var(--font-size-base);
+  color: var(--color-text-tertiary);
+  line-height: var(--line-height-normal);
 }
 
 .clear-filter-btn {
   padding: 0;
   height: auto;
-  font-size: 14px;
-  color: #3370ff;
+  font-size: var(--font-size-base);
+  color: var(--color-primary);
 }
 
 .clear-filter-btn:hover {
-  color: #165dff;
+  color: var(--color-primary-hover);
 }

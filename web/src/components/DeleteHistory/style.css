@@ -1,14 +1,13 @@
 .delete-history-wrapper {
-  padding: 16px;
+  padding: var(--space-lg);
 }
 
 .delete-history-wrapper .toolbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-lg);
 }
 
-/* 表格与分页之间留空 */
 .delete-history-wrapper .ant-table-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-lg);
 }

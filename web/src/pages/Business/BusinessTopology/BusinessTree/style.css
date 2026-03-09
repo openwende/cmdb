@@ -1,6 +1,6 @@
 .business-tree-wrapper {
-  background: #fff;
-  border-right: 1px solid #eee;
+  background: var(--color-bg-container);
+  border-right: 1px solid var(--color-border);
   position: relative;
   user-select: none;
   margin: 16px 20px 16px auto;
@@ -16,8 +16,8 @@
   .collapsed-button {
     width: 16;
     height: 100;
-    background: #e5e6eb;
-    color: #fff;
+    background: var(--color-bg-spotlight);
+    color: var(--color-text-secondary);
     border-radius: 0 12px 12px 0;
     display: flex;
     align-items: center;
@@ -28,9 +28,10 @@
     box-shadow: none;
 
     &:hover {
-      background-color: #1677ff;
+      background-color: var(--color-primary);
+      color: var(--color-header-text);
       opacity: 0.5;
-      box-shadow: 0 0 8px #1890ff55;
+      box-shadow: 0 0 8px var(--color-primary-glow);
     }
 
     .collapsed-icon {

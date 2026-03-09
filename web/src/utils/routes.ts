@@ -101,17 +101,16 @@ export const buildEntityPath = (
  */
 export const parseBusinessInfoFromUrl = (
   pathname?: string,
-): { id: number; type: BusinessType } | null => {
+): { id: string; type: BusinessType } | null => {
   const path = pathname || window.location.pathname;
   const pathSegments = path.split('/');
 
   // Check if path is business path: /business/:businessId/...
   if (pathSegments.length >= 3 && pathSegments[1] === EntityRouteType.Business) {
     const id = pathSegments[2];
-    // Ensure ID is not empty and is a valid number
-    if (id && !isNaN(Number(id))) {
+    if (id) {
       return {
-        id: Number(id),
+        id,
         type: BusinessType.Business,
       };
     }
@@ -120,10 +119,9 @@ export const parseBusinessInfoFromUrl = (
   // Check if path is business set path: /business-set/:businessSetId/...
   if (pathSegments.length >= 3 && pathSegments[1] === EntityRouteType.BusinessSet) {
     const id = pathSegments[2];
-    // Ensure ID is not empty and is a valid number
-    if (id && !isNaN(Number(id))) {
+    if (id) {
       return {
-        id: Number(id),
+        id,
         type: BusinessType.BusinessSet,
       };
     }
@@ -137,7 +135,7 @@ export const parseBusinessInfoFromUrl = (
  * @param pathname Current page path, uses window.location.pathname if not provided
  * @returns Business ID number, returns 0 if parsing fails
  */
-export const getBusinessIdFromUrl = (pathname?: string): number => {
+export const getBusinessIdFromUrl = (pathname?: string): string => {
   const result = parseBusinessInfoFromUrl(pathname);
-  return result ? result.id : 0;
+  return result ? result.id : '';
 };

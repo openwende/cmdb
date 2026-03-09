@@ -1,20 +1,27 @@
 import React, { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
+import { Navigate } from 'react-router-dom';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 import {
   NavigationItem,
   PrimaryNavKey,
   BusinessNavKey,
   BusinessSetNavKey,
+  ModelKey,
   ResourceKey,
   AnalysisKey,
 } from './Types';
 import {
   AppstoreOutlined,
+  ApartmentOutlined,
   ContainerOutlined,
   DiffOutlined,
   BarChartOutlined,
   ProductOutlined,
   DatabaseOutlined,
+  UnorderedListOutlined,
+  GroupOutlined,
+  NodeIndexOutlined,
 } from '@ant-design/icons';
 
 // Lazy load all page components
@@ -23,11 +30,26 @@ const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
 const TopologyView = lazy(() => import('../pages/Business/BusinessTopology/TopologyView'));
 const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/TransferHost'));
-// const ServiceTemplate = lazy(() => import('../pages/Business/ServiceTemplate'));
 const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
+
+// Model pages (promoted to top-level)
+const ResourceModel = lazy(() => import('../pages/Resource/Model'));
+const ModelList = lazy(() => import('../pages/Resource/Model/ModelList'));
+const ModelGroups = lazy(() => import('../pages/Resource/Model/pages/Groups'));
+const ModelTemplates = lazy(() => import('../pages/Resource/Model/pages/Templates'));
+const ModelRelations = lazy(() => import('../pages/Resource/Model/pages/Relations'));
+const ModelLayout = lazy(() => import('../pages/Resource/Model/ModelLayout'));
+const LegacyModelRedirect = lazy(() => import('../pages/Resource/Model/pages/LegacyRedirect'));
+const ModelBasicInfo = lazy(() => import('../pages/Resource/Model/pages/BasicInfo'));
+const ModelFieldDesigner = lazy(() => import('../pages/Resource/Model/pages/FieldDesigner'));
+const ModelUniqueRules = lazy(() => import('../pages/Resource/Model/pages/UniqueRules'));
+const ModelFormPreview = lazy(() => import('../pages/Resource/Model/pages/FormPreview'));
+const ModelInstances = lazy(() => import('../pages/Resource/Model/pages/Instances'));
+const ModelRelationDetail = lazy(() => import('../pages/Resource/Model/pages/RelationDetail'));
+const ModelHistory = lazy(() => import('../pages/Resource/Model/pages/History'));
+
+// Resource pages
 const ResourcePage = lazy(() => import('../pages/Resource'));
-// const ResourceContent = lazy(() => import('../pages/Resource/ResourceContent'));
-// const ResourceProject = lazy(() => import('../pages/Resource/ResourceProject'));
 const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
 const BusinessList = lazy(() => import('../pages/Resource/Business/BusinessList'));
 const BusinessDetail = lazy(() => import('../pages/Resource/Business/BusinessDetail'));
@@ -35,29 +57,34 @@ const ArchivedBusiness = lazy(() => import('../pages/Resource/Business/ArchivedB
 const ResourceHost = lazy(() => import('../pages/Resource/Host'));
 const ResourceHostView = lazy(() => import('../pages/Resource/Host/HostView'));
 const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHistory'));
+
+// Analysis pages
 const AnalysisPage = lazy(() => import('../pages/Analysis'));
 const AuditLogs = lazy(() => import('../pages/Analysis/Audit'));
 const Statistics = lazy(() => import('../pages/Analysis/Statistics'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
-// Wrap lazy-loaded components with Suspense
+// Wrap lazy-loaded components with Suspense and ErrorBoundary
 const withSuspense = (Component: React.LazyExoticComponent<any>) => (
-  <Suspense
-    fallback={
-      <div
-        style={{
-          height: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    }
-  >
-    <Component />
-  </Suspense>
+  <ErrorBoundary>
+    <Suspense
+      fallback={
+        <div
+          style={{
+            height: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '64px 0',
+          }}
+        >
+          <Spin size="large" />
+        </div>
+      }
+    >
+      <Component />
+    </Suspense>
+  </ErrorBoundary>
 );
 
 export const routes: NavigationItem[] = [
@@ -95,13 +122,6 @@ export const routes: NavigationItem[] = [
           },
         ],
       },
-      // {
-      //   name: 'routes.serviceTemplate',
-      //   key: BusinessNavKey.Template,
-      //   path: 'template',
-      //   element: withSuspense(ServiceTemplate),
-      //   icon: <SwitcherOutlined />
-      // },
       {
         name: 'routes.dynamicGroup',
         key: BusinessNavKey.DynamicGroup,
@@ -127,26 +147,111 @@ export const routes: NavigationItem[] = [
       },
     ],
   },
+  // ★ Model Management — promoted to top-level navigation
+  {
+    name: 'routes.modelManagement',
+    key: PrimaryNavKey.Model,
+    path: '/model',
+    element: withSuspense(ResourceModel),
+    children: [
+      {
+        key: 'modelIndex',
+        element: <Navigate to="overview" replace />,
+        index: true,
+        hideInMenu: true,
+      },
+      {
+        name: 'routes.modelOverview',
+        key: ModelKey.Overview,
+        path: 'overview',
+        element: withSuspense(ModelList),
+        icon: <UnorderedListOutlined />,
+      },
+      {
+        name: 'routes.modelGroups',
+        key: ModelKey.Groups,
+        path: 'groups',
+        element: withSuspense(ModelGroups),
+        icon: <GroupOutlined />,
+      },
+      {
+        name: 'routes.modelTopology',
+        key: ModelKey.Topology,
+        path: 'topology',
+        element: withSuspense(ModelRelations),
+        icon: <NodeIndexOutlined />,
+      },
+      {
+        name: 'routes.modelDetail',
+        key: ModelKey.LegacyDetail,
+        path: 'modelDetail/:name',
+        element: withSuspense(LegacyModelRedirect),
+        hideInMenu: true,
+      },
+      {
+        key: ModelKey.Detail,
+        path: ':name',
+        element: withSuspense(ModelLayout),
+        hideInMenu: true,
+        children: [
+          {
+            key: 'modelBasicIndex',
+            element: <Navigate to="basic" replace />,
+            index: true,
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.Basic,
+            path: 'basic',
+            element: withSuspense(ModelBasicInfo),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.Fields,
+            path: 'fields',
+            element: withSuspense(ModelFieldDesigner),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.Uniques,
+            path: 'uniques',
+            element: withSuspense(ModelUniqueRules),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.Preview,
+            path: 'preview',
+            element: withSuspense(ModelFormPreview),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.Instances,
+            path: 'instances',
+            element: withSuspense(ModelInstances),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.RelationDetail,
+            path: 'relations',
+            element: withSuspense(ModelRelationDetail),
+            hideInMenu: true,
+          },
+          {
+            key: ModelKey.History,
+            path: 'history',
+            element: withSuspense(ModelHistory),
+            hideInMenu: true,
+          },
+        ],
+      },
+    ],
+  },
   {
     name: 'routes.resource',
     key: PrimaryNavKey.Resource,
     path: '/resource',
     element: withSuspense(ResourcePage),
     children: [
-      // {
-      //   name: 'routes.resourceContent',
-      //   key: ResourceKey.Content,
-      //   path: 'content',
-      //   element: withSuspense(ResourceContent),
-      //   icon: <BarsOutlined />
-      // },
-      // {
-      //   name: 'routes.project',
-      //   key: ResourceKey.Project,
-      //   path: 'project',
-      //   element: withSuspense(ResourceProject),
-      //   icon: <SwitcherOutlined />
-      // },
       {
         name: 'routes.resourceBusiness',
         key: ResourceKey.Business,

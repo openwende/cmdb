@@ -1,5 +1,5 @@
 .node-info-container {
-  background: #fff;
+  background: var(--color-bg-container);
   padding: 24px;
 
   .category-label {
@@ -44,6 +44,6 @@
 
   .basic-info {
     font-weight: bold;
-    color: #000;
+    color: var(--color-text-primary);
   }
 }

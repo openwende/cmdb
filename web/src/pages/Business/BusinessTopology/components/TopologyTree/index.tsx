@@ -3,6 +3,7 @@ import { Button, Tree } from 'antd';
 import { useTranslation } from 'react-i18next';
 import CreateNodeModal from '../CreateNodeModal';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
+import { useMainlineStore } from '@/store/MainlineStore';
 import './style.css';
 import { findNodeAndParents } from '@/pages/Business/utils';
 
@@ -13,6 +14,7 @@ interface Props {
   onlyLeafSelectable?: boolean;
   selectedKeys?: string[];
   expandedKeys?: string[];
+  onTopologyChanged?: () => void;
   onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
   customTitlePrefix?: (node: TreeData, isSelected: boolean) => React.ReactNode;
 }
@@ -24,16 +26,16 @@ const TopologyTree: React.FC<Props> = ({
   onlyLeafSelectable = false,
   selectedKeys: controlledSelectedKeys,
   expandedKeys: controlledExpandedKeys,
+  onTopologyChanged,
   onNodeSelect,
   customTitlePrefix,
 }) => {
   const { t } = useTranslation();
+  const { getChildModels } = useMainlineStore();
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
-  // State for creating node
   const [modalVisible, setModalVisible] = useState(false);
-  const [createType, setCreateType] = useState<TopoTreeNodeType>(TopoTreeNodeType.Set);
   const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -111,10 +113,10 @@ const TopologyTree: React.FC<Props> = ({
   const handleCreate = (e: React.MouseEvent<HTMLElement, MouseEvent>, node: TreeData) => {
     e.stopPropagation();
 
-    if (node.type === TopoTreeNodeType.Biz) {
-      setCreateType(TopoTreeNodeType.Set);
-    } else if (node.type === TopoTreeNodeType.Set) {
-      setCreateType(TopoTreeNodeType.Module);
+    const nodeModelUID =
+      node.backendType || (node.type === TopoTreeNodeType.Biz ? 'business' : node.type);
+    if (getChildModels(nodeModelUID).length === 0) {
+      return;
     }
 
     setTargetNodeKey(node.key);
@@ -132,11 +134,12 @@ const TopologyTree: React.FC<Props> = ({
 
     if (tailEleType === TailEleType.All) {
       const isHovered = hoveredKey === node.key;
+      const nodeModelUID =
+        node.backendType || (node.type === TopoTreeNodeType.Biz ? 'business' : node.type);
+      const canCreateChildren = getChildModels(nodeModelUID).length > 0;
       return (
         <span className="right-wrapper">
-          {isHovered &&
-          node.type !== TopoTreeNodeType.Idle &&
-          node.type !== TopoTreeNodeType.Module ? (
+          {isHovered && canCreateChildren ? (
             <Button type="primary" size="small" onClick={(e) => handleCreate(e, node)}>
               {t('resource.business.actions.create')}
             </Button>
@@ -204,9 +207,9 @@ const TopologyTree: React.FC<Props> = ({
       {targetNode && (
         <CreateNodeModal
           visible={modalVisible}
-          type={createType}
           selectedNode={targetNode}
           parentNodes={parentNodes}
+          onCreated={onTopologyChanged || (() => undefined)}
           onClose={() => setModalVisible(false)}
         />
       )}

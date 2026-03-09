@@ -14,7 +14,7 @@
 }
 
 .error-message {
-  color: #999;
+  color: var(--color-text-tertiary);
   font-size: 14px;
 }
 
@@ -24,7 +24,7 @@
   .actions-divider {
     width: calc(100% - 32px);
     height: 1px;
-    background-color: #f0f0f0;
+    background-color: var(--color-border-secondary);
     margin-bottom: 16px;
     margin-left: 16px;
   }

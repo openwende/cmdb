@@ -1,7 +1,7 @@
 .transfer-container {
   margin: 16px 20px;
   padding: 16px;
-  background-color: #fff;
+  background-color: var(--color-bg-container);
 
   .info-item {
     display: flex;
@@ -13,7 +13,7 @@
     }
 
     .info-label {
-      color: #63656e;
+      color: var(--color-text-secondary);
       font-size: 14px;
       font-weight: 700;
       text-align: right;
@@ -33,11 +33,11 @@
 
       .edit-icon {
         margin-left: 10px;
-        color: #1677ff;
+        color: var(--color-primary);
       }
 
       .info-number {
-        color: #63656e;
+        color: var(--color-text-secondary);
         font-weight: 700;
       }
 
@@ -53,12 +53,12 @@
           width: 14px;
           height: 14px;
           border-radius: 50%;
-          background-color: #c4c6cc;
-          color: #fff;
+          background-color: var(--color-text-quaternary);
+          color: var(--color-bg-container);
           font-size: 12px;
 
           &.red-count {
-            background-color: #ff4d4f;
+            background-color: var(--color-error);
           }
         }
       }
@@ -89,13 +89,13 @@
           top: -16px;
           right: 0;
           height: 1px;
-          background-color: #f0f0f0;
+          background-color: var(--color-border-secondary);
         }
 
         &.sticky-active {
           flex-shrink: 0;
           padding: 8px 0;
-          background-color: #fff;
+          background-color: var(--color-bg-container);
           margin-left: 0;
 
           &::before {
@@ -107,18 +107,18 @@
 
       .info-button-hover {
         cursor: pointer;
-        background: #e5e6eb !important;
+        background: var(--color-bg-spotlight) !important;
       }
 
       .info-button-tip {
         margin-left: 8px;
-        color: #666;
+        color: var(--color-text-secondary);
         font-size: 12px;
       }
 
       .empty-wrapper {
-        background-color: #fafafa;
-        color: #63656e;
+        background-color: var(--color-bg-spotlight);
+        color: var(--color-text-secondary);
         height: 60px;
         line-height: 60px;
         padding: 0 28px;
@@ -138,8 +138,8 @@
         }
 
         .bind-number {
-          background-color: #f0f1f5;
-          color: #888;
+          background-color: var(--color-bg-layout);
+          color: var(--color-text-tertiary);
           border-radius: 8px;
           padding: 0 6px;
           margin-left: 6;
@@ -164,7 +164,7 @@
     }
 
     .del-action {
-      color: #ff4d4f;
+      color: var(--color-error);
     }
   }
 }

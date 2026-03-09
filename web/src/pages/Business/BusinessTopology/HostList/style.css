@@ -1,5 +1,5 @@
 .list-wrapper {
-  background: #fff;
+  background: var(--color-bg-container);
   padding: 16px;
 }
 

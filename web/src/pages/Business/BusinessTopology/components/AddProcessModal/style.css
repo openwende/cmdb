@@ -16,7 +16,7 @@
     }
 
     .listen-content {
-      border: 1px solid #dfe0e5;
+      border: 1px solid var(--color-border);
       border-radius: 2px;
 
       .add-button {
@@ -32,7 +32,7 @@
 
     .label-tip {
       margin-left: 4px;
-      color: #c3cdd7;
+      color: var(--color-text-quaternary);
     }
 
     .form-row {

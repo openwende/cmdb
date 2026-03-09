@@ -8,22 +8,58 @@
     "dynamicGroup": "Dynamic Group",
     "businessSet": "Business Set",
     "businessSetTopology": "Topology",
-    "resource": "Resource",
+    "modelManagement": "Models",
+    "modelOverview": "Overview",
+    "modelGroups": "Groups",
+    "modelTopology": "Topology",
+    "resource": "Resources",
     "resourceContent": "Resource Content",
     "project": "Project",
     "resourceBusiness": "Business",
+    "resourceModel": "Models",
     "businessDetail": "Business Detail",
+    "modelDetail": "Model Detail",
     "archivedBusiness": "Archived Business",
-    "host": "Host",
+    "host": "Hosts",
     "deleteHistory": "Delete History",
     "analysis": "Analysis",
     "auditLogs": "Audit",
     "operations": "Operations",
     "notFound": "404"
   },
+  "dashboard": {
+    "title": "Overview",
+    "welcome": "Welcome to Configuration Platform",
+    "subtitle": "Unified management of infrastructure and application resources",
+    "stats": {
+      "models": "Models",
+      "instances": "Instances",
+      "hosts": "Hosts",
+      "businesses": "Businesses"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createModel": "Create Model",
+      "importHost": "Import Hosts",
+      "viewTopology": "View Topology",
+      "auditLog": "Audit Logs",
+      "createModelDesc": "Define a new resource model",
+      "importHostDesc": "Batch import host resources",
+      "viewTopologyDesc": "View business topology",
+      "auditLogDesc": "View operation audit logs"
+    },
+    "recentModels": {
+      "title": "Recently Updated Models",
+      "viewAll": "View All",
+      "attributes": "attributes",
+      "noModels": "No models yet"
+    }
+  },
   "common": {
     "layout": {
-      "platformName": "Configuration Platform"
+      "platformName": "Configuration Platform",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar"
     },
     "rename": "Rename",
     "delete": "Delete",
@@ -40,6 +76,7 @@
     "pleaseSelect": "Please select",
     "noMatch": "No matching personnel",
     "noData": "No data",
+    "loading": "Loading...",
     "message": {
       "createSuccess": "Created successfully",
       "createFailed": "Failed to create",
@@ -179,6 +216,8 @@
       },
       "tree": {
         "search": "Please enter keyword",
+        "loadError": "Failed to load topology tree",
+        "noData": "No topology data available",
         "create": {
           "form": {
             "label1": "Cluster template",
@@ -198,9 +237,33 @@
           },
           "setTitle": "Create cluster",
           "moduleTitle": "Create module",
+          "dynamicTitle": "Create topology node",
           "templateMode": "Create from template",
           "directMode": "Create directly",
-          "selected": "Selected"
+          "selected": "Selected",
+          "fields": {
+            "childModel": "Child model",
+            "name": "Name",
+            "envType": "Environment type",
+            "serviceType": "Service type"
+          },
+          "placeholders": {
+            "name": "Enter name",
+            "envType": "Select environment type",
+            "serviceType": "Select service type"
+          },
+          "helper": {
+            "modelDriven": "The available child mainline models are filtered from the current parent node, and instance fields are generated from the model schema.",
+            "schemaDriven": "Built-in topology nodes now read the business form schema first instead of relying on hardcoded frontend fields."
+          },
+          "messages": {
+            "loadModelsFailed": "Failed to load creatable models",
+            "loadModelDetailFailed": "Failed to load model detail",
+            "createFailed": "Failed to create topology node"
+          },
+          "empty": {
+            "noChildModels": "No child mainline model can be created under this node"
+          }
         }
       },
       "copyMenu": {
@@ -721,7 +784,14 @@
       },
       "searchPlaceholder": "Please enter {{field}}",
       "messages": {
-        "deleteSuccess": "Deleted successfully"
+        "loadFailed": "Failed to load dynamic groups",
+        "loadMetaFailed": "Failed to load dynamic group metadata",
+        "createFailed": "Failed to create dynamic group",
+        "updateFailed": "Failed to update dynamic group",
+        "previewFailed": "Failed to preview dynamic group",
+        "deleteSuccess": "Deleted successfully",
+        "deleteFailed": "Failed to delete dynamic group",
+        "noBusinessSelected": "Please select a business first"
       },
       "confirm": {
         "deleteTitle": "Confirm delete",
@@ -737,6 +807,318 @@
     }
   },
   "resource": {
+    "model": {
+      "columns": {
+        "displayName": "Display name",
+        "name": "Model name",
+        "modelName": "Model",
+        "classification": "Classification",
+        "group": "Group",
+        "groupName": "Group name",
+        "groupDisplayName": "Group display name",
+        "groupModelCount": "Model count",
+        "icon": "Icon",
+        "mainline": "Mainline",
+        "scope": "Scope",
+        "level": "Level",
+        "updatedAt": "Updated at",
+        "actions": "Actions",
+        "builtIn": "Built-in",
+        "instanceName": "Instance name",
+        "business": "Business",
+        "createdAt": "Created at",
+        "changeType": "Change type",
+        "changedFields": "Changed fields",
+        "operator": "Operator",
+        "clientIp": "Client IP",
+        "relationDirection": "Direction",
+        "relationLabel": "Relation label",
+        "relatedInstance": "Related instance",
+        "depth": "Depth",
+        "path": "Path",
+        "sourceTarget": "Source/Target",
+        "attributeDisplayName": "Attribute display name",
+        "attributeName": "Attribute name",
+        "attributeType": "Attribute type",
+        "attributeRequired": "Required",
+        "attributeUnique": "Unique",
+        "attributeEditable": "Editable",
+        "attributeSortOrder": "Sort order",
+        "attributeOptions": "Options"
+      },
+      "actions": {
+        "create": "Create model",
+        "createGroup": "Create group",
+        "manageGroups": "Manage groups",
+        "refresh": "Refresh",
+        "viewDetail": "View detail",
+        "viewInstances": "View instances",
+        "viewInstanceDetail": "View detail",
+        "viewInstanceRelations": "View relations",
+        "viewInstanceHistory": "View history",
+        "createInstance": "Create instance",
+        "createInstanceRelation": "Create relation",
+        "createAttribute": "Create attribute",
+        "createRelation": "Create relation",
+        "editRelation": "Edit relation",
+        "createUniqueRule": "Create unique rule",
+        "editUniqueRule": "Edit unique rule"
+      },
+      "fields": {
+        "name": "Model name",
+        "displayName": "Display name",
+        "classification": "Classification",
+        "group": "Group",
+        "groupName": "Group name",
+        "groupDisplayName": "Group display name",
+        "icon": "Icon",
+        "description": "Description",
+        "isMainline": "Mainline",
+        "mainlineScope": "Mainline scope",
+        "mainlineLevel": "Mainline level",
+        "parentModel": "Parent mainline model",
+        "builtIn": "Built-in",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "healthStatus": "Health status",
+        "lastCheckTime": "Last check time",
+        "business": "Business",
+        "parentNode": "Parent node",
+        "instanceName": "Instance name",
+        "sortOrder": "Sort order",
+        "propertiesJson": "Properties JSON",
+        "attributeDisplayName": "Attribute display name",
+        "attributeName": "Attribute name",
+        "attributeType": "Attribute type",
+        "attributeRequired": "Required",
+        "attributeUnique": "Unique",
+        "attributeEditable": "Editable",
+        "defaultValue": "Default value",
+        "placeholder": "Placeholder",
+        "helpText": "Help text",
+        "enumValues": "Enum values"
+      },
+      "placeholders": {
+        "search": "Search by model name, display name, or classification",
+        "name": "Enter model name, e.g. rack",
+        "displayName": "Enter display name",
+        "group": "Select a model group",
+        "groupName": "Enter group key, e.g. database_assets",
+        "groupDisplayName": "Enter group display name",
+        "icon": "Enter icon name, e.g. rack",
+        "description": "Enter description",
+        "parentModel": "Select parent mainline model",
+        "business": "Select business",
+        "parentNode": "Select parent node",
+        "instanceName": "Enter instance name",
+        "relationDefinition": "Select relation definition",
+        "targetInstance": "Select target instance",
+        "propertiesJson": "Enter JSON, e.g. {\"name\":\"rack-a\"}",
+        "attributeDisplayName": "Enter attribute display name",
+        "attributeName": "Enter attribute name, e.g. rack_code",
+        "enumValues": "One value per line, commas also supported",
+        "defaultValue": "Enter default value",
+        "placeholder": "Enter form placeholder",
+        "helpText": "Enter field guidance"
+      },
+      "sections": {
+        "attributes": "Attributes",
+        "advanced": "Advanced settings",
+        "modelGroups": "Model groups",
+        "modelOverview": "Model overview"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "basic": "Basic info",
+        "attributes": "Attributes",
+        "fields": "Field designer",
+        "uniques": "Unique rules",
+        "preview": "Form preview",
+        "instances": "Instances",
+        "instanceDetail": "Instance detail",
+        "instanceRelations": "Instance relations",
+        "instanceHistory": "Instance history",
+        "instanceTopology": "Instance topology",
+        "relations": "Relations",
+        "history": "History",
+        "importExport": "Import / Export",
+        "groups": "Groups",
+        "templates": "Templates"
+      },
+      "groups": {
+        "all": "All models",
+        "mainline": "Mainline models",
+        "business": "Business models",
+        "resource": "Resource models",
+        "builtin": "Built-in models"
+      },
+      "options": {
+        "classification": {
+          "business": "Business model",
+          "resource": "Resource model"
+        },
+        "scope": {
+          "business": "Business",
+          "global": "Global",
+          "none": "None"
+        },
+        "boolean": {
+          "yes": "Yes",
+          "no": "No"
+        },
+        "fieldType": {
+          "string": "Text",
+          "int": "Number",
+          "bool": "Boolean",
+          "enum": "Enum"
+        }
+      },
+      "messages": {
+        "loadFailed": "Failed to load models",
+        "createFailed": "Failed to create model",
+        "loadGroupsFailed": "Failed to load model groups",
+        "createGroupFailed": "Failed to create model group",
+        "loadInstancesFailed": "Failed to load instances",
+        "loadInstanceDetailFailed": "Failed to load instance detail",
+        "loadRelationDefinitionsFailed": "Failed to load available instance relations",
+        "loadTargetInstancesFailed": "Failed to load target instances",
+        "loadInstanceRelationsFailed": "Failed to load instance relations",
+        "createInstanceRelationSuccess": "Instance relation created successfully",
+        "createInstanceRelationFailed": "Failed to create instance relation",
+        "deleteInstanceRelationSuccess": "Instance relation deleted successfully",
+        "deleteInstanceRelationFailed": "Failed to delete instance relation",
+        "loadInstanceHistoryFailed": "Failed to load instance history",
+        "loadInstanceTopologyFailed": "Failed to load instance topology",
+        "relationTargetRequired": "Please select a relation definition and a target instance first",
+        "instanceCreateFailed": "Failed to create instance",
+        "attributeCreateFailed": "Failed to create attribute",
+        "loadRelationsFailed": "Failed to load model relations",
+        "createRelationFailed": "Failed to create model relation",
+        "updateRelationFailed": "Failed to update model relation",
+        "deleteRelationSuccess": "Model relation deleted successfully",
+        "deleteRelationFailed": "Failed to delete model relation",
+        "loadUniqueRulesFailed": "Failed to load unique rules",
+        "createUniqueRuleFailed": "Failed to create unique rule",
+        "updateUniqueRuleFailed": "Failed to update unique rule",
+        "deleteUniqueRuleSuccess": "Unique rule deleted successfully",
+        "deleteUniqueRuleFailed": "Failed to delete unique rule",
+        "invalidAttributeName": "Attribute name must start with a lowercase letter and only contain lowercase letters, numbers, and underscores",
+        "invalidJson": "Properties JSON is invalid",
+        "loadParentFailed": "Failed to load parent nodes"
+      },
+      "empty": {
+        "noAttributes": "No attributes defined for this model",
+        "noInstances": "No instances found for this model",
+        "noInstanceDetail": "No instance detail",
+        "noInstanceRelations": "No relations for this instance",
+        "noInstanceHistory": "No history for this instance",
+        "noInstanceTopology": "No topology for this instance",
+        "noRelations": "No relation definitions found for this model",
+        "noUniqueRules": "No unique rules defined for this model",
+        "tabPending": "This section will be connected in a later phase",
+        "noDescription": "No model description"
+      },
+      "helper": {
+        "modelBasics": "Start with object basics first, then enable mainline behavior only when the model really belongs in topology.",
+        "advancedMainline": "Only models that should participate in the business mainline topology need mainline settings.",
+        "mainlineNotice": "Mainline models require scope, level, and a parent mainline model. Attaching under module is still not supported in P1.",
+        "propertiesJson": "Use JSON to add arbitrary properties. name / sort_order will be merged automatically.",
+        "parentNodeEmpty": "No eligible parent node was found under this business. Create the parent mainline instance first.",
+        "instanceBusinessScope": "Business-scope mainline instances usually require selecting a business before choosing a parent node.",
+        "instanceListNote": "Instance operations are still model-driven, but they are no longer the primary focus of the model detail view.",
+        "instanceHistoryPage": "Select an instance first, then inspect its history, relations, and topology context.",
+        "instanceRelationsPage": "This tab shows real instance-level relation data rather than model-level relation design.",
+        "instanceRelationCreate": "When creating an instance relation, the available target model and association type are constrained by model relation definitions.",
+        "instanceConfigBlock": "Configuration fields come from instance configs.",
+        "instanceMetricsBlock": "State fields come from instance state.metrics.",
+        "instanceTopologyPage": "Current topology contains {{nodeCount}} nodes and {{edgeCount}} edges.",
+        "enumValues": "Enum values will be used as dropdown options in the instance form.",
+        "instanceFallbackForm": "This model has no custom attributes yet, so the drawer falls back to the basic instance fields.",
+        "attributeDesigner": "Define model attributes first, then let the instance form render from that schema.",
+        "attributeRoadmap": "This round focuses on attribute structure and ordering. Drag layout, field grouping, and composite unique rules come next.",
+        "attributeSortHint": "Fields are currently ordered by sort_order. Drag sorting and field grouping will come in the next phase.",
+        "listOverview": "The model list is now grouped first. Mainline is treated as one capability of a model, not the only center of the experience.",
+        "groupsPending": "Persistent model groups will be connected after the backend adds storage support. This round only establishes the IA and grouped browsing.",
+        "groupsPage": "Model groups now persist in the backend and can be used to organize both browsing and creation flows.",
+        "previewNotice": "The preview reuses the dynamic instance form mapping so schema changes can be validated immediately.",
+        "relationsPending": "Model relation design is not wired to the frontend yet, so this tab is a placeholder for now.",
+        "relationsDesign": "Model relations define which target models the current model can connect to, along with mapping and delete constraints.",
+        "relationsDesignHint": "This page manages model-level relation design only, not concrete instance-to-instance links.",
+        "relationsListNote": "These definitions directly constrain which instance relations can be created later. Check active usage before deleting.",
+        "historyPending": "This tab will later show model and attribute change history.",
+        "uniquesPending": "Composite unique rules, auxiliary uniqueness, and conflict feedback depend on the next backend validation pass, so this entry is reserved for now.",
+        "uniquesDesign": "Unique rules run before instance writes and prevent duplicate resources from entering the model.",
+        "uniquesDesignHint": "Default rules usually represent the primary identity, while auxiliary rules add business-specific duplicate constraints.",
+        "uniquesListNote": "Updating unique rules changes later create and update behavior. Check existing data for conflicts before editing.",
+        "importExportPending": "This tab will later host model import/export and template capabilities."
+      },
+      "uniques": {
+        "columns": {
+          "name": "Rule name",
+          "fields": "Field combination",
+          "emptyHandling": "Empty handling",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "fields": {
+          "name": "Rule name",
+          "fields": "Unique fields",
+          "description": "Description",
+          "isDefault": "Default rule",
+          "isAuxiliary": "Auxiliary rule",
+          "enabled": "Enabled",
+          "ignoreIfAllEmpty": "Ignore when all empty"
+        },
+        "placeholders": {
+          "name": "Enter a rule name",
+          "fields": "Select unique fields",
+          "description": "Enter a rule description"
+        },
+        "tags": {
+          "default": "Default",
+          "auxiliary": "Auxiliary",
+          "standard": "Standard"
+        },
+        "status": {
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "options": {
+          "emptyHandling": {
+            "ignore": "Skip when all empty",
+            "validate": "Validate even when all empty"
+          }
+        },
+        "confirmDelete": "Delete this unique rule?"
+      },
+      "relations": {
+        "columns": {
+          "targetModel": "Target model",
+          "associationType": "Association type",
+          "mapping": "Mapping",
+          "onDelete": "On delete",
+          "description": "Description",
+          "actions": "Actions"
+        },
+        "fields": {
+          "targetModel": "Target model",
+          "associationType": "Association type",
+          "mapping": "Mapping",
+          "onDelete": "On delete",
+          "description": "Description",
+          "actions": "Actions"
+        },
+        "options": {
+          "onDelete": {
+            "cascade": "Cascade",
+            "restrict": "Restrict",
+            "set_null": "Set null"
+          }
+        },
+        "confirmDelete": "Delete this model relation?",
+        "confirmDeleteInstanceRelation": "Delete this instance relation?"
+      }
+    },
     "host": {
       "tabs": {
         "unassigned": "Unassigned",
@@ -903,10 +1285,10 @@
           "timezone": "Timezone",
           "language": "Language",
           "sres": "SRE",
+          "sres": "SRE/Operations",
           "bizops": "Product managers",
           "testers": "Testers",
-          "developers": "Developers",
-          "operators": "Operators"
+          "developers": "Developers"
         },
         "placeholders": {
           "name": "Please enter business name",

@@ -1,5 +1,5 @@
 .dynamic-group {
-  background-color: #fff;
+  background-color: var(--color-bg-container);
   margin: 16px 20px;
   padding: 16px;
 

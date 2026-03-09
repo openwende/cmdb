@@ -79,9 +79,14 @@ const Menu: React.FC = () => {
 
       // Handling for other navigation items
       if (item.children?.length) {
-        // If has child routes, navigate to the first child route
-        const childPath = `${item.path}/${item.children[0].path}`;
-        navigate(childPath);
+        // Find first child that has a real path (skip index routes)
+        const firstRoutableChild = item.children.find((c) => c.path && !c.index);
+        if (firstRoutableChild?.path) {
+          navigate(`${item.path}/${firstRoutableChild.path}`);
+        } else {
+          // Fall back to parent path — index route will redirect
+          navigate(item.path!);
+        }
       } else {
         // If no child routes, navigate directly
         navigate(item.path!);
@@ -101,4 +106,4 @@ const Menu: React.FC = () => {
   );
 };
 
-export default Menu;
+export default React.memo(Menu);

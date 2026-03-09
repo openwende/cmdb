@@ -26,7 +26,7 @@ const OPTION_PROP_TYPES = [
 const UNSUPPORTED_OPERATORS = [QUERY_OPERATOR.CONTAINS, QUERY_OPERATOR.LIKE] as OperatorType[];
 
 interface ComponentProps {
-  bizId: number;
+  bizId: number | string;
   property: Property;
   conditionType: ConditionType;
   operator: OperatorType;

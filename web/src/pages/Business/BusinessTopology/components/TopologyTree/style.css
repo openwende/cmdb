@@ -25,13 +25,13 @@
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background-color: #c4c6cc;
-        color: #fff;
+        background-color: var(--color-text-quaternary);
+        color: var(--color-bg-container);
         margin-right: 10px;
 
         &:hover {
-          background-color: #1677ff !important;
-          color: #fff !important;
+          background-color: var(--color-primary) !important;
+          color: var(--color-bg-container) !important;
         }
       }
 
@@ -40,7 +40,7 @@
       }
 
       .search-path {
-        color: #606266;
+        color: var(--color-text-secondary);
         font-size: 14px;
       }
     }
@@ -57,8 +57,8 @@
         width: 20px;
         height: 20px;
         border-radius: 2px;
-        background-color: #f1f0f5;
-        color: #979ba5;
+        background-color: var(--color-bg-spotlight);
+        color: var(--color-text-tertiary);
         opacity: 0.5;
       }
     }
@@ -68,20 +68,20 @@
       height: 20px;
       line-height: 18px;
       border-radius: 2px;
-      background-color: #f1f0f5;
-      color: #979ba5;
+      background-color: var(--color-bg-spotlight);
+      color: var(--color-text-tertiary);
       border: none;
       font-size: 12px;
 
       &:hover {
-        background-color: #1677ff;
-        color: #fff;
+        background-color: var(--color-primary);
+        color: var(--color-bg-container);
       }
     }
 
     .selected {
-      background-color: #1677ff !important;
-      color: #fff !important;
+      background-color: var(--color-primary) !important;
+      color: var(--color-bg-container) !important;
     }
 
     &.search-result {
@@ -91,7 +91,7 @@
       border-radius: 4px;
 
       &:hover {
-        background-color: #f5f7fa;
+        background-color: var(--color-bg-spotlight);
       }
     }
   }

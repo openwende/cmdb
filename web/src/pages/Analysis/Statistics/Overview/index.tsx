@@ -22,7 +22,7 @@ const STATISTICS_ICON_MAP = {
 
 // Define color mapping
 const STATISTICS_COLOR_MAP = {
-  biz: '#1677ff',
+  biz: '#2563eb',
   host: '#13c2c2',
   model: '#52c41a',
   inst: '#fa8c16',

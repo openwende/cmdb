@@ -8,7 +8,7 @@ const Logo: React.FC = () => {
 
   return (
     <div className="header-logo">
-      <img src={logoImage} alt="logo" className="header-logo-image" />
+      <img src={logoImage} alt={t('common.layout.platformName')} className="header-logo-image" />
       <span>{t('common.layout.platformName')}</span>
     </div>
   );

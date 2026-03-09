@@ -23,18 +23,18 @@
     justify-content: space-between;
     align-items: center;
     padding: 8px 12px;
-    background: #fafbfd;
-    border: 1px solid #dcdee5;
+    background: var(--color-bg-spotlight);
+    border: 1px solid var(--color-border);
     border-radius: 2px;
     margin-bottom: 8px;
 
     .template-name {
-      color: #313238;
+      color: var(--color-text-primary);
       font-size: 12px;
     }
 
     .template-id {
-      color: #979ba5;
+      color: var(--color-text-tertiary);
       font-size: 11px;
     }
   }

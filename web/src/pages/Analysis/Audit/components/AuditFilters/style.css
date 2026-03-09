@@ -1,6 +1,6 @@
 .audit-filters {
   padding: 20px 20px 4px;
-  background: #fff;
+  background: var(--color-bg-container);
   margin-bottom: 16px;
 
   .ant-form-item {

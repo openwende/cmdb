@@ -1,23 +1,83 @@
 .app-sidebar {
-  background: #fff;
-  border-right: 1px solid #dcdee5;
-  width: 260px;
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width var(--transition-normal);
+  contain: layout style;
+}
 
-  .sidebar-menu {
-    height: calc(100vh - 50px);
+.app-sidebar .sidebar-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--space-sm) 0;
+  border-inline-end: none !important;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.app-sidebar .sidebar-menu:hover {
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.app-sidebar .menu-toggler {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  background: none;
+  height: 44px;
+  line-height: 44px;
+  font-size: 14px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding-left: 20px;
+  flex-shrink: 0;
+  transition: color var(--transition-fast), background var(--transition-fast);
+  width: 100%;
+  text-align: left;
+}
+
+.app-sidebar .menu-toggler:hover {
+  color: var(--color-primary);
+  background: var(--color-bg-spotlight);
+}
+
+/* ===== Mobile sidebar overlay ===== */
+.app-sidebar--mobile {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  bottom: 0;
+  z-index: 1000;
+  transform: translateX(-100%);
+  transition: transform var(--transition-normal);
+  box-shadow: none;
+}
+
+.app-sidebar--mobile.app-sidebar--open {
+  transform: translateX(0);
+  box-shadow: var(--shadow-lg);
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  top: var(--header-height);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.35);
+  animation: fadeIn var(--transition-fast) ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
 
-  .menu-toggler {
-    border-top: 1px solid #dcdee5;
-    bottom: 0;
-    fill: #63656e;
-    font-size: 14px;
-    height: 50px;
-    left: 0;
-    line-height: 49px;
-    position: absolute;
-    width: 100%;
-    cursor: pointer;
-    padding-left: 28px;
+  to {
+    opacity: 1;
   }
 }

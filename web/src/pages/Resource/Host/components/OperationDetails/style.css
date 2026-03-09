@@ -12,14 +12,14 @@
       width: 50%;
 
       .info-label {
-        color: rgb(99, 101, 110);
+        color: var(--color-text-secondary);
         display: inline-block;
         padding-right: 10px;
         width: 100px;
       }
 
       .info-value {
-        color: rgb(49, 50, 55);
+        color: var(--color-text-primary);
         display: inline-block;
         overflow: hidden;
         text-overflow: ellipsis;

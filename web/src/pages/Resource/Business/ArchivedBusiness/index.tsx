@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Input, Space, message, Popconfirm, Modal, Form, Empty, Spin } from 'antd';
+import { Table, Input, Space, Button, message, Popconfirm, Modal, Form, Empty, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import { deleteBusiness, getBusinessList } from '@/api';
 import dayjs from 'dayjs';
 import './style.css';
 import { BusinessDetail } from '@/api/types/resource';
+import { LIFECYCLE } from '../../constants';
 
 const PAGE_SIZE = 20;
 
@@ -81,9 +82,9 @@ const ArchivedBusiness: React.FC = () => {
       dataIndex: 'action',
       render: (_: string, record: BusinessDetail) => (
         <Space>
-          <a onClick={() => handleRestore(record)}>
+          <Button type="link" size="small" onClick={() => handleRestore(record)}>
             {t('resource.business.archived.actions.restore')}
-          </a>
+          </Button>
           <Popconfirm
             title={t('resource.business.archived.deleteConfirm.title')}
             description={t('resource.business.archived.deleteConfirm.description')}
@@ -91,7 +92,9 @@ const ArchivedBusiness: React.FC = () => {
             okText={t('common.confirm')}
             cancelText={t('common.cancel')}
           >
-            <a className="delete-link">{t('resource.business.archived.actions.delete')}</a>
+            <Button type="link" size="small" danger>
+              {t('resource.business.archived.actions.delete')}
+            </Button>
           </Popconfirm>
         </Space>
       ),
@@ -106,12 +109,17 @@ const ArchivedBusiness: React.FC = () => {
       //   searchText: searchText,
       // };
       const { data } = await getBusinessList({
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
+        limit: 100,
+        offset: 0,
       });
-      const { items, total } = data;
-      setBusinessList(items);
-      setBusinessCount(total);
+      const archivedBusinesses = data.items.filter(
+        (item: BusinessDetail) => item.lifecycle === LIFECYCLE.OFFLINE,
+      );
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+
+      setBusinessList(archivedBusinesses.slice(start, end));
+      setBusinessCount(archivedBusinesses.length);
     } catch (error) {
       console.error(error);
     } finally {

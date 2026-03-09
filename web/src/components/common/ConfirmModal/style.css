@@ -2,11 +2,14 @@
   text-align: center;
 
   .confirm-title {
-    font-size: 20px;
-    margin-bottom: 14px;
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-md);
+    color: var(--color-text-primary);
   }
 
   .confirm-desc {
-    margin: 14px 30px 20px;
+    margin: var(--space-md) var(--space-2xl) var(--space-xl);
+    color: var(--color-text-secondary);
   }
 }

@@ -101,7 +101,6 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
   const handleSelectedRows = (rowKeys: any, rows: any) => {
     setSelectedRowKeys(rowKeys);
-    console.log(rowKeys, rows);
   };
 
   const handleTransferMenuClick = (key: string) => {
@@ -173,7 +172,6 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   );
 
   const handleReleaseHosts = useCallback((dirId: number) => {
-    console.log('Release to directory:', dirId);
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);

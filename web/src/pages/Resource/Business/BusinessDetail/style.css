@@ -1,7 +1,7 @@
 .business-detail {
   margin: 16px 20px;
   padding: 8px 20px 20px;
-  background: #fff;
+  background: var(--color-bg-container);
 
   /* Loading state styles */
   &.loading-container {
@@ -20,7 +20,7 @@
 
     .error-message {
       font-size: 16px;
-      color: #999;
+      color: var(--color-text-tertiary);
     }
   }
 }

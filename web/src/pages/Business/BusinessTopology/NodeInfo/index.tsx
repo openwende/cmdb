@@ -2,7 +2,13 @@ import React, { useMemo } from 'react';
 import { Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { TreeData, TopoTreeNodeType } from '../../Types';
-import { BusinessNodeInfo, IdleNodeInfo, SetNodeInfo, ModuleNodeInfo } from '../components';
+import {
+  BusinessNodeInfo,
+  GenericNodeInfo,
+  IdleNodeInfo,
+  SetNodeInfo,
+  ModuleNodeInfo,
+} from '../components';
 import './style.css';
 
 interface Props {
@@ -30,6 +36,8 @@ const NodeInfo: React.FC<Props> = ({ selectedNode }) => {
       {nodeType === TopoTreeNodeType.Idle && <IdleNodeInfo selectedNode={selectedNode} />}
       {nodeType === TopoTreeNodeType.Set && <SetNodeInfo selectedNode={selectedNode} />}
       {nodeType === TopoTreeNodeType.Module && <ModuleNodeInfo selectedNode={selectedNode} />}
+      {![TopoTreeNodeType.Biz, TopoTreeNodeType.Idle, TopoTreeNodeType.Set, TopoTreeNodeType.Module]
+        .includes(nodeType as TopoTreeNodeType) && <GenericNodeInfo selectedNode={selectedNode} />}
     </div>
   );
 };

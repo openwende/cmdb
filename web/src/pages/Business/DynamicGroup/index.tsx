@@ -6,7 +6,9 @@ import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import DynamicGroupForm, { FormMode } from './components';
-import { dynamicGroupList } from '@/mock/business';
+import { deleteDynamicGroup, listDynamicGroups } from '@/api';
+import { DynamicGroupItem } from '@/api/types/dynamicGroup';
+import { useBusinessStore } from '@/store/BusinessStore';
 import './style.css';
 
 const { Option } = Select;
@@ -15,15 +17,17 @@ const PAGE_SIZE = 20;
 
 const DynamicGroup: React.FC = () => {
   const { t } = useTranslation();
+  const { currentBusiness } = useBusinessStore();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [groupCount, setGroupCount] = useState(0);
-  const [groupList, setGroupList] = useState<any>([]);
+  const [groupList, setGroupList] = useState<DynamicGroupItem[]>([]);
+  const [allGroups, setAllGroups] = useState<DynamicGroupItem[]>([]);
   const [searchField, setSearchField] = useState<string>('id');
   const [searchText, setSearchText] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [alertVisible, setAlertVisible] = useState(true);
-  const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [editingGroup, setEditingGroup] = useState<DynamicGroupItem | null>(null);
   const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
   const [formMode, setFormMode] = useState<FormMode>(FormMode.CREATE);
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -57,7 +61,8 @@ const DynamicGroup: React.FC = () => {
       dataIndex: 'bk_obj_id',
       sorter: true,
       width: 150,
-      render: (val: string) => (val === 'host' ? t('business.dynamicGroup.objectTypes.host') : val),
+      render: (val: string) =>
+        val === 'host' ? t('business.dynamicGroup.objectTypes.host') : val,
     },
     {
       title: t('business.dynamicGroup.columns.createUser'),
@@ -89,7 +94,7 @@ const DynamicGroup: React.FC = () => {
       title: t('business.dynamicGroup.columns.action'),
       dataIndex: 'action',
       width: 150,
-      render: (_: string, record: any) => (
+      render: (_: string, record: DynamicGroupItem) => (
         <Space size="small">
           <Button type="link" size="small" onClick={() => handlePreview(record)}>
             {t('business.dynamicGroup.actions.preview')}
@@ -106,28 +111,63 @@ const DynamicGroup: React.FC = () => {
   ];
 
   useEffect(() => {
-    handleGroupData();
-  }, []);
+    void handleGroupData();
+  }, [currentBusiness?.id]);
 
-  const handleGroupData = () => {
-    // Filter and search data
-    const filteredData = dynamicGroupList.info;
+  useEffect(() => {
+    applyFiltersAndPagination();
+  }, [allGroups, searchField, searchText, page, pageSize]);
 
-    setIsSearching(true);
-    // TODO: Replace with API call
-    console.log('Search Parameters for API:', {
-      field: searchField,
-      textValue: searchText,
-      pagination: {
-        page,
-        pageSize,
-      },
+  const applyFiltersAndPagination = () => {
+    const keyword = searchText.trim().toLowerCase();
+    const filteredData = allGroups.filter((item) => {
+      if (!keyword) {
+        return true;
+      }
+      if (searchField === 'id') {
+        return item.id.toLowerCase().includes(keyword);
+      }
+      if (searchField === 'name') {
+        return item.name.toLowerCase().includes(keyword);
+      }
+      if (searchField === 'bk_obj_id') {
+        return item.bk_obj_id.toLowerCase().includes(keyword);
+      }
+      if (searchField === 'modify_user') {
+        return (item.modify_user || '').toLowerCase().includes(keyword);
+      }
+      return true;
     });
-    setIsSearching(false);
 
     setGroupCount(filteredData.length);
-    const data = filteredData.slice((page - 1) * pageSize, page * pageSize);
-    setGroupList(data);
+    setGroupList(filteredData.slice((page - 1) * pageSize, page * pageSize));
+  };
+
+  const handleGroupData = async () => {
+    if (!currentBusiness?.id) {
+      setAllGroups([]);
+      setGroupList([]);
+      setGroupCount(0);
+      return;
+    }
+
+    try {
+      setIsSearching(true);
+      const response = await listDynamicGroups(currentBusiness.id, {
+        limit: 200,
+        offset: 0,
+        target: 'host',
+      });
+      setAllGroups(response.data.items || []);
+    } catch (error) {
+      console.error(error);
+      setAllGroups([]);
+      setGroupList([]);
+      setGroupCount(0);
+      message.error(t('business.dynamicGroup.messages.loadFailed'));
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleCreate = () => {
@@ -136,19 +176,19 @@ const DynamicGroup: React.FC = () => {
     setDrawerVisible(true);
   };
 
-  const handlePreview = (record: any) => {
+  const handlePreview = (record: DynamicGroupItem) => {
     setEditingGroup(record);
     setFormMode(FormMode.PREVIEW);
     setDrawerVisible(true);
   };
 
-  const handleEdit = (record: any) => {
+  const handleEdit = (record: DynamicGroupItem) => {
     setEditingGroup(record);
     setFormMode(FormMode.EDIT);
     setDrawerVisible(true);
   };
 
-  const handleDeleteClick = (record: any) => {
+  const handleDeleteClick = (record: DynamicGroupItem) => {
     setDeletingGroup({
       id: record.id,
       name: record.name,
@@ -156,20 +196,24 @@ const DynamicGroup: React.FC = () => {
     setShowConfirmModal(true);
   };
 
-  const handleDelete = () => {
-    if (deletingGroup) {
-      // TODO: Call API to delete the group in background
-      // Remove the item from local data directly
-      const updatedList = groupList.filter((item: any) => {
-        return item.id !== deletingGroup.id;
-      });
-      setGroupList(updatedList);
-      setGroupCount((prev) => prev - 1);
+  const handleDelete = async () => {
+    if (!currentBusiness?.id || !deletingGroup) {
+      setShowConfirmModal(false);
+      setDeletingGroup(null);
+      return;
     }
 
-    setShowConfirmModal(false);
-    setDeletingGroup(null);
-    message.success(t('business.dynamicGroup.messages.deleteSuccess'));
+    try {
+      await deleteDynamicGroup(currentBusiness.id, deletingGroup.id);
+      message.success(t('business.dynamicGroup.messages.deleteSuccess'));
+      await handleGroupData();
+    } catch (error) {
+      console.error(error);
+      message.error(t('business.dynamicGroup.messages.deleteFailed'));
+    } finally {
+      setShowConfirmModal(false);
+      setDeletingGroup(null);
+    }
   };
 
   const handleDeleteCancel = () => {
@@ -191,6 +235,7 @@ const DynamicGroup: React.FC = () => {
   const handleFieldChange = (value: string) => {
     setSearchField(value);
     setSearchText('');
+    setPage(1);
   };
 
   const clearSearch = () => {
@@ -234,7 +279,7 @@ const DynamicGroup: React.FC = () => {
       {/* Header with create button and search */}
       <div className="dynamic-group-header">
         <div className="header-operation">
-          <Button type="primary" onClick={handleCreate}>
+          <Button type="primary" onClick={handleCreate} disabled={!currentBusiness?.id}>
             {t('business.dynamicGroup.actions.create')}
           </Button>
         </div>

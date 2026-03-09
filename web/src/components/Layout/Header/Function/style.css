@@ -4,14 +4,15 @@
   align-items: center;
 
   .language-button {
-    color: #fff;
+    color: var(--color-header-text-muted);
     display: flex;
     align-items: center;
     gap: 2px;
     padding: 0;
+    transition: color var(--transition-fast);
 
     &:hover {
-      color: #fff !important;
+      color: var(--color-header-text) !important;
     }
 
     .language-label {

@@ -11,7 +11,7 @@
   .transfer-host-modal-left {
     width: 280px;
     min-width: 220px;
-    border-right: 1px solid #eee;
+    border-right: 1px solid var(--color-border);
     padding-right: 16px;
     height: 100%;
     position: relative;
@@ -33,8 +33,8 @@
       width: 20px;
       height: 20px;
       border-radius: 50%;
-      background-color: #c4c6cc;
-      color: #fff;
+      background-color: var(--color-text-quaternary);
+      color: var(--color-bg-container);
       margin-right: 10px;
     }
   }
@@ -51,7 +51,7 @@
       font-size: 14px;
       font-weight: bold;
       margin-bottom: 8px;
-      color: #222;
+      color: var(--color-text-primary);
     }
 
     .preview-header {
@@ -61,7 +61,7 @@
       margin-bottom: 8px;
 
       .preview-count {
-        color: #1677ff;
+        color: var(--color-primary);
         font-weight: 700;
       }
     }
@@ -72,14 +72,14 @@
     }
 
     .preview-item-bg {
-      background: #f5f7fa !important;
+      background: var(--color-bg-spotlight) !important;
       margin-bottom: 2px !important;
       border-radius: 4px;
       padding: 4px 10px !important;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: '#f5f7fa';
+      background: 'var(--color-bg-spotlight)';
     }
 
     .preview-item-wrapper {
@@ -96,8 +96,8 @@
           width: 20px;
           height: 20px;
           border-radius: 50%;
-          background-color: #c4c6cc;
-          color: #fff;
+          background-color: var(--color-text-quaternary);
+          color: var(--color-bg-container);
           font-size: 12px;
         }
 
@@ -109,13 +109,13 @@
     }
 
     .preview-path {
-      color: #aaa;
+      color: var(--color-text-tertiary);
       font-size: 12px;
       margin-left: 30px;
     }
 
     .preview-remove {
-      color: #1677ff;
+      color: var(--color-primary);
       cursor: pointer;
       font-size: 12px;
     }

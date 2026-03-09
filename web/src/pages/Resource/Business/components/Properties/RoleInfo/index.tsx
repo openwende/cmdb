@@ -45,12 +45,6 @@ const RoleInfo: React.FC<RoleInfoProps> = ({
       type: 'objuser',
       editable: true,
     },
-    {
-      label: '操作人员',
-      field: 'operators',
-      type: 'objuser',
-      editable: true,
-    },
   ];
 
   return (

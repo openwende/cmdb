@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 15px;
-  background-color: #fff;
+  background-color: var(--color-bg-container);
   padding: 15px;
 
   .host-list-header {
@@ -21,5 +21,18 @@
       align-items: center;
       gap: 2px;
     }
+  }
+}
+
+/* --- Mobile (< 768px) --- */
+@media (max-width: 767px) {
+  .host-list-wrapper {
+    padding: 12px;
+  }
+
+  .host-list-wrapper .host-list-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 }

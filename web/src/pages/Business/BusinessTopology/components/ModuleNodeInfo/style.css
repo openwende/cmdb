@@ -29,7 +29,7 @@
 
 .header-label {
   padding-right: 4px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--color-text-secondary);
 }
 
 /* Use more specific selector to increase specificity */
@@ -98,7 +98,7 @@
   .actions-divider {
     width: calc(100% - 32px);
     height: 1px;
-    background-color: #f0f0f0;
+    background-color: var(--color-border-secondary);
     margin-bottom: 16px;
     margin-left: 16px;
   }

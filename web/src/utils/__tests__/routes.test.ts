@@ -124,7 +124,7 @@ describe('Route Utilities', () => {
     it('should parse business path correctly', () => {
       const result = parseBusinessInfoFromUrl('/business/123/topology');
       expect(result).toEqual({
-        id: 123,
+        id: '123',
         type: BusinessType.Business,
       });
     });
@@ -132,14 +132,17 @@ describe('Route Utilities', () => {
     it('should parse business set path correctly', () => {
       const result = parseBusinessInfoFromUrl('/business-set/456/topology');
       expect(result).toEqual({
-        id: 456,
+        id: '456',
         type: BusinessType.BusinessSet,
       });
     });
 
-    it('should return null for invalid business ID', () => {
-      const result = parseBusinessInfoFromUrl('/business/invalid/topology');
-      expect(result).toBeNull();
+    it('should parse business UUID path correctly', () => {
+      const result = parseBusinessInfoFromUrl('/business/9f4923a0-f02f-454c-a097-c8074c892cbf/topology');
+      expect(result).toEqual({
+        id: '9f4923a0-f02f-454c-a097-c8074c892cbf',
+        type: BusinessType.Business,
+      });
     });
 
     it('should return null for path missing ID', () => {
@@ -161,22 +164,22 @@ describe('Route Utilities', () => {
   describe('getBusinessIdFromUrl', () => {
     it('should extract business ID correctly', () => {
       const id = getBusinessIdFromUrl('/business/123/topology');
-      expect(id).toBe(123);
+      expect(id).toBe('123');
     });
 
     it('should extract business set ID correctly', () => {
       const id = getBusinessIdFromUrl('/business-set/456/topology');
-      expect(id).toBe(456);
+      expect(id).toBe('456');
     });
 
-    it('should return 0 for invalid paths', () => {
+    it('should return empty string for invalid paths', () => {
       const id = getBusinessIdFromUrl('/home');
-      expect(id).toBe(0);
+      expect(id).toBe('');
     });
 
-    it('should return 0 for invalid ID', () => {
-      const id = getBusinessIdFromUrl('/business/invalid/topology');
-      expect(id).toBe(0);
+    it('should keep UUID business IDs intact', () => {
+      const id = getBusinessIdFromUrl('/business/9f4923a0-f02f-454c-a097-c8074c892cbf/topology');
+      expect(id).toBe('9f4923a0-f02f-454c-a097-c8074c892cbf');
     });
   });
 });

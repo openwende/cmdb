@@ -8,7 +8,7 @@
     margin-top: 8px;
 
     .toggle-button {
-      color: #1677ff;
+      color: var(--color-primary);
       cursor: pointer;
     }
   }

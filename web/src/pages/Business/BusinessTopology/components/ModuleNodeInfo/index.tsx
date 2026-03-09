@@ -290,7 +290,7 @@ const ModuleNodeInfo: React.FC<Props> = () => {
           {
             key: '1',
             label: (
-              <span style={{ fontWeight: 'bold', color: '#000' }}>
+              <span style={{ fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
                 {t('business.topology.moduleNodeInfo.basicInfo')}
               </span>
             ),

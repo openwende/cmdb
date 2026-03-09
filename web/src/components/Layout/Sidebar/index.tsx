@@ -17,13 +17,23 @@ import {
 const { Sider } = Layout;
 
 const SIDEBAR_COLLAPSED_WIDTH = 60;
-const SIDEBAR_EXPANDED_WIDTH = 260;
+const SIDEBAR_EXPANDED_WIDTH = 220;
 
 interface SidebarProps {
   currentSection: NavigationItem | undefined;
+  isMobile?: boolean;
+  isTablet?: boolean;
+  sidebarOpen?: boolean;
+  onClose?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  currentSection,
+  isMobile = false,
+  isTablet = false,
+  sidebarOpen = false,
+  onClose,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -32,6 +42,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
+
+  // On tablet, force collapsed; on mobile, never collapse (it's full-width overlay)
+  const effectiveCollapsed = isTablet ? true : isMobile ? false : collapsed;
 
   // Get sidebar menu items
   // if current path is a business set, get menu items from business set configuration
@@ -118,6 +131,15 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
         return selectedItem ? selectedItem.key : '';
       }
     }
+
+    // Fallback for dynamic sub-routes (e.g., /model/:name/basic → highlight 'overview')
+    // If path starts with the current section's path but no sidebar item matched,
+    // return the key of the first visible sidebar item as a contextual hint
+    if (currentSection?.path && location.pathname.startsWith(currentSection.path + '/')) {
+      const firstVisible = sidebarItems.find((item: NavigationItem) => !item.hideInMenu && item.path);
+      if (firstVisible) return firstVisible.key;
+    }
+
     return '';
   };
 
@@ -158,37 +180,78 @@ const Sidebar: React.FC<SidebarProps> = ({ currentSection }) => {
   const selectedKey = getSelectedKey();
 
   const menuItems = useMemo(() => {
-    return sidebarItems.map((item: NavigationItem) => ({
-      key: item.key,
-      label: item.name ? t(item.name) : '',
-      icon: item.icon,
-    }));
+    return sidebarItems
+      .filter((item: NavigationItem) => !item.hideInMenu)
+      .map((item: NavigationItem) => ({
+        key: item.key,
+        label: item.name ? t(item.name) : '',
+        icon: item.icon,
+      }));
   }, [t, sidebarItems]);
 
-  return (
-    <>
-      {sidebarItems.length > 0 ? (
+  // Nothing to show
+  if (sidebarItems.length === 0) return null;
+
+  // --- Mobile: overlay sidebar ---
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-backdrop"
+            onClick={onClose}
+            aria-hidden="true"
+          />
+        )}
         <Sider
-          className="app-sidebar"
-          width={collapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH}
+          className={`app-sidebar app-sidebar--mobile ${sidebarOpen ? 'app-sidebar--open' : ''}`}
+          width={SIDEBAR_EXPANDED_WIDTH}
         >
-          {/* Display business selector in business and business set sections */}
-          {isBusinessRelated && <BusinessSelector collapsed={collapsed} />}
+          {isBusinessRelated && <BusinessSelector collapsed={false} />}
           <Menu
             key={location.pathname}
             mode="inline"
             selectedKeys={[selectedKey]}
             items={menuItems}
-            inlineCollapsed={collapsed}
             className="sidebar-menu"
             onClick={({ key }) => onMenuClick(key as string)}
           />
-          <div onClick={toggleCollapsed} className="menu-toggler">
-            {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </div>
         </Sider>
-      ) : null}
-    </>
+      </>
+    );
+  }
+
+  // --- Desktop / Tablet ---
+  return (
+    <Sider
+      className="app-sidebar"
+      width={effectiveCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH}
+    >
+      {/* Display business selector in business and business set sections */}
+      {isBusinessRelated && <BusinessSelector collapsed={effectiveCollapsed} />}
+      <Menu
+        key={location.pathname}
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        items={menuItems}
+        inlineCollapsed={effectiveCollapsed}
+        className="sidebar-menu"
+        onClick={({ key }) => onMenuClick(key as string)}
+      />
+      {/* Hide the collapse toggle on tablet (always collapsed) */}
+      {!isTablet && (
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="menu-toggler"
+          aria-label={collapsed ? t('common.layout.expandSidebar') : t('common.layout.collapseSidebar')}
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </button>
+      )}
+    </Sider>
   );
 };
 

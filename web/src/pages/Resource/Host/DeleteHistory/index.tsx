@@ -52,7 +52,6 @@ const DeleteHistory: React.FC = () => {
     }
 
     // TODO: api
-    console.log('request params', params);
   }, [timeRange, keyword, page, pageSize]);
 
   const pageData = useMemo(() => {

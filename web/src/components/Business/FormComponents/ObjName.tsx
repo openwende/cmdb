@@ -25,7 +25,7 @@ const mockResults = [
 interface ObjNameProps extends FormComponentProps {
   property: Property;
   operator: OperatorType;
-  bizId: number;
+  bizId: number | string;
 }
 
 const ObjName: React.FC<ObjNameProps> = ({

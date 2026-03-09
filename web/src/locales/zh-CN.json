@@ -8,22 +8,58 @@
     "dynamicGroup": "动态分组",
     "businessSet": "业务集",
     "businessSetTopology": "业务集拓扑",
-    "resource": "资源",
+    "modelManagement": "模型管理",
+    "modelOverview": "模型总览",
+    "modelGroups": "模型分组",
+    "modelTopology": "模型拓扑",
+    "resource": "资源管理",
     "resourceContent": "资源目录",
     "project": "项目",
-    "resourceBusiness": "业务",
+    "resourceBusiness": "业务管理",
+    "resourceModel": "模型管理",
     "businessDetail": "业务详情",
+    "modelDetail": "模型详情",
     "archivedBusiness": "已归档业务",
-    "host": "主机",
+    "host": "主机管理",
     "deleteHistory": "删除历史",
     "analysis": "运营分析",
     "auditLogs": "操作审计",
     "operations": "运营统计",
     "notFound": "404"
   },
+  "dashboard": {
+    "title": "总览",
+    "welcome": "欢迎使用配置管理平台",
+    "subtitle": "统一管理基础设施与应用资源的配置信息",
+    "stats": {
+      "models": "模型总数",
+      "instances": "实例总数",
+      "hosts": "主机总数",
+      "businesses": "业务总数"
+    },
+    "quickActions": {
+      "title": "快捷操作",
+      "createModel": "创建模型",
+      "importHost": "导入主机",
+      "viewTopology": "查看拓扑",
+      "auditLog": "操作审计",
+      "createModelDesc": "定义新的资源模型",
+      "importHostDesc": "批量导入主机资源",
+      "viewTopologyDesc": "查看业务拓扑结构",
+      "auditLogDesc": "查看操作审计日志"
+    },
+    "recentModels": {
+      "title": "最近更新的模型",
+      "viewAll": "查看全部",
+      "attributes": "个属性",
+      "noModels": "暂无模型数据"
+    }
+  },
   "common": {
     "layout": {
-      "platformName": "配置平台"
+      "platformName": "配置平台",
+      "expandSidebar": "展开侧栏",
+      "collapseSidebar": "收起侧栏"
     },
     "rename": "重命名",
     "delete": "删除",
@@ -40,6 +76,7 @@
     "pleaseSelect": "请选择",
     "noMatch": "无匹配人员",
     "noData": "暂无数据",
+    "loading": "加载中...",
     "message": {
       "createSuccess": "创建成功",
       "createFailed": "创建失败",
@@ -179,6 +216,8 @@
       },
       "tree": {
         "search": "请输入关键词",
+        "loadError": "加载拓扑树失败",
+        "noData": "暂无拓扑数据",
         "create": {
           "form": {
             "label1": "集群模板",
@@ -198,9 +237,33 @@
           },
           "setTitle": "新建集群",
           "moduleTitle": "新建模块",
+          "dynamicTitle": "新建拓扑节点",
           "templateMode": "从模板新建",
           "directMode": "直接新建",
-          "selected": "已选择"
+          "selected": "已选择",
+          "fields": {
+            "childModel": "子模型",
+            "name": "名称",
+            "envType": "环境类型",
+            "serviceType": "服务类型"
+          },
+          "placeholders": {
+            "name": "请输入名称",
+            "envType": "请选择环境类型",
+            "serviceType": "请选择服务类型"
+          },
+          "helper": {
+            "modelDriven": "会根据当前父节点自动筛选允许挂载的主线模型，并按模型属性生成实例表单。",
+            "schemaDriven": "内置拓扑节点会优先读取当前业务下的表单 schema，避免继续依赖前端写死字段。"
+          },
+          "messages": {
+            "loadModelsFailed": "加载可创建模型失败",
+            "loadModelDetailFailed": "加载模型详情失败",
+            "createFailed": "创建节点失败"
+          },
+          "empty": {
+            "noChildModels": "当前节点下没有可创建的子主线模型"
+          }
         }
       },
       "copyMenu": {
@@ -721,7 +784,14 @@
       },
       "searchPlaceholder": "请输入{{field}}",
       "messages": {
-        "deleteSuccess": "删除成功"
+        "loadFailed": "加载动态分组失败",
+        "loadMetaFailed": "加载动态分组条件元数据失败",
+        "createFailed": "创建动态分组失败",
+        "updateFailed": "更新动态分组失败",
+        "previewFailed": "预览动态分组失败",
+        "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败",
+        "noBusinessSelected": "请先选择业务"
       },
       "confirm": {
         "deleteTitle": "确定删除",
@@ -737,6 +807,318 @@
     }
   },
   "resource": {
+    "model": {
+      "columns": {
+        "displayName": "显示名称",
+        "name": "模型名",
+        "modelName": "模型",
+        "classification": "分类",
+        "group": "分组",
+        "groupName": "分组名",
+        "groupDisplayName": "分组显示名",
+        "groupModelCount": "模型数",
+        "icon": "图标",
+        "mainline": "主线",
+        "scope": "范围",
+        "level": "层级",
+        "updatedAt": "更新时间",
+        "actions": "操作",
+        "builtIn": "内置",
+        "instanceName": "实例名称",
+        "business": "业务",
+        "createdAt": "创建时间",
+        "changeType": "变更类型",
+        "changedFields": "变更字段",
+        "operator": "操作人",
+        "clientIp": "客户端 IP",
+        "relationDirection": "关系方向",
+        "relationLabel": "关系语义",
+        "relatedInstance": "关联实例",
+        "depth": "深度",
+        "path": "路径",
+        "sourceTarget": "源/目标",
+        "attributeDisplayName": "属性显示名",
+        "attributeName": "属性名",
+        "attributeType": "属性类型",
+        "attributeRequired": "必填",
+        "attributeUnique": "唯一",
+        "attributeEditable": "可编辑",
+        "attributeSortOrder": "排序",
+        "attributeOptions": "配置"
+      },
+      "actions": {
+        "create": "新建模型",
+        "createGroup": "新建分组",
+        "manageGroups": "管理分组",
+        "refresh": "刷新",
+        "viewDetail": "查看详情",
+        "viewInstances": "查看实例",
+        "viewInstanceDetail": "查看详情",
+        "viewInstanceRelations": "查看关联",
+        "viewInstanceHistory": "查看历史",
+        "createInstance": "创建实例",
+        "createInstanceRelation": "新增实例关联",
+        "createAttribute": "新增属性",
+        "createRelation": "新建关系",
+        "editRelation": "编辑关系",
+        "createUniqueRule": "新建唯一规则",
+        "editUniqueRule": "编辑唯一规则"
+      },
+      "fields": {
+        "name": "模型名",
+        "displayName": "显示名称",
+        "classification": "分类",
+        "group": "所属分组",
+        "groupName": "分组名",
+        "groupDisplayName": "分组显示名",
+        "icon": "图标",
+        "description": "描述",
+        "isMainline": "是否主线",
+        "mainlineScope": "主线范围",
+        "mainlineLevel": "主线层级",
+        "parentModel": "父主线模型",
+        "builtIn": "内置模型",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "healthStatus": "健康状态",
+        "lastCheckTime": "最近检查时间",
+        "business": "业务",
+        "parentNode": "父节点",
+        "instanceName": "实例名称",
+        "sortOrder": "排序",
+        "propertiesJson": "属性 JSON",
+        "attributeDisplayName": "属性显示名",
+        "attributeName": "属性名",
+        "attributeType": "属性类型",
+        "attributeRequired": "必填",
+        "attributeUnique": "唯一",
+        "attributeEditable": "可编辑",
+        "defaultValue": "默认值",
+        "placeholder": "占位提示",
+        "helpText": "帮助说明",
+        "enumValues": "枚举值"
+      },
+      "placeholders": {
+        "search": "搜索模型名、显示名称或分类",
+        "name": "请输入模型名，例如 rack",
+        "displayName": "请输入显示名称",
+        "group": "请选择模型分组",
+        "groupName": "请输入分组英文名，例如 database_assets",
+        "groupDisplayName": "请输入分组显示名称",
+        "icon": "请输入图标名，例如 rack",
+        "description": "请输入描述",
+        "parentModel": "请选择父主线模型",
+        "business": "请选择业务",
+        "parentNode": "请选择父节点",
+        "instanceName": "请输入实例名称",
+        "relationDefinition": "请选择关系定义",
+        "targetInstance": "请选择目标实例",
+        "propertiesJson": "请输入 JSON，例如 {\"name\":\"rack-a\"}",
+        "attributeDisplayName": "请输入属性显示名",
+        "attributeName": "请输入属性名，例如 rack_code",
+        "enumValues": "每行一个枚举值，也支持逗号分隔",
+        "defaultValue": "请输入默认值",
+        "placeholder": "请输入表单占位提示",
+        "helpText": "请输入字段说明"
+      },
+      "sections": {
+        "attributes": "属性定义",
+        "advanced": "高级配置",
+        "modelGroups": "模型分组",
+        "modelOverview": "模型总览"
+      },
+      "tabs": {
+        "overview": "模型信息",
+        "basic": "基本信息",
+        "attributes": "属性管理",
+        "fields": "字段设计",
+        "uniques": "唯一校验",
+        "preview": "表单预览",
+        "instances": "实例列表",
+        "instanceDetail": "实例详情",
+        "instanceRelations": "实例关联",
+        "instanceHistory": "实例历史",
+        "instanceTopology": "实例拓扑",
+        "relations": "关系",
+        "history": "变更记录",
+        "importExport": "导入导出",
+        "groups": "模型分组",
+        "templates": "字段模板"
+      },
+      "groups": {
+        "all": "全部模型",
+        "mainline": "主线模型",
+        "business": "业务模型",
+        "resource": "资源模型",
+        "builtin": "内置模型"
+      },
+      "options": {
+        "classification": {
+          "business": "业务模型",
+          "resource": "资源模型"
+        },
+        "scope": {
+          "business": "业务级",
+          "global": "全局级",
+          "none": "无"
+        },
+        "boolean": {
+          "yes": "是",
+          "no": "否"
+        },
+        "fieldType": {
+          "string": "单行文本",
+          "int": "数字",
+          "bool": "布尔",
+          "enum": "枚举"
+        }
+      },
+      "messages": {
+        "loadFailed": "加载模型失败",
+        "createFailed": "创建模型失败",
+        "loadGroupsFailed": "加载模型分组失败",
+        "createGroupFailed": "创建模型分组失败",
+        "loadInstancesFailed": "加载实例失败",
+        "loadInstanceDetailFailed": "加载实例详情失败",
+        "loadRelationDefinitionsFailed": "加载实例可用关系失败",
+        "loadTargetInstancesFailed": "加载目标实例失败",
+        "loadInstanceRelationsFailed": "加载实例关联失败",
+        "createInstanceRelationSuccess": "创建实例关联成功",
+        "createInstanceRelationFailed": "创建实例关联失败",
+        "deleteInstanceRelationSuccess": "删除实例关联成功",
+        "deleteInstanceRelationFailed": "删除实例关联失败",
+        "loadInstanceHistoryFailed": "加载实例历史失败",
+        "loadInstanceTopologyFailed": "加载实例拓扑失败",
+        "relationTargetRequired": "请先选择关系定义和目标实例",
+        "instanceCreateFailed": "创建实例失败",
+        "attributeCreateFailed": "创建属性失败",
+        "loadRelationsFailed": "加载模型关系失败",
+        "createRelationFailed": "创建模型关系失败",
+        "updateRelationFailed": "更新模型关系失败",
+        "deleteRelationSuccess": "删除模型关系成功",
+        "deleteRelationFailed": "删除模型关系失败",
+        "loadUniqueRulesFailed": "加载唯一规则失败",
+        "createUniqueRuleFailed": "创建唯一规则失败",
+        "updateUniqueRuleFailed": "更新唯一规则失败",
+        "deleteUniqueRuleSuccess": "删除唯一规则成功",
+        "deleteUniqueRuleFailed": "删除唯一规则失败",
+        "invalidAttributeName": "属性名需以小写字母开头，仅支持小写字母、数字和下划线",
+        "invalidJson": "属性 JSON 格式不合法",
+        "loadParentFailed": "加载父节点失败"
+      },
+      "empty": {
+        "noAttributes": "该模型暂无属性定义",
+        "noInstances": "该模型暂无实例",
+        "noInstanceDetail": "暂无实例详情",
+        "noInstanceRelations": "该实例暂无关联关系",
+        "noInstanceHistory": "该实例暂无变更历史",
+        "noInstanceTopology": "该实例暂无拓扑关系",
+        "noRelations": "该模型暂无关系定义",
+        "noUniqueRules": "该模型暂无唯一规则",
+        "tabPending": "该能力将在后续阶段接入",
+        "noDescription": "暂无模型描述"
+      },
+      "helper": {
+        "modelBasics": "先完成对象基础定义，再按需启用主线能力。这样能把模型和拓扑挂载解耦。",
+        "advancedMainline": "只有需要参与业务主线拓扑的模型，才需要开启主线配置。",
+        "mainlineNotice": "主线模型需要配置范围、层级和父主线模型。当前 P1 仍不支持挂在 module 下。",
+        "propertiesJson": "可以在 JSON 中补充任意属性，name / sort_order 会自动并入。",
+        "parentNodeEmpty": "当前业务下未找到可挂载的父节点，请先确认父主线实例已存在。",
+        "instanceBusinessScope": "业务主线实例创建时，通常需要先选择业务，再选择父节点。",
+        "instanceListNote": "实例录入仍由模型定义驱动，但它已经降级为模型详情里的次级能力。",
+        "instanceHistoryPage": "先选择一个实例，再查看它的变更记录、关联关系和拓扑上下文。",
+        "instanceRelationsPage": "这里展示的是实例级实际关联数据，不同于模型层的关系设计。",
+        "instanceRelationCreate": "新增实例关联时，会先按模型关系定义约束目标模型和关联类型。",
+        "instanceConfigBlock": "配置字段来自实例 configs。",
+        "instanceMetricsBlock": "状态字段来自实例 state.metrics。",
+        "instanceTopologyPage": "当前拓扑共 {{nodeCount}} 个节点，{{edgeCount}} 条边。",
+        "enumValues": "枚举值将用于实例表单下拉选项。",
+        "instanceFallbackForm": "该模型还没有自定义属性，当前先提供基础实例字段。",
+        "attributeDesigner": "先定义模型属性，再由实例表单自动按属性结构渲染。",
+        "attributeRoadmap": "这一页先聚焦属性结构和顺序，拖拽布局、字段分组和联合唯一规则放到下一轮。",
+        "attributeSortHint": "当前按 sort_order 排序展示，下一轮再接拖拽和字段分组。",
+        "listOverview": "模型列表先按分组聚合浏览，主线只是模型的一种能力，不再作为唯一中心视角。",
+        "groupsPending": "模型分组会在后端补上可持久化能力后接入，这一轮先建立信息架构和分组视图。",
+        "groupsPage": "模型分组现在已经接入后端持久化，可以用来组织模型视图和创建入口。",
+        "previewNotice": "当前预览直接复用动态实例表单的字段映射，用来验证字段设计是否合理。",
+        "relationsPending": "模型关系设计还未接入前端，这里先保留占位。",
+        "relationsDesign": "模型关系定义了源模型能指向哪些目标模型，以及关系约束和删除策略。",
+        "relationsDesignHint": "这一页只处理模型层的关系设计，不处理实例之间的实际关联数据。",
+        "relationsListNote": "关系设计会直接约束实例关联的可创建范围，删除前请确认没有线上实例在使用。",
+        "historyPending": "后续会在这里展示模型和属性的变更记录。",
+        "uniquesPending": "联合唯一、辅助唯一和唯一冲突提示依赖下一轮的后端校验能力，这里先预留入口。",
+        "uniquesDesign": "唯一规则会在实例写入前执行校验，用来阻止重复资源进入模型实例表。",
+        "uniquesDesignHint": "默认唯一规则通常对应主标识，辅助唯一规则用于补充业务上的重复约束。",
+        "uniquesListNote": "更新唯一规则会直接影响后续实例创建和更新行为，调整前请确认已有数据不会产生冲突。",
+        "importExportPending": "后续会在这里接入模型导入导出和模板能力。"
+      },
+      "uniques": {
+        "columns": {
+          "name": "规则名称",
+          "fields": "字段组合",
+          "emptyHandling": "空值处理",
+          "status": "状态",
+          "actions": "操作"
+        },
+        "fields": {
+          "name": "规则名称",
+          "fields": "唯一字段",
+          "description": "规则描述",
+          "isDefault": "默认规则",
+          "isAuxiliary": "辅助规则",
+          "enabled": "启用规则",
+          "ignoreIfAllEmpty": "字段全空时忽略"
+        },
+        "placeholders": {
+          "name": "请输入规则名称",
+          "fields": "请选择唯一字段",
+          "description": "请输入规则描述"
+        },
+        "tags": {
+          "default": "默认",
+          "auxiliary": "辅助",
+          "standard": "普通"
+        },
+        "status": {
+          "enabled": "已启用",
+          "disabled": "已停用"
+        },
+        "options": {
+          "emptyHandling": {
+            "ignore": "全空时跳过",
+            "validate": "全空也校验"
+          }
+        },
+        "confirmDelete": "确认删除这条唯一规则吗？"
+      },
+      "relations": {
+        "columns": {
+          "targetModel": "目标模型",
+          "associationType": "关联类型",
+          "mapping": "映射约束",
+          "onDelete": "删除行为",
+          "description": "描述",
+          "actions": "操作"
+        },
+        "fields": {
+          "targetModel": "目标模型",
+          "associationType": "关联类型",
+          "mapping": "映射约束",
+          "onDelete": "删除行为",
+          "description": "描述",
+          "actions": "操作"
+        },
+        "options": {
+          "onDelete": {
+            "cascade": "级联删除",
+            "restrict": "禁止删除",
+            "set_null": "置空"
+          }
+        },
+        "confirmDelete": "确认删除这条模型关系吗？",
+        "confirmDeleteInstanceRelation": "确认删除这条实例关系吗？"
+      }
+    },
     "host": {
       "tabs": {
         "unassigned": "未分配",
@@ -903,10 +1285,10 @@
           "timezone": "时区",
           "language": "语言",
           "sres": "运维人员",
+          "sres": "运维人员",
           "bizops": "产品人员",
           "testers": "测试人员",
-          "developers": "开发人员",
-          "operators": "操作人员"
+          "developers": "开发人员"
         },
         "placeholders": {
           "name": "请输入业务名",

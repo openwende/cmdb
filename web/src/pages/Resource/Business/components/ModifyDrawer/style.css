@@ -32,3 +32,10 @@
     margin-right: 8px;
   }
 }
+
+/* --- Mobile (< 768px) --- */
+@media (max-width: 767px) {
+  .modify-drawer .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

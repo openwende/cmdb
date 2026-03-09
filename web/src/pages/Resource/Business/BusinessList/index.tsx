@@ -120,12 +120,17 @@ const BusinessList: React.FC = () => {
       //     : null,
       // };
       const { data } = await getBusinessList({
-        limit: pageSize,
-        offset: (page - 1) * pageSize,
+        limit: 100,
+        offset: 0,
       });
-      const { items, total } = data;
-      setBusinessList(items);
-      setBusinessCount(total);
+      const activeBusinesses = data.items.filter(
+        (item: BusinessDetail) => item.lifecycle !== LIFECYCLE.OFFLINE,
+      );
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize;
+
+      setBusinessList(activeBusinesses.slice(start, end));
+      setBusinessCount(activeBusinesses.length);
     } catch (error) {
       console.error(error);
     } finally {

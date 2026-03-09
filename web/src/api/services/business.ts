@@ -17,14 +17,78 @@ interface BatchSearchOptions {
   injectId?: string;
 }
 
-// --- API ---
-const topologyTreeApi = '/business/topology/tree';
+import {
+  CreateTopologyModulePayload,
+  CreateTopologySetPayload,
+  GetTopologyTreeRequest,
+  GetTopologyTreeResponse,
+} from '../types/topology';
+
+// --- API Endpoints ---
 const hostListApi = '/business/topology/hostList';
 
-// --- Business Topology ---
-export const getTopologyTree = (params?: any) => {
-  return axios.get(topologyTreeApi, params);
+// --- Business & Business Set List ---
+/**
+ * 获取业务列表
+ * @returns Promise<any>
+ */
+export const getBusinessList = async () => {
+  try {
+    const response: any = await axios.get('/v1/businesses');
+    return response;
+  } catch (error) {
+    console.error('Failed to fetch business list:', error);
+    throw error;
+  }
 };
+
+/**
+ * 获取业务集列表
+ * @returns Promise<any>
+ */
+export const getBusinessSetList = async () => {
+  try {
+    const response: any = await axios.get('/v1/business-sets');
+    return response;
+  } catch (error) {
+    console.error('Failed to fetch business set list:', error);
+    throw error;
+  }
+};
+
+// --- Business Topology ---
+/**
+ * 获取业务拓扑树
+ * @param params 查询参数
+ * @returns Promise<GetTopologyTreeResponse>
+ */
+export const getTopologyTree = async (
+  params?: GetTopologyTreeRequest,
+): Promise<GetTopologyTreeResponse> => {
+  try {
+    const response: GetTopologyTreeResponse = await axios.get('/v1/topology/tree', {
+      params,
+    });
+    return response;
+  } catch (error) {
+    console.error('Failed to fetch topology tree:', error);
+    throw error;
+  }
+};
+
+export const createTopologySet = async (payload: CreateTopologySetPayload) => {
+  return axios.post('/v1/topology/sets', payload);
+};
+
+export const createTopologyModule = async (payload: CreateTopologyModulePayload) => {
+  return axios.post('/v1/topology/modules', payload);
+};
+
+/**
+ * 获取主机列表
+ * @param params 查询参数
+ * @returns Promise<any>
+ */
 export const getHostList = (params: any) => {
   return axios.get(hostListApi, params);
 };

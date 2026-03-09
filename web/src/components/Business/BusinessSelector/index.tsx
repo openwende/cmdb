@@ -32,14 +32,18 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     businessList,
     businessSetList,
     loading,
+    initialized,
     loadBusinessData,
     getBusinessById,
     setCurrentBusiness,
   } = useBusinessStore();
 
   useEffect(() => {
-    loadBusinessData();
-  }, [loadBusinessData]);
+    // 只在未初始化时加载数据
+    if (!initialized && !loading) {
+      loadBusinessData();
+    }
+  }, [initialized, loading]); // 依赖 initialized 而不是 loadBusinessData
 
   // Update current business when URL changes
   useEffect(() => {
@@ -47,7 +51,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
 
     if (businessInfo) {
       const { id, type } = businessInfo;
-      const business = getBusinessById(id.toString(), type);
+      const business = getBusinessById(id, type);
 
       if (business) {
         setCurrentBusiness(business);
@@ -64,22 +68,21 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   // Handle business selection change
   const handleChange = (value: string) => {
     const [type, idStr] = value.split(':');
-    const id = parseInt(idStr, 10);
 
     if (type === BusinessType.Business) {
-      const business = getBusinessById(id, BusinessType.Business);
+      const business = getBusinessById(idStr, BusinessType.Business);
       if (business) {
         setCurrentBusiness(business);
         // Always use replace to ensure page state refresh
-        navigate(getBusinessTopologyPath(id), { replace: true });
+        navigate(getBusinessTopologyPath(business.id), { replace: true });
       }
     } else if (type === BusinessType.BusinessSet) {
-      const businessSet = getBusinessById(id, BusinessType.BusinessSet);
+      const businessSet = getBusinessById(idStr, BusinessType.BusinessSet);
       if (businessSet) {
         setCurrentBusiness(businessSet);
 
         // Always use replace to ensure page state refresh
-        navigate(getBusinessSetTopologyPath(id), { replace: true });
+        navigate(getBusinessSetTopologyPath(businessSet.id), { replace: true });
       }
     }
   };
@@ -133,9 +136,10 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
               <Option
                 key={`${BusinessType.Business}:${business.id}`}
                 value={`${BusinessType.Business}:${business.id}`}
-                label={`${business.name} (${business.id})`}
+                label={`${business.name} (${business.displayId || business.id})`}
               >
-                {business.name} <span className="option-id">({business.id})</span>
+                {business.name}{' '}
+                <span className="option-id">({business.displayId || business.id})</span>
               </Option>
             ))}
           </OptGroup>
@@ -147,9 +151,10 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
               <Option
                 key={`${BusinessType.BusinessSet}:${businessSet.id}`}
                 value={`${BusinessType.BusinessSet}:${businessSet.id}`}
-                label={`${businessSet.name} (${businessSet.id})`}
+                label={`${businessSet.name} (${businessSet.displayId || businessSet.id})`}
               >
-                {businessSet.name} <span className="option-id">({businessSet.id})</span>
+                {businessSet.name}{' '}
+                <span className="option-id">({businessSet.displayId || businessSet.id})</span>
               </Option>
             ))}
           </OptGroup>
@@ -159,4 +164,4 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   );
 };
 
-export default BusinessSelector;
+export default React.memo(BusinessSelector);

@@ -36,7 +36,7 @@
         cursor: pointer;
 
         &:hover {
-          color: #1677ff;
+          color: var(--color-primary);
         }
       }
     }
@@ -53,7 +53,7 @@
 
         .copy-icon {
           margin-left: 8px;
-          color: #1677ff;
+          color: var(--color-primary);
           cursor: pointer;
           opacity: 0;
           transition: opacity 0.2s;
@@ -65,14 +65,14 @@
       }
 
       .error-message {
-        color: #ff4d4f;
+        color: var(--color-error);
         font-size: 12px;
         line-height: 1.4;
       }
     }
 
     .form-item-error {
-      color: #ff4d4f;
+      color: var(--color-error);
       font-size: 12px;
       line-height: 1.4;
       margin-top: 4px;

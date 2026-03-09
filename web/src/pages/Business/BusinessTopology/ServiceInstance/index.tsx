@@ -56,7 +56,7 @@ const ServiceInstance: React.FC<Props> = ({ selectedNode, view = 'instance', set
   return (
     <>
       {selectedNodeStatus.isModule ? (
-        <div style={{ background: '#fff', padding: 16 }}>
+        <div style={{ background: 'var(--color-bg-container)', padding: 16 }}>
           {/* Top action bar */}
           <div
             style={{

@@ -1,5 +1,5 @@
 .archived-business {
-  background-color: #fff;
+  background-color: var(--color-bg-container);
   margin: 16px 20px;
   padding: 16px;
   display: flex;
@@ -29,11 +29,11 @@
 }
 
 .delete-link {
-  color: #ff4d4f;
+  color: var(--color-error);
 }
 
 .delete-link:hover {
-  color: #ff7875;
+  color: var(--color-error);
 }
 
 /* Customize restore business modal */
@@ -43,5 +43,5 @@
 }
 
 .ant-form-item-label > label {
-  color: #606266;
+  color: var(--color-text-secondary);
 }

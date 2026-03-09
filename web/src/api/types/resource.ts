@@ -15,19 +15,59 @@ export interface BusinessListResponse {
   offset: number;
   total: number;
 }
+
+/**
+ * 创建业务请求参数
+ * 对齐蓝鲸 CMDB v3 业务模型
+ */
+export interface CreateBusinessRequest {
+  name: string;
+  description?: string;
+  identifier?: string;
+  lifecycle?: 'testing' | 'online' | 'offline';
+  timezone?: string; // 时区，如 "Asia/Shanghai", "UTC"
+  language?: string; // 语言，如 "zh", "en"
+
+  // 业务角色（对齐蓝鲸 CMDB）
+  sres: string[]; // 运维人员 (bk_biz_maintainer)
+  developers: string[]; // 开发人员 (bk_biz_developer)
+  testers: string[]; // 测试人员 (bk_biz_tester)
+  bizops: string[]; // 产品人员 (bk_biz_productor)
+}
+
+/**
+ * 更新业务请求参数
+ */
+export interface UpdateBusinessRequest {
+  name?: string;
+  description?: string;
+  lifecycle?: 'testing' | 'online' | 'offline';
+  timezone?: string;
+  language?: string;
+  sres?: string[];
+  developers?: string[];
+  testers?: string[];
+  bizops?: string[];
+}
+
+/**
+ * 业务详情（展示层类型，包含响应字段）
+ */
 export interface BusinessDetail {
   id: string;
+  business_id?: number;
   name: string;
   language: string;
-  lifecycle?: string;
+  lifecycle?: 'testing' | 'online' | 'offline';
   timezone: string;
   created_at?: string;
   created_by?: string;
   updated_at?: string;
   updated_by?: string;
+  description?: string;
+  identifier?: string;
   sres: string[];
   bizops?: string[];
   testers?: string[];
   developers?: string[];
-  operators?: string[];
 }

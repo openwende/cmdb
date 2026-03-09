@@ -12,7 +12,7 @@
     display: block;
 
     .selected-count {
-      color: #2dcb56;
+      color: var(--color-success);
       font-weight: bold;
       margin: 0 4px;
       font-weight: 700;

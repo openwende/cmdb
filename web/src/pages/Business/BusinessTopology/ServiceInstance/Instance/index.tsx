@@ -60,7 +60,7 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
             <>
               <span>{text}</span>
               <EditOutlined
-                style={{ cursor: 'pointer', color: '#1890ff' }}
+                style={{ cursor: 'pointer', color: 'var(--color-primary)' }}
                 onClick={() => {
                   setEditingInstance(record.id);
                   setEditingInstanceName(text);
@@ -92,7 +92,7 @@ const Instance: React.FC<Props> = ({ selectedRowKeys, setSelectedRowKeys, expand
               : '--'}
           </div>
           <EditOutlined
-            style={{ cursor: 'pointer', color: '#1890ff' }}
+            style={{ cursor: 'pointer', color: 'var(--color-primary)' }}
             onClick={() => handleEditLabel(record)}
           />
         </div>

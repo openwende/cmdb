@@ -5,7 +5,7 @@
   justify-content: center;
   padding: 10px 16px;
   margin-bottom: 6px;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid var(--color-border);
 
   .business-selector {
     width: 100%;
@@ -16,7 +16,7 @@
   }
 
   .option-id {
-    color: #c4c6cc !important;
+    color: var(--color-text-quaternary) !important;
   }
 
   .create-business-divider {

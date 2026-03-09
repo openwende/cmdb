@@ -32,7 +32,7 @@ interface PropertyItemProps {
   type: string;
   editable?: boolean;
   isEditing?: boolean;
-  editValue?: string | string[];
+  editValue?: string | number | string[];
   onValueChange?: (value: string) => void;
   options?: { [key: string]: string }[];
   hasError?: boolean;
