@@ -23,6 +23,22 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 
 	sqls := []string{
+		`CREATE TABLE mainline_instances (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			model_name TEXT NOT NULL,
+			business_id TEXT NOT NULL,
+			parent_id INTEGER,
+			ref_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			path TEXT NOT NULL,
+			level INTEGER NOT NULL,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			is_default BOOLEAN NOT NULL DEFAULT FALSE,
+			extra TEXT,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		)`,
 		`CREATE TABLE resources (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			model_uid TEXT NOT NULL,
@@ -83,6 +99,34 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 			module_id BIGINT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, module_id)
+		)`,
+		`CREATE TABLE hosts (
+			id TEXT PRIMARY KEY,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME,
+			tenant_id TEXT NOT NULL,
+			created_by TEXT,
+			updated_by TEXT,
+			cloud_area_id TEXT,
+			business_id INTEGER,
+			host_name TEXT NOT NULL,
+			primary_ip TEXT NOT NULL,
+			ip_addresses TEXT,
+			cloud_vendor TEXT,
+			cloud_instance_id TEXT,
+			cloud_region TEXT,
+			vpc_id TEXT,
+			subnet_id TEXT,
+			cpu INTEGER,
+			memory INTEGER,
+			disk_size INTEGER,
+			os_type TEXT,
+			os_version TEXT,
+			status TEXT NOT NULL,
+			is_destroyed BOOLEAN NOT NULL DEFAULT FALSE,
+			cloud_metadata TEXT,
+			custom_fields TEXT
 		)`,
 		`CREATE TABLE modules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -158,4 +202,80 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 	require.Equal(t, "host:1", view.InstanceKey)
 	require.NotNil(t, view.BindingContext)
 	require.Contains(t, view.AllowedActions, "bind_topology")
+}
+
+func TestAggregateInstance_ListAggregateInstances_ReturnsMainlineNodes(t *testing.T) {
+	db := setupAggregateInstanceTestDB(t)
+	dynamicService := dynamic_model.NewService(db)
+	svc := NewAggregateService(db, dynamicService)
+	ctx := context.Background()
+
+	businessID := uuid.New()
+
+	require.NoError(t, db.Exec(`
+		INSERT INTO mainline_instances (id, model_name, business_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
+		VALUES (1, 'business', ?, ?, 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
+	`, businessID.String(), businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	require.NoError(t, db.Exec(`
+		INSERT INTO mainline_instances (id, model_name, business_id, parent_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
+		VALUES (2, 'set', ?, 1, '2', 'SmokeSet3', 'business_1000.set_2', 1, 0, FALSE, '{"description":"topology smoke set"}', ?, ?)
+	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+
+	items, total, err := svc.ListAggregateInstances(ctx, "set", 1, 20)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), total)
+	require.Len(t, items, 1)
+	require.Equal(t, "set:2", items[0].InstanceKey)
+	require.Equal(t, "set", items[0].Model.ModelUID)
+	require.Equal(t, "SmokeSet3", items[0].Properties["name"])
+	require.Equal(t, "mainline", items[0].BindingContext["source"])
+}
+
+func TestAggregateInstance_ListAggregateInstances_ReturnsHosts(t *testing.T) {
+	db := setupAggregateInstanceTestDB(t)
+	dynamicService := dynamic_model.NewService(db)
+	svc := NewAggregateService(db, dynamicService)
+	ctx := context.Background()
+
+	hostID := uuid.New()
+	tenantID := uuid.New()
+
+	require.NoError(t, db.Exec(`
+		INSERT INTO hosts (id, tenant_id, host_name, primary_ip, status, is_destroyed, created_at, updated_at)
+		VALUES (?, ?, 'host-agg-1', '10.0.0.10', 'running', FALSE, ?, ?)
+	`, hostID.String(), tenantID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+
+	items, total, err := svc.ListAggregateInstances(ctx, "host", 1, 20)
+	require.NoError(t, err)
+	require.Equal(t, int64(1), total)
+	require.Len(t, items, 1)
+	require.Equal(t, "host:"+hostID.String(), items[0].InstanceKey)
+	require.Equal(t, "host", items[0].Model.ModelUID)
+	require.Equal(t, "host-agg-1", items[0].Properties["name"])
+	require.Equal(t, "host", items[0].BindingContext["source"])
+}
+
+func TestAggregateInstance_GetInstance_ReturnsMainlineBindingContext(t *testing.T) {
+	db := setupAggregateInstanceTestDB(t)
+	dynamicService := dynamic_model.NewService(db)
+	svc := NewAggregateService(db, dynamicService)
+	ctx := context.Background()
+
+	businessID := uuid.New()
+
+	require.NoError(t, db.Exec(`
+		INSERT INTO mainline_instances (id, model_name, business_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
+		VALUES (1, 'business', ?, ?, 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
+	`, businessID.String(), businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	require.NoError(t, db.Exec(`
+		INSERT INTO mainline_instances (id, model_name, business_id, parent_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
+		VALUES (2, 'set', ?, 1, '2', 'SmokeSet3', 'business_1000.set_2', 1, 0, FALSE, '{"description":"topology smoke set"}', ?, ?)
+	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+
+	view, err := svc.GetAggregateInstance(ctx, "set:2")
+	require.NoError(t, err)
+	require.Equal(t, "set:2", view.InstanceKey)
+	require.Equal(t, "mainline", view.BindingContext["source"])
+	require.Equal(t, true, view.BindingContext["topology_bound"])
+	require.Equal(t, "SmokeSet3", view.Properties["name"])
 }
