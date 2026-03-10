@@ -2,10 +2,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Table, Button, Input, Dropdown, message, Modal, Tooltip } from 'antd';
 import { DownOutlined, ExclamationCircleFilled, HistoryOutlined } from '@ant-design/icons';
 import {
-  assignedListMock,
-  allListMock,
-} from '@/mock/resource';
-import {
   resourceAssignMenuItems,
   resourceCopyMenuItems,
   resourceMoreMenuItems,
@@ -28,10 +24,21 @@ import ImportHost from '../components/ImportHost';
 import './style.css';
 import { useDirectoryStore } from '@/store/DirectoryStore';
 import { usePoolHostStore } from '@/store/PoolHostStore';
+import { getHostList } from '@/api';
 
 interface HostListProps {
   selectedId?: number;
   tabKey: TabsKey;
+}
+
+interface RawHostItem {
+  id: string;
+  primary_ip?: string;
+  ip_addresses?: string[];
+  status?: string;
+  cloud_area_id?: string | null;
+  business_ids?: string[];
+  module_ids?: number[];
 }
 
 export const hostResourcePath = '/resource/host';
@@ -51,6 +58,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const query = usePoolHostStore((state) => state.query);
   const setPoolHostQuery = usePoolHostStore((state) => state.setQuery);
   const fetchPoolHosts = usePoolHostStore((state) => state.fetchHosts);
+  const [generalHostLoading, setGeneralHostLoading] = useState(false);
+  const [generalHostTotal, setGeneralHostTotal] = useState(0);
   // import、assign、transfer host
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
@@ -59,11 +68,79 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   // Host list
   const [hostsList, setHostsList] = useState<any>([]);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+
+  const adaptGeneralHost = useCallback((item: RawHostItem) => {
+    const ipv6 = item.ip_addresses?.find((address) => address.includes(':')) || '';
+    const cloudID = item.cloud_area_id || '';
+    const moduleIDs = item.module_ids || [];
+
+    return {
+      host: {
+        bk_host_id: item.id,
+        bk_host_innerip: item.primary_ip || '',
+        bk_host_innerip_v6: ipv6,
+        bk_cloud_host_status: item.status || '--',
+        bk_cloud_id: cloudID
+          ? [
+              {
+                bk_inst_id: cloudID,
+                bk_inst_name: cloudID,
+              },
+            ]
+          : [],
+      },
+      module: moduleIDs.map((moduleID) => ({
+        bk_module_id: moduleID,
+        topo_module_name: `模块##${moduleID}`,
+      })),
+      set: [],
+      business_ids: item.business_ids || [],
+      module_ids: moduleIDs,
+    };
+  }, []);
+
+  const fetchGeneralHosts = useCallback(async () => {
+    setGeneralHostLoading(true);
+
+    try {
+      const response = await getHostList({
+        params: {
+          page: query.page,
+          page_size: query.pageSize,
+        },
+      });
+
+      const hosts = ((response as any)?.hosts || []) as RawHostItem[];
+      const adaptedHosts = hosts.map(adaptGeneralHost);
+      const filteredHosts =
+        tabKey === TabsKey.Assigned
+          ? adaptedHosts.filter(
+              (item) =>
+                (item.business_ids as string[] | undefined)?.length
+                || (item.module_ids as number[] | undefined)?.length,
+            )
+          : adaptedHosts;
+
+      setHostsList(filteredHosts);
+      setGeneralHostTotal(
+        tabKey === TabsKey.Assigned
+          ? filteredHosts.length
+          : ((response as any)?.total ?? filteredHosts.length),
+      );
+    } catch (error) {
+      console.error('Failed to fetch general hosts:', error);
+      setHostsList([]);
+      setGeneralHostTotal(0);
+      message.error(t('resource.host.messages.loadFailed'));
+    } finally {
+      setGeneralHostLoading(false);
+    }
+  }, [adaptGeneralHost, query.page, query.pageSize, t, tabKey]);
 
   useEffect(() => {
     if (tabKey !== TabsKey.Unassigned) {
-      setHostsList(tabKey === TabsKey.Assigned ? assignedListMock : allListMock);
+      setSelectedRowKeys([]);
       return;
     }
 
@@ -75,11 +152,12 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
   useEffect(() => {
     if (tabKey !== TabsKey.Unassigned) {
+      void fetchGeneralHosts();
       return;
     }
 
     void fetchPoolHosts();
-  }, [fetchPoolHosts, query.directoryId, query.page, query.pageSize, tabKey]);
+  }, [fetchGeneralHosts, fetchPoolHosts, query.directoryId, query.page, query.pageSize, tabKey]);
 
   useEffect(() => {
     if (tabKey === TabsKey.Unassigned) {
@@ -101,7 +179,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const hostsNotAllInBizPool = hostPoolStatuses.some((item) => item.inHostPool === true);
 
   const handleSelectedRows = (rowKeys: React.Key[], _rows: any) => {
-    setSelectedRowKeys(rowKeys.map((key) => Number(key)));
+    setSelectedRowKeys(rowKeys);
   };
 
   const handleTransferMenuClick = (key: string) => {
@@ -381,7 +459,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       <Table
         columns={columns}
         dataSource={hostsList}
-        loading={tabKey === TabsKey.Unassigned ? poolHostLoading : false}
+        loading={tabKey === TabsKey.Unassigned ? poolHostLoading : generalHostLoading}
         rowKey={(record) => record.host.bk_host_id}
         showSorterTooltip={false}
         pagination={false}
@@ -392,7 +470,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       />
 
       <Pagination
-        total={tabKey === TabsKey.Unassigned ? poolHostTotal : hostsList.length}
+        total={tabKey === TabsKey.Unassigned ? poolHostTotal : generalHostTotal}
         pageSize={query.pageSize}
         current={query.page}
         onChange={(nextPage, nextPageSize) =>
