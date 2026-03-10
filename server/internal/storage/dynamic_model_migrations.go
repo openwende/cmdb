@@ -2,7 +2,9 @@ package storage
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/gorm"
 )
 
@@ -12,16 +14,16 @@ func MigrateDynamicModels(db *gorm.DB) error {
 	// 1. 创建基础表（使用 GORM AutoMigrate）
 	// 注意：AutoMigrate 无法处理 Generated Columns，需要手动添加
 	if err := db.AutoMigrate(
-		&Model{},
-		&Attribute{},
-		&Resource{},
-		&ResourceState{},
-		&AssociationType{},
-		&ModelAssociation{},
-		&Relation{},
-		&ResourceHistory{},
-		&ModelUniqueRule{},
-		&ModelUniqueRuleField{},
+		&types.DynamicModel{},
+		&types.DynamicAttribute{},
+		&types.Resource{},
+		&types.ResourceState{},
+		&types.AssociationType{},
+		&types.DynamicModelAssociation{},
+		&types.Relation{},
+		&types.ResourceHistory{},
+		&types.ModelUniqueRule{},
+		&types.ModelUniqueRuleField{},
 	); err != nil {
 		return fmt.Errorf("自动迁移失败: %w", err)
 	}
@@ -44,6 +46,266 @@ func MigrateDynamicModels(db *gorm.DB) error {
 	// 5. 初始化预定义数据
 	if err := seedBuiltinData(db); err != nil {
 		return fmt.Errorf("初始化预定义数据失败: %w", err)
+	}
+	if err := seedBuiltinDynamicModelsFromStaticModels(db); err != nil {
+		return fmt.Errorf("同步内置模型失败: %w", err)
+	}
+
+	return nil
+}
+
+// MigrateRuntimeSupportTables 仅初始化当前运行时依赖的动态模型元数据表。
+// Docker 本地部署只需要关系能力相关表，避免触发完整动态引擎迁移中的历史兼容问题。
+func MigrateRuntimeSupportTables(db *gorm.DB) error {
+	for _, stmt := range runtimeSupportDDL(db.Dialector.Name()) {
+		if err := db.Exec(stmt).Error; err != nil {
+			return fmt.Errorf("创建运行时支持表失败: %w", err)
+		}
+	}
+
+	if err := seedBuiltinData(db); err != nil {
+		return fmt.Errorf("初始化关联类型失败: %w", err)
+	}
+	if err := seedBuiltinDynamicModelsFromStaticModels(db); err != nil {
+		return fmt.Errorf("同步内置模型失败: %w", err)
+	}
+
+	return nil
+}
+
+func runtimeSupportDDL(dialect string) []string {
+	if dialect == "sqlite" {
+		return []string{
+			`CREATE TABLE IF NOT EXISTS dynamic_models (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				uid TEXT NOT NULL,
+				name TEXT NOT NULL,
+				is_paused BOOLEAN NOT NULL DEFAULT FALSE,
+				description TEXT,
+				icon TEXT,
+				unique_fields TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_models_uid ON dynamic_models (uid)`,
+			`CREATE TABLE IF NOT EXISTS association_types (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				uid TEXT NOT NULL,
+				name TEXT NOT NULL,
+				source_to_dest_desc TEXT,
+				dest_to_source_desc TEXT,
+				is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+				description TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_association_types_uid ON association_types (uid)`,
+			`CREATE TABLE IF NOT EXISTS model_associations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				source_model_uid TEXT NOT NULL,
+				target_model_uid TEXT NOT NULL,
+				association_uid TEXT NOT NULL,
+				mapping TEXT NOT NULL,
+				on_delete TEXT,
+				description TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_model_association
+				ON model_associations (source_model_uid, target_model_uid, association_uid)`,
+			`CREATE INDEX IF NOT EXISTS idx_model_associations_source_assoc
+				ON model_associations (source_model_uid, association_uid)`,
+			`CREATE INDEX IF NOT EXISTS idx_model_associations_target_assoc
+				ON model_associations (target_model_uid, association_uid)`,
+			`CREATE TABLE IF NOT EXISTS relations (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				source_id INTEGER NOT NULL,
+				target_id INTEGER NOT NULL,
+				association_uid TEXT NOT NULL,
+				source_model_uid TEXT,
+				target_model_uid TEXT,
+				properties TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_relations_source_assoc
+				ON relations (source_id, association_uid)`,
+			`CREATE INDEX IF NOT EXISTS idx_relations_target_assoc
+				ON relations (target_id, association_uid)`,
+			`CREATE INDEX IF NOT EXISTS idx_relations_models_assoc
+				ON relations (source_model_uid, target_model_uid, association_uid)`,
+			`CREATE TABLE IF NOT EXISTS resources (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				model_uid TEXT NOT NULL,
+				name TEXT NOT NULL,
+				configs TEXT NOT NULL,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				deleted_at DATETIME
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_resources_model_uid
+				ON resources (model_uid)`,
+			`CREATE TABLE IF NOT EXISTS resource_states (
+				resource_id INTEGER PRIMARY KEY,
+				last_check_time DATETIME,
+				health_status INTEGER NOT NULL DEFAULT 0,
+				metrics TEXT,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE TABLE IF NOT EXISTS resource_histories (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				resource_id INTEGER NOT NULL,
+				model_uid TEXT NOT NULL,
+				change_type TEXT NOT NULL,
+				before_data TEXT,
+				after_data TEXT,
+				changed_by TEXT,
+				changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				client_ip TEXT,
+				user_agent TEXT
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_resource_histories_resource_time
+				ON resource_histories (resource_id, changed_at DESC)`,
+		}
+	}
+
+	return []string{
+		`CREATE TABLE IF NOT EXISTS dynamic_models (
+			id BIGSERIAL PRIMARY KEY,
+			uid VARCHAR(50) NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			is_paused BOOLEAN NOT NULL DEFAULT FALSE,
+			description VARCHAR(500),
+			icon VARCHAR(50),
+			unique_fields JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_models_uid ON dynamic_models (uid)`,
+		`CREATE TABLE IF NOT EXISTS association_types (
+			id BIGSERIAL PRIMARY KEY,
+			uid VARCHAR(50) NOT NULL,
+			name VARCHAR(100) NOT NULL,
+			source_to_dest_desc VARCHAR(100),
+			dest_to_source_desc VARCHAR(100),
+			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+			description VARCHAR(500),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_association_types_uid ON association_types (uid)`,
+		`CREATE TABLE IF NOT EXISTS model_associations (
+			id BIGSERIAL PRIMARY KEY,
+			source_model_uid VARCHAR(50) NOT NULL,
+			target_model_uid VARCHAR(50) NOT NULL,
+			association_uid VARCHAR(50) NOT NULL,
+			mapping VARCHAR(10) NOT NULL,
+			on_delete VARCHAR(20),
+			description VARCHAR(500),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_model_association
+			ON model_associations (source_model_uid, target_model_uid, association_uid)`,
+		`CREATE INDEX IF NOT EXISTS idx_model_associations_source_assoc
+			ON model_associations (source_model_uid, association_uid)`,
+		`CREATE INDEX IF NOT EXISTS idx_model_associations_target_assoc
+			ON model_associations (target_model_uid, association_uid)`,
+		`CREATE TABLE IF NOT EXISTS relations (
+			id BIGSERIAL PRIMARY KEY,
+			source_id BIGINT NOT NULL,
+			target_id BIGINT NOT NULL,
+			association_uid VARCHAR(50) NOT NULL,
+			source_model_uid VARCHAR(50),
+			target_model_uid VARCHAR(50),
+			properties JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_relations_source_assoc
+			ON relations (source_id, association_uid)`,
+		`CREATE INDEX IF NOT EXISTS idx_relations_target_assoc
+			ON relations (target_id, association_uid)`,
+		`CREATE INDEX IF NOT EXISTS idx_relations_models_assoc
+			ON relations (source_model_uid, target_model_uid, association_uid)`,
+		`CREATE TABLE IF NOT EXISTS resources (
+			id BIGSERIAL PRIMARY KEY,
+			model_uid VARCHAR(50) NOT NULL,
+			name VARCHAR(200) NOT NULL,
+			configs JSONB NOT NULL,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			deleted_at TIMESTAMPTZ
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_resources_model_uid
+			ON resources (model_uid)`,
+		`CREATE TABLE IF NOT EXISTS resource_states (
+			resource_id BIGINT PRIMARY KEY,
+			last_check_time TIMESTAMPTZ,
+			health_status INTEGER NOT NULL DEFAULT 0,
+			metrics JSONB,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS resource_histories (
+			id BIGSERIAL PRIMARY KEY,
+			resource_id BIGINT NOT NULL,
+			model_uid VARCHAR(50) NOT NULL,
+			change_type VARCHAR(20) NOT NULL,
+			before_data JSONB,
+			after_data JSONB,
+			changed_by VARCHAR(100),
+			changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			client_ip VARCHAR(50),
+			user_agent VARCHAR(500)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_resource_histories_resource_time
+			ON resource_histories (resource_id, changed_at DESC)`,
+	}
+}
+
+type builtinStaticModelSeed struct {
+	UID         string
+	Name        string
+	Description string
+	Icon        string
+}
+
+func seedBuiltinDynamicModelsFromStaticModels(db *gorm.DB) error {
+	if db == nil || !db.Migrator().HasTable("models") {
+		return nil
+	}
+
+	var items []builtinStaticModelSeed
+	if err := db.Table("models").
+		Select("name AS uid, display_name AS name, description, icon").
+		Where("is_builtin = ?", true).
+		Order("name ASC").
+		Scan(&items).Error; err != nil {
+		return err
+	}
+
+	now := time.Now()
+	for _, item := range items {
+		if item.UID == "" || item.Name == "" {
+			continue
+		}
+
+		if err := db.Exec(
+			`INSERT INTO dynamic_models (uid, name, is_paused, description, icon, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?)
+			 ON CONFLICT(uid) DO UPDATE
+			 SET name = excluded.name,
+			     description = excluded.description,
+			     icon = excluded.icon,
+			     updated_at = excluded.updated_at`,
+			item.UID,
+			item.Name,
+			false,
+			item.Description,
+			item.Icon,
+			now,
+			now,
+		).Error; err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -160,7 +422,7 @@ func setTableParameters(db *gorm.DB) error {
 func seedBuiltinData(db *gorm.DB) error {
 	// 插入预定义的关联类型
 	for _, assocType := range BuiltinAssociationTypes {
-		var existing AssociationType
+		var existing types.AssociationType
 		err := db.Where("uid = ?", assocType.UID).First(&existing).Error
 		if err == gorm.ErrRecordNotFound {
 			// 不存在，插入
@@ -369,7 +631,7 @@ type ResourceHistory struct {
 	UserAgent  string
 }
 
-var BuiltinAssociationTypes = []AssociationType{}
+var BuiltinAssociationTypes = types.BuiltinAssociationTypes
 
 type ModelUniqueRule struct {
 	ID               uint64
