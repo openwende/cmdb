@@ -25,7 +25,7 @@ import {
 } from '../types/topology';
 
 // --- API Endpoints ---
-const hostListApi = '/business/topology/hostList';
+const hostListApi = '/v1/hosts';
 
 // --- Business & Business Set List ---
 /**
