@@ -30,6 +30,37 @@ export interface AggregateInstanceDetail {
   allowed_actions?: string[];
 }
 
+export interface AggregateInstanceListItem {
+  instance_key: string;
+  model?: {
+    model_uid: string;
+    display_name?: string;
+    icon?: string;
+  };
+  properties?: Record<string, unknown> | null;
+  binding_context?: Record<string, unknown> | null;
+  allowed_actions?: string[];
+}
+
+export interface ListAggregateInstancesParams {
+  page: number;
+  page_size: number;
+}
+
+export interface ListAggregateInstancesResponse {
+  code: number;
+  data: {
+    items: AggregateInstanceListItem[];
+    pagination?: {
+      page: number;
+      page_size: number;
+      total: number;
+      total_page: number;
+    };
+  };
+  message?: string;
+}
+
 export const getModelInstanceDetail = async (
   modelUID: string,
   instanceID: string | number,
@@ -41,6 +72,18 @@ export const getAggregateInstanceDetail = async (
   instanceKey: string,
 ): Promise<{ code: number; data: AggregateInstanceDetail; message?: string }> => {
   return axios.get(`/v1/instances/${encodeURIComponent(instanceKey)}`);
+};
+
+export const listAggregateInstances = async (
+  modelUID: string,
+  params: ListAggregateInstancesParams,
+): Promise<ListAggregateInstancesResponse> => {
+  return axios.get('/v1/instances', {
+    params: {
+      model_uid: modelUID,
+      ...params,
+    },
+  });
 };
 
 export const listModelInstanceRelations = async (

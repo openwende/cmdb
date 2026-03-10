@@ -22,19 +22,17 @@ import {
   createModelInstanceRelation,
   deleteModelInstanceRelation,
   getModelInstanceTopology,
+  listAggregateInstances,
   listModelInstanceHistory,
   listModelInstanceRelations,
-  listModelInstances,
 } from '@/api';
+import { CreateModelInstancePayload } from '@/api/types/model';
 import {
-  CreateModelInstancePayload,
-  ModelInstance,
-} from '@/api/types/model';
-import {
+  AggregateInstanceListItem,
   InstanceHistoryItem,
   InstanceRelationItem,
   InstanceTopologyGraph,
-} from '@/api/types/modelInstance';
+} from '@/api/services/modelInstance';
 import { useTranslation } from 'react-i18next';
 import CreateInstanceDrawer from '../CreateInstanceDrawer';
 import { useModelPageContext } from '../../context';
@@ -61,13 +59,32 @@ const renderJSONPreview = (value?: Record<string, unknown> | null) => {
   return <pre className="properties-preview">{JSON.stringify(value, null, 2)}</pre>;
 };
 
-const getInstanceName = (record: ModelInstance) => {
+const getInstanceName = (record: AggregateInstanceListItem) => {
   const nameFromProperties = record.properties?.name;
   if (typeof nameFromProperties === 'string' && nameFromProperties.trim()) {
     return nameFromProperties;
   }
 
-  return String(record.id);
+  return record.instance_key;
+};
+
+const getInstanceIdentifier = (record: AggregateInstanceListItem) => {
+  const raw = record.instance_key.split(':').slice(1).join(':');
+  return raw || record.instance_key;
+};
+
+const getInstanceBusinessLabel = (record: AggregateInstanceListItem) => {
+  const directBusinessID = record.binding_context?.business_id;
+  if (typeof directBusinessID === 'string' && directBusinessID.trim()) {
+    return directBusinessID;
+  }
+
+  const businessIDs = record.binding_context?.business_ids;
+  if (Array.isArray(businessIDs) && businessIDs.length > 0) {
+    return businessIDs.join(', ');
+  }
+
+  return '--';
 };
 
 const buildRelationDefinitionKey = (definition: {
@@ -88,8 +105,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [drawerTab, setDrawerTab] = useState<DrawerTabKey>(defaultDrawerTab);
-  const [instances, setInstances] = useState<ModelInstance[]>([]);
-  const [selectedInstance, setSelectedInstance] = useState<ModelInstance | null>(null);
+  const [instances, setInstances] = useState<AggregateInstanceListItem[]>([]);
+  const [selectedInstance, setSelectedInstance] = useState<AggregateInstanceListItem | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
@@ -136,12 +153,12 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   const fetchInstances = async () => {
     try {
       setLoading(true);
-      const response = await listModelInstances(detailModel.name, {
+      const response = await listAggregateInstances(detailModel.name, {
         page,
         page_size: pageSize,
       });
-      setInstances(response.data || []);
-      setTotal(response.meta?.total || 0);
+      setInstances(response.data.items || []);
+      setTotal(response.data.pagination?.total || 0);
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.loadInstancesFailed'));
@@ -210,8 +227,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       return;
     }
 
-    void openInstance(`${detailModel.name}:${selectedInstance.id}`);
-  }, [detailModel.name, drawerVisible, openInstance, selectedInstance]);
+    void openInstance(selectedInstance.instance_key);
+  }, [drawerVisible, openInstance, selectedInstance]);
 
   useEffect(() => {
     if (!drawerVisible || !selectedInstance) {
@@ -219,22 +236,25 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     }
 
     if (drawerTab === 'relations') {
-      void loadInstanceCapabilities(`${detailModel.name}:${selectedInstance.id}`);
-      void loadInstanceRelations(selectedInstance.id);
+      void loadInstanceCapabilities(selectedInstance.instance_key);
+      void loadInstanceRelations(getInstanceIdentifier(selectedInstance));
       return;
     }
 
     if (drawerTab === 'history') {
-      loadInstanceHistory(selectedInstance.id);
+      loadInstanceHistory(getInstanceIdentifier(selectedInstance));
       return;
     }
 
     if (drawerTab === 'topology') {
-      loadInstanceTopology(selectedInstance.id);
+      loadInstanceTopology(getInstanceIdentifier(selectedInstance));
     }
-  }, [drawerVisible, drawerTab, selectedInstance?.id, historyPage, historyPageSize, detailModel.name]);
+  }, [drawerVisible, drawerTab, selectedInstance?.instance_key, historyPage, historyPageSize, detailModel.name]);
 
-  const openInstanceDrawer = (record: ModelInstance, tab: DrawerTabKey = defaultDrawerTab) => {
+  const openInstanceDrawer = (
+    record: AggregateInstanceListItem,
+    tab: DrawerTabKey = defaultDrawerTab,
+  ) => {
     setSelectedInstance(record);
     setDrawerTab(tab);
     setDrawerVisible(true);
@@ -282,15 +302,15 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     try {
       setRelationSubmitting(true);
       await createModelInstanceRelation({
-        source_id: Number(selectedInstance.id),
+        source_id: Number(getInstanceIdentifier(selectedInstance)),
         target_id: selectedTargetInstanceID,
         association_uid: selectedRelationDefinition.association_uid,
       });
       message.success(t('resource.model.messages.createInstanceRelationSuccess'));
       setSelectedRelationDefinitionKey(undefined);
       setSelectedTargetInstanceID(undefined);
-      await loadInstanceRelations(selectedInstance.id);
-      await loadInstanceTopology(selectedInstance.id);
+      await loadInstanceRelations(getInstanceIdentifier(selectedInstance));
+      await loadInstanceTopology(getInstanceIdentifier(selectedInstance));
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.createInstanceRelationFailed'));
@@ -307,19 +327,20 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     try {
       await deleteModelInstanceRelation(relationID);
       message.success(t('resource.model.messages.deleteInstanceRelationSuccess'));
-      await loadInstanceRelations(selectedInstance.id);
-      await loadInstanceTopology(selectedInstance.id);
+      await loadInstanceRelations(getInstanceIdentifier(selectedInstance));
+      await loadInstanceTopology(getInstanceIdentifier(selectedInstance));
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.deleteInstanceRelationFailed'));
     }
   };
 
-  const instanceColumns: ColumnsType<ModelInstance> = [
+  const instanceColumns: ColumnsType<AggregateInstanceListItem> = [
     {
       title: 'ID',
-      dataIndex: 'id',
+      key: 'id',
       width: 220,
+      render: (_value, record) => getInstanceIdentifier(record),
     },
     {
       title: t('resource.model.columns.instanceName'),
@@ -329,9 +350,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     },
     {
       title: t('resource.model.columns.business'),
-      dataIndex: 'business_id',
+      key: 'business_id',
       width: 220,
-      render: (value?: string | null) => value || '--',
+      render: (_value, record) => getInstanceBusinessLabel(record),
     },
     {
       title: t('resource.model.columns.createdAt'),
@@ -501,7 +522,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
   ];
 
   const drawerTitle = selectedInstance
-    ? `${getInstanceName(selectedInstance)} (${selectedInstance.id})`
+    ? `${getInstanceName(selectedInstance)} (${getInstanceIdentifier(selectedInstance)})`
     : t('resource.model.tabs.instances');
 
   const relationDefinitionOptions = (instanceRelationDetail?.constraints?.associations || []).map((definition) => ({
@@ -540,7 +561,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       </div>
 
       <Table
-        rowKey="id"
+        rowKey="instance_key"
         loading={loading}
         pagination={false}
         scroll={{ x: 1280 }}
@@ -660,7 +681,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                     <div className="model-page-toolbar">
                       <div className="model-page-note">{t('resource.model.helper.instanceRelationCreate')}</div>
                       <div className="model-page-actions">
-                        <Button onClick={() => loadInstanceRelations(selectedInstance.id)}>
+                        <Button onClick={() => loadInstanceRelations(getInstanceIdentifier(selectedInstance))}>
                           {t('resource.model.actions.refresh')}
                         </Button>
                       </div>

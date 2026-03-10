@@ -56,6 +56,7 @@ export {
 export { getBusinessFormSchema } from './services/businessCustomField';
 
 export {
+  listAggregateInstances,
   getModelInstanceDetail,
   listModelInstanceRelations,
   createModelInstanceRelation,
