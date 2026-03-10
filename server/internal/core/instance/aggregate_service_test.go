@@ -158,36 +158,25 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 	ctx := context.Background()
 
 	hostID := uuid.New()
+	tenantID := uuid.New()
 	businessID := uuid.New()
 
 	require.NoError(t, db.Exec(`
 		INSERT INTO resources (id, model_uid, name, configs, created_at, updated_at)
-		VALUES (1, 'host', 'host-1', '{"name":"host-1","primary_ip":"10.0.0.1"}', ?, ?)
-	`, time.Now().UTC(), time.Now().UTC()).Error)
-	require.NoError(t, db.Exec(`
-		INSERT INTO resources (id, model_uid, name, configs, created_at, updated_at)
 		VALUES (2, 'service', 'svc-1', '{"name":"svc-1"}', ?, ?)
-	`, time.Now().UTC(), time.Now().UTC()).Error)
-	require.NoError(t, db.Exec(`
-		INSERT INTO resource_states (resource_id, last_check_time, health_status, metrics, updated_at)
-		VALUES (1, ?, 0, '{"cpu": 10}', ?)
 	`, time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO association_types (uid, name, source_to_dest_desc, dest_to_source_desc, is_builtin, created_at, updated_at)
 		VALUES ('runs_on', '运行于', '运行于', '运行', TRUE, ?, ?)
 	`, time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
-		INSERT INTO relations (source_id, target_id, association_uid, source_model_uid, target_model_uid, properties, created_at)
-		VALUES (2, 1, 'runs_on', 'service', 'host', '{}', ?)
-	`, time.Now().UTC()).Error)
-	require.NoError(t, db.Exec(`
-		INSERT INTO resource_histories (resource_id, model_uid, change_type, before_data, after_data, changed_by, changed_at, client_ip, user_agent)
-		VALUES (1, 'host', 'create', '{}', '{"name":"host-1"}', 'tester', ?, '127.0.0.1', 'go-test')
-	`, time.Now().UTC()).Error)
-	require.NoError(t, db.Exec(`
 		INSERT INTO modules (id, set_id, business_id, name, service_type, created_at, updated_at)
 		VALUES (1, 1, ?, 'module-a', 'web', ?, ?)
 	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	require.NoError(t, db.Exec(`
+		INSERT INTO hosts (id, tenant_id, business_id, host_name, primary_ip, status, is_destroyed, created_at, updated_at)
+		VALUES (?, ?, 1000, 'host-1', '10.0.0.1', 'running', FALSE, ?, ?)
+	`, hostID.String(), tenantID.String(), time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO host_business_relations (host_id, business_id, created_at)
 		VALUES (?, ?, ?)
@@ -197,9 +186,9 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 		VALUES (?, 1, ?)
 	`, hostID.String(), time.Now().UTC()).Error)
 
-	view, err := svc.GetAggregateInstance(ctx, "host:1")
+	view, err := svc.GetAggregateInstance(ctx, "host:"+hostID.String())
 	require.NoError(t, err)
-	require.Equal(t, "host:1", view.InstanceKey)
+	require.Equal(t, "host:"+hostID.String(), view.InstanceKey)
 	require.NotNil(t, view.BindingContext)
 	require.Contains(t, view.AllowedActions, "bind_topology")
 }
