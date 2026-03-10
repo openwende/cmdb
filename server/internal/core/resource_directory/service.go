@@ -386,16 +386,17 @@ func (s *Service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 }
 
 // AllocateHosts 分配主机到业务模块
-func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.BatchOperationResult, error) {
+func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
 	// 验证目标模块存在
 	var module types.Module
 	if err := s.db.First(&module, req.TargetModuleID).Error; err != nil {
 		return nil, fmt.Errorf("目标模块不存在")
 	}
 
-	result := &types.BatchOperationResult{
-		Total:  len(req.HostIDs),
-		Errors: make([]string, 0),
+	result := &types.ResourcePoolLifecycleResult{
+		Total:          len(req.HostIDs),
+		SucceededItems: make([]types.ResourcePoolLifecycleItem, 0),
+		FailedItems:    make([]types.ResourcePoolLifecycleItem, 0),
 	}
 
 	for _, hostID := range req.HostIDs {
@@ -430,9 +431,29 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 
 		if err != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+			item, lookupErr := s.GetHostLifecycle(ctx, hostID)
+			if lookupErr != nil {
+				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
+					HostID:         hostID.String(),
+					ResourceStatus: types.ResourceStatusUnknown,
+					Message:        err.Error(),
+				})
+			} else {
+				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
+					HostID:         item.HostID,
+					ResourceStatus: item.ResourceStatus,
+					DirectoryID:    item.DirectoryID,
+					Message:        err.Error(),
+				})
+			}
 		} else {
 			result.Successful++
+			result.SucceededItems = append(result.SucceededItems, types.ResourcePoolLifecycleItem{
+				HostID:         hostID.String(),
+				ResourceStatus: types.ResourceStatusAllocated,
+				BusinessID:     module.BusinessID.String(),
+				ModuleID:       req.TargetModuleID,
+			})
 		}
 	}
 
@@ -440,16 +461,17 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 }
 
 // ReclaimHosts 回收主机到资源池
-func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.BatchOperationResult, error) {
+func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
 	// 验证目录存在
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, req.DirectoryID).Error; err != nil {
 		return nil, fmt.Errorf("目录不存在")
 	}
 
-	result := &types.BatchOperationResult{
-		Total:  len(req.HostIDs),
-		Errors: make([]string, 0),
+	result := &types.ResourcePoolLifecycleResult{
+		Total:          len(req.HostIDs),
+		SucceededItems: make([]types.ResourcePoolLifecycleItem, 0),
+		FailedItems:    make([]types.ResourcePoolLifecycleItem, 0),
 	}
 
 	for _, hostID := range req.HostIDs {
@@ -476,13 +498,82 @@ func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsReque
 
 		if err != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+			item, lookupErr := s.GetHostLifecycle(ctx, hostID)
+			if lookupErr != nil {
+				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
+					HostID:         hostID.String(),
+					ResourceStatus: types.ResourceStatusUnknown,
+					Message:        err.Error(),
+				})
+			} else {
+				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
+					HostID:         item.HostID,
+					ResourceStatus: item.ResourceStatus,
+					DirectoryID:    item.DirectoryID,
+					Message:        err.Error(),
+				})
+			}
 		} else {
 			result.Successful++
+			result.SucceededItems = append(result.SucceededItems, types.ResourcePoolLifecycleItem{
+				HostID:         hostID.String(),
+				ResourceStatus: types.ResourceStatusPooled,
+				DirectoryID:    req.DirectoryID,
+			})
 		}
 	}
 
 	return result, nil
+}
+
+func (s *Service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error) {
+	var poolHost types.ResourcePoolHost
+	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).First(&poolHost).Error; err == nil {
+		return &types.ResourcePoolHostLifecycle{
+			HostID:         hostID.String(),
+			ResourceStatus: types.ResourceStatusPooled,
+			DirectoryID:    poolHost.DirectoryID,
+			AllowedActions: []string{"allocate", "move"},
+		}, nil
+	} else if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	var bizRelations []types.HostBusinessRelation
+	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).Find(&bizRelations).Error; err != nil {
+		return nil, err
+	}
+
+	var moduleRelations []types.HostModuleRelation
+	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).Find(&moduleRelations).Error; err != nil {
+		return nil, err
+	}
+
+	if len(bizRelations) > 0 || len(moduleRelations) > 0 {
+		businessIDs := make([]string, 0, len(bizRelations))
+		for _, item := range bizRelations {
+			businessIDs = append(businessIDs, item.BusinessID.String())
+		}
+
+		moduleIDs := make([]uint64, 0, len(moduleRelations))
+		for _, item := range moduleRelations {
+			moduleIDs = append(moduleIDs, item.ModuleID)
+		}
+
+		return &types.ResourcePoolHostLifecycle{
+			HostID:         hostID.String(),
+			ResourceStatus: types.ResourceStatusAllocated,
+			BusinessIDs:    businessIDs,
+			ModuleIDs:      moduleIDs,
+			AllowedActions: []string{"reclaim"},
+		}, nil
+	}
+
+	return &types.ResourcePoolHostLifecycle{
+		HostID:         hostID.String(),
+		ResourceStatus: types.ResourceStatusUnknown,
+		AllowedActions: []string{},
+	}, nil
 }
 
 // ListPoolHosts 获取资源池主机列表

@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/core/topology"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -13,12 +15,16 @@ import (
 
 // TopologyHandler 业务拓扑处理器
 type TopologyHandler struct {
-	service *topology.Service
+	service   *topology.Service
+	aggregate *topology.AggregateService
 }
 
 // NewTopologyHandler 创建处理器
-func NewTopologyHandler(service *topology.Service) *TopologyHandler {
-	return &TopologyHandler{service: service}
+func NewTopologyHandler(service *topology.Service, aggregate *topology.AggregateService) *TopologyHandler {
+	if aggregate == nil && service != nil {
+		aggregate = topology.NewAggregateService(service.DB(), service, nil)
+	}
+	return &TopologyHandler{service: service, aggregate: aggregate}
 }
 
 // ========== 拓扑树 API ==========
@@ -87,6 +93,28 @@ func (h *TopologyHandler) GetNodeChildren(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": children,
+	})
+}
+
+// GetNodeDetail 获取聚合节点详情
+// GET /api/v1/topology/nodes/:id
+func (h *TopologyHandler) GetNodeDetail(c *gin.Context) {
+	detail, err := h.aggregate.GetNodeDetail(c.Request.Context(), c.Param("id"))
+	if err != nil {
+		switch {
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			c.JSON(http.StatusNotFound, gin.H{"error": "节点不存在"})
+		case err.Error() == "invalid node id":
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的节点ID"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code": 0,
+		"data": detail,
 	})
 }
 

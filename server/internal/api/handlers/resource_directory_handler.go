@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 
 	"github.com/wend/cmdb-backend/internal/core/resource_directory"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -239,6 +240,24 @@ func (h *ResourceDirectoryHandler) ReclaimHosts(c *gin.Context) {
 	}
 
 	result, err := h.service.ReclaimHosts(c.Request.Context(), &req, reclaimedBy)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
+}
+
+// GetHostLifecycle 获取主机生命周期状态
+// GET /api/v1/resource-pool/hosts/:id/lifecycle
+func (h *ResourceDirectoryHandler) GetHostLifecycle(c *gin.Context) {
+	hostID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的主机ID"})
+		return
+	}
+
+	result, err := h.service.GetHostLifecycle(c.Request.Context(), hostID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

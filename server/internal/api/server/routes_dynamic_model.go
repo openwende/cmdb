@@ -29,6 +29,8 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			modelsAPI.GET("/:uid/attributes", handler.ListAttributes)                // 列出属性
 			modelsAPI.PUT("/:uid/attributes/:field_uid", handler.UpdateAttribute)    // 更新属性
 			modelsAPI.DELETE("/:uid/attributes/:field_uid", handler.DeleteAttribute) // 删除属性
+			modelsAPI.GET("/:uid/schema", handler.GetSchema)
+			modelsAPI.GET("/:uid/form-schema", handler.GetFormSchema)
 
 			// ========== 模型关系管理 ==========
 			modelsAPI.GET("/:uid/associations", handler.ListModelAssociations)
@@ -36,6 +38,7 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			modelsAPI.PUT("/:uid/associations/:id", handler.UpdateModelAssociation)
 			modelsAPI.DELETE("/:uid/associations/:id", handler.DeleteModelAssociation)
 			modelsAPI.GET("/:uid/available-relations", handler.GetAvailableRelations)
+			modelsAPI.GET("/:uid/relation-capabilities", handler.GetModelRelationCapabilities)
 
 			// ========== 唯一规则管理 ==========
 			modelsAPI.GET("/:uid/unique-rules", handler.ListUniqueRules)
@@ -53,6 +56,7 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 				instancesAPI.DELETE("/:id", handler.DeleteInstance) // 删除实例
 
 				// 实例关联关系
+				instancesAPI.GET("/:id/relation-capabilities", handler.GetInstanceRelationCapabilities)
 				instancesAPI.GET("/:id/relations", handler.ListRelations)    // 查询关联关系
 				instancesAPI.GET("/:id/topology", handler.GetTopology)       // 查询拓扑关系
 				instancesAPI.GET("/:id/history", handler.GetResourceHistory) // 查询变更历史
@@ -75,4 +79,6 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 			relationsAPI.DELETE("/:id", handler.DeleteRelation) // 删除关联
 		}
 	}
+
+	RegisterInstanceAggregateRoutes(router, service)
 }

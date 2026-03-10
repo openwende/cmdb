@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/gorm"
@@ -15,13 +16,17 @@ import (
 
 // DynamicModelHandler 动态模型 HTTP Handler
 type DynamicModelHandler struct {
-	service *dynamic_model.Service
+	service         *dynamic_model.Service
+	relationService *dynamic_model.RelationAggregateService
+	schemaService   *dynamic_model.SchemaService
 }
 
 // NewDynamicModelHandler 创建 Handler
 func NewDynamicModelHandler(service *dynamic_model.Service) *DynamicModelHandler {
 	return &DynamicModelHandler{
-		service: service,
+		service:         service,
+		relationService: dynamic_model.NewRelationAggregateService(service.DB(), service),
+		schemaService:   dynamic_model.NewSchemaService(service.DB(), service),
 	}
 }
 
@@ -663,6 +668,103 @@ func (h *DynamicModelHandler) GetAvailableRelations(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
 }
 
+func (h *DynamicModelHandler) GetModelRelationCapabilities(c *gin.Context) {
+	uid := c.Param("uid")
+	data, err := h.relationService.GetModelRelationCapabilities(c.Request.Context(), uid)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetInstanceRelationCapabilities(c *gin.Context) {
+	modelUID := c.Param("uid")
+	resourceID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的资源 ID"})
+		return
+	}
+
+	data, err := h.relationService.GetInstanceRelationCapabilities(c.Request.Context(), modelUID, resourceID)
+	if err != nil {
+		switch {
+		case isDynamicResourceNotFound(err):
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetAggregateInstanceRelationCapabilities(c *gin.Context) {
+	data, err := h.relationService.GetInstanceRelationCapabilitiesByKey(c.Request.Context(), c.Param("instanceKey"))
+	if err != nil {
+		switch {
+		case errors.Is(err, dynamic_model.ErrInvalidRelationInstanceKey):
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的实例标识"})
+		case isDynamicResourceNotFound(err):
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetSchema(c *gin.Context) {
+	data, err := h.schemaService.GetSchema(c.Request.Context(), c.Param("uid"))
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
+func (h *DynamicModelHandler) GetFormSchema(c *gin.Context) {
+	var businessID uuid.UUID
+	if rawBusinessID := strings.TrimSpace(c.Query("business_id")); rawBusinessID != "" {
+		parsed, err := uuid.Parse(rawBusinessID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
+			return
+		}
+		businessID = parsed
+	}
+
+	data, err := h.schemaService.GetFormSchema(
+		c.Request.Context(),
+		c.Param("uid"),
+		c.DefaultQuery("scene", "default"),
+		businessID,
+	)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": data})
+}
+
 // ========== 资源实例管理 API ==========
 
 // UpsertInstanceRequest 创建/更新实例请求
@@ -1001,6 +1103,20 @@ func (h *DynamicModelHandler) GetResourceHistory(c *gin.Context) {
 func marshalJSON(v interface{}) []byte {
 	b, _ := json.Marshal(v)
 	return b
+}
+
+func parsePaginationParams(c *gin.Context, defaultPageSize, maxPageSize int) (int, int) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", strconv.Itoa(defaultPageSize)))
+
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > maxPageSize {
+		pageSize = defaultPageSize
+	}
+
+	return page, pageSize
 }
 
 func splitAndTrim(s, sep string) []string {

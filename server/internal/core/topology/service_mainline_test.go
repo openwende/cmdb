@@ -112,11 +112,22 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 			created_at DATETIME,
 			PRIMARY KEY (host_id, module_id)
 		)`,
+		`CREATE TABLE model_groups (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL UNIQUE,
+			display_name TEXT NOT NULL,
+			description TEXT DEFAULT '',
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at DATETIME,
+			updated_at DATETIME
+		)`,
 		`CREATE TABLE models (
 				id TEXT PRIMARY KEY,
 				name TEXT NOT NULL UNIQUE,
 			display_name TEXT NOT NULL,
 			classification TEXT NOT NULL,
+			group_id TEXT,
 			icon TEXT,
 			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
 			is_mainline BOOLEAN NOT NULL DEFAULT FALSE,
@@ -171,6 +182,11 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 			deleted_at DATETIME
 		)`,
 		`CREATE UNIQUE INDEX idx_mainline_instances_model_ref ON mainline_instances (model_name, ref_id)`,
+		`INSERT INTO model_groups (id, name, display_name, description, sort_order, is_builtin, created_at, updated_at)
+		VALUES
+			('11111111-1111-1111-1111-111111111111', 'core_topology', '核心拓扑', '承载业务主线内置模型', 10, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+			('22222222-2222-2222-2222-222222222222', 'resource_objects', '资源对象', '承载基础资源类模型', 20, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+			('33333333-3333-3333-3333-333333333333', 'custom_models', '自定义模型', '承载租户扩展的自定义模型', 30, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
 	}
 
 	for _, sql := range sqls {
@@ -182,6 +198,33 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 
 func newTestTopologyService(db *gorm.DB) *Service {
 	return NewService(db, mainline.NewService(db))
+}
+
+func TestSetupTopologyTestDB_ModelSchemaSupportsModelGroups(t *testing.T) {
+	db := setupTopologyTestDB(t)
+
+	type pragmaColumn struct {
+		Name string `gorm:"column:name"`
+	}
+
+	var columns []pragmaColumn
+	require.NoError(t, db.Raw("PRAGMA table_info(models)").Scan(&columns).Error)
+
+	hasGroupID := false
+	for _, column := range columns {
+		if column.Name == "group_id" {
+			hasGroupID = true
+			break
+		}
+	}
+	require.True(t, hasGroupID, "models table should include group_id")
+
+	require.NoError(t, db.Exec(`
+		SELECT models.id
+		FROM models
+		LEFT JOIN model_groups ON model_groups.id = models.group_id
+		LIMIT 1
+	`).Error)
 }
 
 func seedBusiness(t *testing.T, db *gorm.DB, name string) uuid.UUID {
