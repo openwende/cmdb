@@ -10,6 +10,10 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
+const defaultTenantID = "00000000-0000-0000-0000-000000000001"
+
+var defaultTenantUUID = uuid.MustParse(defaultTenantID)
+
 // HostHandler 主机处理器
 type HostHandler struct {
 	service *host.Service
@@ -38,7 +42,7 @@ func (h *HostHandler) CreateHost(c *gin.Context) {
 	}
 
 	// TODO: 从上下文获取租户ID和用户ID（需要认证中间件）
-	tenantID := uuid.New() // 临时占位符
+	tenantID := defaultTenantUUID
 	var createdBy *uuid.UUID = nil
 
 	host, err := h.service.CreateHost(c.Request.Context(), tenantID, &req, createdBy)
@@ -66,7 +70,7 @@ func (h *HostHandler) BatchImportHosts(c *gin.Context) {
 	}
 
 	// TODO: 从上下文获取租户ID和用户ID（需要认证中间件）
-	tenantID := uuid.New() // 临时占位符
+	tenantID := defaultTenantUUID
 	var createdBy *uuid.UUID = nil
 
 	result, err := h.service.BatchImportHosts(c.Request.Context(), tenantID, &req, createdBy)
@@ -140,7 +144,7 @@ func (h *HostHandler) ListHosts(c *gin.Context) {
 	}
 
 	// TODO: 从上下文获取租户ID
-	tenantID := uuid.New() // 临时占位符
+	tenantID := defaultTenantUUID
 
 	hosts, total, err := h.service.ListHosts(c.Request.Context(), tenantID, &params)
 	if err != nil {
