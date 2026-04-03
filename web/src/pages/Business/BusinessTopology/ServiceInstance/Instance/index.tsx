@@ -17,6 +17,15 @@ import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, MinusOutlined } from '@ant-design/icons';
 import Pagination from '@/components/common/Pagination';
 import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
+import {
+  deleteProcess,
+  getModuleProcessSummary,
+  getProcess,
+  listProcesses,
+  ProcessBindInfo,
+  ProcessRecord,
+  updateProcess,
+} from '@/api/services/business';
 
 interface Props {
   selectedNode?: any;
@@ -25,6 +34,31 @@ interface Props {
   expandAll: boolean;
   setExpandAll: (expand: boolean) => void;
 }
+
+interface ProcessDraft {
+  processName: string;
+  processAlias: string;
+  startupParams: string;
+  description: string;
+}
+
+const formatBindInfoText = (bindInfo?: ProcessBindInfo[]) => {
+  if (!Array.isArray(bindInfo) || bindInfo.length === 0) {
+    return '--';
+  }
+
+  return bindInfo
+    .filter((item) => item.protocol && item.ip && item.port)
+    .map((item) => `${item.protocol} ${item.ip}:${item.port}`)
+    .join(', ');
+};
+
+const createDraftFromProcess = (process: ProcessRecord | null): ProcessDraft => ({
+  processName: process?.process_name || '',
+  processAlias: process?.process_name || '',
+  startupParams: process?.start_command || process?.process_template?.start_param_regex || '',
+  description: process?.description || '',
+});
 
 const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRowKeys, expandAll }) => {
   const { t } = useTranslation();
@@ -41,6 +75,10 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
   const [editingInstanceName, setEditingInstanceName] = useState('');
   const [labelModalVisible, setLabelModalVisible] = useState(false);
   const [labelList, setLabelList] = useState<Array<{ key: string; value: string }>>([]);
+  const [processItems, setProcessItems] = useState<ProcessRecord[]>([]);
+  const [processTotal, setProcessTotal] = useState(0);
+  const [activeProcess, setActiveProcess] = useState<ProcessRecord | null>(null);
+  const [draft, setDraft] = useState<ProcessDraft>(createDraftFromProcess(null));
 
   const dataSource = useMemo(() => {
     if (!detail) {
@@ -54,19 +92,11 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
           detail.properties && typeof detail.properties.name === 'string'
             ? detail.properties.name
             : detail.instance_key,
-        process_count: detail.relation_summary?.total || 0,
+        process_count: processTotal,
         labels: detail.binding_context || {},
       },
     ];
-  }, [detail]);
-
-  const processItems = useMemo(() => {
-    if (!Array.isArray(detail?.relation_summary?.items)) {
-      return [];
-    }
-
-    return detail.relation_summary.items as any[];
-  }, [detail]);
+  }, [detail, processTotal]);
 
   useEffect(() => {
     if (!selectedNode?.nodeId) {
@@ -76,6 +106,36 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
     const modelUID = selectedNode.backendType || selectedNode.type;
     void openInstance(`${modelUID}:${selectedNode.nodeId}`);
   }, [openInstance, selectedNode?.backendType, selectedNode?.nodeId, selectedNode?.type]);
+
+  useEffect(() => {
+    const moduleID = Number.parseInt(String(selectedNode?.nodeId ?? ''), 10);
+    if (Number.isNaN(moduleID)) {
+      setProcessItems([]);
+      setProcessTotal(0);
+      return;
+    }
+
+    const loadProcesses = async () => {
+      try {
+        const [summaryResponse, listResponse] = await Promise.all([
+          getModuleProcessSummary(moduleID),
+          listProcesses({
+            module_id: moduleID,
+            page: 1,
+            page_size: 100,
+          }),
+        ]);
+        setProcessTotal(summaryResponse?.data?.total ?? 0);
+        setProcessItems(listResponse?.data?.items ?? []);
+      } catch (processError) {
+        console.error('Failed to load module processes:', processError);
+        setProcessItems([]);
+        setProcessTotal(0);
+      }
+    };
+
+    void loadProcesses();
+  }, [selectedNode?.nodeId]);
 
   useEffect(() => {
     if (expandAll) {
@@ -180,9 +240,9 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
     const columns = [
       {
         title: t('business.topology.serviceInstance.instance.columns.processName'),
-        dataIndex: ['property', 'bk_process_name'],
+        dataIndex: 'process_name',
         key: 'process_name',
-        render: (text: string, processRecord: any) => (
+        render: (text: string, processRecord: ProcessRecord) => (
           <Button type="link" onClick={() => handleViewProcess(processRecord)}>
             {text}
           </Button>
@@ -190,24 +250,28 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
       },
       {
         title: t('business.topology.serviceInstance.instance.columns.processStart'),
-        dataIndex: ['property', 'bk_func_name'],
+        dataIndex: 'start_command',
         key: 'func_name',
+        render: (value: string, processRecord: ProcessRecord) =>
+          value || processRecord.process_template?.start_param_regex || '--',
       },
       {
         title: t('business.topology.serviceInstance.instance.columns.startupParams'),
-        dataIndex: ['property', 'bk_start_param_regex'],
+        dataIndex: 'start_command',
         key: 'start_param',
+        render: (value: string, processRecord: ProcessRecord) =>
+          value || processRecord.process_template?.start_param_regex || '--',
       },
       {
         title: t('business.topology.serviceInstance.instance.columns.bindInfo'),
-        dataIndex: ['property', 'bind_info'],
+        dataIndex: 'bind_info',
         key: 'bind_info',
-        render: () => '--',
+        render: (value: ProcessBindInfo[]) => formatBindInfoText(value),
       },
       {
         title: t('business.topology.serviceInstance.instance.columns.action'),
         key: 'action',
-        render: (processRecord: any) => (
+        render: (processRecord: ProcessRecord) => (
           <Space>
             <Button type="link" onClick={() => handleEditProcess(processRecord)}>
               {t('common.edit')}
@@ -233,7 +297,7 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
         dataSource={processItems}
         pagination={false}
         size="small"
-        rowKey={(record) => record.property?.bk_process_id || record.id}
+        rowKey={(record) => record.id}
       />
     );
   };
@@ -270,19 +334,36 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
     setLabelModalVisible(false);
   };
 
-  const handleViewProcess = (_record: any) => {
-    setDrawerType('view');
+  const openProcessDrawer = async (record: ProcessRecord, type: 'view' | 'add' | 'edit') => {
+    if (type === 'add') {
+      setActiveProcess(null);
+      setDraft(createDraftFromProcess(null));
+      setDrawerType(type);
+      setDrawerVisible(true);
+      return;
+    }
+
+    const response = await getProcess(record.id);
+    const detailRecord = response?.data ?? record;
+    setActiveProcess(detailRecord);
+    setDraft(createDraftFromProcess(detailRecord));
+    setDrawerType(type);
     setDrawerVisible(true);
+  };
+
+  const handleViewProcess = (record: ProcessRecord) => {
+    setDrawerType('view');
+    void openProcessDrawer(record, 'view');
   };
 
   const handleAddProcess = (_record: any) => {
     setDrawerType('add');
-    setDrawerVisible(true);
+    void openProcessDrawer(_record, 'add');
   };
 
-  const handleEditProcess = (_record: any) => {
+  const handleEditProcess = (record: ProcessRecord) => {
     setDrawerType('edit');
-    setDrawerVisible(true);
+    void openProcessDrawer(record, 'edit');
   };
 
   const handleCloneInstance = (_record: any) => {
@@ -293,8 +374,54 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
     message.success(t('business.topology.serviceInstance.instance.messages.deleteInstanceSuccess'));
   };
 
-  const handleDeleteProcess = (_record: any) => {
+  const handleDeleteProcess = async (record: ProcessRecord) => {
+    await deleteProcess(record.id);
     message.success(t('business.topology.serviceInstance.instance.messages.deleteProcessSuccess'));
+    const moduleID = Number.parseInt(String(selectedNode?.nodeId ?? ''), 10);
+    if (!Number.isNaN(moduleID)) {
+      const [summaryResponse, listResponse] = await Promise.all([
+        getModuleProcessSummary(moduleID),
+        listProcesses({
+          module_id: moduleID,
+          page: 1,
+          page_size: 100,
+        }),
+      ]);
+      setProcessTotal(summaryResponse?.data?.total ?? 0);
+      setProcessItems(listResponse?.data?.items ?? []);
+    }
+  };
+
+  const handleSaveProcess = async () => {
+    if (!activeProcess) {
+      return;
+    }
+
+    const response = await updateProcess(activeProcess.id, {
+      process_name: draft.processName,
+      start_command: draft.startupParams,
+      description: draft.description,
+      bind_info: activeProcess.bind_info || [],
+    });
+    setActiveProcess(response?.data ?? activeProcess);
+    setDraft(createDraftFromProcess(response?.data ?? activeProcess));
+    message.success(t('common.save'));
+
+    const moduleID = Number.parseInt(String(selectedNode?.nodeId ?? ''), 10);
+    if (!Number.isNaN(moduleID)) {
+      const [summaryResponse, listResponse] = await Promise.all([
+        getModuleProcessSummary(moduleID),
+        listProcesses({
+          module_id: moduleID,
+          page: 1,
+          page_size: 100,
+        }),
+      ]);
+      setProcessTotal(summaryResponse?.data?.total ?? 0);
+      setProcessItems(listResponse?.data?.items ?? []);
+    }
+
+    setDrawerVisible(false);
   };
 
   const renderDrawerContent = () => {
@@ -304,17 +431,28 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
           <h3>{t('business.topology.serviceInstance.process.sections.basicInfo')}</h3>
           <div style={{ marginBottom: 16 }}>
             <div>
-              {t('business.topology.serviceInstance.process.fields.createTime')}：2025-05-27
-              14:52:15
+              {t('business.topology.serviceInstance.process.fields.createTime')}：
+              {activeProcess?.created_at || '--'}
             </div>
-            <div>{t('business.topology.serviceInstance.process.fields.creator')}：bk-cmdb</div>
-            <div>{t('business.topology.serviceInstance.process.form.processName')}：devTest</div>
             <div>
-              {t('business.topology.serviceInstance.process.fields.updateTime')}：2025-05-27
-              14:52:15
+              {t('business.topology.serviceInstance.process.fields.creator')}：--
             </div>
-            <div>{t('business.topology.serviceInstance.process.form.processAlias')}：devTest</div>
-            <div>{t('business.topology.serviceInstance.process.fields.description')}：--</div>
+            <div>
+              {t('business.topology.serviceInstance.process.form.processName')}：
+              {activeProcess?.process_name || '--'}
+            </div>
+            <div>
+              {t('business.topology.serviceInstance.process.fields.updateTime')}：
+              {activeProcess?.updated_at || '--'}
+            </div>
+            <div>
+              {t('business.topology.serviceInstance.process.form.processAlias')}：
+              {activeProcess?.process_name || '--'}
+            </div>
+            <div>
+              {t('business.topology.serviceInstance.process.fields.description')}：
+              {activeProcess?.description || '--'}
+            </div>
           </div>
 
           <h3>{t('business.topology.serviceInstance.process.sections.listenInfo')}</h3>
@@ -324,16 +462,17 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
               { title: 'Port', dataIndex: 'port', key: 'port' },
               { title: 'Protocol', dataIndex: 'protocol', key: 'protocol' },
               { title: 'Enable', dataIndex: 'enable', key: 'enable' },
-              { title: 'RowID', dataIndex: 'rowId', key: 'rowId' },
             ]}
-            dataSource={[]}
+            dataSource={activeProcess?.bind_info || []}
             pagination={false}
             size="small"
             locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
           />
 
           <div style={{ marginTop: 16 }}>
-            <Button type="primary">{t('common.edit')}</Button>
+            <Button type="primary" onClick={() => setDrawerType('edit')}>
+              {t('common.edit')}
+            </Button>
           </div>
         </div>
       );
@@ -347,13 +486,29 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
             label={t('business.topology.serviceInstance.process.form.processName')}
             style={{ flex: 1 }}
           >
-            <Input defaultValue="devTest" />
+            <Input
+              value={draft.processName}
+              onChange={(event) =>
+                setDraft((currentDraft) => ({
+                  ...currentDraft,
+                  processName: event.target.value,
+                }))
+              }
+            />
           </Form.Item>
           <Form.Item
             label={t('business.topology.serviceInstance.process.form.processAlias')}
             style={{ flex: 1 }}
           >
-            <Input defaultValue="devTest" />
+            <Input
+              value={draft.processAlias}
+              onChange={(event) =>
+                setDraft((currentDraft) => ({
+                  ...currentDraft,
+                  processAlias: event.target.value,
+                }))
+              }
+            />
           </Form.Item>
         </div>
         <div style={{ display: 'flex', gap: 16 }}>
@@ -362,9 +517,14 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
             style={{ flex: 1 }}
           >
             <Input
-              placeholder={t(
-                'business.topology.serviceInstance.process.form.placeholders.startupParams',
-              )}
+              value={draft.startupParams}
+              placeholder={t('business.topology.serviceInstance.process.form.placeholders.startupParams')}
+              onChange={(event) =>
+                setDraft((currentDraft) => ({
+                  ...currentDraft,
+                  startupParams: event.target.value,
+                }))
+              }
             />
           </Form.Item>
           <Form.Item
@@ -372,15 +532,20 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
             style={{ flex: 1 }}
           >
             <Input
-              placeholder={t(
-                'business.topology.serviceInstance.process.form.placeholders.description',
-              )}
+              value={draft.description}
+              placeholder={t('business.topology.serviceInstance.process.form.placeholders.description')}
+              onChange={(event) =>
+                setDraft((currentDraft) => ({
+                  ...currentDraft,
+                  description: event.target.value,
+                }))
+              }
             />
           </Form.Item>
         </div>
 
         <div style={{ marginTop: 16 }}>
-          <Button type="primary" style={{ marginRight: 8 }}>
+          <Button type="primary" style={{ marginRight: 8 }} onClick={handleSaveProcess}>
             {t('common.save')}
           </Button>
           <Button onClick={() => setDrawerVisible(false)}>{t('common.cancel')}</Button>

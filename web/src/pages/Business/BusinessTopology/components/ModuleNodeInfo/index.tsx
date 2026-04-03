@@ -51,11 +51,26 @@ const getModuleTypeLabel = (value: string | undefined, t: (key: string) => strin
 
 const buildModuleData = (selectedNode: TreeData) => normalizeModuleNodeDetail(selectedNode);
 
+export const buildModuleUpdatePayload = (
+  values: { bkModuleName: string },
+  serviceCategoryPath: number[],
+  currentModuleData: { service_category_id?: string | null },
+) => {
+  const pathServiceCategoryId = serviceCategoryPath[serviceCategoryPath.length - 1];
+  const currentServiceCategoryId = Number(currentModuleData.service_category_id || 0) || undefined;
+  const leafServiceCategoryId = pathServiceCategoryId ?? currentServiceCategoryId;
+
+  return {
+    name: values.bkModuleName,
+    ...(leafServiceCategoryId != null ? { service_category_id: leafServiceCategoryId } : {}),
+  };
+};
+
 const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
-  const [serviceCategory, setServiceCategory] = useState<number[]>([1, 2]);
+  const [serviceCategory, setServiceCategory] = useState<number[]>([]);
   const [formChanged, setFormChanged] = useState(false);
   const [userOptions, setUserOptions] = useState<{ label: string; value: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -83,6 +98,8 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
     const categoryId = Number(moduleData.service_category_id);
     if (!Number.isNaN(categoryId) && categoryId > 0) {
       setServiceCategory([categoryId]);
+    } else {
+      setServiceCategory([]);
     }
 
     form.setFieldsValue({
@@ -149,9 +166,9 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
     try {
       const values = await form.validateFields();
       const moduleID = Number(selectedNode.nodeId ?? moduleData.bk_module_id);
-      await updateTopologyModule(moduleID, {
-        name: values.bkModuleName,
-      });
+      const payload = buildModuleUpdatePayload(values, serviceCategory, moduleData);
+      await updateTopologyModule(moduleID, payload);
+      const nextServiceCategoryId = payload.service_category_id;
       setModuleData((current) => ({
         ...current,
         bk_module_name: values.bkModuleName,
@@ -161,7 +178,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
           ? values.bkBakOperator.join(',')
           : values.bkBakOperator,
         service_category_id:
-          serviceCategory[0] != null ? String(serviceCategory[0]) : current.service_category_id,
+          nextServiceCategoryId != null ? String(nextServiceCategoryId) : current.service_category_id,
       }));
       message.success(t('business.topology.moduleNodeInfo.saveSuccess'));
       setIsEditing(false);

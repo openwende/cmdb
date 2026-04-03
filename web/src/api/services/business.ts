@@ -1,6 +1,5 @@
 import axios from '../axiosInstance';
 import { Property, PropertyMap } from '../../pages/Business/Types';
-import { dynamicGroupCondition, objectmainline } from '../../mock/business';
 import { ObjectMainLine } from '../../pages/Business/Types';
 import { createIdProperty } from '@/pages/Business/utils';
 
@@ -147,12 +146,148 @@ export const getTopologyNodeHosts = async (
   });
 };
 
+export interface ProcessBindInfo {
+  ip: string;
+  port: string;
+  protocol: string;
+  enable: boolean;
+}
+
+export interface ProcessTemplateSummary {
+  id: number;
+  name: string;
+  start_param_regex?: string;
+  description?: string;
+}
+
+export interface ServiceCategoryRecord {
+  id: number;
+  name: string;
+  parent_id: number | null;
+  root_id: number;
+  is_builtin: boolean;
+  business_id?: string | null;
+}
+
+export interface ResourceDirectoryTreeNode {
+  id: number;
+  name: string;
+  host_count?: number;
+  children?: ResourceDirectoryTreeNode[];
+}
+
+export interface ProcessRecord {
+  id: number;
+  process_template_id: number;
+  host_id: string;
+  module_id: number;
+  business_id: string;
+  process_name: string;
+  bind_info?: ProcessBindInfo[];
+  start_command?: string;
+  user?: string;
+  work_path?: string;
+  priority?: number | null;
+  proc_num?: number | null;
+  description?: string;
+  created_at?: string;
+  updated_at?: string;
+  process_template?: ProcessTemplateSummary | null;
+}
+
+export interface ListProcessesResponse {
+  code: number;
+  data: {
+    items: ProcessRecord[];
+    pagination: {
+      page: number;
+      page_size: number;
+      total: number;
+    };
+  };
+  message?: string;
+}
+
+export const listProcesses = async (params: {
+  page: number;
+  page_size: number;
+  business_id?: string;
+  module_id?: number;
+  host_id?: string;
+  process_template_id?: number;
+}): Promise<ListProcessesResponse> => {
+  return axios.get('/v1/processes', { params });
+};
+
+export const getProcess = async (
+  id: number,
+): Promise<{ code: number; data: ProcessRecord; message?: string }> => {
+  return axios.get(`/v1/processes/${id}`);
+};
+
+export const updateProcess = async (
+  id: number,
+  payload: {
+    process_name?: string;
+    bind_info?: ProcessBindInfo[];
+    start_command?: string;
+    user?: string;
+    work_path?: string;
+    priority?: number | null;
+    proc_num?: number | null;
+    description?: string;
+  },
+): Promise<{ code: number; data: ProcessRecord; message?: string }> => {
+  return axios.put(`/v1/processes/${id}`, payload);
+};
+
+export const deleteProcess = async (id: number): Promise<{ code: number; message?: string }> => {
+  return axios.delete(`/v1/processes/${id}`);
+};
+
+export const getModuleProcessSummary = async (
+  moduleId: number,
+): Promise<{
+  code: number;
+  data: {
+    total: number;
+    running: number;
+    stopped: number;
+    unknown: number;
+  };
+  message?: string;
+}> => {
+  return axios.get(`/v1/modules/${moduleId}/process-summary`);
+};
+
+export const listHostProcessesWithStatus = async (
+  hostId: string,
+): Promise<{ code: number; data: Array<ProcessRecord & { status?: Record<string, any> }> }> => {
+  return axios.get(`/v1/hosts/${encodeURIComponent(hostId)}/processes`);
+};
+
 export const createTopologySet = async (payload: CreateTopologySetPayload) => {
   return axios.post('/v1/topology/sets', payload);
 };
 
 export const createTopologyModule = async (payload: CreateTopologyModulePayload) => {
   return axios.post('/v1/topology/modules', payload);
+};
+
+export const listServiceCategories = async (
+  businessId: string,
+): Promise<{ code: number; data: ServiceCategoryRecord[]; message?: string }> => {
+  return axios.get('/v1/service-categories', {
+    params: { business_id: businessId },
+  });
+};
+
+export const getResourceDirectoryTree = async (): Promise<{
+  code: number;
+  data: ResourceDirectoryTreeNode[];
+  message?: string;
+}> => {
+  return axios.get('/v1/resource-pool/directories/tree');
 };
 
 export const updateTopologySet = async (
@@ -174,6 +309,7 @@ export const updateTopologyModule = async (
     description?: string;
     service_type?: string;
     sort_order?: number;
+    service_category_id?: number;
   },
 ) => {
   return axios.put(`/v1/topology/modules/${id}`, payload);
@@ -216,22 +352,18 @@ export const getHostList = (params: any) => {
  */
 export const batchSearchObjectAttribute = async ({
   params,
-  config,
   injectId,
 }: BatchSearchOptions): Promise<PropertyMap> => {
   try {
-    // TODO: api
-    // $http.post('find/objectattr/web', params, config)
-    console.log(config);
-    const mockData = dynamicGroupCondition;
+    const entries = await Promise.all(
+      params.bk_obj_id.$in.map(async (objId) => [objId, await searchObjectAttribute(objId)] as const),
+    );
 
-    const result: any = {};
-    params.bk_obj_id.$in.forEach((objId: string) => {
-      result[objId] = [];
-    });
-    mockData.forEach((property) => {
-      result[property.bk_obj_id].push(property);
-    });
+    const result = entries.reduce<PropertyMap>((acc, [objId, properties]) => {
+      acc[objId] = properties;
+      return acc;
+    }, {});
+
     Object.keys(result).forEach((objId) => {
       if (injectId === objId) {
         const alreadyInject = result[objId].some((property: Property) => property._is_inject_);
@@ -257,30 +389,47 @@ export const searchObjectAttribute = async (
   _bizId?: number, // 使用下划线前缀表示未使用的参数
 ): Promise<Property[]> => {
   try {
-    // const params = {
-    //   bk_obj_id: objId,
-    //   ...(bizId && { bk_biz_id: bizId })
-    // };
+    const response: {
+      code: number;
+      data: Array<{
+        id: number;
+        model_uid: string;
+        field_uid: string;
+        field_name: string;
+        field_type: string;
+        group_name?: string | null;
+        option?: unknown;
+        placeholder?: string;
+        unit?: string;
+        description?: string;
+        is_required?: boolean;
+        is_unique?: boolean;
+        is_read_only?: boolean;
+        is_system?: boolean;
+        is_api?: boolean;
+      }>;
+    } = await axios.get(`/v1/dynamic-models/${encodeURIComponent(objId)}/attributes`);
 
-    const mockData = dynamicGroupCondition;
-    const result: Property[] = [];
-
-    if (mockData && Array.isArray(mockData)) {
-      mockData.forEach((property: any) => {
-        if (property.bk_obj_id === objId) {
-          // 转换mock数据格式为PropertyModel格式
-          const formattedProperty: Property = {
-            ...property,
-            option: Array.isArray(property.option)
-              ? JSON.stringify(property.option)
-              : property.option || '',
-          };
-          result.push(formattedProperty);
-        }
-      });
-    }
-
-    return result;
+    return (response.data || []).map((property) => ({
+      id: property.id,
+      bk_obj_id: property.model_uid || objId,
+      bk_property_id: property.field_uid,
+      bk_property_name: property.field_name,
+      bk_property_type: property.field_type,
+      bk_property_group: property.group_name || '',
+      bk_property_group_name: property.group_name || '',
+      option: Array.isArray(property.option) ? JSON.stringify(property.option) : '',
+      placeholder: property.placeholder || '',
+      unit: property.unit || '',
+      description: property.description || '',
+      editable: !property.is_read_only,
+      isonly: Boolean(property.is_unique),
+      ispre: Boolean(property.is_system),
+      isreadonly: Boolean(property.is_read_only),
+      isrequired: Boolean(property.is_required),
+      bk_issystem: Boolean(property.is_system),
+      bk_isapi: Boolean(property.is_api),
+    }));
   } catch (error) {
     console.error(error);
     throw error;
@@ -292,9 +441,33 @@ export const searchObjectAttribute = async (
  */
 export const getAvailableModels = async (): Promise<ObjectMainLine[]> => {
   try {
-    // TODO: api
-    // await axios.post('/find/objectmainline');
-    return objectmainline;
+    const response: {
+      code: number;
+      data: {
+        items: Array<{
+          uid: string;
+          display_name: string;
+          parent_model_uid: string | null;
+          level: number;
+        }>;
+      };
+    } = await axios.get('/v1/mainline/models');
+    const items = [...(response.data?.items || [])].sort((left, right) => left.level - right.level);
+    const itemMap = new Map(items.map((item) => [item.uid, item]));
+
+    return items.map((item, index) => {
+      const nextItem = items[index + 1];
+      const parentItem = item.parent_model_uid ? itemMap.get(item.parent_model_uid) : undefined;
+      return {
+        bk_obj_id: item.uid,
+        bk_obj_name: item.display_name,
+        bk_supplier_account: '0',
+        bk_next_obj: nextItem?.parent_model_uid === item.uid ? nextItem.uid : '',
+        bk_next_name: nextItem?.parent_model_uid === item.uid ? nextItem.display_name : '',
+        bk_pre_obj_id: parentItem?.uid || '',
+        bk_pre_obj_name: parentItem?.display_name || '',
+      };
+    });
   } catch (error) {
     console.error(error);
     throw error;

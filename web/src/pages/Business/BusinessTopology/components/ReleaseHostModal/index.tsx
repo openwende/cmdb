@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Select, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { resourceDir } from '@/mock/business';
+import {
+  getResourceDirectoryTree,
+  ResourceDirectoryTreeNode,
+} from '@/api/services/business';
 import './style.css';
 
 interface ReleaseHostModalProps {
@@ -11,6 +14,14 @@ interface ReleaseHostModalProps {
   onConfirm: (dirId: number) => void;
 }
 
+export const flattenDirectoryTreeOptions = (
+  nodes: ResourceDirectoryTreeNode[],
+): Array<{ value: number; label: string }> =>
+  nodes.flatMap((node) => [
+    { value: node.id, label: node.name },
+    ...flattenDirectoryTreeOptions(node.children || []),
+  ]);
+
 const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({
   visible,
   selectedCount,
@@ -19,6 +30,36 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const [selectedDir, setSelectedDir] = useState<number | null>(null);
+  const [directoryOptions, setDirectoryOptions] = useState<Array<{ value: number; label: string }>>(
+    [],
+  );
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    let active = true;
+    const loadDirectories = async () => {
+      try {
+        const response = await getResourceDirectoryTree();
+        if (!active) {
+          return;
+        }
+        setDirectoryOptions(flattenDirectoryTreeOptions(response.data || []));
+      } catch (error) {
+        console.error('Failed to load resource directories:', error);
+        if (active) {
+          setDirectoryOptions([]);
+        }
+      }
+    };
+
+    loadDirectories();
+    return () => {
+      active = false;
+    };
+  }, [visible]);
 
   const handleChange = (value: number) => {
     setSelectedDir(value);
@@ -65,10 +106,7 @@ const ReleaseHostModal: React.FC<ReleaseHostModalProps> = ({
           style={{ width: 310 }}
           value={selectedDir}
           onChange={handleChange}
-          options={resourceDir.info.map((item) => ({
-            value: item.bk_module_id,
-            label: item.bk_module_name,
-          }))}
+          options={directoryOptions}
         />
       </div>
       <div className="release-modal-footer">

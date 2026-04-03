@@ -227,6 +227,10 @@ const TransferHost: React.FC = () => {
     transferHostType === RemoveMenuItemKey.CurrentModule
       ? true
       : hasChanges;
+  const availableListenIpOptions = useMemo(
+    () => selectedHosts.map((host) => host.ip),
+    [selectedHosts],
+  );
 
   const columns = [
     {
@@ -564,6 +568,7 @@ const TransferHost: React.FC = () => {
         onSubmit={handleConfirmAddProcess}
         mode={processModalMode}
         initialValues={editingProcess}
+        listenIpOptions={availableListenIpOptions}
       />
 
       {/* Transfer host modal */}

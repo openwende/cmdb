@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { Drawer, Button, Collapse, Form, Input, Select, Switch, Table, Space, Tooltip } from 'antd';
 import './style.css';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { listenIPOptions } from '@/mock/business';
 import { ProcessItem } from '../../TransferHost';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
@@ -17,6 +16,7 @@ interface Props {
   onSubmit: (info: any) => void;
   mode: 'add' | 'edit';
   initialValues?: ProcessItem | null;
+  listenIpOptions?: Array<string | undefined>;
 }
 
 export interface ListenInfo {
@@ -27,13 +27,24 @@ export interface ListenInfo {
   enable: boolean;
 }
 
-const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, initialValues }) => {
+export const normalizeListenIpOptions = (options: Array<string | undefined>): string[] =>
+  Array.from(new Set(options.map((item) => item?.trim()).filter((item): item is string => Boolean(item))));
+
+const AddProcessModal: React.FC<Props> = ({
+  visible,
+  onClose,
+  onSubmit,
+  mode,
+  initialValues,
+  listenIpOptions = [],
+}) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
 
   const [listenInfoList, setListenInfoList] = useState<ListenInfo[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [isChanged, setIsChanged] = useState(false);
+  const availableListenIps = normalizeListenIpOptions(listenIpOptions);
 
   useEffect(() => {
     if (visible) {
@@ -117,7 +128,7 @@ const AddProcessModal: React.FC<Props> = ({ visible, onClose, onSubmit, mode, in
           placeholder={t('business.topology.addProcessModal.placeholders.selectOrInputIP')}
           onChange={(val) => handleUpdateListenInfo(record.id, 'ip', val)}
         >
-          {listenIPOptions.options.map((item) => (
+          {availableListenIps.map((item) => (
             <Select.Option value={item} key={item}>
               {item}
             </Select.Option>
