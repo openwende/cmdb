@@ -40,6 +40,18 @@ func main() {
 	}
 	defer func() { _ = db.Close() }()
 
+	if os.Getenv("ENABLE_COMPAT_AUTOMIGRATE") == "true" {
+		if err := storage.MigrateRuntimeSupportTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run runtime support migrations: %v", err)
+		}
+		if err := storage.MigrateRuntimeResourceSupportTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run runtime resource support migrations: %v", err)
+		}
+		if err := storage.MigrateResourceGraphTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run resource graph migrations: %v", err)
+		}
+	}
+
 	// 3. Initialize Repositories & Services
 	businessRepo := storage.NewBusinessRepository(db.DB())
 	// For MVP, businessSetRepo and personnelRepo could just return the nil interface wrapper or be implemented

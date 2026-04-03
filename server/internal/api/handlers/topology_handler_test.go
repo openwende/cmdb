@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -17,7 +18,10 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/wend/cmdb-backend/internal/core/mainline"
+	"github.com/wend/cmdb-backend/internal/core/projection"
+	"github.com/wend/cmdb-backend/internal/core/resource_graph"
 	"github.com/wend/cmdb-backend/internal/core/topology"
+	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -102,6 +106,22 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 			cloud_metadata TEXT,
 			custom_fields TEXT
 		)`,
+		`CREATE TABLE cloud_areas (
+			id TEXT PRIMARY KEY,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME,
+			tenant_id TEXT,
+			name TEXT NOT NULL,
+			identifier TEXT NOT NULL,
+			type TEXT NOT NULL,
+			description TEXT,
+			cloud_vendor TEXT,
+			vpc_id TEXT,
+			cidr_block TEXT,
+			region TEXT,
+			custom_fields TEXT
+		)`,
 		`CREATE TABLE host_business_relations (
 			host_id TEXT NOT NULL,
 			business_id TEXT NOT NULL,
@@ -113,6 +133,13 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 			module_id BIGINT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, module_id)
+		)`,
+		`CREATE TABLE resource_pool_hosts (
+			host_id TEXT PRIMARY KEY,
+			directory_id BIGINT NOT NULL,
+			imported_at DATETIME,
+			imported_by TEXT,
+			remark TEXT
 		)`,
 		`CREATE TABLE model_groups (
 			id TEXT PRIMARY KEY,
@@ -194,6 +221,7 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 	for _, sql := range sqls {
 		require.NoError(t, db.Exec(sql).Error)
 	}
+	require.NoError(t, storage.MigrateResourceGraphTables(db))
 
 	return db
 }
@@ -226,7 +254,7 @@ func TestTopologyHandler_GetNodeDetail(t *testing.T) {
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
 
 	ctx := context.Background()
 	bizID := seedTopologyHandlerBusiness(t, db, "handler-biz")
@@ -259,4 +287,649 @@ func TestTopologyHandler_GetNodeDetail(t *testing.T) {
 	require.Equal(t, 0, body.Code)
 	require.Equal(t, "module", body.Data.ModelUID)
 	require.Contains(t, body.Data.AllowedActions, "move")
+}
+
+func TestTopologyHandler_GetNodeHosts(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	ctx := context.Background()
+	bizID := seedTopologyHandlerBusiness(t, db, "host-scope-biz")
+	setNode, err := service.CreateSet(ctx, &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "scope-set",
+	})
+	require.NoError(t, err)
+	module, err := service.CreateModule(ctx, &types.CreateModuleRequest{
+		SetID: setNode.ID,
+		Name:  "scope-module",
+	})
+	require.NoError(t, err)
+
+	cloudAreaID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO cloud_areas (id, tenant_id, name, identifier, type, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		cloudAreaID.String(),
+		uuid.New().String(),
+		"default",
+		"default",
+		"direct",
+	).Error)
+
+	moduleHostID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO hosts (id, tenant_id, cloud_area_id, host_name, primary_ip, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		moduleHostID.String(),
+		defaultTenantUUID.String(),
+		cloudAreaID.String(),
+		"module-host",
+		"10.0.0.10",
+		"running",
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_business_relations (host_id, business_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		moduleHostID.String(),
+		bizID.String(),
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_module_relations (host_id, module_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		moduleHostID.String(),
+		module.ID,
+	).Error)
+
+	otherTenantHostID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO hosts (id, tenant_id, cloud_area_id, host_name, primary_ip, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		otherTenantHostID.String(),
+		uuid.New().String(),
+		cloudAreaID.String(),
+		"other-tenant-module-host",
+		"10.0.0.11",
+		"running",
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_business_relations (host_id, business_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		otherTenantHostID.String(),
+		bizID.String(),
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_module_relations (host_id, module_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		otherTenantHostID.String(),
+		module.ID,
+	).Error)
+
+	idleHostID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO hosts (id, tenant_id, cloud_area_id, host_name, primary_ip, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		idleHostID.String(),
+		defaultTenantUUID.String(),
+		cloudAreaID.String(),
+		"idle-host",
+		"10.0.0.20",
+		"running",
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_business_relations (host_id, business_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		idleHostID.String(),
+		bizID.String(),
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO resource_pool_hosts (host_id, directory_id, imported_at, imported_by, remark)
+		VALUES (?, 1, CURRENT_TIMESTAMP, 'tester', 'idle host')`,
+		idleHostID.String(),
+	).Error)
+
+	router := gin.New()
+	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
+
+	type hostRow struct {
+		HostID    string `json:"host_id"`
+		InnerIPv4 string `json:"inner_ipv4"`
+		Module    *struct {
+			ID   uint64 `json:"id"`
+			Name string `json:"name"`
+		} `json:"module"`
+		Set *struct {
+			ID   uint64 `json:"id"`
+			Name string `json:"name"`
+		} `json:"set"`
+	}
+
+	type responseBody struct {
+		Code int `json:"code"`
+		Data struct {
+			Items []hostRow `json:"items"`
+		} `json:"data"`
+	}
+
+	cases := []struct {
+		name       string
+		nodeID     string
+		wantHostID string
+		wantModule *uint64
+		wantSet    *uint64
+	}{
+		{
+			name:       "business scope returns all bound hosts",
+			nodeID:     fmt.Sprintf("business-%s", bizID),
+			wantHostID: moduleHostID.String(),
+			wantModule: &module.ID,
+			wantSet:    &setNode.ID,
+		},
+		{
+			name:       "set scope returns hosts under set modules",
+			nodeID:     fmt.Sprintf("set-%d", setNode.ID),
+			wantHostID: moduleHostID.String(),
+			wantModule: &module.ID,
+			wantSet:    &setNode.ID,
+		},
+		{
+			name:       "module scope returns module hosts",
+			nodeID:     fmt.Sprintf("module-%d", module.ID),
+			wantHostID: moduleHostID.String(),
+			wantModule: &module.ID,
+			wantSet:    &setNode.ID,
+		},
+		{
+			name:       "idle scope returns pooled hosts",
+			nodeID:     "idle_set-1",
+			wantHostID: idleHostID.String(),
+			wantModule: nil,
+			wantSet:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "/api/v1/topology/nodes/"+tc.nodeID+"/hosts", nil)
+			require.NoError(t, err)
+			resp := httptest.NewRecorder()
+
+			router.ServeHTTP(resp, req)
+
+			require.Equal(t, http.StatusOK, resp.Code)
+
+			var body responseBody
+			require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &body))
+			require.Equal(t, 0, body.Code)
+			require.Len(t, body.Data.Items, 1)
+			require.Equal(t, tc.wantHostID, body.Data.Items[0].HostID)
+			require.Equal(t, tc.wantModule == nil, body.Data.Items[0].Module == nil)
+			require.Equal(t, tc.wantSet == nil, body.Data.Items[0].Set == nil)
+			if tc.wantModule != nil {
+				require.Equal(t, *tc.wantModule, body.Data.Items[0].Module.ID)
+			}
+			if tc.wantSet != nil {
+				require.Equal(t, *tc.wantSet, body.Data.Items[0].Set.ID)
+			}
+		})
+	}
+}
+
+func TestTopologyHandler_GetTopologyTree_UsesProjectionWhenGraphDataExists(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	graphSvc := resource_graph.NewService(db)
+	registerProjectionHandlerType(t, graphSvc, "business", "org")
+	registerProjectionHandlerType(t, graphSvc, "set", "org")
+	registerProjectionHandlerType(t, graphSvc, "module", "app")
+
+	bizID := uuid.NewString()
+	biz, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
+		TypeName: "business",
+		Name:     "Projected Biz",
+		Spec:     map[string]any{"ref_id": bizID},
+	})
+	require.NoError(t, err)
+	setNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
+		TypeName: "set",
+		Name:     "proj-set",
+		Spec:     map[string]any{"ref_id": "88"},
+	})
+	require.NoError(t, err)
+	_, err = graphSvc.CreateEdge(context.Background(), resource_graph.CreateEdgeInput{
+		FromID:  biz.ID,
+		ToID:    setNode.ID,
+		RelType: "contains",
+	})
+	require.NoError(t, err)
+
+	router := gin.New()
+	router.GET("/api/v1/topology/tree", handler.GetTopologyTree)
+
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/topology/tree?business_id="+bizID+"&max_depth=3", nil)
+	require.NoError(t, err)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	require.Contains(t, resp.Body.String(), `"Projected Biz"`)
+	require.Contains(t, resp.Body.String(), `"set_88"`)
+}
+
+func TestTopologyHandler_GetNodeDetail_UsesProjectionWhenGraphDataExists(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	graphSvc := resource_graph.NewService(db)
+	registerProjectionHandlerType(t, graphSvc, "business", "org")
+	registerProjectionHandlerType(t, graphSvc, "set", "org")
+	registerProjectionHandlerType(t, graphSvc, "module", "app")
+
+	bizID := uuid.NewString()
+	biz, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
+		TypeName: "business",
+		Name:     "Projection Detail Biz",
+		Spec:     map[string]any{"ref_id": bizID},
+	})
+	require.NoError(t, err)
+	setNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
+		TypeName: "set",
+		Name:     "detail-set",
+		Spec:     map[string]any{"ref_id": "91"},
+	})
+	require.NoError(t, err)
+	moduleNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
+		TypeName: "module",
+		Name:     "detail-module",
+		Spec: map[string]any{
+			"ref_id":       "92",
+			"service_type": "api",
+		},
+	})
+	require.NoError(t, err)
+	for _, edge := range []resource_graph.CreateEdgeInput{
+		{FromID: biz.ID, ToID: setNode.ID, RelType: "contains"},
+		{FromID: setNode.ID, ToID: moduleNode.ID, RelType: "contains"},
+	} {
+		_, err := graphSvc.CreateEdge(context.Background(), edge)
+		require.NoError(t, err)
+	}
+
+	router := gin.New()
+	router.GET("/api/v1/topology/nodes/:id", handler.GetNodeDetail)
+
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/topology/nodes/module-92", nil)
+	require.NoError(t, err)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusOK, resp.Code)
+	require.Contains(t, resp.Body.String(), `"model_uid":"module"`)
+	require.Contains(t, resp.Body.String(), `"node_id":"module-92"`)
+	require.Contains(t, resp.Body.String(), `"service_type":"api"`)
+}
+
+func registerProjectionHandlerType(t *testing.T, svc *resource_graph.Service, name, category string) {
+	t.Helper()
+
+	_, err := svc.CreateType(context.Background(), resource_graph.CreateTypeInput{
+		Name:        name,
+		DisplayName: name,
+		Category:    category,
+		Schema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"ref_id": map[string]any{"type": "string"},
+			},
+		},
+	})
+	require.NoError(t, err)
+}
+
+func TestTopologyHandler_CreateSet_UsesProjectionCommandService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-write-biz")
+
+	router := gin.New()
+	router.POST("/api/v1/topology/sets", handler.CreateSet)
+	router.GET("/api/v1/topology/tree", handler.GetTopologyTree)
+
+	payload, err := json.Marshal(map[string]any{
+		"business_id": bizID.String(),
+		"name":        "write-set",
+		"description": "created by projection",
+		"env_type":    "prod",
+		"sort_order":  10,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	require.Equal(t, http.StatusCreated, resp.Code)
+	require.Contains(t, resp.Body.String(), `"name":"write-set"`)
+
+	treeReq := httptest.NewRequest(http.MethodGet, "/api/v1/topology/tree?business_id="+bizID.String()+"&max_depth=2", nil)
+	treeResp := httptest.NewRecorder()
+	router.ServeHTTP(treeResp, treeReq)
+
+	require.Equal(t, http.StatusOK, treeResp.Code)
+	require.Contains(t, treeResp.Body.String(), `"write-set"`)
+}
+
+func TestTopologyHandler_UpdateModule_UsesProjectionCommandService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-module-biz")
+
+	createRouter := gin.New()
+	createRouter.POST("/api/v1/topology/sets", handler.CreateSet)
+	createRouter.POST("/api/v1/topology/modules", handler.CreateModule)
+	createRouter.PUT("/api/v1/topology/modules/:id", handler.UpdateModule)
+	createRouter.GET("/api/v1/topology/tree", handler.GetTopologyTree)
+
+	setPayload, err := json.Marshal(map[string]any{
+		"business_id": bizID.String(),
+		"name":        "module-set",
+	})
+	require.NoError(t, err)
+
+	setReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(setPayload))
+	setReq.Header.Set("Content-Type", "application/json")
+	setResp := httptest.NewRecorder()
+	createRouter.ServeHTTP(setResp, setReq)
+	require.Equal(t, http.StatusCreated, setResp.Code)
+
+	var setBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(setResp.Body.Bytes(), &setBody))
+
+	modulePayload, err := json.Marshal(map[string]any{
+		"set_id":       setBody.Data.ID,
+		"name":         "gateway",
+		"service_type": "web",
+	})
+	require.NoError(t, err)
+
+	moduleReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/modules", bytes.NewReader(modulePayload))
+	moduleReq.Header.Set("Content-Type", "application/json")
+	moduleResp := httptest.NewRecorder()
+	createRouter.ServeHTTP(moduleResp, moduleReq)
+	require.Equal(t, http.StatusCreated, moduleResp.Code)
+
+	var moduleBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(moduleResp.Body.Bytes(), &moduleBody))
+
+	updatePayload, err := json.Marshal(map[string]any{
+		"name":         "gateway-v2",
+		"service_type": "db",
+	})
+	require.NoError(t, err)
+
+	updateReq := httptest.NewRequest(
+		http.MethodPut,
+		fmt.Sprintf("/api/v1/topology/modules/%d", moduleBody.Data.ID),
+		bytes.NewReader(updatePayload),
+	)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateResp := httptest.NewRecorder()
+	createRouter.ServeHTTP(updateResp, updateReq)
+
+	require.Equal(t, http.StatusOK, updateResp.Code)
+	require.Contains(t, updateResp.Body.String(), `"name":"gateway-v2"`)
+
+	treeReq := httptest.NewRequest(http.MethodGet, "/api/v1/topology/tree?business_id="+bizID.String()+"&max_depth=3", nil)
+	treeResp := httptest.NewRecorder()
+	createRouter.ServeHTTP(treeResp, treeReq)
+
+	require.Equal(t, http.StatusOK, treeResp.Code)
+	require.Contains(t, treeResp.Body.String(), `"gateway-v2"`)
+	require.Contains(t, treeResp.Body.String(), `"bk_module_type":"2"`)
+}
+
+func TestTopologyHandler_InitializeBusinessTopology_UsesProjectionCommandService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-init-biz")
+
+	router := gin.New()
+	router.POST("/api/v1/topology/businesses/:id/initialize", handler.InitializeBusinessTopology)
+	router.GET("/api/v1/topology/tree", handler.GetTopologyTree)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/topology/businesses/"+bizID.String()+"/initialize", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	require.Equal(t, http.StatusOK, resp.Code)
+
+	treeReq := httptest.NewRequest(http.MethodGet, "/api/v1/topology/tree?business_id="+bizID.String()+"&max_depth=3", nil)
+	treeResp := httptest.NewRecorder()
+	router.ServeHTTP(treeResp, treeReq)
+
+	require.Equal(t, http.StatusOK, treeResp.Code)
+	require.Contains(t, treeResp.Body.String(), `"is_default":true`)
+}
+
+func TestTopologyHandler_TransferHosts_UsesProjectionCommandService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-host-transfer-biz")
+	hostID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO hosts (id, tenant_id, host_name, primary_ip, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		hostID.String(),
+		uuid.New().String(),
+		"host-transfer",
+		"10.0.0.21",
+		"running",
+	).Error)
+
+	router := gin.New()
+	router.POST("/api/v1/topology/sets", handler.CreateSet)
+	router.POST("/api/v1/topology/modules", handler.CreateModule)
+	router.POST("/api/v1/topology/hosts/transfer", handler.TransferHosts)
+	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
+
+	setPayload, err := json.Marshal(map[string]any{
+		"business_id": bizID.String(),
+		"name":        "host-set",
+	})
+	require.NoError(t, err)
+	setReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(setPayload))
+	setReq.Header.Set("Content-Type", "application/json")
+	setResp := httptest.NewRecorder()
+	router.ServeHTTP(setResp, setReq)
+	require.Equal(t, http.StatusCreated, setResp.Code)
+
+	var setBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(setResp.Body.Bytes(), &setBody))
+
+	modulePayload, err := json.Marshal(map[string]any{
+		"set_id": setBody.Data.ID,
+		"name":   "host-module",
+	})
+	require.NoError(t, err)
+	moduleReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/modules", bytes.NewReader(modulePayload))
+	moduleReq.Header.Set("Content-Type", "application/json")
+	moduleResp := httptest.NewRecorder()
+	router.ServeHTTP(moduleResp, moduleReq)
+	require.Equal(t, http.StatusCreated, moduleResp.Code)
+
+	var moduleBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(moduleResp.Body.Bytes(), &moduleBody))
+
+	transferPayload, err := json.Marshal(map[string]any{
+		"host_ids":         []string{hostID.String()},
+		"target_module_id": moduleBody.Data.ID,
+	})
+	require.NoError(t, err)
+	transferReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/hosts/transfer", bytes.NewReader(transferPayload))
+	transferReq.Header.Set("Content-Type", "application/json")
+	transferResp := httptest.NewRecorder()
+	router.ServeHTTP(transferResp, transferReq)
+
+	require.Equal(t, http.StatusOK, transferResp.Code)
+	require.Contains(t, transferResp.Body.String(), `"successful":1`)
+
+	hostsReq := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/api/v1/topology/nodes/module-%d/hosts", moduleBody.Data.ID), nil)
+	hostsResp := httptest.NewRecorder()
+	router.ServeHTTP(hostsResp, hostsReq)
+
+	require.Equal(t, http.StatusOK, hostsResp.Code)
+	require.Contains(t, hostsResp.Body.String(), hostID.String())
+	require.Contains(t, hostsResp.Body.String(), `"module":{"id":`)
+}
+
+func TestTopologyHandler_TransferHostsToPool_UsesProjectionCommandService(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-host-pool-biz")
+	hostID := uuid.New()
+	require.NoError(t, db.Exec(
+		`INSERT INTO hosts (id, tenant_id, host_name, primary_ip, status, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+		hostID.String(),
+		uuid.New().String(),
+		"host-pool",
+		"10.0.0.31",
+		"running",
+	).Error)
+
+	router := gin.New()
+	router.POST("/api/v1/topology/sets", handler.CreateSet)
+	router.POST("/api/v1/topology/modules", handler.CreateModule)
+	router.POST("/api/v1/topology/hosts/transfer", handler.TransferHosts)
+	router.POST("/api/v1/topology/hosts/transfer-to-pool", handler.TransferHostsToPool)
+	router.POST("/api/v1/topology/businesses/:id/initialize", handler.InitializeBusinessTopology)
+	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
+
+	initReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/businesses/"+bizID.String()+"/initialize", nil)
+	initResp := httptest.NewRecorder()
+	router.ServeHTTP(initResp, initReq)
+	require.Equal(t, http.StatusOK, initResp.Code)
+
+	setPayload, err := json.Marshal(map[string]any{
+		"business_id": bizID.String(),
+		"name":        "pool-set",
+	})
+	require.NoError(t, err)
+	setReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(setPayload))
+	setReq.Header.Set("Content-Type", "application/json")
+	setResp := httptest.NewRecorder()
+	router.ServeHTTP(setResp, setReq)
+	require.Equal(t, http.StatusCreated, setResp.Code)
+
+	var setBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(setResp.Body.Bytes(), &setBody))
+
+	modulePayload, err := json.Marshal(map[string]any{
+		"set_id": setBody.Data.ID,
+		"name":   "pool-module",
+	})
+	require.NoError(t, err)
+	moduleReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/modules", bytes.NewReader(modulePayload))
+	moduleReq.Header.Set("Content-Type", "application/json")
+	moduleResp := httptest.NewRecorder()
+	router.ServeHTTP(moduleResp, moduleReq)
+	require.Equal(t, http.StatusCreated, moduleResp.Code)
+
+	var moduleBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(moduleResp.Body.Bytes(), &moduleBody))
+
+	transferPayload, err := json.Marshal(map[string]any{
+		"host_ids":         []string{hostID.String()},
+		"target_module_id": moduleBody.Data.ID,
+	})
+	require.NoError(t, err)
+	transferReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/hosts/transfer", bytes.NewReader(transferPayload))
+	transferReq.Header.Set("Content-Type", "application/json")
+	transferResp := httptest.NewRecorder()
+	router.ServeHTTP(transferResp, transferReq)
+	require.Equal(t, http.StatusOK, transferResp.Code)
+
+	poolPayload, err := json.Marshal(map[string]any{
+		"host_ids": []string{hostID.String()},
+	})
+	require.NoError(t, err)
+	poolReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/hosts/transfer-to-pool", bytes.NewReader(poolPayload))
+	poolReq.Header.Set("Content-Type", "application/json")
+	poolResp := httptest.NewRecorder()
+	router.ServeHTTP(poolResp, poolReq)
+
+	require.Equal(t, http.StatusOK, poolResp.Code)
+	require.Contains(t, poolResp.Body.String(), `"successful":1`)
+
+	idleHostsReq := httptest.NewRequest(http.MethodGet, "/api/v1/topology/nodes/idle_set-1/hosts", nil)
+	idleHostsResp := httptest.NewRecorder()
+	router.ServeHTTP(idleHostsResp, idleHostsReq)
+
+	require.Equal(t, http.StatusOK, idleHostsResp.Code)
+	require.Contains(t, idleHostsResp.Body.String(), hostID.String())
 }

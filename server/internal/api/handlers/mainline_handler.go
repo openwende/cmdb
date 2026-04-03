@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/wend/cmdb-backend/internal/core/mainline"
+	"github.com/wend/cmdb-backend/internal/core/projection"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -16,10 +17,19 @@ import (
 type MainlineHandler struct {
 	mainlineService *mainline.Service
 	topologyService *topology.Service
+	projection      *projection.BusinessTopologyService
 }
 
-func NewMainlineHandler(mainlineService *mainline.Service, topologyService *topology.Service) *MainlineHandler {
-	return &MainlineHandler{mainlineService: mainlineService, topologyService: topologyService}
+func NewMainlineHandler(
+	mainlineService *mainline.Service,
+	topologyService *topology.Service,
+	projectionSvc *projection.BusinessTopologyService,
+) *MainlineHandler {
+	return &MainlineHandler{
+		mainlineService: mainlineService,
+		topologyService: topologyService,
+		projection:      projectionSvc,
+	}
 }
 
 func (h *MainlineHandler) ListModels(c *gin.Context) {
@@ -120,6 +130,29 @@ func (h *MainlineHandler) GetTree(c *gin.Context) {
 	req.IncludeHosts = c.Query("include_hosts") == "true"
 	req.MaxDepth, _ = strconv.Atoi(c.DefaultQuery("max_depth", "10"))
 	req.ExpandNodeID = c.Query("expand_node_id")
+
+	if h.projection != nil {
+		var businessRef string
+		if req.BusinessID != nil {
+			businessRef = req.BusinessID.String()
+		}
+
+		tree, err := h.projection.GetTopologyTree(
+			c.Request.Context(),
+			businessRef,
+			req.IncludeHosts,
+			req.MaxDepth,
+			req.ExpandNodeID,
+		)
+		switch {
+		case err == nil && len(tree) > 0:
+			c.JSON(http.StatusOK, gin.H{"code": 0, "data": tree})
+			return
+		case err != nil && !shouldFallbackProjection(err):
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	}
 
 	tree, err := h.topologyService.GetTopologyTree(c.Request.Context(), &req)
 	if err != nil {

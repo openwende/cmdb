@@ -65,7 +65,7 @@ func (s *AggregateService) GetNodeDetail(ctx context.Context, nodeID string) (*t
 
 	return &types.AggregateTopologyNode{
 		NodeID:         normalizeAggregateNodeID(node),
-		NodeType:       types.TopologyNodeType(node.ModelName),
+		NodeType:       aggregateNodeType(node),
 		Name:           node.Name,
 		ModelUID:       node.ModelName,
 		Path:           path,
@@ -83,7 +83,7 @@ func (s *AggregateService) buildNodePath(ctx context.Context, node *types.Mainli
 	for current != nil {
 		lineage = append([]types.AggregateTopologyPathNode{{
 			NodeID:   normalizeAggregateNodeID(current),
-			NodeType: types.TopologyNodeType(current.ModelName),
+			NodeType: aggregateNodeType(current),
 			Name:     current.Name,
 			ModelUID: current.ModelName,
 		}}, lineage...)
@@ -108,11 +108,11 @@ func parseAggregateNodeID(raw string) (types.TopologyNodeType, string, error) {
 		return "", "", fmt.Errorf("invalid node id")
 	}
 
-	if strings.Contains(raw, "_") {
-		parts := strings.SplitN(raw, "_", 2)
-		if len(parts) == 2 && parts[0] != "" && parts[1] != "" {
-			return types.TopologyNodeType(parts[0]), parts[1], nil
-		}
+	switch {
+	case strings.HasPrefix(raw, "idle_set-"):
+		return types.NodeTypeSet, strings.TrimPrefix(raw, "idle_set-"), nil
+	case strings.HasPrefix(raw, "idle_module-"):
+		return types.NodeTypeModule, strings.TrimPrefix(raw, "idle_module-"), nil
 	}
 
 	if idx := strings.Index(raw, "-"); idx > 0 && idx < len(raw)-1 {
@@ -123,7 +123,7 @@ func parseAggregateNodeID(raw string) (types.TopologyNodeType, string, error) {
 }
 
 func normalizeAggregateNodeID(node *types.MainlineInstance) string {
-	return fmt.Sprintf("%s-%s", node.ModelName, node.RefID)
+	return fmt.Sprintf("%s-%s", aggregateNodeType(node), node.RefID)
 }
 
 func allowedActionsForNode(node *types.MainlineInstance) []string {
@@ -139,4 +139,17 @@ func allowedActionsForNode(node *types.MainlineInstance) []string {
 	default:
 		return []string{"create_child", "move", "delete"}
 	}
+}
+
+func aggregateNodeType(node *types.MainlineInstance) types.TopologyNodeType {
+	if node.IsDefault {
+		switch node.ModelName {
+		case string(types.NodeTypeSet):
+			return "idle_set"
+		case string(types.NodeTypeModule):
+			return "idle_module"
+		}
+	}
+
+	return types.TopologyNodeType(node.ModelName)
 }

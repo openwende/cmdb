@@ -6,6 +6,7 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
+	"github.com/wend/cmdb-backend/internal/core/projection"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 )
 
@@ -15,16 +16,19 @@ func RegisterTopologyRoutes(router *gin.Engine, db *gorm.DB) {
 	mainlineService := mainline.NewService(db)
 	service := topology.NewService(db, mainlineService)
 	aggregateService := topology.NewAggregateService(db, service, mainlineService)
-	handler := handlers.NewTopologyHandler(service, aggregateService)
+	projectionService := projection.NewBusinessTopologyService(db)
+	commandService := projection.NewBusinessTopologyCommandService(db)
+	handler := handlers.NewTopologyHandler(service, aggregateService, projectionService, commandService)
 
 	// API v1 路由组
 	v1 := router.Group("/api/v1/topology")
 	{
 		// ========== 拓扑树 ==========
-		v1.GET("/tree", handler.GetTopologyTree)                     // 获取拓扑树
-		v1.GET("/nodes/:id", handler.GetNodeDetail)                  // 获取节点聚合详情
-		v1.GET("/nodes/:type/:id/children", handler.GetNodeChildren) // 获取节点子节点（懒加载）
-		v1.GET("/statistics", handler.GetStatistics)                 // 获取统计信息
+		v1.GET("/tree", handler.GetTopologyTree)                    // 获取拓扑树
+		v1.GET("/nodes/:id", handler.GetNodeDetail)                 // 获取节点聚合详情
+		v1.GET("/nodes/:id/hosts", handler.GetNodeHosts)            // 获取节点下的主机列表
+		v1.GET("/node-children/:type/:id", handler.GetNodeChildren) // 获取节点子节点（懒加载）
+		v1.GET("/statistics", handler.GetStatistics)                // 获取统计信息
 
 		// ========== 集群（Set）==========
 		setsAPI := v1.Group("/sets")

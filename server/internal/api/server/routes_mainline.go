@@ -6,13 +6,15 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
+	"github.com/wend/cmdb-backend/internal/core/projection"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 )
 
 func RegisterMainlineRoutes(router *gin.Engine, db *gorm.DB) {
 	mainlineService := mainline.NewService(db)
 	topologyService := topology.NewService(db, mainlineService)
-	handler := handlers.NewMainlineHandler(mainlineService, topologyService)
+	projectionService := projection.NewBusinessTopologyService(db)
+	handler := handlers.NewMainlineHandler(mainlineService, topologyService, projectionService)
 
 	v1 := router.Group("/api/v1/mainline")
 	{
