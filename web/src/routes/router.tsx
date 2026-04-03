@@ -3,6 +3,8 @@ import { createBrowserRouter, createRoutesFromElements, Route } from 'react-rout
 import { routes } from './index';
 import { NavigationItem } from './Types';
 import MainLayout from '@/components/Layout/MainLayout';
+import { Navigate } from 'react-router-dom';
+import CmdbNextPrototype from '@/pages/Prototype/CmdbNext';
 
 function createRouteElements(items: NavigationItem[]): React.ReactNode[] {
   return items.map((item) => (
@@ -22,9 +24,15 @@ function createRouteElements(items: NavigationItem[]): React.ReactNode[] {
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<MainLayout />}>
-      {createRouteElements(routes)}
-    </Route>,
+    <>
+      <Route path="/" element={<MainLayout />}>
+        {createRouteElements(routes)}
+      </Route>
+      <Route path="/prototype/cmdb-next">
+        <Route index element={<Navigate to="workbench" replace />} />
+        <Route path=":section" element={<CmdbNextPrototype />} />
+      </Route>
+    </>,
   ),
 );
 

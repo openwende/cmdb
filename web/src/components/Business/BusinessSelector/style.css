@@ -11,10 +11,6 @@
     width: 100%;
   }
 
-  .ant-select-dropdown {
-    width: 320px !important;
-  }
-
   .option-id {
     color: var(--color-text-quaternary) !important;
   }
@@ -30,4 +26,8 @@
   .create-business-button {
     width: 100%;
   }
+}
+
+.business-selector-dropdown {
+  width: min(320px, calc(100vw - 24px)) !important;
 }

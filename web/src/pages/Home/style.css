@@ -8,6 +8,14 @@
 /* Welcome Section */
 .dashboard__welcome {
   margin-bottom: var(--space-2xl);
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.9fr);
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+.dashboard__welcome-copy {
+  min-width: 0;
 }
 
 .dashboard__welcome-title {
@@ -23,9 +31,92 @@
   margin: 0;
 }
 
-/* Stats */
-.dashboard__stats {
-  margin-bottom: var(--space-3xl);
+.dashboard__workspace-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-top: var(--space-lg);
+}
+
+.dashboard__summary-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-md);
+  border-radius: 999px;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.dashboard__summary-note {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.dashboard__workspace-actions {
+  display: grid;
+  gap: var(--space-md);
+  padding: var(--space-xl);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-container);
+}
+
+.dashboard__workspace-primary {
+  justify-content: center;
+  height: 48px;
+}
+
+.dashboard__workspace-secondary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color var(--transition-normal), background-color var(--transition-normal);
+}
+
+.dashboard__workspace-secondary:hover {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-bg);
+}
+
+.dashboard__workspace-secondary-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-layout);
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.dashboard__workspace-secondary-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.dashboard__workspace-secondary-title {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.dashboard__workspace-secondary-desc {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+  margin-top: 2px;
 }
 
 /* Section */
@@ -57,51 +148,6 @@
 }
 
 /* Quick Action Cards */
-.dashboard__action-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-xl);
-  background: var(--color-bg-container);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  cursor: pointer;
-  transition: all var(--transition-normal);
-}
-
-.dashboard__action-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-primary-border);
-  transform: translateY(-1px);
-}
-
-.dashboard__action-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-lg);
-  font-size: 20px;
-  flex-shrink: 0;
-}
-
-.dashboard__action-content {
-  min-width: 0;
-}
-
-.dashboard__action-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--color-text-primary);
-}
-
-.dashboard__action-desc {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  margin-top: 2px;
-}
-
 /* Model Cards */
 .dashboard__model-card {
   border: 1px solid var(--color-border);
@@ -179,6 +225,10 @@
   .dashboard {
     padding: var(--space-xl);
   }
+
+  .dashboard__welcome {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* --- Mobile (< 768px) --- */
@@ -191,13 +241,17 @@
     font-size: var(--font-size-lg);
   }
 
-  .dashboard__action-card {
-    padding: var(--space-lg);
-  }
-
   .dashboard__section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-sm);
+  }
+
+  .dashboard__workspace-actions {
+    padding: var(--space-lg);
+  }
+
+  .dashboard__workspace-secondary {
+    padding: var(--space-md);
   }
 }

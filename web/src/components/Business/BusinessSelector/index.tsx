@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Select, Spin, Divider, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -24,7 +24,6 @@ interface BusinessSelectorProps {
 const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
 
   const {
@@ -53,11 +52,18 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
       const { id, type } = businessInfo;
       const business = getBusinessById(id, type);
 
-      if (business) {
+      if (business && currentBusiness?.id !== business.id) {
         setCurrentBusiness(business);
       }
     }
-  }, [location.pathname, getBusinessById, setCurrentBusiness]);
+  }, [
+    businessList,
+    businessSetList,
+    currentBusiness?.id,
+    getBusinessById,
+    location.pathname,
+    setCurrentBusiness,
+  ]);
 
   // Generate select value from current business
   const getSelectValue = (): string => {
@@ -118,16 +124,19 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   }
 
   return (
-    <div ref={containerRef} className="business-selector-container">
+    <div className="business-selector-container">
       <Select
         value={getSelectValue()}
         onChange={handleChange}
         className="business-selector"
+        placement="bottomLeft"
+        popupClassName="business-selector-dropdown"
+        popupMatchSelectWidth={false}
         popupRender={renderPopup}
         loading={loading}
         notFoundContent={loading ? <Spin size="small" /> : null}
         placeholder={t('common.components.businessSelector.placeholder')}
-        getPopupContainer={() => containerRef.current!}
+        getPopupContainer={() => document.body}
         styles={{ root: { width: collapsed ? SELECTOR_COLLAPSED_WIDTH : undefined } }}
       >
         {businessList.length > 0 && (

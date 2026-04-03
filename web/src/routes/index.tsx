@@ -26,6 +26,7 @@ import {
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
 const BusinessPage = lazy(() => import('../pages/Business'));
+const BusinessEntryRedirect = lazy(() => import('../pages/Business/EntryRedirect'));
 const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
 const TopologyView = lazy(() => import('../pages/Business/BusinessTopology/TopologyView'));
 const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/TransferHost'));
@@ -95,6 +96,13 @@ export const routes: NavigationItem[] = [
   {
     name: 'routes.business',
     key: PrimaryNavKey.Business,
+    path: '/business',
+    element: withSuspense(BusinessEntryRedirect),
+    hideInMenu: true,
+  },
+  {
+    name: 'routes.business',
+    key: 'businessEntity',
     path: '/business/:businessId',
     element: withSuspense(BusinessPage),
     children: [

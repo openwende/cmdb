@@ -2,29 +2,29 @@
   "routes": {
     "home": "首页",
     "business": "业务",
-    "businessTopology": "业务拓扑",
+    "businessTopology": "拓扑工作区",
     "transferHost": "转移主机",
     "serviceTemplate": "服务模板",
-    "dynamicGroup": "动态分组",
+    "dynamicGroup": "主机分组",
     "businessSet": "业务集",
-    "businessSetTopology": "业务集拓扑",
-    "modelManagement": "模型管理",
-    "modelOverview": "模型总览",
-    "modelGroups": "模型分组",
-    "modelTopology": "模型拓扑",
-    "resource": "资源管理",
+    "businessSetTopology": "拓扑工作区",
+    "modelManagement": "模型与类型",
+    "modelOverview": "类型总览",
+    "modelGroups": "类型分组",
+    "modelTopology": "关系拓扑",
+    "resource": "资源目录",
     "resourceContent": "资源目录",
     "project": "项目",
-    "resourceBusiness": "业务管理",
-    "resourceModel": "模型管理",
+    "resourceBusiness": "业务台账",
+    "resourceModel": "模型与类型",
     "businessDetail": "业务详情",
     "modelDetail": "模型详情",
     "archivedBusiness": "已归档业务",
-    "host": "主机管理",
-    "deleteHistory": "删除历史",
-    "analysis": "运营分析",
+    "host": "主机资源",
+    "deleteHistory": "删除记录",
+    "analysis": "审计与分析",
     "auditLogs": "操作审计",
-    "operations": "运营统计",
+    "operations": "运营概览",
     "notFound": "404"
   },
   "dashboard": {
@@ -35,7 +35,8 @@
       "models": "模型总数",
       "instances": "实例总数",
       "hosts": "主机总数",
-      "businesses": "业务总数"
+      "businesses": "业务总数",
+      "pending": "待接入"
     },
     "quickActions": {
       "title": "快捷操作",
@@ -53,11 +54,26 @@
       "viewAll": "查看全部",
       "attributes": "个属性",
       "noModels": "暂无模型数据"
+    },
+    "workspace": {
+      "connectedModels_one": "已接入 {{count}} 个模型",
+      "connectedModels_other": "已接入 {{count}} 个模型",
+      "pendingSummary": "主机、业务、实例统计将随着资源图接入逐步开放。",
+      "primaryCta": "进入业务拓扑",
+      "primaryDesc": "从业务树进入主工作流，继续查看节点、主机和变更入口。",
+      "secondary": {
+        "resources": "进入资源目录",
+        "resourcesDesc": "查看主机与基础资源，补齐台账接入。",
+        "models": "进入模型管理",
+        "modelsDesc": "维护资源类型和 schema，扩展平台能力。"
+      }
     }
   },
   "common": {
     "layout": {
       "platformName": "配置平台",
+      "help": "帮助",
+      "login": "登录",
       "expandSidebar": "展开侧栏",
       "collapseSidebar": "收起侧栏"
     },
@@ -76,6 +92,7 @@
     "pleaseSelect": "请选择",
     "noMatch": "无匹配人员",
     "noData": "暂无数据",
+    "notSet": "未设置",
     "loading": "加载中...",
     "message": {
       "createSuccess": "创建成功",
@@ -129,6 +146,14 @@
         "hostList": "主机列表",
         "serviceInstance": "服务实例",
         "nodeInfo": "节点信息"
+      },
+      "workspace": {
+        "currentNode": "当前节点",
+        "noNode": "请先在左侧选择节点",
+        "selectNode": "先在左侧树中选择节点，右侧会切换到该节点的主机、服务和详情工作区。",
+        "hostList": "查看当前节点下的主机，并从这里发起新增、转移和回收操作。",
+        "serviceInstance": "查看当前节点下的服务实例，继续切换实例或进程视图。",
+        "nodeInfo": "查看当前节点的关键信息，确认归属、状态和维护责任。"
       },
       "hostList": {
         "columns": {
@@ -242,7 +267,7 @@
           "directMode": "直接新建",
           "selected": "已选择",
           "fields": {
-            "childModel": "子模型",
+            "childModel": "子节点类型",
             "name": "名称",
             "envType": "环境类型",
             "serviceType": "服务类型"
@@ -253,7 +278,7 @@
             "serviceType": "请选择服务类型"
           },
           "helper": {
-            "modelDriven": "会根据当前父节点自动筛选允许挂载的主线模型，并按模型属性生成实例表单。",
+            "modelDriven": "会根据当前节点自动筛选允许创建的子节点类型，并按表单 schema 生成创建表单。",
             "schemaDriven": "内置拓扑节点会优先读取当前业务下的表单 schema，避免继续依赖前端写死字段。"
           },
           "messages": {
@@ -262,7 +287,7 @@
             "createFailed": "创建节点失败"
           },
           "empty": {
-            "noChildModels": "当前节点下没有可创建的子主线模型"
+            "noChildModels": "当前节点下没有可创建的子节点类型"
           }
         }
       },
@@ -497,6 +522,7 @@
       },
       "moduleNodeInfo": {
         "deleteSuccess": "删除模块节点成功",
+        "deleteFailed": "删除模块节点失败",
         "saveSuccess": "保存成功",
         "serviceCategory": "服务分类",
         "basicInfo": "基础信息",
@@ -525,6 +551,7 @@
       },
       "setNodeInfo": {
         "deleteSuccess": "删除集群节点成功",
+        "deleteFailed": "删除集群节点失败",
         "saveSuccess": "保存成功",
         "basicInfo": "基础信息",
         "setName": "集群名称",
@@ -572,6 +599,7 @@
         "chinese": "中文",
         "english": "英文",
         "roles": "角色",
+        "rolesEmpty": "角色信息尚未录入",
         "maintainer": "运维人员",
         "productor": "产品人员",
         "tester": "测试人员",

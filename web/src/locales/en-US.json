@@ -2,29 +2,29 @@
   "routes": {
     "home": "Home",
     "business": "Business",
-    "businessTopology": "Topology",
+    "businessTopology": "Topology Workspace",
     "transferHost": "Transfer Host",
     "serviceTemplate": "Service Template",
-    "dynamicGroup": "Dynamic Group",
+    "dynamicGroup": "Host Groups",
     "businessSet": "Business Set",
-    "businessSetTopology": "Topology",
-    "modelManagement": "Models",
-    "modelOverview": "Overview",
-    "modelGroups": "Groups",
-    "modelTopology": "Topology",
-    "resource": "Resources",
+    "businessSetTopology": "Topology Workspace",
+    "modelManagement": "Models & Types",
+    "modelOverview": "Type Overview",
+    "modelGroups": "Type Groups",
+    "modelTopology": "Relationship Topology",
+    "resource": "Resource Directory",
     "resourceContent": "Resource Content",
     "project": "Project",
-    "resourceBusiness": "Business",
-    "resourceModel": "Models",
+    "resourceBusiness": "Business Inventory",
+    "resourceModel": "Models & Types",
     "businessDetail": "Business Detail",
     "modelDetail": "Model Detail",
     "archivedBusiness": "Archived Business",
-    "host": "Hosts",
-    "deleteHistory": "Delete History",
-    "analysis": "Analysis",
+    "host": "Host Resources",
+    "deleteHistory": "Deletion History",
+    "analysis": "Audit & Analysis",
     "auditLogs": "Audit",
-    "operations": "Operations",
+    "operations": "Operations Overview",
     "notFound": "404"
   },
   "dashboard": {
@@ -35,7 +35,8 @@
       "models": "Models",
       "instances": "Instances",
       "hosts": "Hosts",
-      "businesses": "Businesses"
+      "businesses": "Businesses",
+      "pending": "Pending"
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -53,11 +54,26 @@
       "viewAll": "View All",
       "attributes": "attributes",
       "noModels": "No models yet"
+    },
+    "workspace": {
+      "connectedModels_one": "{{count}} model connected",
+      "connectedModels_other": "{{count}} models connected",
+      "pendingSummary": "Host, business, and instance metrics will open up as the resource graph comes online.",
+      "primaryCta": "Open Business Topology",
+      "primaryDesc": "Enter the main workflow from the business tree and continue into nodes, hosts, and change entry points.",
+      "secondary": {
+        "resources": "Open Resource Directory",
+        "resourcesDesc": "Inspect hosts and infrastructure resources, then continue onboarding the inventory.",
+        "models": "Open Model Management",
+        "modelsDesc": "Maintain resource types and schemas to extend the platform."
+      }
     }
   },
   "common": {
     "layout": {
       "platformName": "Configuration Platform",
+      "help": "Help",
+      "login": "Sign in",
       "expandSidebar": "Expand sidebar",
       "collapseSidebar": "Collapse sidebar"
     },
@@ -76,6 +92,7 @@
     "pleaseSelect": "Please select",
     "noMatch": "No matching personnel",
     "noData": "No data",
+    "notSet": "Not set",
     "loading": "Loading...",
     "message": {
       "createSuccess": "Created successfully",
@@ -129,6 +146,14 @@
         "hostList": "Host List",
         "serviceInstance": "Service Instance",
         "nodeInfo": "Node Info"
+      },
+      "workspace": {
+        "currentNode": "Current node",
+        "noNode": "Select a node from the tree first",
+        "selectNode": "Select a node from the tree on the left. The panel on the right will switch to that node's hosts, services, and details.",
+        "hostList": "Inspect hosts under the current node and launch add, transfer, or release actions from here.",
+        "serviceInstance": "Inspect service instances under the current node and continue into instance or process views.",
+        "nodeInfo": "Inspect the current node's key details to confirm ownership, status, and maintenance context."
       },
       "hostList": {
         "columns": {
@@ -242,7 +267,7 @@
           "directMode": "Create directly",
           "selected": "Selected",
           "fields": {
-            "childModel": "Child model",
+            "childModel": "Child node type",
             "name": "Name",
             "envType": "Environment type",
             "serviceType": "Service type"
@@ -253,7 +278,7 @@
             "serviceType": "Select service type"
           },
           "helper": {
-            "modelDriven": "The available child mainline models are filtered from the current parent node, and instance fields are generated from the model schema.",
+            "modelDriven": "Available child node types are filtered from the current node, and the create form is generated from the schema.",
             "schemaDriven": "Built-in topology nodes now read the business form schema first instead of relying on hardcoded frontend fields."
           },
           "messages": {
@@ -262,7 +287,7 @@
             "createFailed": "Failed to create topology node"
           },
           "empty": {
-            "noChildModels": "No child mainline model can be created under this node"
+            "noChildModels": "No child node types can be created under this node"
           }
         }
       },
@@ -497,6 +522,7 @@
       },
       "moduleNodeInfo": {
         "deleteSuccess": "Module node deleted successfully",
+        "deleteFailed": "Failed to delete module node",
         "saveSuccess": "Saved successfully",
         "serviceCategory": "Service category",
         "basicInfo": "Basic info",
@@ -525,6 +551,7 @@
       },
       "setNodeInfo": {
         "deleteSuccess": "Set node deleted successfully",
+        "deleteFailed": "Failed to delete set node",
         "saveSuccess": "Saved successfully",
         "basicInfo": "Basic info",
         "setName": "Set name",
@@ -572,6 +599,7 @@
         "chinese": "Chinese",
         "english": "English",
         "roles": "Roles",
+        "rolesEmpty": "Role information has not been filled in yet",
         "maintainer": "Maintainer",
         "productor": "Product manager",
         "tester": "Tester",

@@ -2,19 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Card, Col, Row, Button, Skeleton } from 'antd';
 import {
   ApartmentOutlined,
-  CloudServerOutlined,
-  AppstoreOutlined,
-  DatabaseOutlined,
-  PlusOutlined,
-  ImportOutlined,
   NodeIndexOutlined,
-  FileSearchOutlined,
+  DatabaseOutlined,
+  AppstoreOutlined,
   RightOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
-import StatCard from '@/components/common/StatCard';
 import { listModels } from '@/api';
 import { ModelDefinition } from '@/api/types/model';
 import './style.css';
@@ -48,126 +43,77 @@ const Home: React.FC = () => {
     })
     .slice(0, 6);
 
-  const quickActions = [
+  const connectedModelSummary = t('dashboard.workspace.connectedModels', {
+    count: loading ? 0 : models.length,
+  });
+
+  const workspaceActions = [
     {
-      icon: <PlusOutlined />,
-      title: t('dashboard.quickActions.createModel'),
-      desc: t('dashboard.quickActions.createModelDesc'),
-      color: 'var(--color-primary)',
-      bg: 'var(--color-primary-bg)',
-      path: '/model/overview',
+      key: 'topology',
+      icon: <NodeIndexOutlined />,
+      title: t('dashboard.workspace.primaryCta'),
+      desc: t('dashboard.workspace.primaryDesc'),
+      path: '/business',
+      primary: true,
     },
     {
-      icon: <ImportOutlined />,
-      title: t('dashboard.quickActions.importHost'),
-      desc: t('dashboard.quickActions.importHostDesc'),
-      color: 'var(--color-success)',
-      bg: 'var(--color-success-bg)',
+      key: 'resources',
+      icon: <DatabaseOutlined />,
+      title: t('dashboard.workspace.secondary.resources'),
+      desc: t('dashboard.workspace.secondary.resourcesDesc'),
       path: '/resource/host',
     },
     {
-      icon: <NodeIndexOutlined />,
-      title: t('dashboard.quickActions.viewTopology'),
-      desc: t('dashboard.quickActions.viewTopologyDesc'),
-      color: 'var(--color-accent)',
-      bg: 'var(--color-accent-bg)',
-      path: '/model/topology',
-    },
-    {
-      icon: <FileSearchOutlined />,
-      title: t('dashboard.quickActions.auditLog'),
-      desc: t('dashboard.quickActions.auditLogDesc'),
-      color: 'var(--color-warning)',
-      bg: 'var(--color-warning-bg)',
-      path: '/analysis/audit',
+      key: 'models',
+      icon: <AppstoreOutlined />,
+      title: t('dashboard.workspace.secondary.models'),
+      desc: t('dashboard.workspace.secondary.modelsDesc'),
+      path: '/model/overview',
     },
   ];
 
   return (
     <div className="dashboard">
       <div className="dashboard__welcome">
-        <div>
+        <div className="dashboard__welcome-copy">
           <h1 className="dashboard__welcome-title">{t('dashboard.welcome')}</h1>
           <p className="dashboard__welcome-subtitle">{t('dashboard.subtitle')}</p>
+          <div className="dashboard__workspace-summary">
+            <span className="dashboard__summary-pill">{connectedModelSummary}</span>
+            <span className="dashboard__summary-note">{t('dashboard.workspace.pendingSummary')}</span>
+          </div>
         </div>
-      </div>
-
-      {/* Stats */}
-      <Row gutter={[16, 16]} className="dashboard__stats">
-        <Col xs={24} sm={12} lg={6}>
-          <StatCard
-            label={t('dashboard.stats.models')}
-            value={loading ? 0 : models.length}
-            icon={<ApartmentOutlined />}
-            color="blue"
-            loading={loading}
-            onClick={() => navigate('/model/overview')}
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatCard
-            label={t('dashboard.stats.instances')}
-            value={loading ? 0 : '--'}
-            icon={<CloudServerOutlined />}
-            color="green"
-            loading={loading}
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatCard
-            label={t('dashboard.stats.hosts')}
-            value={loading ? 0 : '--'}
-            icon={<DatabaseOutlined />}
-            color="orange"
-            loading={loading}
-            onClick={() => navigate('/resource/host')}
-          />
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <StatCard
-            label={t('dashboard.stats.businesses')}
-            value={loading ? 0 : '--'}
-            icon={<AppstoreOutlined />}
-            color="purple"
-            loading={loading}
-            onClick={() => navigate('/resource/business')}
-          />
-        </Col>
-      </Row>
-
-      {/* Quick Actions */}
-      <div className="dashboard__section">
-        <h2 className="dashboard__section-title">{t('dashboard.quickActions.title')}</h2>
-        <Row gutter={[16, 16]}>
-          {quickActions.map((action) => (
-            <Col xs={24} sm={12} lg={6} key={action.title}>
-              <div
-                className="dashboard__action-card"
+        <div className="dashboard__workspace-actions">
+          {workspaceActions.map((action) =>
+            action.primary ? (
+              <Button
+                key={action.key}
+                type="primary"
+                size="large"
+                className="dashboard__workspace-primary"
                 onClick={() => navigate(action.path)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    navigate(action.path);
-                  }
-                }}
                 aria-label={action.title}
               >
-                <div
-                  className="dashboard__action-icon"
-                  style={{ background: action.bg, color: action.color }}
-                >
-                  {action.icon}
-                </div>
-                <div className="dashboard__action-content">
-                  <div className="dashboard__action-title">{action.title}</div>
-                  <div className="dashboard__action-desc">{action.desc}</div>
-                </div>
-              </div>
-            </Col>
-          ))}
-        </Row>
+                {action.icon}
+                <span>{action.title}</span>
+              </Button>
+            ) : (
+              <button
+                key={action.key}
+                type="button"
+                className="dashboard__workspace-secondary"
+                onClick={() => navigate(action.path)}
+                aria-label={action.title}
+              >
+                <span className="dashboard__workspace-secondary-icon">{action.icon}</span>
+                <span className="dashboard__workspace-secondary-copy">
+                  <span className="dashboard__workspace-secondary-title">{action.title}</span>
+                  <span className="dashboard__workspace-secondary-desc">{action.desc}</span>
+                </span>
+              </button>
+            ),
+          )}
+        </div>
       </div>
 
       {/* Recent Models */}
