@@ -178,6 +178,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	RegisterResourcePoolRoutes(s.router, db.DB())
 	RegisterDynamicGroupRoutes(s.router, db.DB())
 	RegisterBusinessCustomFieldRoutes(s.router, db.DB())
+	RegisterResourceGraphRoutes(s.router, db.DB())
 }
 
 func (s *Server) Run() error {
