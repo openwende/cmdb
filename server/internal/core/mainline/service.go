@@ -228,6 +228,13 @@ func (s *Service) SyncModule(ctx context.Context, module *types.Module) (*types.
 	if err != nil {
 		return nil, err
 	}
+	extra := map[string]interface{}{
+		"service_type": module.ServiceType,
+		"description":  module.Description,
+	}
+	if module.ServiceCategoryID != nil {
+		extra["service_category_id"] = *module.ServiceCategoryID
+	}
 	return s.upsertNode(ctx, parent, &types.MainlineInstance{
 		ModelName:  string(types.NodeTypeModule),
 		BusinessID: module.BusinessID,
@@ -236,7 +243,7 @@ func (s *Service) SyncModule(ctx context.Context, module *types.Module) (*types.
 		Level:      2,
 		SortOrder:  module.SortOrder,
 		IsDefault:  module.IsDefault,
-		Extra:      mustJSON(map[string]interface{}{"service_type": module.ServiceType, "description": module.Description}),
+		Extra:      mustJSON(extra),
 	})
 }
 

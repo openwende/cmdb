@@ -175,6 +175,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// ==========================
 	RegisterProcessRoutes(s.router, db.DB())
 	RegisterServiceTemplateRoutes(s.router, db.DB())
+	RegisterServiceCategoryRoutes(s.router, db.DB())
 	RegisterResourcePoolRoutes(s.router, db.DB())
 	RegisterDynamicGroupRoutes(s.router, db.DB())
 	RegisterBusinessCustomFieldRoutes(s.router, db.DB())

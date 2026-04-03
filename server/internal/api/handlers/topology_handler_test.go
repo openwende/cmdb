@@ -69,6 +69,7 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 			set_id INTEGER NOT NULL,
 			business_id TEXT NOT NULL,
 			service_template_id BIGINT,
+			service_category_id BIGINT,
 			name TEXT NOT NULL,
 			description TEXT,
 			service_type TEXT,
@@ -932,4 +933,96 @@ func TestTopologyHandler_TransferHostsToPool_UsesProjectionCommandService(t *tes
 
 	require.Equal(t, http.StatusOK, idleHostsResp.Code)
 	require.Contains(t, idleHostsResp.Body.String(), hostID.String())
+}
+
+func TestTopologyHandler_UpdateModule_PersistsServiceCategoryID(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	db := setupTopologyHandlerTestDB(t)
+	require.NoError(t, db.Exec(`
+		CREATE TABLE service_categories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			business_id TEXT,
+			name TEXT NOT NULL,
+			parent_id BIGINT,
+			root_id BIGINT NOT NULL,
+			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		)
+	`).Error)
+
+	mainlineSvc := mainline.NewService(db)
+	service := topology.NewService(db, mainlineSvc)
+	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
+	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+
+	bizID := seedTopologyHandlerBusiness(t, db, "projection-category-biz")
+	categoryID := uint64(10)
+	require.NoError(t, db.Exec(`
+		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
+		VALUES (?, ?, ?, NULL, ?, FALSE, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`, categoryID, bizID.String(), "Database", categoryID).Error)
+
+	router := gin.New()
+	router.POST("/api/v1/topology/sets", handler.CreateSet)
+	router.POST("/api/v1/topology/modules", handler.CreateModule)
+	router.PUT("/api/v1/topology/modules/:id", handler.UpdateModule)
+
+	setPayload, err := json.Marshal(map[string]any{
+		"business_id": bizID.String(),
+		"name":        "module-set",
+	})
+	require.NoError(t, err)
+
+	setReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(setPayload))
+	setReq.Header.Set("Content-Type", "application/json")
+	setResp := httptest.NewRecorder()
+	router.ServeHTTP(setResp, setReq)
+	require.Equal(t, http.StatusCreated, setResp.Code)
+
+	var setBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(setResp.Body.Bytes(), &setBody))
+
+	modulePayload, err := json.Marshal(map[string]any{
+		"set_id": setBody.Data.ID,
+		"name":   "gateway",
+	})
+	require.NoError(t, err)
+
+	moduleReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/modules", bytes.NewReader(modulePayload))
+	moduleReq.Header.Set("Content-Type", "application/json")
+	moduleResp := httptest.NewRecorder()
+	router.ServeHTTP(moduleResp, moduleReq)
+	require.Equal(t, http.StatusCreated, moduleResp.Code)
+
+	var moduleBody struct {
+		Data struct {
+			ID uint64 `json:"id"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(moduleResp.Body.Bytes(), &moduleBody))
+
+	updatePayload, err := json.Marshal(map[string]any{
+		"service_category_id": categoryID,
+	})
+	require.NoError(t, err)
+
+	updateReq := httptest.NewRequest(
+		http.MethodPut,
+		fmt.Sprintf("/api/v1/topology/modules/%d", moduleBody.Data.ID),
+		bytes.NewReader(updatePayload),
+	)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateResp := httptest.NewRecorder()
+	router.ServeHTTP(updateResp, updateReq)
+
+	require.Equal(t, http.StatusOK, updateResp.Code)
+	require.Contains(t, updateResp.Body.String(), `"service_category_id":10`)
 }

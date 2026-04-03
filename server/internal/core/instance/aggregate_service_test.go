@@ -133,6 +133,7 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 			set_id INTEGER NOT NULL,
 			business_id TEXT NOT NULL,
 			service_template_id BIGINT,
+			service_category_id BIGINT,
 			name TEXT NOT NULL,
 			description TEXT,
 			service_type TEXT,

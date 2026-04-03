@@ -443,6 +443,9 @@ func buildExtra(resource types.ResourceV2) map[string]interface{} {
 		extra["bk_module_id"] = uintValue(resource.Spec["ref_id"])
 		extra["bk_module_name"] = resourceDisplayName(resource)
 		extra["bk_module_type"] = moduleTypeToLegacyValue(stringValue(resource.Spec["service_type"]))
+		if categoryID, ok := extra["service_category_id"]; ok {
+			extra["service_category_id"] = categoryID
+		}
 		if _, ok := extra["host_count"]; !ok {
 			extra["host_count"] = 0
 		}

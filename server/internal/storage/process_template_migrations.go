@@ -66,6 +66,174 @@ func MigrateProcessAndTemplates(db *gorm.DB) error {
 	return nil
 }
 
+// MigrateRuntimeProcessSupportTables 仅初始化当前运行时依赖的进程相关表。
+// 本地 Docker 联调启用兼容迁移时只需要进程读写依赖表，避免依赖完整业务模板初始化流程。
+func MigrateRuntimeProcessSupportTables(db *gorm.DB) error {
+	for _, stmt := range runtimeProcessSupportDDL(db.Dialector.Name()) {
+		if err := db.Exec(stmt).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func runtimeProcessSupportDDL(dialect string) []string {
+	if dialect == "sqlite" {
+		return []string{
+			`CREATE TABLE IF NOT EXISTS service_templates (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				name TEXT NOT NULL,
+				business_id TEXT NOT NULL,
+				service_type TEXT,
+				description TEXT,
+				created_by TEXT,
+				updated_by TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				deleted_at DATETIME
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_service_templates_business_id ON service_templates (business_id)`,
+			`CREATE TABLE IF NOT EXISTS process_templates (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				name TEXT NOT NULL,
+				business_id TEXT NOT NULL,
+				service_template_id INTEGER,
+				start_command TEXT,
+				stop_command TEXT,
+				restart_command TEXT,
+				reload_command TEXT,
+				face_stop_command TEXT,
+				work_path TEXT,
+				pid_file TEXT,
+				user TEXT,
+				proc_num INTEGER NOT NULL DEFAULT 1,
+				start_param_regex TEXT,
+				priority INTEGER NOT NULL DEFAULT 0,
+				timeout INTEGER NOT NULL DEFAULT 60,
+				auto_start BOOLEAN NOT NULL DEFAULT TRUE,
+				auto_recover BOOLEAN NOT NULL DEFAULT TRUE,
+				bind_info TEXT,
+				description TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_process_templates_business_id ON process_templates (business_id)`,
+			`CREATE INDEX IF NOT EXISTS idx_process_templates_service_template_id ON process_templates (service_template_id)`,
+			`CREATE TABLE IF NOT EXISTS processes (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				process_template_id INTEGER NOT NULL,
+				host_id TEXT NOT NULL,
+				module_id INTEGER NOT NULL,
+				business_id TEXT NOT NULL,
+				process_name TEXT,
+				bind_info TEXT,
+				start_command TEXT,
+				user TEXT,
+				work_path TEXT,
+				priority INTEGER,
+				proc_num INTEGER,
+				description TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				deleted_at DATETIME
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_processes_template_id ON processes (process_template_id)`,
+			`CREATE INDEX IF NOT EXISTS idx_processes_host_id ON processes (host_id)`,
+			`CREATE INDEX IF NOT EXISTS idx_processes_module_id ON processes (module_id)`,
+			`CREATE INDEX IF NOT EXISTS idx_processes_business_id ON processes (business_id)`,
+			`CREATE TABLE IF NOT EXISTS process_statuses (
+				process_id INTEGER PRIMARY KEY,
+				host_id TEXT NOT NULL,
+				pid INTEGER NOT NULL DEFAULT 0,
+				status TEXT,
+				cpu REAL NOT NULL DEFAULT 0,
+				memory REAL NOT NULL DEFAULT 0,
+				start_time DATETIME,
+				last_check_at DATETIME,
+				error_message TEXT
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_process_statuses_host_id ON process_statuses (host_id)`,
+		}
+	}
+
+	return []string{
+		`CREATE TABLE IF NOT EXISTS service_templates (
+			id BIGSERIAL PRIMARY KEY,
+			name VARCHAR(200) NOT NULL,
+			business_id UUID NOT NULL,
+			service_type VARCHAR(50),
+			description VARCHAR(500),
+			created_by VARCHAR(100),
+			updated_by VARCHAR(100),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			deleted_at TIMESTAMPTZ
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_service_templates_business_id ON service_templates (business_id)`,
+		`CREATE TABLE IF NOT EXISTS process_templates (
+			id BIGSERIAL PRIMARY KEY,
+			name VARCHAR(200) NOT NULL,
+			business_id UUID NOT NULL,
+			service_template_id BIGINT,
+			start_command VARCHAR(500),
+			stop_command VARCHAR(500),
+			restart_command VARCHAR(500),
+			reload_command VARCHAR(500),
+			face_stop_command VARCHAR(500),
+			work_path VARCHAR(500),
+			pid_file VARCHAR(500),
+			"user" VARCHAR(100),
+			proc_num INT NOT NULL DEFAULT 1,
+			start_param_regex VARCHAR(500),
+			priority INT NOT NULL DEFAULT 0,
+			timeout INT NOT NULL DEFAULT 60,
+			auto_start BOOLEAN NOT NULL DEFAULT TRUE,
+			auto_recover BOOLEAN NOT NULL DEFAULT TRUE,
+			bind_info JSONB,
+			description VARCHAR(500),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_process_templates_business_id ON process_templates (business_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_process_templates_service_template_id ON process_templates (service_template_id)`,
+		`CREATE TABLE IF NOT EXISTS processes (
+			id BIGSERIAL PRIMARY KEY,
+			process_template_id BIGINT NOT NULL,
+			host_id UUID NOT NULL,
+			module_id BIGINT NOT NULL,
+			business_id UUID NOT NULL,
+			process_name VARCHAR(200),
+			bind_info JSONB,
+			start_command VARCHAR(500),
+			"user" VARCHAR(100),
+			work_path VARCHAR(500),
+			priority INT,
+			proc_num INT,
+			description VARCHAR(500),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			deleted_at TIMESTAMPTZ
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_processes_template_id ON processes (process_template_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_processes_host_id ON processes (host_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_processes_module_id ON processes (module_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_processes_business_id ON processes (business_id)`,
+		`CREATE TABLE IF NOT EXISTS process_statuses (
+			process_id BIGINT PRIMARY KEY,
+			host_id UUID NOT NULL,
+			pid INT NOT NULL DEFAULT 0,
+			status VARCHAR(50),
+			cpu DOUBLE PRECISION NOT NULL DEFAULT 0,
+			memory DOUBLE PRECISION NOT NULL DEFAULT 0,
+			start_time TIMESTAMPTZ,
+			last_check_at TIMESTAMPTZ,
+			error_message VARCHAR(500)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_process_statuses_host_id ON process_statuses (host_id)`,
+	}
+}
+
 // MigrateRuntimeResourceSupportTables 仅初始化资源池页面和生命周期接口依赖的表。
 // 这里显式建表，避免启动时触发历史模型上的 GORM AutoMigrate 兼容问题。
 func MigrateRuntimeResourceSupportTables(db *gorm.DB) error {

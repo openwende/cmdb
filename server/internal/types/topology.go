@@ -40,6 +40,7 @@ type Module struct {
 	SetID             uint64         `gorm:"index;not null;comment:所属集群ID" json:"set_id"`
 	BusinessID        uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID（冗余，便于查询）" json:"business_id"`
 	ServiceTemplateID *uint64        `gorm:"index;comment:关联服务模板ID" json:"service_template_id,omitempty"`
+	ServiceCategoryID *uint64        `gorm:"index;comment:服务分类ID" json:"service_category_id,omitempty"`
 	Name              string         `gorm:"size:200;not null;comment:模块名称" json:"name"`
 	Description       string         `gorm:"size:500;comment:模块描述" json:"description"`
 	ServiceType       string         `gorm:"size:50;comment:服务类型：web/api/db/cache/mq/other" json:"service_type"`
@@ -119,10 +120,11 @@ type CreateModuleRequest struct {
 
 // UpdateModuleRequest 更新模块请求
 type UpdateModuleRequest struct {
-	Name        *string `json:"name"`
-	Description *string `json:"description"`
-	ServiceType *string `json:"service_type" binding:"omitempty,oneof=web api db cache mq other"`
-	SortOrder   *int    `json:"sort_order"`
+	Name              *string `json:"name"`
+	Description       *string `json:"description"`
+	ServiceType       *string `json:"service_type" binding:"omitempty,oneof=web api db cache mq other"`
+	ServiceCategoryID *uint64 `json:"service_category_id"`
+	SortOrder         *int    `json:"sort_order"`
 }
 
 // TransferHostsRequest 转移主机请求

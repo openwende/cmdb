@@ -1,9 +1,11 @@
 package storage
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/gorm"
 )
@@ -69,6 +71,12 @@ func MigrateRuntimeSupportTables(db *gorm.DB) error {
 	if err := seedBuiltinDynamicModelsFromStaticModels(db); err != nil {
 		return fmt.Errorf("同步内置模型失败: %w", err)
 	}
+	if err := seedBuiltinStaticModelAttributesFromBuiltinModels(db); err != nil {
+		return fmt.Errorf("同步内置静态属性失败: %w", err)
+	}
+	if err := seedRuntimeDynamicAttributesFromStaticModels(db); err != nil {
+		return fmt.Errorf("同步内置属性失败: %w", err)
+	}
 
 	return nil
 }
@@ -88,6 +96,26 @@ func runtimeSupportDDL(dialect string) []string {
 				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 			)`,
 			`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_models_uid ON dynamic_models (uid)`,
+			`CREATE TABLE IF NOT EXISTS dynamic_attributes (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				model_uid TEXT NOT NULL,
+				field_uid TEXT NOT NULL,
+				field_name TEXT NOT NULL,
+				field_type TEXT NOT NULL,
+				category TEXT NOT NULL DEFAULT 'config',
+				is_required BOOLEAN NOT NULL DEFAULT FALSE,
+				is_unique BOOLEAN NOT NULL DEFAULT FALSE,
+				unique_group TEXT,
+				is_read_only BOOLEAN NOT NULL DEFAULT FALSE,
+				default_value TEXT,
+				placeholder TEXT,
+				unit TEXT,
+				validators TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+			)`,
+			`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_attributes_model_field
+				ON dynamic_attributes (model_uid, field_uid)`,
 			`CREATE TABLE IF NOT EXISTS association_types (
 				id INTEGER PRIMARY KEY AUTOINCREMENT,
 				uid TEXT NOT NULL,
@@ -181,6 +209,26 @@ func runtimeSupportDDL(dialect string) []string {
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 		)`,
 		`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_models_uid ON dynamic_models (uid)`,
+		`CREATE TABLE IF NOT EXISTS dynamic_attributes (
+			id BIGSERIAL PRIMARY KEY,
+			model_uid VARCHAR(50) NOT NULL,
+			field_uid VARCHAR(50) NOT NULL,
+			field_name VARCHAR(100) NOT NULL,
+			field_type VARCHAR(20) NOT NULL,
+			category VARCHAR(20) NOT NULL DEFAULT 'config',
+			is_required BOOLEAN NOT NULL DEFAULT FALSE,
+			is_unique BOOLEAN NOT NULL DEFAULT FALSE,
+			unique_group VARCHAR(50),
+			is_read_only BOOLEAN NOT NULL DEFAULT FALSE,
+			default_value VARCHAR(500),
+			placeholder VARCHAR(200),
+			unit VARCHAR(20),
+			validators JSONB,
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS idx_dynamic_attributes_model_field
+			ON dynamic_attributes (model_uid, field_uid)`,
 		`CREATE TABLE IF NOT EXISTS association_types (
 			id BIGSERIAL PRIMARY KEY,
 			uid VARCHAR(50) NOT NULL,
@@ -309,6 +357,232 @@ func seedBuiltinDynamicModelsFromStaticModels(db *gorm.DB) error {
 	}
 
 	return nil
+}
+
+type builtinStaticAttributeSeed struct {
+	ModelUID   string
+	FieldUID   string
+	FieldName  string
+	FieldType  string
+	IsRequired bool
+	IsUnique   bool
+	IsEditable bool
+	IsSystem   bool
+	Options    []byte
+}
+
+type builtinStaticAttributeDefinition struct {
+	Name        string
+	DisplayName string
+	FieldType   string
+	IsRequired  bool
+	IsUnique    bool
+	IsEditable  bool
+	IsSystem    bool
+	SortOrder   int
+	Options     map[string]interface{}
+}
+
+func builtinStaticModelAttributes() map[string][]builtinStaticAttributeDefinition {
+	return map[string][]builtinStaticAttributeDefinition{
+		"business": {
+			{Name: "bk_biz_id", DisplayName: "业务 ID", FieldType: "int", IsRequired: true, IsUnique: true, IsEditable: false, IsSystem: true, SortOrder: 10},
+			{Name: "bk_biz_name", DisplayName: "业务名称", FieldType: "string", IsRequired: true, IsUnique: true, IsEditable: true, IsSystem: true, SortOrder: 20},
+			{Name: "life_cycle", DisplayName: "生命周期", FieldType: "enum", IsEditable: true, IsSystem: true, SortOrder: 30, Options: map[string]interface{}{"enum_values": []string{"testing", "online"}}},
+			{Name: "time_zone", DisplayName: "时区", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 40},
+			{Name: "language", DisplayName: "语言", FieldType: "enum", IsEditable: true, IsSystem: true, SortOrder: 50, Options: map[string]interface{}{"enum_values": []string{"zh", "en"}}},
+			{Name: "bk_biz_maintainer", DisplayName: "运维负责人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 60},
+			{Name: "bk_biz_productor", DisplayName: "产品负责人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 70},
+			{Name: "bk_biz_tester", DisplayName: "测试负责人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 80},
+			{Name: "bk_biz_developer", DisplayName: "开发负责人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 90},
+			{Name: "operator", DisplayName: "操作人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 100},
+		},
+		"set": {
+			{Name: "bk_set_id", DisplayName: "集群 ID", FieldType: "int", IsRequired: true, IsUnique: true, IsEditable: false, IsSystem: true, SortOrder: 10},
+			{Name: "bk_set_name", DisplayName: "集群名称", FieldType: "string", IsRequired: true, IsEditable: true, IsSystem: true, SortOrder: 20},
+			{Name: "bk_set_desc", DisplayName: "集群描述", FieldType: "text", IsEditable: true, IsSystem: true, SortOrder: 30},
+			{Name: "bk_set_env", DisplayName: "环境类型", FieldType: "enum", IsEditable: true, IsSystem: true, SortOrder: 40, Options: map[string]interface{}{"enum_values": []string{"1", "2", "3"}}},
+		},
+		"module": {
+			{Name: "bk_module_id", DisplayName: "模块 ID", FieldType: "int", IsRequired: true, IsUnique: true, IsEditable: false, IsSystem: true, SortOrder: 10},
+			{Name: "bk_module_name", DisplayName: "模块名称", FieldType: "string", IsRequired: true, IsEditable: true, IsSystem: true, SortOrder: 20},
+			{Name: "service_type", DisplayName: "服务类型", FieldType: "enum", IsEditable: true, IsSystem: true, SortOrder: 30, Options: map[string]interface{}{"enum_values": []string{"web", "api", "db", "cache", "mq", "other"}}},
+			{Name: "service_category_id", DisplayName: "服务分类", FieldType: "int", IsEditable: true, IsSystem: true, SortOrder: 40},
+			{Name: "operator", DisplayName: "主要维护人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 50},
+			{Name: "bk_bak_operator", DisplayName: "备份维护人", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 60},
+		},
+		"host": {
+			{Name: "bk_host_id", DisplayName: "主机 ID", FieldType: "string", IsRequired: true, IsUnique: true, IsEditable: false, IsSystem: true, SortOrder: 10},
+			{Name: "bk_host_name", DisplayName: "主机名", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 20},
+			{Name: "bk_host_innerip", DisplayName: "内网 IPv4", FieldType: "string", IsRequired: true, IsEditable: true, IsSystem: true, SortOrder: 30},
+			{Name: "bk_host_innerip_v6", DisplayName: "内网 IPv6", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 40},
+			{Name: "bk_cloud_id", DisplayName: "管控区域 ID", FieldType: "string", IsEditable: true, IsSystem: true, SortOrder: 50},
+		},
+	}
+}
+
+func seedBuiltinStaticModelAttributesFromBuiltinModels(db *gorm.DB) error {
+	if db == nil || !db.Migrator().HasTable("models") || !db.Migrator().HasTable("model_attributes") {
+		return nil
+	}
+
+	type modelRef struct {
+		ID   string
+		Name string
+	}
+
+	var models []modelRef
+	if err := db.Table("models").
+		Select("id", "name").
+		Where("is_builtin = ?", true).
+		Where("name IN ?", []string{"business", "set", "module", "host"}).
+		Scan(&models).Error; err != nil {
+		return err
+	}
+
+	now := time.Now()
+	seedMap := builtinStaticModelAttributes()
+
+	for _, model := range models {
+		definitions := seedMap[model.Name]
+		for _, def := range definitions {
+			options := "{}"
+			if len(def.Options) > 0 {
+				raw, err := json.Marshal(def.Options)
+				if err != nil {
+					return err
+				}
+				options = string(raw)
+			}
+
+			var existingCount int64
+			if err := db.Table("model_attributes").
+				Where("model_id = ? AND name = ?", model.ID, def.Name).
+				Count(&existingCount).Error; err != nil {
+				return err
+			}
+
+			if existingCount > 0 {
+				continue
+			}
+
+			if err := db.Exec(
+				`INSERT INTO model_attributes (id, model_id, name, display_name, field_type, is_required, is_unique, is_editable, is_system, sort_order, options, created_at, updated_at)
+				 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+				uuid.New().String(),
+				model.ID,
+				def.Name,
+				def.DisplayName,
+				def.FieldType,
+				def.IsRequired,
+				def.IsUnique,
+				def.IsEditable,
+				def.IsSystem,
+				def.SortOrder,
+				options,
+				now,
+				now,
+			).Error; err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func seedRuntimeDynamicAttributesFromStaticModels(db *gorm.DB) error {
+	if db == nil || !db.Migrator().HasTable("models") || !db.Migrator().HasTable("model_attributes") {
+		return nil
+	}
+
+	var items []builtinStaticAttributeSeed
+	if err := db.Table("model_attributes").
+		Select(`
+			models.name AS model_uid,
+			model_attributes.name AS field_uid,
+			model_attributes.display_name AS field_name,
+			model_attributes.field_type AS field_type,
+			model_attributes.is_required AS is_required,
+			model_attributes.is_unique AS is_unique,
+			model_attributes.is_editable AS is_editable,
+			model_attributes.is_system AS is_system,
+			model_attributes.options AS options
+		`).
+		Joins("JOIN models ON models.id = model_attributes.model_id").
+		Scan(&items).Error; err != nil {
+		return err
+	}
+
+	now := time.Now()
+	for _, item := range items {
+		placeholder, unit, defaultValue, validators := parseStaticAttributeOptions(item.Options)
+
+		row := types.DynamicAttribute{
+			ModelUID:     item.ModelUID,
+			FieldUID:     item.FieldUID,
+			FieldName:    item.FieldName,
+			FieldType:    item.FieldType,
+			Category:     "config",
+			IsRequired:   item.IsRequired,
+			IsUnique:     item.IsUnique,
+			IsReadOnly:   !item.IsEditable,
+			DefaultValue: defaultValue,
+			Placeholder:  placeholder,
+			Unit:         unit,
+			Validators:   validators,
+			CreatedAt:    now,
+			UpdatedAt:    now,
+		}
+
+		if err := db.Where("model_uid = ? AND field_uid = ?", row.ModelUID, row.FieldUID).
+			Assign(row).
+			FirstOrCreate(&row).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func parseStaticAttributeOptions(raw []byte) (placeholder string, unit string, defaultValue string, validators []byte) {
+	if len(raw) == 0 {
+		return "", "", "", nil
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(raw, &data); err != nil {
+		return "", "", "", nil
+	}
+
+	fieldValidators := types.FieldValidators{}
+
+	if value, ok := data["placeholder"].(string); ok {
+		placeholder = value
+	}
+	if value, ok := data["unit"].(string); ok {
+		unit = value
+	}
+	if value, exists := data["default"]; exists && value != nil {
+		defaultValue = fmt.Sprint(value)
+	}
+	if value, ok := data["enum_values"].([]interface{}); ok {
+		fieldValidators.EnumValues = make([]string, 0, len(value))
+		for _, item := range value {
+			if item == nil {
+				continue
+			}
+			fieldValidators.EnumValues = append(fieldValidators.EnumValues, fmt.Sprint(item))
+		}
+	}
+	if len(fieldValidators.EnumValues) > 0 {
+		raw, err := json.Marshal(fieldValidators)
+		if err == nil {
+			validators = raw
+		}
+	}
+
+	return placeholder, unit, defaultValue, validators
 }
 
 // addGeneratedColumns 添加生成列

@@ -44,6 +44,12 @@ func main() {
 		if err := storage.MigrateRuntimeSupportTables(db.DB()); err != nil {
 			log.Fatalf("Failed to run runtime support migrations: %v", err)
 		}
+		if err := storage.MigrateRuntimeProcessSupportTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run runtime process support migrations: %v", err)
+		}
+		if err := storage.MigrateRuntimeServiceCategorySupportTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run service category migrations: %v", err)
+		}
 		if err := storage.MigrateRuntimeResourceSupportTables(db.DB()); err != nil {
 			log.Fatalf("Failed to run runtime resource support migrations: %v", err)
 		}

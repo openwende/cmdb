@@ -50,6 +50,7 @@ func setupResourceLifecycleTestDB(t *testing.T) *gorm.DB {
 			set_id INTEGER NOT NULL,
 			business_id TEXT NOT NULL,
 			service_template_id INTEGER,
+			service_category_id INTEGER,
 			name TEXT NOT NULL,
 			description TEXT,
 			service_type TEXT,

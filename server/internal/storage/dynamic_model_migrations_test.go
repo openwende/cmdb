@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -110,7 +111,7 @@ func TestMigrateRuntimeSupportTablesCreatesRequiredTables(t *testing.T) {
 		t.Fatalf("migrate runtime support tables: %v", err)
 	}
 
-	for _, table := range []string{"dynamic_models", "association_types", "model_associations", "relations"} {
+	for _, table := range []string{"dynamic_models", "dynamic_attributes", "association_types", "model_associations", "relations"} {
 		if !db.Migrator().HasTable(table) {
 			t.Fatalf("expected table %s to exist", table)
 		}
@@ -139,6 +140,161 @@ func TestMigrateRuntimeSupportTablesCreatesResourceInstanceTables(t *testing.T) 
 		if !db.Migrator().HasTable(table) {
 			t.Fatalf("expected table %s to exist", table)
 		}
+	}
+}
+
+func TestMigrateRuntimeSupportTablesSeedsBuiltinStaticModelAttributesWhenMissing(t *testing.T) {
+	db := setupDynamicModelMigrationTestDB(t)
+	now := time.Now().UTC()
+
+	if err := db.Exec(`
+		CREATE TABLE model_attributes (
+			id TEXT PRIMARY KEY,
+			model_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			display_name TEXT NOT NULL,
+			field_type TEXT NOT NULL,
+			is_required BOOLEAN NOT NULL DEFAULT 0,
+			is_unique BOOLEAN NOT NULL DEFAULT 0,
+			is_editable BOOLEAN NOT NULL DEFAULT 1,
+			is_system BOOLEAN NOT NULL DEFAULT 0,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			options TEXT,
+			created_at DATETIME NOT NULL,
+			updated_at DATETIME NOT NULL,
+			UNIQUE(model_id, name)
+		)
+	`).Error; err != nil {
+		t.Fatalf("create model_attributes: %v", err)
+	}
+
+	if err := db.Exec(
+		`INSERT INTO models (id, name, display_name, description, icon, is_builtin, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?), (?, ?, ?, ?, ?, ?, ?, ?)`,
+		"11111111-1111-1111-1111-111111111111", "business", "业务", "builtin biz", "business", true, now, now,
+		"22222222-2222-2222-2222-222222222222", "set", "集群", "builtin set", "cluster", true, now, now,
+		"33333333-3333-3333-3333-333333333333", "module", "模块", "builtin module", "module", true, now, now,
+		"44444444-4444-4444-4444-444444444444", "host", "主机", "builtin host", "host", true, now, now,
+	).Error; err != nil {
+		t.Fatalf("insert builtin models: %v", err)
+	}
+
+	if err := MigrateRuntimeSupportTables(db); err != nil {
+		t.Fatalf("migrate runtime support tables: %v", err)
+	}
+
+	type staticAttribute struct {
+		Name string
+	}
+
+	checks := []struct {
+		ModelID string
+		Name    string
+	}{
+		{"11111111-1111-1111-1111-111111111111", "bk_biz_name"},
+		{"22222222-2222-2222-2222-222222222222", "bk_set_name"},
+		{"33333333-3333-3333-3333-333333333333", "bk_module_name"},
+		{"44444444-4444-4444-4444-444444444444", "bk_host_innerip"},
+	}
+
+	for _, check := range checks {
+		var row staticAttribute
+		if err := db.Table("model_attributes").Where("model_id = ? AND name = ?", check.ModelID, check.Name).First(&row).Error; err != nil {
+			t.Fatalf("expected builtin static attribute %s for model %s: %v", check.Name, check.ModelID, err)
+		}
+	}
+
+	type dynamicAttribute struct {
+		ModelUID string
+		FieldUID string
+	}
+
+	if err := db.Table("dynamic_attributes").Where("model_uid = ? AND field_uid = ?", "module", "bk_module_name").First(&dynamicAttribute{}).Error; err != nil {
+		t.Fatalf("expected module dynamic attribute to be synced: %v", err)
+	}
+}
+
+func TestMigrateRuntimeSupportTablesSeedsDynamicAttributesFromStaticModelAttributes(t *testing.T) {
+	db := setupDynamicModelMigrationTestDB(t)
+	now := time.Now().UTC()
+
+	if err := db.Exec(`
+		CREATE TABLE model_attributes (
+			id TEXT PRIMARY KEY,
+			model_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			display_name TEXT NOT NULL,
+			field_type TEXT NOT NULL,
+			is_required BOOLEAN NOT NULL DEFAULT 0,
+			is_unique BOOLEAN NOT NULL DEFAULT 0,
+			is_editable BOOLEAN NOT NULL DEFAULT 1,
+			is_system BOOLEAN NOT NULL DEFAULT 0,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			options TEXT,
+			created_at DATETIME NOT NULL,
+			updated_at DATETIME NOT NULL
+		)
+	`).Error; err != nil {
+		t.Fatalf("create model_attributes: %v", err)
+	}
+
+	options, err := json.Marshal(map[string]any{
+		"placeholder": "请输入模块名称",
+		"unit":        "",
+	})
+	if err != nil {
+		t.Fatalf("marshal options: %v", err)
+	}
+
+	if err := db.Exec(
+		`INSERT INTO models (id, name, display_name, description, icon, is_builtin, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		"model-1", "module", "模块", "系统内置模块模型", "module", true, now, now,
+	).Error; err != nil {
+		t.Fatalf("insert model: %v", err)
+	}
+
+	if err := db.Exec(
+		`INSERT INTO model_attributes (id, model_id, name, display_name, field_type, is_required, is_unique, is_editable, is_system, sort_order, options, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		"attr-1", "model-1", "bk_module_name", "模块名称", "string", true, false, true, true, 0, string(options), now, now,
+	).Error; err != nil {
+		t.Fatalf("insert model_attribute: %v", err)
+	}
+
+	if err := MigrateRuntimeSupportTables(db); err != nil {
+		t.Fatalf("migrate runtime support tables: %v", err)
+	}
+
+	type seededAttribute struct {
+		ModelUID    string
+		FieldUID    string
+		FieldName   string
+		FieldType   string
+		IsRequired  bool
+		IsReadOnly  bool
+		Placeholder string
+	}
+
+	var item seededAttribute
+	if err := db.Table("dynamic_attributes").Where("model_uid = ? AND field_uid = ?", "module", "bk_module_name").First(&item).Error; err != nil {
+		t.Fatalf("query dynamic_attributes: %v", err)
+	}
+
+	if item.FieldName != "模块名称" {
+		t.Fatalf("expected field name 模块名称, got %s", item.FieldName)
+	}
+	if item.FieldType != "string" {
+		t.Fatalf("expected field type string, got %s", item.FieldType)
+	}
+	if !item.IsRequired {
+		t.Fatalf("expected field to be required")
+	}
+	if item.IsReadOnly {
+		t.Fatalf("expected editable static field to stay writable")
+	}
+	if item.Placeholder != "请输入模块名称" {
+		t.Fatalf("expected placeholder to be seeded, got %s", item.Placeholder)
 	}
 }
 

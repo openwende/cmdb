@@ -285,6 +285,12 @@ func (s *BusinessTopologyCommandService) UpdateModule(ctx context.Context, id ui
 	if req.ServiceType != nil {
 		spec["service_type"] = strings.TrimSpace(*req.ServiceType)
 	}
+	if req.ServiceCategoryID != nil {
+		if err := s.validateServiceCategory(ctx, stringValue(resource.Spec["business_id"]), *req.ServiceCategoryID); err != nil {
+			return nil, err
+		}
+		spec["service_category_id"] = *req.ServiceCategoryID
+	}
 	if req.SortOrder != nil {
 		spec["sort_order"] = *req.SortOrder
 	}
@@ -987,10 +993,31 @@ func mapModuleResource(resource *types.ResourceV2) *types.Module {
 	}
 	item.ID = uintValue(resource.Spec["ref_id"])
 	item.SetID = uintValue(resource.Spec["set_id"])
+	if categoryID, ok := uintPointerValue(resource.Spec["service_category_id"]); ok {
+		item.ServiceCategoryID = categoryID
+	}
 	if businessID, err := uuid.Parse(stringValue(resource.Spec["business_id"])); err == nil {
 		item.BusinessID = businessID
 	}
 	return item
+}
+
+func (s *BusinessTopologyCommandService) validateServiceCategory(ctx context.Context, businessIDRaw string, categoryID uint64) error {
+	var category types.ServiceCategory
+	if err := s.db.WithContext(ctx).First(&category, categoryID).Error; err != nil {
+		return fmt.Errorf("服务分类不存在: %w", err)
+	}
+	if category.BusinessID == nil {
+		return nil
+	}
+	businessID, err := uuid.Parse(strings.TrimSpace(businessIDRaw))
+	if err != nil {
+		return fmt.Errorf("无效的业务ID")
+	}
+	if *category.BusinessID != businessID {
+		return fmt.Errorf("服务分类不属于当前业务")
+	}
+	return nil
 }
 
 func valueOrEmpty(value *string) string {
@@ -1028,6 +1055,31 @@ func uintValue(value any) uint64 {
 		n, _ := strconv.ParseUint(strings.TrimSpace(fmt.Sprint(v)), 10, 64)
 		return n
 	}
+}
+
+func uintPointerValue(value any) (*uint64, bool) {
+	switch v := value.(type) {
+	case uint64:
+		return &v, true
+	case uint32:
+		n := uint64(v)
+		return &n, true
+	case int:
+		n := uint64(v)
+		return &n, true
+	case int64:
+		n := uint64(v)
+		return &n, true
+	case float64:
+		n := uint64(v)
+		return &n, true
+	case string:
+		n, err := strconv.ParseUint(strings.TrimSpace(v), 10, 64)
+		if err == nil {
+			return &n, true
+		}
+	}
+	return nil, false
 }
 
 func intValue(value any) int {

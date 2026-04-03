@@ -217,6 +217,11 @@ func (s *Service) ListModulesByBusiness(ctx context.Context, businessID uuid.UUI
 func (s *Service) UpdateModule(ctx context.Context, id uint64, req *types.UpdateModuleRequest) (*types.Module, error) {
 	updates := make(map[string]interface{})
 
+	var current types.Module
+	if err := s.db.WithContext(ctx).First(&current, id).Error; err != nil {
+		return nil, err
+	}
+
 	if req.Name != nil {
 		updates["name"] = *req.Name
 	}
@@ -228,6 +233,12 @@ func (s *Service) UpdateModule(ctx context.Context, id uint64, req *types.Update
 	}
 	if req.SortOrder != nil {
 		updates["sort_order"] = *req.SortOrder
+	}
+	if req.ServiceCategoryID != nil {
+		if err := s.validateServiceCategory(ctx, current.BusinessID, *req.ServiceCategoryID); err != nil {
+			return nil, err
+		}
+		updates["service_category_id"] = *req.ServiceCategoryID
 	}
 
 	var updated types.Module
@@ -245,6 +256,17 @@ func (s *Service) UpdateModule(ctx context.Context, id uint64, req *types.Update
 	}
 
 	return s.GetModule(ctx, id)
+}
+
+func (s *Service) validateServiceCategory(ctx context.Context, businessID uuid.UUID, categoryID uint64) error {
+	var category types.ServiceCategory
+	if err := s.db.WithContext(ctx).First(&category, categoryID).Error; err != nil {
+		return fmt.Errorf("服务分类不存在: %w", err)
+	}
+	if category.BusinessID != nil && *category.BusinessID != businessID {
+		return fmt.Errorf("服务分类不属于当前业务")
+	}
+	return nil
 }
 
 // DeleteModule 删除模块

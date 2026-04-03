@@ -63,6 +63,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 			set_id INTEGER NOT NULL,
 			business_id TEXT NOT NULL,
 			service_template_id BIGINT,
+			service_category_id BIGINT,
 			name TEXT NOT NULL,
 			description TEXT,
 			service_type TEXT,
@@ -406,6 +407,53 @@ func TestCustomMainlineInstanceAppearsInTopologyTree(t *testing.T) {
 	require.Len(t, tree, 1)
 	require.Len(t, tree[0].Children, 2)
 	require.Equal(t, "rack-a", tree[0].Children[1].Children[0].Name)
+}
+
+func TestUpdateModulePersistsServiceCategoryID(t *testing.T) {
+	db := setupTopologyTestDB(t)
+	svc := newTestTopologyService(db)
+	ctx := context.Background()
+
+	bizID := seedBusiness(t, db, "category-biz")
+	setNode, err := svc.CreateSet(ctx, &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "category-set",
+	})
+	require.NoError(t, err)
+
+	module, err := svc.CreateModule(ctx, &types.CreateModuleRequest{
+		SetID: setNode.ID,
+		Name:  "category-module",
+	})
+	require.NoError(t, err)
+
+	require.NoError(t, db.Exec(`
+		CREATE TABLE service_categories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			business_id TEXT,
+			name TEXT NOT NULL,
+			parent_id BIGINT,
+			root_id BIGINT NOT NULL,
+			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		)
+	`).Error)
+
+	categoryID := uint64(10)
+	require.NoError(t, db.Exec(`
+		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
+		VALUES (?, ?, ?, NULL, ?, FALSE, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`, categoryID, bizID.String(), "Database", categoryID).Error)
+
+	updated, err := svc.UpdateModule(ctx, module.ID, &types.UpdateModuleRequest{
+		ServiceCategoryID: &categoryID,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated.ServiceCategoryID)
+	require.Equal(t, categoryID, *updated.ServiceCategoryID)
 }
 
 func ptrString(v string) *string {

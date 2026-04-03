@@ -312,6 +312,56 @@ func TestBusinessTopologyCommandService_TransferHostsAndReleaseToPool(t *testing
 	require.Equal(t, hostID.String(), idleList.Items[0].HostID)
 }
 
+func TestBusinessTopologyCommandService_UpdateModule_StoresServiceCategoryIDInSpec(t *testing.T) {
+	db := setupProjectionTestDB(t)
+	bizID := seedProjectionBusiness(t, db, "module-category-biz")
+
+	require.NoError(t, db.Exec(`
+		CREATE TABLE IF NOT EXISTS service_categories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			business_id TEXT,
+			name TEXT NOT NULL,
+			parent_id BIGINT,
+			root_id BIGINT NOT NULL,
+			is_builtin BOOLEAN NOT NULL DEFAULT FALSE,
+			sort_order INTEGER NOT NULL DEFAULT 0,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		)
+	`).Error)
+
+	categoryID := uint64(10)
+	require.NoError(t, db.Exec(`
+		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
+		VALUES (?, ?, ?, NULL, ?, FALSE, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`, categoryID, bizID.String(), "Database", categoryID).Error)
+
+	svc := NewBusinessTopologyCommandService(db)
+	setNode, err := svc.CreateSet(context.Background(), &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "set-a",
+	})
+	require.NoError(t, err)
+
+	module, err := svc.CreateModule(context.Background(), &types.CreateModuleRequest{
+		SetID: setNode.ID,
+		Name:  "gateway",
+	})
+	require.NoError(t, err)
+
+	updated, err := svc.UpdateModule(context.Background(), module.ID, &types.UpdateModuleRequest{
+		ServiceCategoryID: &categoryID,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, updated.ServiceCategoryID)
+	require.Equal(t, categoryID, *updated.ServiceCategoryID)
+
+	tree, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizID.String(), false, 3, "")
+	require.NoError(t, err)
+	require.Equal(t, float64(categoryID), tree[0].Children[0].Children[0].Extra["service_category_id"])
+}
+
 func ptr[T any](value T) *T {
 	return &value
 }
