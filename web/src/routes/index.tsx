@@ -98,13 +98,13 @@ export const routes: NavigationItem[] = [
     key: PrimaryNavKey.Business,
     path: '/business',
     element: withSuspense(BusinessEntryRedirect),
-    hideInMenu: true,
   },
   {
     name: 'routes.business',
     key: 'businessEntity',
     path: '/business/:businessId',
     element: withSuspense(BusinessPage),
+    hideInMenu: true,
     children: [
       {
         name: 'routes.businessTopology',

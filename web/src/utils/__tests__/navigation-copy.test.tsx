@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HeaderMenu from '@/components/Layout/Header/Menu';
 import Sidebar from '@/components/Layout/Sidebar';
@@ -8,6 +9,15 @@ import { PrimaryNavKey } from '@/routes/Types';
 
 const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
+}));
+
+const { mockLocationPathname, mockBusinessStore } = vi.hoisted(() => ({
+  mockLocationPathname: { value: '/model/overview' },
+  mockBusinessStore: {
+    businessList: [] as Array<{ id: string }>,
+    loadBusinessData: vi.fn(),
+    loading: false,
+  },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -38,18 +48,14 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useLocation: () => ({
-      pathname: '/model/overview',
+      pathname: mockLocationPathname.value,
     }),
     useNavigate: () => mockNavigate,
   };
 });
 
 vi.mock('@/store/BusinessStore', () => ({
-  useBusinessStore: () => ({
-    businessList: [],
-    loadBusinessData: vi.fn(),
-    loading: false,
-  }),
+  useBusinessStore: () => mockBusinessStore,
 }));
 
 vi.mock('@/utils/routes', () => ({
@@ -65,10 +71,16 @@ vi.mock('@/components/Business/BusinessSelector', () => ({
 }));
 
 vi.mock('antd', () => ({
-  Menu: ({ items }: { items?: { key: string; label: React.ReactNode }[] }) => (
+  Menu: ({
+    items,
+    onClick,
+  }: {
+    items?: { key: string; label: React.ReactNode }[];
+    onClick?: ({ key }: { key: string }) => void;
+  }) => (
     <nav>
       {items?.map((item) => (
-        <button type="button" key={item.key}>
+        <button type="button" key={item.key} onClick={() => onClick?.({ key: item.key })}>
           {item.label}
         </button>
       ))}
@@ -85,6 +97,32 @@ vi.mock('antd', () => ({
 }));
 
 describe('navigation copy', () => {
+  beforeEach(() => {
+    mockNavigate.mockReset();
+    mockLocationPathname.value = '/model/overview';
+    mockBusinessStore.businessList = [];
+    mockBusinessStore.loadBusinessData = vi.fn();
+    mockBusinessStore.loading = false;
+  });
+
+  it('keeps entity-scoped business routes out of the top navigation', () => {
+    render(<HeaderMenu />);
+
+    expect(screen.getAllByText('业务')).toHaveLength(1);
+  });
+
+  it('navigates the top-level business menu to the first available business topology', async () => {
+    mockLocationPathname.value = '/model/overview';
+    mockBusinessStore.businessList = [{ id: 'biz-1' }];
+
+    const user = userEvent.setup();
+    render(<HeaderMenu />);
+
+    await user.click(screen.getByText('业务'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/business/biz-1/topology');
+  });
+
   it('uses task-oriented labels in the top navigation', () => {
     render(<HeaderMenu />);
 
