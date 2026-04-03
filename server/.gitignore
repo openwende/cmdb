@@ -86,6 +86,7 @@ temp/
 # Documentation build
 docs/_build/
 docs/site/
+docs/plans/
 
 # Helm charts
 deploy/helm/charts/*.tgz
