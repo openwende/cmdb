@@ -40,37 +40,48 @@ ON model_unique_rule_fields (rule_id, field_uid);
 CREATE INDEX IF NOT EXISTS idx_model_unique_rule_fields_rule_sort
 ON model_unique_rule_fields (rule_id, sort_order);
 
-INSERT INTO model_unique_rules (
-    model_uid,
-    name,
-    is_default,
-    is_auxiliary,
-    enabled,
-    ignore_if_all_empty,
-    description
-)
-SELECT
-    uid,
-    COALESCE(NULLIF(unique_fields->>'name', ''), uid || '_legacy_unique'),
-    TRUE,
-    FALSE,
-    TRUE,
-    TRUE,
-    'legacy unique_fields backfill'
-FROM dynamic_models
-WHERE unique_fields IS NOT NULL
-  AND unique_fields <> '{}'::jsonb
-  AND jsonb_typeof(unique_fields->'fields') = 'array'
-  AND jsonb_array_length(unique_fields->'fields') > 0
-ON CONFLICT DO NOTHING;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'dynamic_models'
+          AND column_name = 'unique_fields'
+    ) THEN
+        INSERT INTO model_unique_rules (
+            model_uid,
+            name,
+            is_default,
+            is_auxiliary,
+            enabled,
+            ignore_if_all_empty,
+            description
+        )
+        SELECT
+            uid,
+            COALESCE(NULLIF(unique_fields->>'name', ''), uid || '_legacy_unique'),
+            TRUE,
+            FALSE,
+            TRUE,
+            TRUE,
+            'legacy unique_fields backfill'
+        FROM dynamic_models
+        WHERE unique_fields IS NOT NULL
+          AND unique_fields <> '{}'::jsonb
+          AND jsonb_typeof(unique_fields->'fields') = 'array'
+          AND jsonb_array_length(unique_fields->'fields') > 0
+        ON CONFLICT DO NOTHING;
 
-INSERT INTO model_unique_rule_fields (rule_id, field_uid, sort_order)
-SELECT
-    mur.id,
-    field_uid.value,
-    field_uid.ordinality - 1
-FROM model_unique_rules mur
-JOIN dynamic_models dm ON dm.uid = mur.model_uid
-JOIN LATERAL jsonb_array_elements_text(dm.unique_fields->'fields') WITH ORDINALITY AS field_uid(value, ordinality) ON TRUE
-WHERE mur.description = 'legacy unique_fields backfill'
-ON CONFLICT DO NOTHING;
+        INSERT INTO model_unique_rule_fields (rule_id, field_uid, sort_order)
+        SELECT
+            mur.id,
+            field_uid.value,
+            field_uid.ordinality - 1
+        FROM model_unique_rules mur
+        JOIN dynamic_models dm ON dm.uid = mur.model_uid
+        JOIN LATERAL jsonb_array_elements_text(dm.unique_fields->'fields') WITH ORDINALITY AS field_uid(value, ordinality) ON TRUE
+        WHERE mur.description = 'legacy unique_fields backfill'
+        ON CONFLICT DO NOTHING;
+    END IF;
+END $$;

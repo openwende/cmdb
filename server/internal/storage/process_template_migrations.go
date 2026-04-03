@@ -66,6 +66,80 @@ func MigrateProcessAndTemplates(db *gorm.DB) error {
 	return nil
 }
 
+// MigrateRuntimeResourceSupportTables 仅初始化资源池页面和生命周期接口依赖的表。
+// 这里显式建表，避免启动时触发历史模型上的 GORM AutoMigrate 兼容问题。
+func MigrateRuntimeResourceSupportTables(db *gorm.DB) error {
+	for _, stmt := range runtimeResourceSupportDDL(db.Dialector.Name()) {
+		if err := db.Exec(stmt).Error; err != nil {
+			return err
+		}
+	}
+
+	return createDefaultResourceDirectory(db)
+}
+
+func runtimeResourceSupportDDL(dialect string) []string {
+	if dialect == "sqlite" {
+		return []string{
+			`CREATE TABLE IF NOT EXISTS resource_directories (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				parent_id INTEGER,
+				name TEXT NOT NULL,
+				description TEXT,
+				path TEXT,
+				level INTEGER NOT NULL DEFAULT 1,
+				sort_order INTEGER NOT NULL DEFAULT 0,
+				is_default BOOLEAN NOT NULL DEFAULT FALSE,
+				created_by TEXT,
+				updated_by TEXT,
+				created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				deleted_at DATETIME
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_resource_directories_parent_id ON resource_directories (parent_id)`,
+			`CREATE INDEX IF NOT EXISTS idx_resource_directories_path ON resource_directories (path)`,
+			`CREATE INDEX IF NOT EXISTS idx_resource_directories_default ON resource_directories (is_default)`,
+			`CREATE TABLE IF NOT EXISTS resource_pool_hosts (
+				host_id TEXT PRIMARY KEY,
+				directory_id INTEGER NOT NULL,
+				imported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+				imported_by TEXT,
+				remark TEXT
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_resource_pool_hosts_directory_id ON resource_pool_hosts (directory_id)`,
+		}
+	}
+
+	return []string{
+		`CREATE TABLE IF NOT EXISTS resource_directories (
+			id BIGSERIAL PRIMARY KEY,
+			parent_id BIGINT,
+			name VARCHAR(200) NOT NULL,
+			description VARCHAR(500),
+			path VARCHAR(500),
+			level INT NOT NULL DEFAULT 1,
+			sort_order INT NOT NULL DEFAULT 0,
+			is_default BOOLEAN NOT NULL DEFAULT FALSE,
+			created_by VARCHAR(100),
+			updated_by VARCHAR(100),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			deleted_at TIMESTAMPTZ
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_resource_directories_parent_id ON resource_directories (parent_id)`,
+		`CREATE INDEX IF NOT EXISTS idx_resource_directories_path ON resource_directories (path)`,
+		`CREATE INDEX IF NOT EXISTS idx_resource_directories_default ON resource_directories (is_default)`,
+		`CREATE TABLE IF NOT EXISTS resource_pool_hosts (
+			host_id UUID PRIMARY KEY,
+			directory_id BIGINT NOT NULL,
+			imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+			imported_by VARCHAR(100),
+			remark VARCHAR(500)
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_resource_pool_hosts_directory_id ON resource_pool_hosts (directory_id)`,
+	}
+}
+
 // createDefaultResourceDirectory 创建默认资源目录
 func createDefaultResourceDirectory(db *gorm.DB) error {
 	var count int64
