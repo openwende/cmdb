@@ -63,8 +63,6 @@ vi.mock('react-i18next', () => ({
 }));
 
 vi.mock('antd', () => {
-  const React = require('react');
-
   const Button = ({ children, onClick, disabled }: any) => (
     <button onClick={onClick} disabled={disabled} type="button">
       {children}

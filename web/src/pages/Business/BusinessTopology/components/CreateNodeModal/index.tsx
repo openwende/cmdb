@@ -1,14 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Empty, Form, Input, InputNumber, Modal, Select, Spin, Switch, message } from 'antd';
-import {
-  createModelInstance,
-  createTopologyModule,
-  createTopologySet,
-} from '@/api';
+import { createModelInstance, createTopologyModule, createTopologySet } from '@/api';
 import { CreateModelInstancePayload, ModelAttributeOptions } from '@/api/types/model';
 import { MainlineModel } from '@/api/types/mainline';
 import { TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
+import { getBusinessTopologyChildModels } from '@/pages/Business/BusinessTopology/modelRules';
 import { useBusinessStore } from '@/store/BusinessStore';
 import { useMainlineStore } from '@/store/MainlineStore';
 import { SchemaCenterField, useSchemaCenterStore } from '@/store/SchemaCenterStore';
@@ -59,7 +56,13 @@ const resolveParentModelName = (node: TreeData | null) => {
   return node.type;
 };
 
-const CreateModal: React.FC<CreateModalProps> = ({
+const BUILTIN_TOPOLOGY_PARENTS = new Set(['business', 'set', 'idle_set']);
+
+const shouldLoadLegacyMainlineModels = (parentModelName: string) => {
+  return parentModelName !== '' && !BUILTIN_TOPOLOGY_PARENTS.has(parentModelName);
+};
+
+const VisibleCreateModal: React.FC<CreateModalProps> = ({
   visible,
   selectedNode,
   parentNodes,
@@ -68,7 +71,7 @@ const CreateModal: React.FC<CreateModalProps> = ({
 }) => {
   const { t } = useTranslation();
   const { currentBusiness } = useBusinessStore();
-  const { mainlineModels, loadMainlineModels, getChildModels } = useMainlineStore();
+  const { loadMainlineModels, getChildModels } = useMainlineStore();
   const [form] = Form.useForm();
   const [modelsLoading, setModelsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -80,26 +83,32 @@ const CreateModal: React.FC<CreateModalProps> = ({
 
   const topoPath = useMemo(() => {
     return parentNodes.length > 0
-      ? [...parentNodes.map((node) => String(node.title)), String(selectedNode?.title || '')].join(' / ')
+      ? [...parentNodes.map((node) => String(node.title)), String(selectedNode?.title || '')].join(
+          ' / ',
+        )
       : String(selectedNode?.title || '');
   }, [parentNodes, selectedNode]);
 
   const parentModelName = useMemo(() => resolveParentModelName(selectedNode), [selectedNode]);
 
   const availableModels = useMemo(() => {
-    if (!parentModelName || mainlineModels.length === 0) {
-      return [];
-    }
-
-    return getChildModels(parentModelName);
-  }, [getChildModels, mainlineModels.length, parentModelName]);
+    return getBusinessTopologyChildModels(parentModelName, getChildModels);
+  }, [getChildModels, parentModelName]);
 
   const hasNameAttribute = useMemo(
-    () => (selectedModelName ? (formSchemas[`${selectedModelName}:topology_create`]?.fields || []) : []).some((field) => field.name === 'name'),
+    () =>
+      (selectedModelName
+        ? formSchemas[`${selectedModelName}:topology_create`]?.fields || []
+        : []
+      ).some((field) => field.name === 'name'),
     [formSchemas, selectedModelName],
   );
   const hasSortOrderAttribute = useMemo(
-    () => (selectedModelName ? (formSchemas[`${selectedModelName}:topology_create`]?.fields || []) : []).some((field) => field.name === 'sort_order'),
+    () =>
+      (selectedModelName
+        ? formSchemas[`${selectedModelName}:topology_create`]?.fields || []
+        : []
+      ).some((field) => field.name === 'sort_order'),
     [formSchemas, selectedModelName],
   );
 
@@ -112,6 +121,11 @@ const CreateModal: React.FC<CreateModalProps> = ({
       form.resetFields();
       setSelectedModelName('');
       setSelectedModel(null);
+      return;
+    }
+
+    if (!shouldLoadLegacyMainlineModels(parentModelName)) {
+      setModelsLoading(false);
       return;
     }
 
@@ -128,7 +142,7 @@ const CreateModal: React.FC<CreateModalProps> = ({
     };
 
     loadModels();
-  }, [form, loadMainlineModels, t, visible]);
+  }, [form, loadMainlineModels, parentModelName, t, visible]);
 
   useEffect(() => {
     if (!visible) {
@@ -164,7 +178,8 @@ const CreateModal: React.FC<CreateModalProps> = ({
         setDetailLoading(true);
         await loadFormSchema(selectedModelName, 'topology_create', currentBusiness?.id);
 
-        const loadedSchema = useSchemaCenterStore.getState().formSchemas[`${selectedModelName}:topology_create`];
+        const loadedSchema =
+          useSchemaCenterStore.getState().formSchemas[`${selectedModelName}:topology_create`];
         const defaults = buildSchemaDefaultValues(loadedSchema?.fields || []);
         form.setFieldsValue(
           isBuiltinTopologyModel
@@ -344,7 +359,10 @@ const CreateModal: React.FC<CreateModalProps> = ({
                   allowClear={!field.is_required}
                   placeholder={field.placeholder || options.placeholder}
                   disabled={!field.is_editable}
-                  options={(options.enum_values || []).map((item) => ({ value: item, label: item }))}
+                  options={(options.enum_values || []).map((item) => ({
+                    value: item,
+                    label: item,
+                  }))}
                 />
               </Form.Item>
             );
@@ -376,7 +394,10 @@ const CreateModal: React.FC<CreateModalProps> = ({
               rules={rules}
               extra={options.help_text}
             >
-              <Input placeholder={field.placeholder || options.placeholder} disabled={!field.is_editable} />
+              <Input
+                placeholder={field.placeholder || options.placeholder}
+                disabled={!field.is_editable}
+              />
             </Form.Item>
           );
         })}
@@ -416,7 +437,8 @@ const CreateModal: React.FC<CreateModalProps> = ({
             style={{ marginBottom: 16 }}
           />
 
-          {selectedModelName && formSchemas[`${selectedModelName}:topology_create`]?.fields?.length ? (
+          {selectedModelName &&
+          formSchemas[`${selectedModelName}:topology_create`]?.fields?.length ? (
             <Alert
               type="info"
               showIcon
@@ -465,6 +487,14 @@ const CreateModal: React.FC<CreateModalProps> = ({
       )}
     </Modal>
   );
+};
+
+const CreateModal: React.FC<CreateModalProps> = (props) => {
+  if (!props.visible) {
+    return null;
+  }
+
+  return <VisibleCreateModal {...props} />;
 };
 
 export default CreateModal;

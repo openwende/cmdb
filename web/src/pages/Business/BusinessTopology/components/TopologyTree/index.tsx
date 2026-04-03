@@ -2,10 +2,16 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
 import { useTranslation } from 'react-i18next';
 import CreateNodeModal from '../CreateNodeModal';
+import { getBusinessTopologyChildModels } from '@/pages/Business/BusinessTopology/modelRules';
 import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types';
 import { useMainlineStore } from '@/store/MainlineStore';
 import './style.css';
 import { findNodeAndParents } from '@/pages/Business/utils';
+
+const getNodeAllowedActions = (node: TreeData): string[] | null => {
+  const allowedActions = node.extra?.allowed_actions;
+  return Array.isArray(allowedActions) ? allowedActions.filter((item) => typeof item === 'string') : null;
+};
 
 interface Props {
   treeData: TreeData[];
@@ -113,9 +119,7 @@ const TopologyTree: React.FC<Props> = ({
   const handleCreate = (e: React.MouseEvent<HTMLElement, MouseEvent>, node: TreeData) => {
     e.stopPropagation();
 
-    const nodeModelUID =
-      node.backendType || (node.type === TopoTreeNodeType.Biz ? 'business' : node.type);
-    if (getChildModels(nodeModelUID).length === 0) {
+    if (!canCreateChildren(node)) {
       return;
     }
 
@@ -123,28 +127,39 @@ const TopologyTree: React.FC<Props> = ({
     setModalVisible(true);
   };
 
+  const canCreateChildren = (node: TreeData) => {
+    const allowedActions = getNodeAllowedActions(node);
+    if (allowedActions) {
+      return allowedActions.includes('create_child');
+    }
+
+    const nodeModelUID =
+      node.backendType || (node.type === TopoTreeNodeType.Biz ? 'business' : node.type);
+    return getBusinessTopologyChildModels(nodeModelUID, getChildModels).length > 0;
+  };
+
   const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
+    const nodeCount = Number(node.extra?.host_count ?? node.children?.length ?? 0);
+
     if (tailEleType === TailEleType.Count) {
       return (
         <span className="right-wrapper">
-          <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>0</span>
+          <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>{nodeCount}</span>
         </span>
       );
     }
 
     if (tailEleType === TailEleType.All) {
       const isHovered = hoveredKey === node.key;
-      const nodeModelUID =
-        node.backendType || (node.type === TopoTreeNodeType.Biz ? 'business' : node.type);
-      const canCreateChildren = getChildModels(nodeModelUID).length > 0;
+      const canCreateChildrenForNode = canCreateChildren(node);
       return (
         <span className="right-wrapper">
-          {isHovered && canCreateChildren ? (
+          {isHovered && canCreateChildrenForNode ? (
             <Button type="primary" size="small" onClick={(e) => handleCreate(e, node)}>
               {t('resource.business.actions.create')}
             </Button>
           ) : (
-            <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>0</span>
+            <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>{nodeCount}</span>
           )}
         </span>
       );
@@ -168,7 +183,7 @@ const TopologyTree: React.FC<Props> = ({
           {customTitlePrefix
             ? customTitlePrefix(node, isSelected)
             : renderTitlePrefix(isSelected, node.objName)}
-          {node.title}
+          <span className="title-text">{node.title}</span>
         </span>
         {renderTailElement(node, hoveredKey!, isSelected)}
       </span>

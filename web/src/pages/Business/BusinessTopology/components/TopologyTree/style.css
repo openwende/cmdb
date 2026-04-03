@@ -6,17 +6,27 @@
   }
 
   .ant-tree-treenode {
-    height: 36px;
-    line-height: 36px;
+    min-height: 36px;
+    align-items: flex-start;
+    padding: 4px 0;
+  }
+
+  .ant-tree-node-content-wrapper {
+    overflow: visible;
   }
 
   .title-wrapper {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
 
     .left-wrapper {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
+      gap: 10px;
+      min-width: 0;
+      flex: 1;
 
       .title-prefix {
         display: flex;
@@ -43,12 +53,21 @@
         color: var(--color-text-secondary);
         font-size: 14px;
       }
+
+      .title-text {
+        min-width: 0;
+        line-height: 20px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+      }
     }
 
     .right-wrapper {
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
 
       .suffix-count {
         display: flex;

@@ -3,8 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { allHosts2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
+import {
+  getTopologyNodeHosts,
+  TopologyNodeHostItem,
+  transferTopologyHosts,
+  transferTopologyHostsToPool,
+} from '@/api/services/business';
 import {
   TransferHostItem,
   AppendMenuItemKey,
@@ -45,19 +50,124 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [transferModalVisible, setTransferModalVisible] = useState(false);
   const [transferModalType, setTransferModalType] = useState<TransferHostType>();
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
 
-  useEffect(() => {
-    // TODO: api
-    setHostsList(allHosts2);
-  }, [searchValue, currentPage, pageSize]);
+  const adaptTopologyHost = useCallback((item: TopologyNodeHostItem) => {
+    return {
+      host: {
+        bk_host_id: item.host_id,
+        bk_host_innerip: item.inner_ipv4,
+        bk_host_innerip_v6: item.inner_ipv6,
+        bk_cloud_host_status: item.status,
+        bk_cloud_id: item.cloud_area
+          ? [
+              {
+                bk_inst_id: item.cloud_area.id,
+                bk_inst_name: item.cloud_area.name,
+              },
+            ]
+          : [],
+      },
+      module: item.module
+        ? [
+            {
+              bk_module_id: item.module.id,
+              bk_module_name: item.module.name,
+              topo_module_name: item.module.name,
+            },
+          ]
+        : [],
+      set: item.set
+        ? [
+            {
+              bk_set_id: item.set.id,
+              bk_set_name: item.set.name,
+            },
+          ]
+        : [],
+    };
+  }, []);
 
-  const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
-  const hostsNotInIdlePool = hostIdleStatuses.some((item) => item.inIdlePool === false);
+  const fetchNodeHosts = useCallback(async () => {
+    const nodeType = selectedNode.backendType || selectedNode.type;
+    const nodeId = selectedNode.nodeId;
+
+    if (!nodeType || !nodeId) {
+      setHostsList([]);
+      setTotal(0);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await getTopologyNodeHosts(`${nodeType}-${nodeId}`, {
+        page: currentPage,
+        page_size: pageSize,
+        keyword: searchValue.trim(),
+      });
+
+      const items = response?.data?.items || [];
+      const pagination = response?.data?.pagination;
+
+      setHostsList(items.map(adaptTopologyHost));
+      setTotal(pagination?.total ?? items.length);
+    } catch (error) {
+      console.error('Failed to fetch topology node hosts:', error);
+      setHostsList([]);
+      setTotal(0);
+      message.error(t('resource.host.messages.loadFailed'));
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    adaptTopologyHost,
+    currentPage,
+    pageSize,
+    searchValue,
+    selectedNode.backendType,
+    selectedNode.nodeId,
+    selectedNode.type,
+    t,
+  ]);
+
+  useEffect(() => {
+    fetchNodeHosts();
+  }, [fetchNodeHosts]);
+
+  useEffect(() => {
+    setSelectedRowKeys([]);
+  }, [selectedNode.key]);
+
+  const selectedTransferHosts = useMemo(() => {
+    const idleStatusMap = new Map(
+      checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID).map((host) => [
+        String(host.id),
+        host,
+      ]),
+    );
+
+    return selectedRowKeys.map((id) => {
+      const hostInfo = hostsList.find((host) => host.host.bk_host_id === id);
+      const cloud = hostInfo?.host.bk_cloud_id?.[0];
+      const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
+      const idleStatus = idleStatusMap.get(String(id));
+
+      return {
+        id,
+        ip: hostInfo?.host.bk_host_innerip || '',
+        cloudInfo: region,
+        inIdlePool: idleStatus?.inIdlePool,
+      } as TransferHostItem;
+    });
+  }, [hostsList, idleSetID, selectedRowKeys]);
+
+  const hostsNotInIdlePool = selectedTransferHosts.some((item) => item.inIdlePool !== true);
 
   const copyHostData = useCallback(
     (copyKey: HostCopyKey) => {
@@ -131,36 +241,80 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     }
   };
 
+  const selectedNodeStatus = useMemo(() => {
+    return getSelectedNodeStatus([selectedNode]);
+  }, [selectedNode]);
+
   const handleConfirmAddHosts = useCallback(
-    (hosts: TransferHostItem[]) => {
-      setTransferHostData(hosts, [selectedNode]);
-      handleNavToTransferPage();
+    async (hosts: TransferHostItem[]) => {
+      if (!selectedNodeStatus.isModule || !selectedNode.nodeId) {
+        setTransferHostData(hosts, [selectedNode]);
+        handleNavToTransferPage();
+        return;
+      }
+
+      try {
+        await transferTopologyHosts({
+          host_ids: hosts.map((host) => String(host.id)),
+          target_module_id: Number(selectedNode.nodeId),
+        });
+        message.success(
+          t('business.topology.addHostModal.messages.addSuccess', { count: hosts.length }),
+        );
+        onTopologyChanged();
+        await fetchNodeHosts();
+      } catch (error) {
+        console.error('Failed to transfer hosts to topology module:', error);
+        message.error(t('resource.host.messages.loadFailed'));
+      }
     },
-    [selectedNode],
+    [
+      fetchNodeHosts,
+      handleNavToTransferPage,
+      onTopologyChanged,
+      selectedNode,
+      selectedNodeStatus.isModule,
+      setTransferHostData,
+      t,
+    ],
   );
 
   const handleTransferHosts = useCallback(
     (targetModules: TreeData[]) => {
-      if (
-        (transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool) ||
-        transferModalType === TransferMenuItemType.otherBusiness
-      ) {
-        // TODO: api
+      if (transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool) {
         setTransferModalVisible(false);
         return;
       }
 
-      setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
+      setTransferHostData(selectedTransferHosts, targetModules, transferModalType);
       handleNavToTransferPage();
     },
-    [transferModalType, hostsNotInIdlePool, hostIdleStatuses],
+    [
+      handleNavToTransferPage,
+      hostsNotInIdlePool,
+      selectedTransferHosts,
+      setTransferHostData,
+      transferModalType,
+    ],
   );
 
-  const handleReleaseHosts = useCallback((_dirId: number) => {
-    // TODO: api
-    // params: selectedRowKeys, dirId
-    setReleaseModalVisible(false);
-  }, []);
+  const handleReleaseHosts = useCallback(
+    async (_dirId: number) => {
+      try {
+        await transferTopologyHostsToPool({
+          host_ids: selectedTransferHosts.map((host) => String(host.id)),
+        });
+        message.success(t('resource.host.messages.removeSuccess'));
+        setReleaseModalVisible(false);
+        onTopologyChanged();
+        await fetchNodeHosts();
+      } catch (error) {
+        console.error('Failed to transfer hosts to resource pool:', error);
+        message.error(t('resource.host.messages.loadFailed'));
+      }
+    },
+    [fetchNodeHosts, onTopologyChanged, selectedTransferHosts, t],
+  );
 
   const handleSearch = (value: string) => {
     setSearchValue(value);
@@ -216,34 +370,30 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     const items = [];
 
     if (type === DropdownMenuType.Transfer) {
-      transferBaseMenuItems.forEach((base) => {
-        if (
-          base.key === TransferMenuItemType.hostPool ||
-          base.key === TransferMenuItemType.otherBusiness
-        ) {
-          const disabled = hostsNotInIdlePool;
-          const tip =
-            base.key === TransferMenuItemType.hostPool
-              ? t('business.topology.hostList.transfer.hostPoolTip')
-              : t('business.topology.hostList.transfer.otherBusinessTip');
-          items.push({
-            ...base,
-            label: disabled ? (
-              <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
-                {t(base.label)}
-              </Tooltip>
-            ) : (
-              t(base.label)
-            ),
-            disabled,
-          });
-        } else {
-          items.push({
-            ...base,
-            label: t(base.label),
-          } as any);
-        }
-      });
+      transferBaseMenuItems
+        .filter((base) => base.key !== TransferMenuItemType.otherBusiness)
+        .forEach((base) => {
+          if (base.key === TransferMenuItemType.hostPool) {
+            const disabled = hostsNotInIdlePool;
+            const tip = t('business.topology.hostList.transfer.hostPoolTip');
+            items.push({
+              ...base,
+              label: disabled ? (
+                <Tooltip title={tip} styles={{ root: { maxWidth: 'none' } }}>
+                  {t(base.label)}
+                </Tooltip>
+              ) : (
+                t(base.label)
+              ),
+              disabled,
+            });
+          } else {
+            items.push({
+              ...base,
+              label: t(base.label),
+            } as any);
+          }
+        });
     } else if (type === DropdownMenuType.Append) {
       items.push({
         key: AppendMenuItemKey.AppendToBusinessModule,
@@ -293,10 +443,6 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
 
     return { items };
   };
-
-  const selectedNodeStatus = useMemo(() => {
-    return getSelectedNodeStatus([selectedNode]);
-  }, [selectedNode]);
 
   const isEmptySet = useMemo(() => {
     const node = selectedNode;
@@ -429,6 +575,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
             }}
             columns={columns}
             dataSource={hostsList}
+            loading={loading}
             rowKey={(record) => record.host.bk_host_id}
             pagination={false}
             locale={{
@@ -447,7 +594,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 &nbsp;{t('business.topology.hostList.pagination.items')}
               </span>
               <Pagination
-                total={hostsList.length}
+                total={total}
                 pageSize={pageSize}
                 current={currentPage}
                 onChange={(page, size) => {
@@ -475,7 +622,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       <TransferHostModal
         visible={transferModalVisible}
         transferType={transferModalType}
-        selectedHosts={hostIdleStatuses}
+        selectedHosts={selectedTransferHosts}
         onClose={() => setTransferModalVisible(false)}
         onConfirm={handleTransferHosts}
       />

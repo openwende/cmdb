@@ -13,7 +13,11 @@ import './style.css';
 import { useTopologySceneStore } from '@/store/TopologySceneStore';
 import { useNodeDetailStore } from '@/store/NodeDetailStore';
 
-const NodeInfo: React.FC = () => {
+interface Props {
+  onTopologyChanged?: () => void;
+}
+
+const NodeInfo: React.FC<Props> = ({ onTopologyChanged }) => {
   const { t } = useTranslation();
   const selectedNode = useTopologySceneStore((state) => state.selectedNode);
   const detail = useNodeDetailStore((state) => state.detail);
@@ -66,8 +70,12 @@ const NodeInfo: React.FC = () => {
     <div className="node-info-container">
       {nodeType === TopoTreeNodeType.Biz && <BusinessNodeInfo selectedNode={enrichedNode} />}
       {nodeType === TopoTreeNodeType.Idle && <IdleNodeInfo selectedNode={enrichedNode} />}
-      {nodeType === TopoTreeNodeType.Set && <SetNodeInfo selectedNode={enrichedNode} />}
-      {nodeType === TopoTreeNodeType.Module && <ModuleNodeInfo selectedNode={enrichedNode} />}
+      {nodeType === TopoTreeNodeType.Set && (
+        <SetNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
+      )}
+      {nodeType === TopoTreeNodeType.Module && (
+        <ModuleNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
+      )}
       {![TopoTreeNodeType.Biz, TopoTreeNodeType.Idle, TopoTreeNodeType.Set, TopoTreeNodeType.Module]
         .includes(nodeType as TopoTreeNodeType) && <GenericNodeInfo selectedNode={enrichedNode} />}
     </div>

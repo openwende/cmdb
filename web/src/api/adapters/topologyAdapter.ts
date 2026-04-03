@@ -32,6 +32,18 @@ const toDisplayLabel = (value?: string): string => {
   return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
 };
 
+const normalizeBackendNodeType = (node: BackendTopologyNode): string => {
+  if (node.is_default && node.node_type === BackendNodeType.Set) {
+    return BackendNodeType.IdleSet;
+  }
+
+  if (node.is_default && node.node_type === BackendNodeType.Module) {
+    return BackendNodeType.IdleModule;
+  }
+
+  return node.node_type;
+};
+
 /**
  * 将后端节点类型映射到前端节点类型
  */
@@ -72,8 +84,7 @@ const getObjName = (
  * 格式: "biz-uuid" 或 "set-123" 或 "module-456"
  */
 const generateNodeKey = (node: BackendTopologyNode): string => {
-  const type = mapNodeType(node.node_type);
-  return `${type}-${node.node_id}`;
+  return `${normalizeBackendNodeType(node)}-${node.node_id}`;
 };
 
 /**
@@ -83,20 +94,24 @@ export const adaptTopologyNode = (
   backendNode: BackendTopologyNode,
   mainlineModelMap?: Record<string, MainlineModel>,
 ): TreeData => {
-  const frontendType = mapNodeType(backendNode.node_type);
+  const backendNodeType = normalizeBackendNodeType(backendNode);
+  const frontendType = mapNodeType(backendNodeType);
   const key = generateNodeKey(backendNode);
 
   const treeData: TreeData = {
     title: backendNode.name,
     key: key,
     type: frontendType,
-    objName: getObjName(backendNode.node_type, backendNode.icon, mainlineModelMap),
+    objName: getObjName(backendNodeType, backendNode.icon, mainlineModelMap),
     nodeId: String(backendNode.node_id),
-    backendType: backendNode.node_type,
+    backendType: backendNodeType,
     icon: backendNode.icon,
     isLeaf: backendNode.is_leaf,
     expandable: backendNode.expandable,
-    extra: backendNode.extra,
+    extra: {
+      ...backendNode.extra,
+      is_default: backendNode.is_default,
+    },
   };
 
   // 如果有子节点，递归转换

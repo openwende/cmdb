@@ -21,3 +21,9 @@
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
+.info-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  padding: 4px 0;
+}

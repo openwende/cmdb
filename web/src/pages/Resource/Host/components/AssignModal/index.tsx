@@ -11,7 +11,7 @@ const { Option } = Select;
 
 interface AssignModalProps {
   assignType: AssignType;
-  selectedRowKeys: number[];
+  selectedRowKeys: React.Key[];
   hostPoolStatuses?: HostPoolStatus[];
   onClose: () => void;
 }

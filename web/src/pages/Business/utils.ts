@@ -151,7 +151,7 @@ export function checkHostsInIdlePool(
   return selectedRowKeys.map((key) => {
     const hostItem = allHostsData.find((h) => h.host.bk_host_id === key);
     const inIdlePool = hostItem?.set?.some((s: any) => s.bk_set_id === idleSetID) ?? false;
-    return { id: Number(key), ip: hostItem.host.bk_host_innerip, inIdlePool };
+    return { id: key, ip: hostItem.host.bk_host_innerip, inIdlePool };
   });
 }
 
@@ -526,10 +526,11 @@ export function getSelectedNodeStatus(selectedNodes: TreeData[]) {
     };
   }
   const node = selectedNodes[0];
+  const backendType = node.backendType || '';
 
   return {
     isModule: node.type === TopoTreeNodeType.Module,
-    isIdle: node.type === TopoTreeNodeType.Idle,
+    isIdle: node.type === TopoTreeNodeType.Idle || backendType.startsWith('idle_'),
   };
 }
 

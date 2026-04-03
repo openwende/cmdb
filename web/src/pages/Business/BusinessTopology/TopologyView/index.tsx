@@ -17,25 +17,17 @@ const BusinessTopology: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('hostList');
   const [view, setView] = useState<'instance' | 'process'>('instance');
-  const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
   const [topologyVersion, setTopologyVersion] = useState(0);
   const businessId = getBusinessIdFromUrl();
   const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
-  const prevPathnameRef = useRef<string>('');
   const { selectedNode, parentNodes, selectNode, reset } = useTopologySceneStore();
+  const previousBusinessIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    const isJustSwitchedToCurPath =
-      location.pathname === currentBusinessTopoPath &&
-      prevPathnameRef.current !== currentBusinessTopoPath;
-    if (!isJustSwitchedToCurPath) {
-      // Update previous pathname after initialization
-      prevPathnameRef.current = location.pathname;
-      setShouldInitializeKeys(false);
+    if (location.pathname !== currentBusinessTopoPath) {
       return;
     }
 
-    setShouldInitializeKeys(true);
     const tabParam = searchParams.get('tab') || 'hostList';
     const viewParam = searchParams.get('view') as 'instance' | 'process' | null;
 
@@ -45,10 +37,7 @@ const BusinessTopology: React.FC = () => {
     } else {
       setView('instance');
     }
-
-    // Update previous pathname after initialization
-    prevPathnameRef.current = location.pathname;
-  }, [searchParams, location.pathname]);
+  }, [currentBusinessTopoPath, location.pathname, searchParams]);
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
@@ -82,7 +71,26 @@ const BusinessTopology: React.FC = () => {
     setTopologyVersion((current) => current + 1);
   }, []);
 
-  useEffect(() => reset, [reset]);
+  useEffect(() => {
+    reset();
+  }, [businessId, reset]);
+
+  useEffect(() => {
+    if (!businessId) {
+      return;
+    }
+
+    const previousBusinessId = previousBusinessIdRef.current;
+    previousBusinessIdRef.current = businessId;
+
+    if (!previousBusinessId || previousBusinessId === businessId) {
+      return;
+    }
+
+    setActiveTab('hostList');
+    setView('instance');
+    setSearchParams(new URLSearchParams());
+  }, [businessId, setSearchParams]);
 
   const items = [
     {
@@ -107,28 +115,54 @@ const BusinessTopology: React.FC = () => {
     {
       key: 'nodeInfo',
       label: t('business.topology.tabs.nodeInfo'),
-      children: <NodeInfo />,
+      children: <NodeInfo onTopologyChanged={handleTopologyChanged} />,
     },
   ];
 
-  const initialSelectedKey = shouldInitializeKeys ? searchParams.get('node') : null;
+  const initialSelectedKey =
+    location.pathname === currentBusinessTopoPath ? searchParams.get('node') : null;
+
+  const panelTitle = selectedNode ? String(selectedNode.title) : t('business.topology.workspace.noNode');
+  const panelDescription = (() => {
+    if (!selectedNode) {
+      return t('business.topology.workspace.selectNode');
+    }
+
+    switch (activeTab) {
+      case 'hostList':
+        return t('business.topology.workspace.hostList');
+      case 'serviceInstance':
+        return t('business.topology.workspace.serviceInstance');
+      case 'nodeInfo':
+      default:
+        return t('business.topology.workspace.nodeInfo');
+    }
+  })();
 
   return (
     <>
       <div className="topology-wrapper">
         <BusinessTree
+          key={businessId ?? 'no-business'}
           selectedNode={selectedNode}
           initialSelectedKey={initialSelectedKey}
           topologyVersion={topologyVersion}
           onTopologyChanged={handleTopologyChanged}
           onNodeSelect={handleNodeSelect}
         />
-        <Tabs
-          activeKey={activeTab}
-          onChange={handleTabChange}
-          items={items}
-          className="topology-tabs"
-        />
+        <div className="topology-panel">
+          <div className="topology-panel__header">
+            <div className="topology-panel__eyebrow">{t('business.topology.workspace.currentNode')}</div>
+            <div className="topology-panel__title">{panelTitle}</div>
+            <div className="topology-panel__description">{panelDescription}</div>
+          </div>
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            items={items}
+            className="topology-tabs"
+          />
+        </div>
       </div>
     </>
   );

@@ -1,26 +1,88 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Collapse, Button, message, Form, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { setNodeInfo } from '@/mock/business';
 import InfoItem from '../InfoItem';
 import { TreeData } from '../../../Types';
 import ConfirmModal from '@/components/common/ConfirmModal';
+import { deleteTopologySet, updateTopologySet } from '@/api/services/business';
+import { normalizeSetNodeDetail } from '../../nodeDetailAdapters';
 import './style.css';
 
 const { Option } = Select;
 
 interface Props {
   selectedNode: TreeData;
+  onTopologyChanged?: () => void;
 }
 
-const SetNodeInfo: React.FC<Props> = () => {
+const formatDateTime = (value?: string | null): string => {
+  if (!value) {
+    return '--';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return date.toLocaleString();
+};
+
+const getSetEnvLabel = (value: string | undefined, t: (key: string) => string): string => {
+  switch (value) {
+    case '1':
+    case 'test':
+      return t('business.topology.setNodeInfo.environment.test');
+    case '2':
+    case 'staging':
+      return t('business.topology.setNodeInfo.environment.experience');
+    case '3':
+    case 'prod':
+      return t('business.topology.setNodeInfo.environment.production');
+    case 'dev':
+      return 'dev';
+    default:
+      return '--';
+  }
+};
+
+const getServiceStatusLabel = (value: string | undefined, t: (key: string) => string): string => {
+  switch (value) {
+    case '1':
+      return t('business.topology.setNodeInfo.status.open');
+    case '2':
+      return t('business.topology.setNodeInfo.status.closed');
+    default:
+      return '--';
+  }
+};
+
+const mapEnvValueToAPI = (value: string | undefined): string | undefined => {
+  switch (value) {
+    case '1':
+      return 'test';
+    case '2':
+      return 'staging';
+    case '3':
+      return 'prod';
+    default:
+      return undefined;
+  }
+};
+
+const buildSetData = (selectedNode: TreeData) => normalizeSetNodeDetail(selectedNode);
+
+const SetNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
   const [formChanged, setFormChanged] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [setData, setSetData] = useState(() => buildSetData(selectedNode));
 
-  const setData = setNodeInfo[0];
+  useEffect(() => {
+    setSetData(buildSetData(selectedNode));
+  }, [selectedNode]);
 
   const handleEdit = () => {
     form.setFieldsValue({
@@ -29,7 +91,7 @@ const SetNodeInfo: React.FC<Props> = () => {
       bkServiceStatus: setData.bk_service_status,
       bkSetEnv: setData.bk_set_env || '3',
       bkCapacity: setData.bk_capacity,
-      bkSetDesc: setData.bk_set_desc || '',
+      bkSetDesc: setData.description || '',
     });
     setFormChanged(false);
     setIsEditing(true);
@@ -39,23 +101,41 @@ const SetNodeInfo: React.FC<Props> = () => {
     setIsDeleteModalVisible(true);
   };
 
-  const confirmDelete = () => {
-    // TODO: api
-    message.success(t('business.topology.setNodeInfo.deleteSuccess'));
-    setIsDeleteModalVisible(false);
+  const confirmDelete = async () => {
+    try {
+      const setID = Number(selectedNode.nodeId ?? setData.bk_set_id);
+      await deleteTopologySet(setID);
+      message.success(t('business.topology.setNodeInfo.deleteSuccess'));
+      setIsDeleteModalVisible(false);
+      onTopologyChanged?.();
+    } catch (error) {
+      console.error('Failed to delete topology set:', error);
+      message.error(t('business.topology.setNodeInfo.deleteFailed'));
+    }
   };
 
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
-
-      const setProcessedValues = {
-        ...values,
-      };
-
-      console.log(setProcessedValues);
+      const setID = Number(selectedNode.nodeId ?? setData.bk_set_id);
+      await updateTopologySet(setID, {
+        name: values.bkSetName,
+        description: values.bkSetDesc || values.setDesc || '',
+        env_type: mapEnvValueToAPI(values.bkSetEnv),
+      });
+      setSetData((current) => ({
+        ...current,
+        bk_set_name: values.bkSetName,
+        bk_set_desc: values.setDesc || values.bkSetDesc || '',
+        description: values.bkSetDesc || values.setDesc || '',
+        bk_set_env: values.bkSetEnv,
+        bk_service_status: values.bkServiceStatus,
+        bk_capacity: values.bkCapacity,
+      }));
       message.success(t('business.topology.setNodeInfo.saveSuccess'));
       setIsEditing(false);
+      setFormChanged(false);
+      onTopologyChanged?.();
     } catch (error) {
       console.error('Form validation failed:', error);
     }
@@ -180,12 +260,10 @@ const SetNodeInfo: React.FC<Props> = () => {
     );
   };
 
-  // Return edit form if in editing mode
   if (isEditing) {
     return <div className="node-info-container">{renderEditForm()}</div>;
   }
 
-  // Otherwise, return info view
   return (
     <>
       <ConfirmModal
@@ -202,7 +280,9 @@ const SetNodeInfo: React.FC<Props> = () => {
           <span className="header-label">
             {t('business.topology.setNodeInfo.clusterTemplate')}：
           </span>
-          {t('business.topology.setNodeInfo.none')}
+          {setData.set_template_id
+            ? String(setData.set_template_id)
+            : t('business.topology.setNodeInfo.none')}
         </div>
       </div>
 
@@ -221,7 +301,7 @@ const SetNodeInfo: React.FC<Props> = () => {
               <div className="info-grid">
                 <InfoItem
                   label={t('business.topology.setNodeInfo.createTime')}
-                  value={new Date(setData.create_time).toLocaleString()}
+                  value={formatDateTime(setData.create_time)}
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.creator')}
@@ -229,7 +309,7 @@ const SetNodeInfo: React.FC<Props> = () => {
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.updateTime')}
-                  value={new Date(setData.last_time).toLocaleString()}
+                  value={formatDateTime(setData.last_time)}
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.updater')}
@@ -246,19 +326,11 @@ const SetNodeInfo: React.FC<Props> = () => {
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.environmentType')}
-                  value={
-                    setData.bk_set_env === '3'
-                      ? t('business.topology.setNodeInfo.environment.production')
-                      : t('business.topology.setNodeInfo.environment.test')
-                  }
+                  value={getSetEnvLabel(setData.bk_set_env, t)}
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.serviceStatus')}
-                  value={
-                    setData.bk_service_status === '1'
-                      ? t('business.topology.setNodeInfo.status.open')
-                      : t('business.topology.setNodeInfo.status.closed')
-                  }
+                  value={getServiceStatusLabel(setData.bk_service_status, t)}
                 />
                 <InfoItem
                   label={t('business.topology.setNodeInfo.remarks')}

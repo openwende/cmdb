@@ -5,10 +5,8 @@ import { CloseOutlined } from '@ant-design/icons';
 import TopologyTree from '../TopologyTree';
 import DragHandle from '@/components/common/DragHandle';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
-import { businessData2, idleCluster2, bizInfo, allHosts2 } from '@/mock/business';
 import {
   findNodeAndParents,
-  isHostAlreadyInTarget,
   filterTree,
   getSelectedNodesByKeys,
   collectAllKeys,
@@ -22,10 +20,53 @@ import {
   TreeData,
   AppendMenuItemKey,
 } from '@/pages/Business/Types';
+import { getTopologyTree } from '@/api/services/business';
+import { useBusinessStore } from '@/store/BusinessStore';
+import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import './style.css';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
+
+const annotateParentPaths = (nodes: TreeData[], ancestors: string[] = []): TreeData[] =>
+  nodes.map((node) => {
+    const nextAncestors = node.type === TopoTreeNodeType.Module ? ancestors : [...ancestors, String(node.title)];
+    return {
+      ...node,
+      parentPath: node.type === TopoTreeNodeType.Module ? ancestors : node.parentPath,
+      children: node.children ? annotateParentPaths(node.children, nextAncestors) : node.children,
+    };
+  });
+
+const filterTransferNodesByMode = (
+  nodes: TreeData[],
+  mode: 'businessModule' | 'idlePool',
+): TreeData[] =>
+  nodes.reduce<TreeData[]>((acc, node) => {
+      const backendType = node.backendType || node.type;
+      const isBusiness = node.type === TopoTreeNodeType.Biz;
+      const isModule = node.type === TopoTreeNodeType.Module;
+      const isSet = node.type === TopoTreeNodeType.Set;
+      const isIdleSet = backendType === 'idle_set';
+      const isIdleModule = backendType === 'idle_module';
+      const keepCurrentNode =
+        mode === 'businessModule'
+          ? isBusiness || (isSet && !isIdleSet) || (isModule && !isIdleModule)
+          : isBusiness || isIdleSet || isIdleModule;
+      const filteredChildren = node.children
+        ? filterTransferNodesByMode(node.children, mode)
+        : undefined;
+
+      if (!keepCurrentNode && (!filteredChildren || filteredChildren.length === 0)) {
+        return acc;
+      }
+
+      acc.push({
+        ...node,
+        children: filteredChildren,
+      });
+      return acc;
+    }, []);
 
 interface TransferHostModalProps {
   visible: boolean;
@@ -47,6 +88,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   onConfirm,
 }) => {
   const { t } = useTranslation();
+  const { currentBusiness, businessList } = useBusinessStore();
 
   const typeTitleMap: Partial<Record<TransferHostType, string>> = {
     idlePool: t('business.topology.transferHostModal.titles.idlePool'),
@@ -64,6 +106,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   const [previewList, setPreviewList] = useState<TreeData[]>([]);
   const [hoveredPreviewId, setHoveredPreviewId] = useState<React.Key | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(320);
+  const [customTreeData, setCustomTreeData] = useState<TreeData[]>([]);
 
   const transferStatus = useMemo(() => {
     return {
@@ -79,62 +122,51 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     };
   }, [transferType]);
 
-  // Helper to build idlePool/otherBusiness tree structure (biz idle pool)
-  const buildIdlePoolTree = (bizName: string, bizId?: number): TreeData[] => [
-    {
-      title: bizName,
-      key: bizId ? `biz-${bizId}` : bizName,
-      type: TopoTreeNodeType.Biz,
-      objName: t('business.topology.transferHostModal.objectNames.business'),
-      children: [
-        {
-          title: idleCluster2.bk_set_name,
-          key: `set-${idleCluster2.bk_set_id}`,
-          type: TopoTreeNodeType.Set,
-          objName: t('business.topology.transferHostModal.objectNames.cluster'),
-          children: idleCluster2.module.map((mod) => ({
-            title: mod.bk_module_name,
-            key: `module-${mod.bk_module_id}`,
-            type: TopoTreeNodeType.Module,
-            objName: t('business.topology.transferHostModal.objectNames.module'),
-            parentPath: [bizName, idleCluster2.bk_set_name],
-          })),
-        },
-      ],
-    },
-  ];
-
-  const customTreeData: TreeData[] = useMemo(() => {
-    if (transferStatus.isIdlePool) {
-      // idlePool: for each business, build idlePool tree
-      return businessData2.map((biz) => buildIdlePoolTree(biz.bk_inst_name, biz.bk_inst_id)[0]);
-    } else if (transferStatus.isBusinessModule) {
-      return businessData2.map((biz) => ({
-        title: biz.bk_inst_name,
-        key: `${biz.bk_obj_id}-${biz.bk_inst_id}`,
-        type: TopoTreeNodeType.Biz,
-        objName: biz.bk_obj_name,
-        children: (biz.child || []).map((set) => ({
-          title: set.bk_inst_name,
-          key: `${set.bk_obj_id}-${set.bk_inst_id}`,
-          type: TopoTreeNodeType.Set,
-          objName: set.bk_obj_name,
-          children: (set.child || []).map((mod) => ({
-            title: mod.bk_inst_name,
-            key: `${mod.bk_obj_id}-${mod.bk_inst_id}`,
-            type: TopoTreeNodeType.Module,
-            objName: mod.bk_obj_name,
-            parentPath: [biz.bk_inst_name, set.bk_inst_name],
-          })),
-        })),
-      }));
-    } else if (transferStatus.isOtherBusiness && selectedBizId) {
-      const biz = bizInfo.info.find((b) => String(b.bk_biz_id) === selectedBizId);
-      if (!biz) return [];
-      return buildIdlePoolTree(biz.bk_biz_name!, biz.bk_biz_id);
+  useEffect(() => {
+    if (!visible) {
+      return;
     }
-    return [];
-  }, [transferStatus, selectedBizId]);
+
+    const businessId = transferStatus.isOtherBusiness ? selectedBizId : currentBusiness?.id;
+    if (!businessId) {
+      setCustomTreeData([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadTree = async () => {
+      try {
+        const response = await getTopologyTree({
+          business_id: businessId,
+        });
+        if (cancelled) {
+          return;
+        }
+
+        const adaptedTree = annotateParentPaths(adaptTopologyTree(response.data || []));
+        const mode = transferStatus.isBusinessModule ? 'businessModule' : 'idlePool';
+        setCustomTreeData(filterTransferNodesByMode(adaptedTree, mode));
+      } catch (error) {
+        console.error('Failed to load transfer topology tree:', error);
+        if (!cancelled) {
+          setCustomTreeData([]);
+        }
+      }
+    };
+
+    loadTree();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    currentBusiness?.id,
+    selectedBizId,
+    transferStatus.isBusinessModule,
+    transferStatus.isOtherBusiness,
+    visible,
+  ]);
 
   // Filter tree data based on search value
   const filteredTreeData: TreeData[] = useMemo(() => {
@@ -280,21 +312,18 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     return null;
   };
 
-  const bizOptions = bizInfo.info
-    .filter((biz) => biz.bk_biz_id && biz.bk_biz_name)
+  const bizOptions = businessList
+    .filter((biz) => biz.id && biz.name)
     .map((biz) => ({
-      key: String(biz.bk_biz_id),
-      label: `[${biz.bk_biz_id}] ${biz.bk_biz_name}`,
-      value: String(biz.bk_biz_id),
+      key: biz.id,
+      label: `[${biz.displayId || biz.id}] ${biz.name}`,
+      value: biz.id,
     }));
 
   const confirmDisabled = useMemo(() => {
     if (previewList.length === 0) return true;
     if (selectedHosts.length === 0) return true;
-    // Disable if all hosts are already in all target modules
-    return selectedHosts.every((host) =>
-      previewList.every((moduleNode) => isHostAlreadyInTarget(allHosts2, host.id, moduleNode)),
-    );
+    return false;
   }, [previewList, selectedHosts]);
 
   const confirmTooltip = useMemo(() => {

@@ -1,35 +1,73 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Collapse, Button, message, Form, Input, Select, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { moduleNodeInfo } from '@/mock/business';
 import { userListMock } from '@/mock/resource';
 import ServiceCategorySelector from '../../components/ServiceCategory';
 import InfoItem from '../InfoItem';
 import { TreeData } from '../../../Types';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { debounce } from '@/utils/performance';
+import { deleteTopologyModule, updateTopologyModule } from '@/api/services/business';
+import { normalizeModuleNodeDetail } from '../../nodeDetailAdapters';
 import './style.css';
 
 const { Option } = Select;
 
 interface Props {
   selectedNode: TreeData;
+  onTopologyChanged?: () => void;
 }
 
-const ModuleNodeInfo: React.FC<Props> = () => {
+const formatDateTime = (value?: string | null): string => {
+  if (!value) {
+    return '--';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return date.toLocaleString();
+};
+
+const getModuleTypeLabel = (value: string | undefined, t: (key: string) => string): string => {
+  switch (value) {
+    case '1':
+      return t('business.topology.moduleNodeInfo.moduleTypeOptions.normal');
+    case '2':
+    case 'db':
+      return t('business.topology.moduleNodeInfo.moduleTypeOptions.database');
+    case 'web':
+    case 'api':
+    case 'cache':
+    case 'mq':
+    case 'other':
+      return value;
+    default:
+      return '--';
+  }
+};
+
+const buildModuleData = (selectedNode: TreeData) => normalizeModuleNodeDetail(selectedNode);
+
+const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
   const { t } = useTranslation();
   const [isEditing, setIsEditing] = useState(false);
   const [form] = Form.useForm();
-  const [serviceCategory, setServiceCategory] = useState<number[]>([1, 2]); // Default -> Default
+  const [serviceCategory, setServiceCategory] = useState<number[]>([1, 2]);
   const [formChanged, setFormChanged] = useState(false);
   const [userOptions, setUserOptions] = useState<{ label: string; value: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
 
-  // Initialize form when editing starts
-  const moduleData = moduleNodeInfo[0];
+  const [moduleData, setModuleData] = useState(() => buildModuleData(selectedNode));
+
+  useEffect(() => {
+    setModuleData(buildModuleData(selectedNode));
+  }, [selectedNode]);
+
   const handleEdit = () => {
-    // Convert operator strings to arrays for Select components
     let operators: string[] = [];
     if (moduleData.operator) {
       const opStr = String(moduleData.operator);
@@ -40,6 +78,11 @@ const ModuleNodeInfo: React.FC<Props> = () => {
     if (moduleData.bk_bak_operator) {
       const backupOpStr = String(moduleData.bk_bak_operator);
       backupOperators = backupOpStr.split(',').filter((op: string) => op.trim() !== '');
+    }
+
+    const categoryId = Number(moduleData.service_category_id);
+    if (!Number.isNaN(categoryId) && categoryId > 0) {
+      setServiceCategory([categoryId]);
     }
 
     form.setFieldsValue({
@@ -59,16 +102,21 @@ const ModuleNodeInfo: React.FC<Props> = () => {
     setIsDeleteModalVisible(true);
   };
 
-  const confirmDelete = () => {
-    // TODO: api
-    message.success(t('business.topology.moduleNodeInfo.deleteSuccess'));
-    setIsDeleteModalVisible(false);
+  const confirmDelete = async () => {
+    try {
+      const moduleID = Number(selectedNode.nodeId ?? moduleData.bk_module_id);
+      await deleteTopologyModule(moduleID);
+      message.success(t('business.topology.moduleNodeInfo.deleteSuccess'));
+      setIsDeleteModalVisible(false);
+      onTopologyChanged?.();
+    } catch (error) {
+      console.error('Failed to delete topology module:', error);
+      message.error(t('business.topology.moduleNodeInfo.deleteFailed'));
+    }
   };
 
-  // Search users with debounce
   const searchUsers = debounce((value: string) => {
     setIsSearching(true);
-    // Simulate API call with timeout
     setTimeout(() => {
       if (value.trim() === '') {
         setUserOptions([]);
@@ -100,20 +148,25 @@ const ModuleNodeInfo: React.FC<Props> = () => {
   const handleSave = async () => {
     try {
       const values = await form.validateFields();
-
-      // Join array values into comma-separated strings if needed
-      const processedValues = {
-        ...values,
+      const moduleID = Number(selectedNode.nodeId ?? moduleData.bk_module_id);
+      await updateTopologyModule(moduleID, {
+        name: values.bkModuleName,
+      });
+      setModuleData((current) => ({
+        ...current,
+        bk_module_name: values.bkModuleName,
+        bk_module_type: values.bkModuleType,
         operator: Array.isArray(values.operator) ? values.operator.join(',') : values.operator,
-        bkBakOperator: Array.isArray(values.bkBakOperator)
+        bk_bak_operator: Array.isArray(values.bkBakOperator)
           ? values.bkBakOperator.join(',')
           : values.bkBakOperator,
-        serviceCategory,
-      };
-
-      console.log(values, processedValues);
+        service_category_id:
+          serviceCategory[0] != null ? String(serviceCategory[0]) : current.service_category_id,
+      }));
       message.success(t('business.topology.moduleNodeInfo.saveSuccess'));
       setIsEditing(false);
+      setFormChanged(false);
+      onTopologyChanged?.();
     } catch (error) {
       console.error('Form validation failed:', error);
     }
@@ -243,12 +296,10 @@ const ModuleNodeInfo: React.FC<Props> = () => {
     );
   };
 
-  // Return edit form if in editing mode
   if (isEditing) {
     return <div className="node-info-container">{renderEditForm()}</div>;
   }
 
-  // Otherwise, return info view
   return (
     <>
       <ConfirmModal
@@ -265,20 +316,24 @@ const ModuleNodeInfo: React.FC<Props> = () => {
           <span className="header-label">
             {t('business.topology.moduleNodeInfo.serviceTemplate')}：
           </span>
-          {t('business.topology.moduleNodeInfo.none')}
+          {moduleData.service_template_id
+            ? String(moduleData.service_template_id)
+            : t('business.topology.moduleNodeInfo.none')}
         </div>
         <div>
           <span className="header-label">
             {t('business.topology.moduleNodeInfo.serviceCategory')}：
           </span>
-          Default / Default
+          {moduleData.service_category_id ? String(moduleData.service_category_id) : '--'}
         </div>
         <div>
           <span className="header-label">
             {t('business.topology.moduleNodeInfo.hostAttributeAutoApply')}：
           </span>
           <Button type="link" className="disabled-link">
-            {t('business.topology.moduleNodeInfo.notEnabled')}
+            {moduleData.host_apply_enabled
+              ? 'Enabled'
+              : t('business.topology.moduleNodeInfo.notEnabled')}
           </Button>
         </div>
       </div>
@@ -298,7 +353,7 @@ const ModuleNodeInfo: React.FC<Props> = () => {
               <div className="info-grid">
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.createTime')}
-                  value={new Date(moduleData.create_time).toLocaleString()}
+                  value={formatDateTime(moduleData.create_time)}
                 />
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.creator')}
@@ -306,7 +361,7 @@ const ModuleNodeInfo: React.FC<Props> = () => {
                 />
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.updateTime')}
-                  value={new Date(moduleData.last_time).toLocaleString()}
+                  value={formatDateTime(moduleData.last_time)}
                 />
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.updater')}
@@ -319,11 +374,10 @@ const ModuleNodeInfo: React.FC<Props> = () => {
                 />
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.moduleType')}
-                  value={
-                    moduleData.bk_module_type === '1'
-                      ? t('business.topology.moduleNodeInfo.moduleTypeOptions.normal')
-                      : t('business.topology.moduleNodeInfo.moduleTypeOptions.database')
-                  }
+                  value={getModuleTypeLabel(
+                    moduleData.service_type ?? moduleData.bk_module_type,
+                    t,
+                  )}
                 />
                 <InfoItem
                   label={t('business.topology.moduleNodeInfo.mainOperator')}

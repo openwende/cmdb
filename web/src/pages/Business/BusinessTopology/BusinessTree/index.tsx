@@ -1,4 +1,4 @@
-import React, { Fragment, useState, useMemo, useEffect } from 'react';
+import React, { Fragment, useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Input, Spin, message } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
@@ -7,7 +7,7 @@ import EmptySearchResult from '@/components/common/EmptySearchResult';
 import DragHandle from '@/components/common/DragHandle';
 import { TreeData } from '../../Types';
 import { filterTree, findNodeAndParents, collectAllKeys } from '../../utils';
-import { getMainlineTopologyTree } from '@/api/services/mainline';
+import { getTopologyTree } from '@/api/services/business';
 import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import { useBusinessStore } from '@/store/BusinessStore';
 import { useMainlineStore } from '@/store/MainlineStore';
@@ -34,8 +34,7 @@ const BusinessTree: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { currentBusiness } = useBusinessStore();
-  const { topologySettings, mainlineModels, loadTopologySettings, loadMainlineModels } =
-    useMainlineStore();
+  const { topologySettings, loadTopologySettings } = useMainlineStore();
   const [searchValue, setSearchValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -43,40 +42,55 @@ const BusinessTree: React.FC<Props> = ({
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
+  const requestSequenceRef = useRef(0);
 
   const loadTopologyTree = React.useCallback(async () => {
     if (!currentBusiness) {
+      setFullTreeData([]);
       console.warn('No current business selected');
       return;
     }
 
+    const requestSequence = ++requestSequenceRef.current;
+    const requestedBusinessID = currentBusiness.id.toString();
+
     setLoading(true);
+    setFullTreeData([]);
     try {
-      const response = await getMainlineTopologyTree({
-        business_id: currentBusiness.id.toString(),
+      const response = await getTopologyTree({
+        business_id: requestedBusinessID,
         include_hosts: false,
         max_depth: topologySettings?.max_topology_level || 10,
       });
 
+      if (requestSequence !== requestSequenceRef.current) {
+        return;
+      }
+
       if (response.code === 0 && response.data) {
-        setFullTreeData(adaptTopologyTree(response.data, mainlineModels));
+        setFullTreeData(adaptTopologyTree(response.data));
       } else {
         message.error(response.message || t('business.topology.tree.loadError'));
         setFullTreeData([]);
       }
     } catch (error) {
+      if (requestSequence !== requestSequenceRef.current) {
+        return;
+      }
+
       console.error('Failed to load topology tree:', error);
       message.error(t('business.topology.tree.loadError'));
       setFullTreeData([]);
     } finally {
-      setLoading(false);
+      if (requestSequence === requestSequenceRef.current) {
+        setLoading(false);
+      }
     }
-  }, [currentBusiness, mainlineModels, t, topologySettings?.max_topology_level]);
+  }, [currentBusiness, t, topologySettings?.max_topology_level]);
 
   useEffect(() => {
-    loadMainlineModels();
     loadTopologySettings();
-  }, [loadMainlineModels, loadTopologySettings]);
+  }, [loadTopologySettings]);
 
   useEffect(() => {
     loadTopologyTree();
@@ -158,6 +172,8 @@ const BusinessTree: React.FC<Props> = ({
         <Fragment>
           <div className="search-wrapper">
             <Input.Search
+              id="business-topology-search"
+              name="business_topology_search"
               placeholder={t('business.topology.tree.search')}
               allowClear
               value={searchValue}

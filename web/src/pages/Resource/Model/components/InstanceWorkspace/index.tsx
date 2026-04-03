@@ -29,10 +29,12 @@ import {
 import { CreateModelInstancePayload } from '@/api/types/model';
 import {
   AggregateInstanceListItem,
+} from '@/api/services/modelInstance';
+import {
   InstanceHistoryItem,
   InstanceRelationItem,
   InstanceTopologyGraph,
-} from '@/api/services/modelInstance';
+} from '@/api/types/modelInstance';
 import { useTranslation } from 'react-i18next';
 import CreateInstanceDrawer from '../CreateInstanceDrawer';
 import { useModelPageContext } from '../../context';

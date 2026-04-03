@@ -6,8 +6,6 @@ import { useTransferHostStore } from '@/store/TransferHostStore';
 import AddHostModal from '../components/AddHostModal';
 import AddProcessModal, { ListenInfo } from '../components/AddProcessModal';
 import './style.css';
-import { transferTarget, transferWithClearServiceInstance } from '@/mock/business';
-import { getFormattedTopoPath, isHostAlreadyInTarget } from '@/pages/Business/utils';
 import {
   AppendMenuItemKey,
   TransferHostItem,
@@ -18,7 +16,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { getBusinessTopologyPath, getBusinessIdFromUrl } from '../../../../utils/routes';
 import TransferHostModal from '../components/TransferHostModal';
-import { allHosts2 } from '@/mock/business';
+import { transferTopologyHosts, transferTopologyHostsToPool } from '@/api/services/business';
 
 export interface ProcessItem {
   id: string;
@@ -27,6 +25,12 @@ export interface ProcessItem {
   startupParams?: string;
   bindInfo: ListenInfo[];
   [key: string]: any;
+}
+
+interface ServiceInstanceItem {
+  id: string;
+  name: string;
+  bk_module_id?: string | number;
 }
 
 const TransferHost: React.FC = () => {
@@ -61,22 +65,51 @@ const TransferHost: React.FC = () => {
     return () => observer.disconnect();
   }, []);
 
-  const selectedTopoPaths = useMemo(() => {
-    return targetModules.map((module) => getFormattedTopoPath(module, transferTarget));
-  }, [targetModules]);
+  const selectedTopoPaths = useMemo(
+    () =>
+      targetModules.map((module) => [...(module.parentPath || []), String(module.title)].join(' / ')),
+    [targetModules],
+  );
 
   const formatBindInfoText = (bindInfo: ListenInfo[]) =>
     bindInfo
       .filter((i) => i.protocol && i.ip && i.port)
       .map((i) => `${i.protocol} ${i.ip}:${i.port}`);
 
-  const handleConfirm = () => {
-    // TODO: api
-    // bk_host_ids:[1, 2]
-    // default_internal_module:9
-    // is_remove_from_all:true
-    console.log(selectedHosts, targetModules, hostProcessMap);
-    backToPrePage();
+  const handleConfirm = async () => {
+    const hostIDs = selectedHosts.map((host) => String(host.id));
+
+    if (hostIDs.length === 0) {
+      backToPrePage();
+      return;
+    }
+
+    try {
+      if (
+        transferHostType === TransferMenuItemType.idlePool ||
+        transferHostType === RemoveMenuItemKey.CurrentModule
+      ) {
+        await transferTopologyHostsToPool({ host_ids: hostIDs });
+        backToPrePage();
+        return;
+      }
+
+      for (const module of targetModules) {
+        const targetModuleID = Number(module.nodeId || module.key.split('-')[1]);
+        if (!targetModuleID) {
+          continue;
+        }
+
+        await transferTopologyHosts({
+          host_ids: hostIDs,
+          target_module_id: targetModuleID,
+        });
+      }
+
+      backToPrePage();
+    } catch (error) {
+      console.error('Failed to confirm topology host transfer:', error);
+    }
   };
 
   const handleCancel = () => {
@@ -158,27 +191,18 @@ const TransferHost: React.FC = () => {
     [selectedHosts, transferHostType],
   );
 
-  const handleServiceInstances = () => {
-    const serviceInstances = transferWithClearServiceInstance.flatMap((item) =>
-      item.to_remove_from_modules.flatMap((mod) => mod.service_instances),
-    );
-    return serviceInstances || [];
+  const handleServiceInstances = (): ServiceInstanceItem[] => {
+    return [];
   };
 
   // Calculate the list of hosts to be added for each target module
   const hostsToAddByModule = useMemo(() => {
     const map: Record<string, TransferHostItem[]> = {};
     targetModules.forEach((mod) => {
-      const needAdd: TransferHostItem[] = [];
-      selectedHosts.forEach((h) => {
-        if (!isHostAlreadyInTarget(allHosts2, h.id, mod)) {
-          needAdd.push(h);
-        }
-      });
-      map[mod.key] = needAdd;
+      map[mod.key] = selectedHosts;
     });
     return map;
-  }, [targetModules, selectedHosts, isHostAlreadyInTarget]);
+  }, [targetModules, selectedHosts]);
 
   const hasChanges = useMemo(() => {
     return Object.values(hostsToAddByModule).some((list) => list.length > 0);
@@ -194,16 +218,7 @@ const TransferHost: React.FC = () => {
   // Hosts that will be moved to idle (only exist in current module)
   const hostsCanMoveToIdle = useMemo(() => {
     if (!isRemoveFromCurrent || targetModules.length === 0) return [] as TransferHostItem[];
-    const currentModule = targetModules[0];
-    const moduleId = Number(currentModule.key.split('-')[1]);
-
-    return selectedHosts.filter((h) => {
-      const hostInfo = allHosts2.find((x) => x.host.bk_host_id === h.id);
-      if (!hostInfo) return false;
-      const hostModuleIds = (hostInfo.module || []).map((m: any) => m.bk_module_id);
-      // Return only if the host belongs to a single module and that module is the current module
-      return hostModuleIds.length === 1 && hostModuleIds[0] === moduleId;
-    });
+    return selectedHosts;
   }, [isRemoveFromCurrent, targetModules, selectedHosts]);
 
   const shouldShowMoveIdleTab = isRemoveFromCurrent && hostsCanMoveToIdle.length > 0;
@@ -269,7 +284,7 @@ const TransferHost: React.FC = () => {
         {targetModules.map((module) => {
           const hostsForModule = hostsToAddByModule[module.key] || [];
           if (hostsForModule.length === 0) return null;
-          const topoPath = getFormattedTopoPath(module, transferTarget);
+          const topoPath = [...(module.parentPath || []), String(module.title)].join(' / ');
           return (
             <div key={module.key} className="module-section">
               {hostsForModule.map((host: TransferHostItem, index: number) => (
@@ -358,25 +373,11 @@ const TransferHost: React.FC = () => {
 
   const renderDelInst = () => {
     const serviceInstances = handleServiceInstances();
-    const tableData = serviceInstances.map((inst) => {
-      // Find owning module
-      let topoPath = '';
-      if (inst.bk_module_id) {
-        const node = transferTarget.nodes.find((n) => n.topo_node.bk_inst_id === inst.bk_module_id);
-        if (node && node.topo_path) {
-          topoPath = node.topo_path
-            .slice()
-            .reverse()
-            .map((p) => p.bk_inst_name)
-            .join(' / ');
-        }
-      }
-      return {
-        id: inst.id,
-        name: inst.name,
-        module: topoPath,
-      };
-    });
+    const tableData = serviceInstances.map((inst) => ({
+      id: inst.id,
+      name: inst.name,
+      module: '',
+    }));
     return (
       <>
         <Space className="tip-text">

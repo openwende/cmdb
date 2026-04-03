@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Modal,
   Tabs,
@@ -15,40 +15,25 @@ import {
 } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
-import { allHosts2, businessData2, idleCluster2 } from '@/mock/business';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import DragHandle from '@/components/common/DragHandle';
 import TopologyTree from '../TopologyTree';
-import { buildTreeData, filterTree, collectAllKeys } from '@/pages/Business/utils';
+import { filterTree, collectAllKeys } from '@/pages/Business/utils';
 import {
   TransferHostItem,
   TailEleType,
   TransferHostType,
+  TreeData,
   RemoveMenuItemKey,
 } from '@/pages/Business/Types';
+import { getHostList, getTopologyTree } from '@/api/services/business';
+import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
+import { getBusinessIdFromUrl } from '@/utils/routes';
 import './style.css';
 
 const MIN_WIDTH = 280;
 const MAX_WIDTH = 420;
-
-const createNewHost = (ip: string, index: number, t: any) => {
-  return {
-    bk_host_id: Date.now() + index,
-    bk_host_innerip: ip,
-    bk_host_innerip_v6: '',
-    bk_cloud_id: [
-      {
-        id: '90000001',
-        bk_obj_id: 'plat',
-        bk_obj_icon: '',
-        bk_inst_id: 90000001,
-        bk_obj_name: '',
-        bk_inst_name: t('business.topology.addHostModal.unassigned'),
-      },
-    ],
-  };
-};
 
 interface Props {
   visible: boolean;
@@ -58,7 +43,7 @@ interface Props {
   onConfirm: (hosts: TransferHostItem[]) => void;
 }
 interface HostData {
-  bk_host_id: number;
+  bk_host_id: React.Key;
   bk_host_innerip: string;
   bk_host_innerip_v6?: string;
   bk_cloud_id: any[];
@@ -124,13 +109,54 @@ const AddHostModal: React.FC<Props> = ({
   const [allHostsMapping, setAllHostsMapping] = useState<Map<React.Key, TransferHostItem>>(
     new Map(),
   );
+  const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
+  const [staticHosts, setStaticHosts] = useState<HostData[]>([]);
   // Ref for tree wrapper to control popover container
   const [treeKey, setTreeKey] = useState(0);
   const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
 
-  const fullTreeData = useMemo(() => {
-    // Build complete tree data
-    return buildTreeData(businessData2, idleCluster2);
+  const loadTopologyAndHosts = useCallback(async () => {
+    const businessId = getBusinessIdFromUrl();
+    if (!businessId) {
+      setFullTreeData([]);
+      setStaticHosts([]);
+      return;
+    }
+
+    const [treeResponse, hostResponse] = await Promise.all([
+      getTopologyTree({
+        business_id: businessId,
+        include_hosts: false,
+        max_depth: 10,
+      }),
+      getHostList({
+        params: {
+          page: 1,
+          page_size: 100,
+        },
+      }),
+    ]);
+
+    if (treeResponse.code === 0 && treeResponse.data) {
+      setFullTreeData(adaptTopologyTree(treeResponse.data));
+    } else {
+      setFullTreeData([]);
+    }
+
+    const hosts = (((hostResponse as any)?.hosts || []) as any[]).map((item) => ({
+      bk_host_id: item.id,
+      bk_host_innerip: item.primary_ip || '',
+      bk_host_innerip_v6: '',
+      bk_cloud_id: item.cloud_area_id
+        ? [
+            {
+              bk_inst_id: item.cloud_area_id,
+              bk_inst_name: item.cloud_area_id,
+            },
+          ]
+        : [],
+    }));
+    setStaticHosts(hosts);
   }, []);
 
   const filteredTreeData = useMemo(() => {
@@ -153,6 +179,14 @@ const AddHostModal: React.FC<Props> = ({
   useEffect(() => {
     if (visible) setTreeKey(Date.now());
   }, [visible]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    void loadTopologyAndHosts();
+  }, [loadTopologyAndHosts, visible]);
 
   useEffect(() => {
     if (visible) {
@@ -219,9 +253,9 @@ const AddHostModal: React.FC<Props> = ({
     let hosts: any[] = [];
 
     if (activeTab === TabItemKey.StaticTopo) {
-      hosts = allHosts2.map((item) => ({
-        ...item.host,
-        key: item.host.bk_host_id,
+      hosts = staticHosts.map((item) => ({
+        ...item,
+        key: item.bk_host_id,
       }));
     } else {
       hosts = customHosts.map((host) => ({
@@ -258,11 +292,14 @@ const AddHostModal: React.FC<Props> = ({
     const newHosts: HostData[] = [];
     const existingIps = new Set(customHosts.map((h) => h.bk_host_innerip));
 
-    ips.forEach((ip, index) => {
+    ips.forEach((ip) => {
       const trimmedIp = ip.trim();
-      if (trimmedIp && !existingIps.has(trimmedIp)) {
-        // TODO: the default field name is what?
-        newHosts.push(createNewHost(trimmedIp, index, t));
+      const matchedHost = staticHosts.find(
+        (host) =>
+          host.bk_host_innerip === trimmedIp || host.bk_host_innerip_v6 === trimmedIp,
+      );
+      if (trimmedIp && matchedHost && !existingIps.has(trimmedIp)) {
+        newHosts.push(matchedHost);
       }
     });
 
@@ -315,8 +352,8 @@ const AddHostModal: React.FC<Props> = ({
     let output = resultPreviewItems;
     if (transferHostType === RemoveMenuItemKey.CurrentModule) {
       output = resultPreviewItems.map((item) => {
-        const hostInfo = allHosts2.find((h) => h.host.bk_host_id === item.id);
-        const cloud = hostInfo?.host.bk_cloud_id?.[0];
+        const hostInfo = staticHosts.find((h) => h.bk_host_id === item.id);
+        const cloud = hostInfo?.bk_cloud_id?.[0];
         const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
         return { ...item, cloudInfo: region } as TransferHostItem;
       });
@@ -335,7 +372,7 @@ const AddHostModal: React.FC<Props> = ({
     setHostSearchValue('');
     setResultPreviewItems([]);
     setAllHostsMapping(new Map());
-    setExpandedKeys([filteredTreeData[0].key]);
+    setExpandedKeys(filteredTreeData[0] ? [filteredTreeData[0].key] : []);
     onClose();
   };
 

@@ -101,12 +101,101 @@ export const getTopologyNodeDetail = async (
   return axios.get(`/v1/topology/nodes/${encodeURIComponent(nodeId)}`);
 };
 
+export interface TopologyNodeHostItem {
+  host_id: string;
+  inner_ipv4: string;
+  inner_ipv6: string;
+  cloud_area?: {
+    id: string;
+    name: string;
+  } | null;
+  module?: {
+    id: number;
+    name: string;
+  } | null;
+  set?: {
+    id: number;
+    name: string;
+  } | null;
+  status: string;
+}
+
+export interface TopologyNodeHostsResponse {
+  code: number;
+  data: {
+    items: TopologyNodeHostItem[];
+    pagination: {
+      page: number;
+      page_size: number;
+      total: number;
+      total_page: number;
+    };
+  };
+  message?: string;
+}
+
+export const getTopologyNodeHosts = async (
+  nodeId: string,
+  params: {
+    page: number;
+    page_size: number;
+    keyword?: string;
+  },
+): Promise<TopologyNodeHostsResponse> => {
+  return axios.get(`/v1/topology/nodes/${encodeURIComponent(nodeId)}/hosts`, {
+    params,
+  });
+};
+
 export const createTopologySet = async (payload: CreateTopologySetPayload) => {
   return axios.post('/v1/topology/sets', payload);
 };
 
 export const createTopologyModule = async (payload: CreateTopologyModulePayload) => {
   return axios.post('/v1/topology/modules', payload);
+};
+
+export const updateTopologySet = async (
+  id: number,
+  payload: {
+    name?: string;
+    description?: string;
+    env_type?: string;
+    sort_order?: number;
+  },
+) => {
+  return axios.put(`/v1/topology/sets/${id}`, payload);
+};
+
+export const updateTopologyModule = async (
+  id: number,
+  payload: {
+    name?: string;
+    description?: string;
+    service_type?: string;
+    sort_order?: number;
+  },
+) => {
+  return axios.put(`/v1/topology/modules/${id}`, payload);
+};
+
+export const deleteTopologySet = async (id: number) => {
+  return axios.delete(`/v1/topology/sets/${id}`);
+};
+
+export const deleteTopologyModule = async (id: number) => {
+  return axios.delete(`/v1/topology/modules/${id}`);
+};
+
+export const transferTopologyHosts = async (payload: {
+  host_ids: string[];
+  target_module_id: number;
+}) => {
+  return axios.post('/v1/topology/hosts/transfer', payload);
+};
+
+export const transferTopologyHostsToPool = async (payload: { host_ids: string[] }) => {
+  return axios.post('/v1/topology/hosts/transfer-to-pool', payload);
 };
 
 /**

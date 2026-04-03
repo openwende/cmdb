@@ -12,6 +12,8 @@ interface Props {
 const InfoItem: React.FC<Props> = ({ label, value }) => {
   const { t } = useTranslation();
   const [isHovered, setIsHovered] = useState(false);
+  const hasValue = value !== null && value !== undefined && String(value).trim() !== '';
+  const displayValue = hasValue ? String(value) : t('common.notSet');
 
   const handleCopy = async (text: string) => {
     try {
@@ -30,9 +32,9 @@ const InfoItem: React.FC<Props> = ({ label, value }) => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <span>{value || '--'}</span>
-        {isHovered && value && (
-          <CopyOutlined className="copy-icon" onClick={() => handleCopy(value as string)} />
+        <span>{displayValue}</span>
+        {isHovered && hasValue && (
+          <CopyOutlined className="copy-icon" onClick={() => handleCopy(String(value))} />
         )}
       </div>
     </div>
