@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { bizListMock } from '@/mock/resource';
+import { useBusinessStore } from '@/store/BusinessStore';
 
 const { Option } = Select;
 
 export interface BusinessSelectorProps {
-  value?: number | null;
-  onChange?: (value: number) => void;
+  value?: string | null;
+  onChange?: (value: string) => void;
   allowClear?: boolean;
   showSearch?: boolean;
   disabled?: boolean;
@@ -25,7 +25,15 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
-  const handleChange = (val: number) => {
+  const { businessList, initialized, loading, loadBusinessData } = useBusinessStore();
+
+  useEffect(() => {
+    if (!initialized && !loading) {
+      void loadBusinessData();
+    }
+  }, [initialized, loading, loadBusinessData]);
+
+  const handleChange = (val: string) => {
     onChange?.(val);
   };
 
@@ -47,9 +55,9 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
       className={className}
       filterOption={showSearch ? filterOption : false}
     >
-      {bizListMock.map((biz) => (
-        <Option key={biz.bk_biz_id} value={biz.bk_biz_id}>
-          {`[${biz.bk_biz_id}] ${biz.bk_biz_name}`}
+      {businessList.map((biz) => (
+        <Option key={biz.id} value={biz.id}>
+          {`[${biz.displayId || biz.id}] ${biz.name}`}
         </Option>
       ))}
     </Select>

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Select, Typography } from 'antd';
 import { AssignType } from '@/pages/Resource/Types';
 import { HostPoolStatus } from '@/pages/Resource/Types';
-import { hostDirectoryMock } from '@/mock/resource';
 import BusinessSelector from '@/components/common/BusinessSelector';
+import { useDirectoryStore } from '@/store/DirectoryStore';
 import './style.css';
 
 const { Option } = Select;
@@ -23,7 +23,14 @@ const AssignModal: React.FC<AssignModalProps> = ({
   onClose,
 }) => {
   const { t } = useTranslation();
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<string | number | null>(null);
+  const { directories, loading, fetchDirectories } = useDirectoryStore();
+
+  useEffect(() => {
+    if (assignType === AssignType.HostPool && directories.length === 0 && !loading) {
+      void fetchDirectories();
+    }
+  }, [assignType, directories.length, fetchDirectories, loading]);
 
   const onOk = () => {
     // TODO: api
@@ -84,7 +91,11 @@ const AssignModal: React.FC<AssignModalProps> = ({
         </Typography.Text>
 
         {assignType === AssignType.Biz ? (
-          <BusinessSelector value={selected} onChange={setSelected} allowClear={false} />
+          <BusinessSelector
+            value={typeof selected === 'string' ? selected : null}
+            onChange={setSelected}
+            allowClear={false}
+          />
         ) : (
           <Select
             showSearch={true}
@@ -96,7 +107,7 @@ const AssignModal: React.FC<AssignModalProps> = ({
               (option?.children as any).toLowerCase().includes(input.toLowerCase())
             }
           >
-            {hostDirectoryMock
+            {directories
               .filter((dir) => !shouldDirExclude(dir.bk_module_id))
               .map((dir) => (
                 <Option key={dir.bk_module_id} value={dir.bk_module_id}>
