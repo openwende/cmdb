@@ -18,6 +18,17 @@ vi.mock('@/store/MainlineStore', () => ({
   }),
 }));
 
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
+}));
+
 vi.mock(
   '@/pages/Business/BusinessTopology/components/CreateNodeModal',
   () => ({

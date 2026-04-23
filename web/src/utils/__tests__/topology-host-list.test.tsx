@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HostList from '@/pages/Business/BusinessTopology/HostList';
@@ -83,22 +83,89 @@ vi.mock('@/store/TransferHostStore', () => ({
   }),
 }));
 
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
+}));
+
 vi.mock('antd', () => ({
-  Table: ({ dataSource = [] }: any) => (
-    <div>
-      {dataSource.map((record: any) => (
-        <div key={record.host.bk_host_id}>
-          <span>{record.host.bk_host_id}</span>
-          <span>{record.host.bk_host_innerip}</span>
-          <span>{record.module[0]?.bk_module_name || record.module[0]?.topo_module_name || '--'}</span>
-          <span>{record.set[0]?.bk_set_name || '--'}</span>
-        </div>
-      ))}
-    </div>
+  Table: ({ dataSource = [], rowSelection, rowKey, locale }: any) => {
+    const selectedKeys = rowSelection?.selectedRowKeys ?? [];
+    const resolvedKey = (record: any) =>
+      typeof rowKey === 'function' ? rowKey(record) : record[rowKey ?? 'key'];
+    const allKeys = dataSource.map((record: any) => resolvedKey(record));
+    const allChecked = allKeys.length > 0 && selectedKeys.length === allKeys.length;
+
+    if (!dataSource.length) {
+      return <div>{locale?.emptyText ?? null}</div>;
+    }
+
+    return (
+      <div>
+        <label>
+          <input
+            data-testid="host-select-all"
+            type="checkbox"
+            checked={allChecked}
+            onChange={(event) => rowSelection?.onChange?.(event.target.checked ? allKeys : [])}
+          />
+          select-all
+        </label>
+        {dataSource.map((record: any) => {
+          const key = resolvedKey(record);
+          const checked = selectedKeys.includes(key);
+          return (
+            <div key={key}>
+              <label>
+                <input
+                  aria-label={`select-host-${key}`}
+                  type="checkbox"
+                  checked={checked}
+                  onChange={(event) => {
+                    const nextKeys = event.target.checked
+                      ? [...selectedKeys, key]
+                      : selectedKeys.filter((item: unknown) => item !== key);
+                    rowSelection?.onChange?.(nextKeys);
+                  }}
+                />
+                select-host
+              </label>
+              <span>{record.host.bk_host_id}</span>
+              <span>{record.host.bk_host_innerip}</span>
+              <span>{record.module[0]?.bk_module_name || record.module[0]?.topo_module_name || '--'}</span>
+              <span>{record.set[0]?.bk_set_name || '--'}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  },
+  Button: ({ children, onClick, disabled, ...props }: any) => (
+    <button type="button" onClick={onClick} disabled={disabled} {...props}>
+      {children}
+    </button>
   ),
-  Button: ({ children }: any) => <button type="button">{children}</button>,
   Dropdown: ({ children }: any) => <div>{children}</div>,
-  Input: { Search: () => <div /> },
+  Input: {
+    Search: ({ value, onChange, onSearch, placeholder }: any) => (
+      <input
+        aria-label={placeholder}
+        value={value}
+        onChange={onChange}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            onSearch?.((event.target as HTMLInputElement).value);
+          }
+        }}
+      />
+    ),
+  },
   message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   Tooltip: ({ children }: any) => <div>{children}</div>,
   Empty: ({ children, description }: any) => (
@@ -179,8 +246,55 @@ describe('business topology host list', () => {
       keyword: '',
     });
     expect(screen.getByText('SmokeModule-1773163733771')).toBeInTheDocument();
-    expect(screen.getByText('ProbeSet-1773163724333')).toBeInTheDocument();
+    expect(screen.getAllByText('ProbeSet-1773163724333')).toHaveLength(2);
     expect(screen.queryByText('game')).not.toBeInTheDocument();
     expect(screen.queryByText('otherBusiness')).not.toBeInTheDocument();
+  });
+
+  it('shows floating bulk actions when hosts are selected and hides them after clearing selection', async () => {
+    render(
+      <HostList
+        selectedNode={{
+          title: 'SmokeModule-1773163733771',
+          key: 'module-3',
+          nodeId: '3',
+          type: TopoTreeNodeType.Module,
+          backendType: 'module',
+        }}
+        parentNodes={[
+          {
+            title: 'ProbeSet-1773163724333',
+            key: 'set-4',
+            nodeId: '4',
+            type: TopoTreeNodeType.Set,
+            backendType: 'set',
+          },
+        ]}
+        onTopologyChanged={() => undefined}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('real-host-1')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('select-host-real-host-1'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('hostlist-floating-actions')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('business.topology.hostList.floating.selectedCount')).toBeInTheDocument();
+    expect(screen.getByText('business.topology.hostList.buttons.transferTo')).toBeInTheDocument();
+    expect(screen.getByText('business.topology.hostList.buttons.appendTo')).toBeInTheDocument();
+    expect(screen.getByText('business.topology.hostList.buttons.removeFrom')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByTestId('hostlist-clear-selection'));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
+    });
   });
 });

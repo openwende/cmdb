@@ -6,6 +6,7 @@ import { TreeData } from '../../../Types';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { deleteTopologySet, updateTopologySet } from '@/api/services/business';
 import { normalizeSetNodeDetail } from '../../nodeDetailAdapters';
+import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 
 const { Option } = Select;
@@ -79,6 +80,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
   const [formChanged, setFormChanged] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
   const [setData, setSetData] = useState(() => buildSetData(selectedNode));
+  const canWrite = useAuthStore((state) => state.canWrite());
 
   useEffect(() => {
     setSetData(buildSetData(selectedNode));
@@ -250,7 +252,7 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
         <div className="node-actions">
           <div className="actions-divider"></div>
           <div className="actions-content">
-            <Button type="primary" onClick={handleSave} disabled={!formChanged}>
+            <Button type="primary" onClick={handleSave} disabled={!formChanged || !canWrite}>
               {t('common.submit')}
             </Button>
             <Button onClick={handleCancel}>{t('common.cancel')}</Button>
@@ -349,12 +351,16 @@ const SetNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) => {
       <div className="node-actions">
         <div className="actions-divider"></div>
         <div className="actions-content">
-          <Button type="primary" onClick={handleEdit}>
-            {t('common.edit')}
-          </Button>
-          <Button type="primary" danger onClick={handleDelete}>
-            {t('business.topology.setNodeInfo.deleteNode')}
-          </Button>
+          {canWrite ? (
+            <>
+              <Button type="primary" onClick={handleEdit}>
+                {t('common.edit')}
+              </Button>
+              <Button type="primary" danger onClick={handleDelete}>
+                {t('business.topology.setNodeInfo.deleteNode')}
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
     </>

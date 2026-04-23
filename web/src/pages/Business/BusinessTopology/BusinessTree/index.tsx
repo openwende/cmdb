@@ -15,7 +15,7 @@ import './style.css';
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
-const DEFAULT_WIDTH = 320;
+const DEFAULT_WIDTH = 280;
 
 interface Props {
   selectedNode: TreeData | null;
@@ -100,11 +100,9 @@ const BusinessTree: React.FC<Props> = ({
     if (!searchValue.trim()) {
       return fullTreeData;
     }
-    // Filter tree data based on search value
     return filterTree(fullTreeData, searchValue);
   }, [fullTreeData, searchValue]);
 
-  // Generate expanded keys based on search results
   const searchExpandedKeys = useMemo(() => {
     if (!searchValue || filteredTreeData.length === 0) {
       return [];
@@ -113,19 +111,15 @@ const BusinessTree: React.FC<Props> = ({
   }, [searchValue, filteredTreeData]);
 
   useEffect(() => {
-    // 等待数据加载完成
     if (loading || fullTreeData.length === 0) {
       return;
     }
 
-    // Handle search-based expansion
     if (searchExpandedKeys.length > 0) {
-      // When searching, expand all matching nodes
       setExpandedKeys(searchExpandedKeys);
       return;
     }
 
-    // Handle initial selection
     if (initialSelectedKey) {
       const { node, parents } = findNodeAndParents(fullTreeData, initialSelectedKey);
       if (node) {
@@ -135,7 +129,6 @@ const BusinessTree: React.FC<Props> = ({
         onNodeSelect(node, parents);
       }
     } else if (!selectedNode) {
-      // Select first node if no specific node is provided
       const firstNode = fullTreeData[0];
       if (firstNode) {
         setSelectedKeys([firstNode.key]);
@@ -156,53 +149,69 @@ const BusinessTree: React.FC<Props> = ({
 
   const isEmptySearchResult = filteredTreeData.length === 0 && searchValue;
   const isEmptyTree = fullTreeData.length === 0 && !loading;
+  const topologyNodeCount = useMemo(() => collectAllKeys(fullTreeData).length, [fullTreeData]);
 
   return (
     <div
-      className="business-tree-wrapper"
+      className="topo-navigator"
       style={{
         width: collapsed ? 0 : sidebarWidth,
         minWidth: collapsed ? 0 : MIN_WIDTH,
         maxWidth: collapsed ? 0 : MAX_WIDTH,
-        marginLeft: collapsed ? 0 : 20,
       }}
     >
-      {/* The search input and tree*/}
       {!collapsed && (
         <Fragment>
-          <div className="search-wrapper">
+          <div className="biz-header">
+            <div className="biz-header-title">
+              <span>🏢 {currentBusiness?.name || t('business.topology.workspace.noBusiness')}</span>
+            </div>
+            <div className="biz-header-desc">
+              <span className="stat-badge">{topologyNodeCount} {t('business.topology.tree.nodes', '节点')}</span>
+              {currentBusiness?.displayId && <span className="stat-badge">#{currentBusiness.displayId}</span>}
+            </div>
+          </div>
+
+          <div className="topo-search">
             <Input.Search
               id="business-topology-search"
               name="business_topology_search"
-              placeholder={t('business.topology.tree.search')}
+              className="search-input"
+              placeholder={t('business.topology.tree.search', '搜索节点名称...')}
               allowClear
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value.trim())}
               onClear={() => setSearchValue('')}
               disabled={loading}
+              style={{ padding: 0 }}
             />
           </div>
-          {loading ? (
-            <div style={{ textAlign: 'center', padding: '50px 0' }}>
-              <Spin tip={t('common.loading')} />
-            </div>
-          ) : isEmptyTree ? (
-            <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--color-text-tertiary)' }}>
-              {t('business.topology.tree.noData')}
-            </div>
-          ) : isEmptySearchResult ? (
-            <EmptySearchResult onClearFilter={handleClearSearch} />
-          ) : (
-            <TopologyTree
-              treeData={filteredTreeData}
-              selectedKeys={selectedKeys}
-              expandedKeys={expandedKeys}
-              searchValue={searchValue}
-              onTopologyChanged={onTopologyChanged}
-              onNodeSelect={handleNodeSelect}
-            />
-          )}
-          {/* The dragger */}
+          
+          <div className="topo-tree-container">
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+                <Spin tip={t('common.loading')} />
+              </div>
+            ) : isEmptyTree ? (
+              <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--color-text-tertiary)' }}>
+                {t('business.topology.tree.noData')}
+              </div>
+            ) : isEmptySearchResult ? (
+              <EmptySearchResult onClearFilter={handleClearSearch} />
+            ) : (
+              <div className="topo-tree">
+                <TopologyTree
+                  treeData={filteredTreeData}
+                  selectedKeys={selectedKeys}
+                  expandedKeys={expandedKeys}
+                  searchValue={searchValue}
+                  onTopologyChanged={onTopologyChanged}
+                  onNodeSelect={handleNodeSelect}
+                />
+              </div>
+            )}
+          </div>
+
           <DragHandle
             minWidth={MIN_WIDTH}
             maxWidth={MAX_WIDTH}
@@ -212,7 +221,7 @@ const BusinessTree: React.FC<Props> = ({
           />
         </Fragment>
       )}
-      {/* The collapsed button */}
+      
       <div
         className="collapsed-button"
         style={{

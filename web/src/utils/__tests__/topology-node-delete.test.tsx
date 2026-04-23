@@ -105,6 +105,17 @@ vi.mock('@/pages/Business/BusinessTopology/components/ServiceCategory', () => ({
   default: () => <div>service-category</div>,
 }));
 
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
+}));
+
 const buildNode = (overrides: Partial<TreeData>): TreeData => ({
   title: 'node',
   key: 'node-1',

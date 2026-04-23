@@ -32,6 +32,7 @@ import { checkHostsInIdlePool, getHostCopyValue, getSelectedNodeStatus } from '.
 import CreateNodeModal from '../components/CreateNodeModal';
 import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import { useAuthStore } from '@/store/AuthStore';
 
 interface Props {
   selectedNode: TreeData;
@@ -57,6 +58,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const [transferModalType, setTransferModalType] = useState<TransferHostType>();
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
+  const canWrite = useAuthStore((state) => state.canWrite());
 
   const adaptTopologyHost = useCallback((item: TopologyNodeHostItem) => {
     return {
@@ -343,11 +345,14 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       title: t('resource.host.columns.cloudArea'),
       render: (_: any, record: any) => {
         const cloudInfo = record.host.bk_cloud_id;
-        const region =
-          cloudInfo.length > 0 ? (
-            <span>{`${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`}</span>
-          ) : null;
-        return region;
+        if (!cloudInfo || cloudInfo.length === 0) return '--';
+        const { bk_inst_name } = cloudInfo[0];
+        // If the name looks like a UUID (contains only hex + dashes, 36 chars), show a friendly fallback
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const displayName = uuidPattern.test(bk_inst_name)
+          ? t('resource.host.cloudArea.direct')
+          : bk_inst_name;
+        return <span>{displayName}</span>;
       },
     },
     {
@@ -457,6 +462,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     return isSetType && hasNoChildren;
   }, [selectedNode]);
 
+  const hostScopeTitle = useMemo(() => String(selectedNode.title), [selectedNode.title]);
+  const hasSelection = selectedRowKeys.length > 0;
+
   return (
     <>
       {isEmptySet ? (
@@ -468,146 +476,183 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
             </Typography.Text>
           }
         >
-          <Button type="primary" onClick={() => setCreateModalVisible(true)}>
+          <Button type="primary" onClick={() => setCreateModalVisible(true)} disabled={!canWrite}>
             {t('business.topology.hostList.empty.createNow')}
           </Button>
         </Empty>
       ) : (
         <div className="list-wrapper">
-          {/* The operation botton bar */}
-          <div className="operation-bar">
-            {selectedNodeStatus.isModule ? (
-              <Button type="primary" onClick={handleAddHosts}>
-                {t('business.topology.hostList.buttons.add')}
-              </Button>
-            ) : (
-              <Tooltip title={t('business.topology.hostList.tooltips.onlyModuleCanAdd')}>
-                <Button type="primary" disabled>
-                  {t('business.topology.hostList.buttons.add')}
+          <div className="host-workspace">
+            <div className="host-workspace__scope">
+              <div>
+                <div className="host-workspace__eyebrow">{t('business.topology.workspace.currentNode')}</div>
+                <div className="host-workspace__title">{hostScopeTitle}</div>
+              </div>
+              <div className="host-workspace__summary">
+                {t('business.topology.workspace.hostList')}
+              </div>
+            </div>
+
+            <div className="host-workspace__toolbar">
+              <div className="host-workspace__actions">
+                {selectedNodeStatus.isModule ? (
+                  <Button type="primary" onClick={handleAddHosts} disabled={!canWrite}>
+                    {t('business.topology.hostList.buttons.add')}
+                  </Button>
+                ) : (
+                  <Tooltip title={t('business.topology.hostList.tooltips.onlyModuleCanAdd')}>
+                    <Button type="primary" disabled>
+                      {t('business.topology.hostList.buttons.add')}
+                    </Button>
+                  </Tooltip>
+                )}
+
+                <Button disabled={!hasSelection || !canWrite}>
+                  {t('business.topology.hostList.buttons.edit')}
                 </Button>
-              </Tooltip>
-            )}
 
-            <Button disabled={selectedRowKeys.length === 0}>
-              {t('business.topology.hostList.buttons.edit')}
-            </Button>
+                {canWrite ? (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.More),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button>
+                      {t('business.topology.hostList.buttons.more')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                ) : null}
+              </div>
 
-            <Dropdown
-              menu={{
-                ...getDropdownMenu(DropdownMenuType.Transfer),
-                onClick: ({ key }) => handleMenuClick(key),
-              }}
-              trigger={['click']}
-            >
-              <Button disabled={selectedRowKeys.length === 0}>
-                {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
-              </Button>
-            </Dropdown>
+              <div className="search-bar">
+                <Input.Search
+                  placeholder={t('business.topology.hostList.search.placeholder')}
+                  style={{ width: 300 }}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onSearch={(value) => handleSearch(value)}
+                />
+              </div>
+            </div>
 
-            {!selectedNodeStatus.isIdle && (
-              <Dropdown
-                menu={{
-                  ...getDropdownMenu(DropdownMenuType.Append),
-                  onClick: ({ key }) => handleMenuClick(key),
+            <div className="host-workspace__table-shell">
+              <Table
+                rowSelection={{
+                  selectedRowKeys,
+                  onChange: setSelectedRowKeys,
                 }}
-                trigger={['click']}
-              >
-                <Button disabled={selectedRowKeys.length === 0}>
-                  {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
-                </Button>
-              </Dropdown>
-            )}
-
-            {selectedNodeStatus.isModule && (
-              <Dropdown
-                menu={{
-                  ...getDropdownMenu(DropdownMenuType.Remove),
-                  onClick: ({ key }) => handleMenuClick(key),
+                columns={columns}
+                dataSource={hostsList}
+                loading={loading}
+                rowKey={(record) => record.host.bk_host_id}
+                pagination={false}
+                locale={{
+                  emptyText:
+                    searchValue && hostsList.length === 0 ? (
+                      <EmptySearchResult onClearFilter={handleClearSearch} />
+                    ) : undefined,
                 }}
-                trigger={['click']}
-              >
-                <Button disabled={selectedRowKeys.length === 0}>
-                  {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
-                </Button>
-              </Dropdown>
-            )}
-
-            <Dropdown
-              menu={{
-                ...getDropdownMenu(DropdownMenuType.Copy),
-                onClick: ({ key }) => handleMenuClick(key as HostCopyKey),
-              }}
-              overlayStyle={{ width: 190 }}
-              trigger={['click']}
-            >
-              <Button disabled={selectedRowKeys.length === 0}>
-                {t('business.topology.hostList.buttons.copy')} <DownOutlined />
-              </Button>
-            </Dropdown>
-
-            <Dropdown
-              menu={{
-                ...getDropdownMenu(DropdownMenuType.More),
-                onClick: ({ key }) => handleMenuClick(key),
-              }}
-              trigger={['click']}
-            >
-              <Button>
-                {t('business.topology.hostList.buttons.more')} <DownOutlined />
-              </Button>
-            </Dropdown>
-
-            <div className="search-bar">
-              <Input.Search
-                placeholder={t('business.topology.hostList.search.placeholder')}
-                style={{ width: 300 }}
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onSearch={(value) => handleSearch(value)}
               />
             </div>
+
+            {hostsList.length > 0 && (
+              <div className="pagination-wrapper">
+                <span className="host-workspace__pagination-copy">
+                  {t('business.topology.hostList.pagination.total', { count: total })}
+                </span>
+                <Pagination
+                  total={total}
+                  pageSize={pageSize}
+                  current={currentPage}
+                  onChange={(page, size) => {
+                    setCurrentPage(page);
+                    setPageSize(size);
+                  }}
+                  onSizeChange={(_, size) => {
+                    setPageSize(size);
+                    setCurrentPage(1);
+                  }}
+                />
+              </div>
+            )}
+
+            {hasSelection && (
+              <div className="host-floating-actions" data-testid="hostlist-floating-actions">
+                <div className="host-floating-actions__count">
+                  {t('business.topology.hostList.floating.selectedCount', {
+                    count: selectedRowKeys.length,
+                  })}
+                </div>
+                <span className="host-floating-actions__divider" />
+
+                {canWrite ? (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Transfer),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button type="text">
+                      {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                ) : null}
+
+                {canWrite && !selectedNodeStatus.isIdle && (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Append),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button type="text">
+                      {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                )}
+
+                {canWrite && selectedNodeStatus.isModule && (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Remove),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                  >
+                    <Button type="text">
+                      {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                )}
+
+                <Dropdown
+                  menu={{
+                    ...getDropdownMenu(DropdownMenuType.Copy),
+                    onClick: ({ key }) => handleMenuClick(key as HostCopyKey),
+                  }}
+                  overlayStyle={{ width: 190 }}
+                  trigger={['click']}
+                >
+                  <Button type="text">
+                    {t('business.topology.hostList.buttons.copy')} <DownOutlined />
+                  </Button>
+                </Dropdown>
+
+                <button
+                  type="button"
+                  className="host-floating-actions__clear"
+                  data-testid="hostlist-clear-selection"
+                  onClick={() => setSelectedRowKeys([])}
+                >
+                  ×
+                </button>
+              </div>
+            )}
           </div>
-
-          <Table
-            rowSelection={{
-              selectedRowKeys,
-              onChange: setSelectedRowKeys,
-            }}
-            columns={columns}
-            dataSource={hostsList}
-            loading={loading}
-            rowKey={(record) => record.host.bk_host_id}
-            pagination={false}
-            locale={{
-              emptyText:
-                searchValue && hostsList.length === 0 ? (
-                  <EmptySearchResult onClearFilter={handleClearSearch} />
-                ) : undefined,
-            }}
-          />
-
-          {hostsList.length > 0 && (
-            <div className="pagination-wrapper">
-              <span>
-                {t('business.topology.hostList.pagination.selected')}
-                &nbsp;<span className="selected-count">{selectedRowKeys.length}</span>
-                &nbsp;{t('business.topology.hostList.pagination.items')}
-              </span>
-              <Pagination
-                total={total}
-                pageSize={pageSize}
-                current={currentPage}
-                onChange={(page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size);
-                }}
-                onSizeChange={(_, size) => {
-                  setPageSize(size);
-                  setCurrentPage(1);
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
 

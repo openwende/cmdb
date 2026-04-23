@@ -1,117 +1,82 @@
 .topology-tree {
   user-select: none;
+}
 
-  .ant-tree {
-    height: 100%;
-  }
+.topology-tree .ant-tree {
+  height: 100%;
+  background: transparent;
+}
 
-  .ant-tree-treenode {
-    min-height: 36px;
-    align-items: flex-start;
-    padding: 4px 0;
-  }
+.topology-tree .ant-tree-treenode {
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0;
+  margin-bottom: 2px;
+  width: 100%;
+}
 
-  .ant-tree-node-content-wrapper {
-    overflow: visible;
-  }
+.topology-tree .ant-tree-node-content-wrapper {
+  overflow: visible;
+  flex: 1;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+  padding: 6px;
+}
 
-  .title-wrapper {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 8px;
+.topology-tree .ant-tree-node-content-wrapper:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
 
-    .left-wrapper {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
+.topology-tree .ant-tree-node-selected {
+  background: var(--color-primary-bg) !important;
+}
 
-      .title-prefix {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background-color: var(--color-text-quaternary);
-        color: var(--color-bg-container);
-        margin-right: 10px;
+.topology-tree .ant-tree-switcher {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-        &:hover {
-          background-color: var(--color-primary) !important;
-          color: var(--color-bg-container) !important;
-        }
-      }
+.topology-tree .title-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
 
-      .title-icon {
-        margin-right: 10px;
-      }
+/* When the node content is selected, make title bold and primary colored */
+.topology-tree .ant-tree-node-selected .title-text {
+  color: var(--color-primary);
+  font-weight: 500;
+}
 
-      .search-path {
-        color: var(--color-text-secondary);
-        font-size: 14px;
-      }
+.topology-tree .left-wrapper {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+}
 
-      .title-text {
-        min-width: 0;
-        line-height: 20px;
-        white-space: normal;
-        overflow-wrap: anywhere;
-      }
-    }
+.topology-tree .title-text {
+  min-width: 0;
+  line-height: 20px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--color-text-main);
+}
 
-    .right-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      margin-top: 2px;
+.topology-tree .right-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
-      .suffix-count {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 20px;
-        height: 20px;
-        border-radius: 2px;
-        background-color: var(--color-bg-spotlight);
-        color: var(--color-text-tertiary);
-        opacity: 0.5;
-      }
-    }
-
-    .create-btn {
-      padding: 0 4px;
-      height: 20px;
-      line-height: 18px;
-      border-radius: 2px;
-      background-color: var(--color-bg-spotlight);
-      color: var(--color-text-tertiary);
-      border: none;
-      font-size: 12px;
-
-      &:hover {
-        background-color: var(--color-primary);
-        color: var(--color-bg-container);
-      }
-    }
-
-    .selected {
-      background-color: var(--color-primary) !important;
-      color: var(--color-bg-container) !important;
-    }
-
-    &.search-result {
-      cursor: pointer;
-      padding: 4px 8px;
-      margin: 2px 0;
-      border-radius: 4px;
-
-      &:hover {
-        background-color: var(--color-bg-spotlight);
-      }
-    }
-  }
+.topology-tree .suffix-count {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  font-weight: 400;
 }

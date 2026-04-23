@@ -9,6 +9,7 @@ import ConfirmModal from '@/components/common/ConfirmModal';
 import { debounce } from '@/utils/performance';
 import { deleteTopologyModule, updateTopologyModule } from '@/api/services/business';
 import { normalizeModuleNodeDetail } from '../../nodeDetailAdapters';
+import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 
 const { Option } = Select;
@@ -75,6 +76,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
   const [userOptions, setUserOptions] = useState<{ label: string; value: string }[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const canWrite = useAuthStore((state) => state.canWrite());
 
   const [moduleData, setModuleData] = useState(() => buildModuleData(selectedNode));
 
@@ -303,7 +305,7 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
         <div className="node-actions">
           <div className="actions-divider"></div>
           <div className="actions-content">
-            <Button type="primary" onClick={handleSave} disabled={!formChanged}>
+            <Button type="primary" onClick={handleSave} disabled={!formChanged || !canWrite}>
               {t('common.submit')}
             </Button>
             <Button onClick={handleCancel}>{t('common.cancel')}</Button>
@@ -413,12 +415,16 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
       <div className="node-actions">
         <div className="actions-divider"></div>
         <div className="actions-content">
-          <Button type="primary" onClick={handleEdit}>
-            {t('common.edit')}
-          </Button>
-          <Button type="primary" danger onClick={handleDelete}>
-            {t('business.topology.moduleNodeInfo.deleteNode')}
-          </Button>
+          {canWrite ? (
+            <>
+              <Button type="primary" onClick={handleEdit}>
+                {t('common.edit')}
+              </Button>
+              <Button type="primary" danger onClick={handleDelete}>
+                {t('business.topology.moduleNodeInfo.deleteNode')}
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
     </>

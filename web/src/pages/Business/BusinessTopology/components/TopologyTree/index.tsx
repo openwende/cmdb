@@ -7,6 +7,7 @@ import { TailEleType, TopoTreeNodeType, TreeData } from '@/pages/Business/Types'
 import { useMainlineStore } from '@/store/MainlineStore';
 import './style.css';
 import { findNodeAndParents } from '@/pages/Business/utils';
+import { useAuthStore } from '@/store/AuthStore';
 
 const getNodeAllowedActions = (node: TreeData): string[] | null => {
   const allowedActions = node.extra?.allowed_actions;
@@ -43,6 +44,7 @@ const TopologyTree: React.FC<Props> = ({
   const [hoveredKey, setHoveredKey] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [targetNodeKey, setTargetNodeKey] = useState<string | null>(null);
+  const canWrite = useAuthStore((state) => state.canWrite());
 
   useEffect(() => {
     // Handle expanded keys logic
@@ -154,7 +156,7 @@ const TopologyTree: React.FC<Props> = ({
       const canCreateChildrenForNode = canCreateChildren(node);
       return (
         <span className="right-wrapper">
-          {isHovered && canCreateChildrenForNode ? (
+          {isHovered && canWrite && canCreateChildrenForNode ? (
             <Button type="primary" size="small" onClick={(e) => handleCreate(e, node)}>
               {t('resource.business.actions.create')}
             </Button>
@@ -173,7 +175,7 @@ const TopologyTree: React.FC<Props> = ({
 
     return (
       <span
-        className="title-wrapper"
+        className={`title-wrapper ${isSelected ? 'active' : ''}`}
         onMouseEnter={() => setHoveredKey(node.key)}
         onMouseLeave={() => setHoveredKey(null)}
         onClick={(e) => handleNodeTitleClick(e, node)}
@@ -182,7 +184,7 @@ const TopologyTree: React.FC<Props> = ({
         <span className="left-wrapper">
           {customTitlePrefix
             ? customTitlePrefix(node, isSelected)
-            : renderTitlePrefix(isSelected, node.objName)}
+            : renderNodeBadge(node)}
           <span className="title-text">{node.title}</span>
         </span>
         {renderTailElement(node, hoveredKey!, isSelected)}
@@ -190,13 +192,18 @@ const TopologyTree: React.FC<Props> = ({
     );
   };
 
-  const renderTitlePrefix = (isSelected: boolean, objName?: string) => {
-    if (objName) {
-      return (
-        <span className={`title-prefix ${isSelected ? 'selected' : ''}`}>{objName.charAt(0)}</span>
-      );
+  const renderNodeBadge = (node: TreeData) => {
+    const typeStr = node.type?.toLowerCase() || 'biz';
+    let label = t('business.topology.workspace.business', '业务');
+    switch (node.type) {
+      case TopoTreeNodeType.Module: label = t('business.topology.workspace.module', '模块'); break;
+      case TopoTreeNodeType.Set: label = t('business.topology.workspace.cluster', '集群'); break;
+      case TopoTreeNodeType.Idle: label = t('business.topology.workspace.idlePool', '空闲'); break;
     }
-    return null;
+
+    return (
+      <span className={`node-badge badge-${typeStr}`}>{label}</span>
+    );
   };
 
   const { node: targetNode, parents: parentNodes } = useMemo(() => {
