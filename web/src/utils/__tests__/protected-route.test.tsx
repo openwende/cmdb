@@ -70,4 +70,30 @@ describe('ProtectedRoute', () => {
     });
     expect(screen.queryByText('login-page')).not.toBeInTheDocument();
   });
+
+  it('redirects authenticated users without required role back to home', async () => {
+    authState.token = 'token';
+    authState.user = {
+      id: 'user-1',
+      username: 'viewer',
+      display_name: 'Viewer',
+      roles: ['viewer'],
+    };
+
+    render(
+      <MemoryRouter initialEntries={['/admin/users']}>
+        <Routes>
+          <Route path="/" element={<div>home-page</div>} />
+          <Route element={<ProtectedRoute requiredRoles={['admin']} />}>
+            <Route path="/admin/users" element={<div>admin-page</div>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('home-page')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('admin-page')).not.toBeInTheDocument();
+  });
 });

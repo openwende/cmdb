@@ -4,7 +4,11 @@ import { Spin } from 'antd';
 import { useAuthStore } from '@/store/AuthStore';
 import { LOGIN_PATH } from '@/constants/auth';
 
-const ProtectedRoute: React.FC = () => {
+interface ProtectedRouteProps {
+  requiredRoles?: string[];
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRoles }) => {
   const location = useLocation();
   const { token, user, loading, initialized, initialize } = useAuthStore();
 
@@ -30,6 +34,13 @@ const ProtectedRoute: React.FC = () => {
   if (!token || !user) {
     const from = `${location.pathname}${location.search}${location.hash}`;
     return <Navigate to={LOGIN_PATH} replace state={{ from }} />;
+  }
+
+  if (requiredRoles && requiredRoles.length > 0) {
+    const hasRequiredRole = requiredRoles.some((role) => user.roles.includes(role));
+    if (!hasRequiredRole) {
+      return <Navigate to="/" replace />;
+    }
   }
 
   return <Outlet />;

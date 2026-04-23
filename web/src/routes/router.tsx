@@ -10,6 +10,7 @@ import ImpactAnalysisPrototype from '@/pages/Prototype/ImpactAnalysis';
 import SreWorkbenchPrototype from '@/pages/Prototype/SreWorkbench';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import LoginPage from '@/pages/Login';
+import UserManagementPage from '@/pages/Admin/Users';
 
 function createRouteElements(items: NavigationItem[]): React.ReactNode[] {
   return items.map((item) => (
@@ -34,6 +35,9 @@ const router = createBrowserRouter(
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<MainLayout />}>
           {createRouteElements(routes)}
+          <Route element={<ProtectedRoute requiredRoles={['admin']} />}>
+            <Route path="/admin/users" element={<UserManagementPage />} />
+          </Route>
         </Route>
       </Route>
       <Route path="/prototype/cmdb-next">

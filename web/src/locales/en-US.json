@@ -162,6 +162,50 @@
       "messages": {
         "invalidCredentials": "Invalid username or password"
       }
+    },
+    "userManagement": {
+      "entry": "Users",
+      "title": "User Management",
+      "subtitle": "Manage in-app accounts, fixed roles, and account status. This version keeps the role model intentionally small: admin / editor / viewer.",
+      "actions": {
+        "create": "Create User",
+        "edit": "Edit User",
+        "resetPassword": "Reset Password"
+      },
+      "fields": {
+        "username": "Username",
+        "displayName": "Display Name",
+        "password": "Password",
+        "role": "Role",
+        "status": "Status"
+      },
+      "columns": {
+        "username": "Username",
+        "displayName": "Display Name",
+        "role": "Role",
+        "status": "Status",
+        "lastLoginAt": "Last Login",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "placeholders": {
+        "username": "Enter username",
+        "displayName": "Enter display name",
+        "password": "Enter new password"
+      },
+      "roles": {
+        "admin": "Administrator",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "messages": {
+        "loadFailed": "Failed to load users",
+        "passwordResetSuccess": "Password reset successfully"
+      }
     }
   },
   "business": {
