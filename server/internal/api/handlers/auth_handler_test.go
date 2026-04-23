@@ -168,3 +168,147 @@ func TestAuthMeReturnsViewerProfile(t *testing.T) {
 
 	require.Equal(t, http.StatusNotFound, recorder.Code)
 }
+
+func TestAuthListUsersAdminOnly(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler, middleware := newTestAuthStack(t)
+
+	router := gin.New()
+	adminAPI := router.Group("/api/v1/auth/users")
+	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.GET("", handler.ListUsers)
+
+	adminToken, err := middleware.Manager().IssueToken(uuid.New(), "admin", []string{"admin"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/users", nil)
+	req.Header.Set("Authorization", "Bearer "+adminToken)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	var resp types.AuthListUsersResponse
+	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
+	require.GreaterOrEqual(t, resp.Total, 3)
+}
+
+func TestAuthListUsersRejectsViewer(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler, middleware := newTestAuthStack(t)
+
+	router := gin.New()
+	adminAPI := router.Group("/api/v1/auth/users")
+	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.GET("", handler.ListUsers)
+
+	viewerToken, err := middleware.Manager().IssueToken(uuid.New(), "viewer", []string{"viewer"})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/auth/users", nil)
+	req.Header.Set("Authorization", "Bearer "+viewerToken)
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusForbidden, recorder.Code)
+}
+
+func TestAuthCreateUpdateAndResetPassword(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler, middleware := newTestAuthStack(t)
+
+	router := gin.New()
+	adminAPI := router.Group("/api/v1/auth/users")
+	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.POST("", handler.CreateUser)
+	adminAPI.PUT("/:id", handler.UpdateUser)
+	adminAPI.PUT("/:id/password", handler.ResetPassword)
+
+	adminID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	adminToken, err := middleware.Manager().IssueToken(adminID, "admin", []string{"admin"})
+	require.NoError(t, err)
+
+	createBody, err := json.Marshal(types.AuthCreateUserRequest{
+		Username:    "alice",
+		DisplayName: "Alice",
+		Password:    "alice123456",
+		Role:        types.AuthRoleEditor,
+	})
+	require.NoError(t, err)
+
+	createReq := httptest.NewRequest(http.MethodPost, "/api/v1/auth/users", bytes.NewReader(createBody))
+	createReq.Header.Set("Authorization", "Bearer "+adminToken)
+	createReq.Header.Set("Content-Type", "application/json")
+	createRecorder := httptest.NewRecorder()
+	router.ServeHTTP(createRecorder, createReq)
+
+	require.Equal(t, http.StatusCreated, createRecorder.Code)
+
+	var createdUser types.AuthManagedUser
+	require.NoError(t, json.Unmarshal(createRecorder.Body.Bytes(), &createdUser))
+	require.Equal(t, "alice", createdUser.Username)
+	require.Equal(t, types.AuthRoleEditor, createdUser.Role)
+
+	updateBody, err := json.Marshal(types.AuthUpdateUserRequest{
+		DisplayName: "Alice Ops",
+		Status:      types.AuthUserStatusDisabled,
+		Role:        types.AuthRoleViewer,
+	})
+	require.NoError(t, err)
+
+	updateReq := httptest.NewRequest(http.MethodPut, "/api/v1/auth/users/"+createdUser.ID.String(), bytes.NewReader(updateBody))
+	updateReq.Header.Set("Authorization", "Bearer "+adminToken)
+	updateReq.Header.Set("Content-Type", "application/json")
+	updateRecorder := httptest.NewRecorder()
+	router.ServeHTTP(updateRecorder, updateReq)
+
+	require.Equal(t, http.StatusOK, updateRecorder.Code)
+
+	var updatedUser types.AuthManagedUser
+	require.NoError(t, json.Unmarshal(updateRecorder.Body.Bytes(), &updatedUser))
+	require.Equal(t, "Alice Ops", updatedUser.DisplayName)
+	require.Equal(t, types.AuthUserStatusDisabled, updatedUser.Status)
+	require.Equal(t, types.AuthRoleViewer, updatedUser.Role)
+
+	resetBody, err := json.Marshal(types.AuthResetPasswordRequest{
+		Password: "alice654321",
+	})
+	require.NoError(t, err)
+
+	resetReq := httptest.NewRequest(http.MethodPut, "/api/v1/auth/users/"+createdUser.ID.String()+"/password", bytes.NewReader(resetBody))
+	resetReq.Header.Set("Authorization", "Bearer "+adminToken)
+	resetReq.Header.Set("Content-Type", "application/json")
+	resetRecorder := httptest.NewRecorder()
+	router.ServeHTTP(resetRecorder, resetReq)
+
+	require.Equal(t, http.StatusOK, resetRecorder.Code)
+}
+
+func TestAuthUpdateUserRejectsSelfDemotion(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	handler, middleware := newTestAuthStack(t)
+
+	router := gin.New()
+	adminAPI := router.Group("/api/v1/auth/users")
+	adminAPI.Use(middleware.RequireAdmin())
+	adminAPI.PUT("/:id", handler.UpdateUser)
+
+	adminID := uuid.MustParse("11111111-1111-1111-1111-111111111111")
+	adminToken, err := middleware.Manager().IssueToken(adminID, "admin", []string{"admin"})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(types.AuthUpdateUserRequest{
+		DisplayName: "管理员",
+		Status:      types.AuthUserStatusDisabled,
+		Role:        types.AuthRoleViewer,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/auth/users/"+adminID.String(), bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+adminToken)
+	req.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	router.ServeHTTP(recorder, req)
+
+	require.Equal(t, http.StatusBadRequest, recorder.Code)
+}

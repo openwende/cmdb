@@ -14,7 +14,12 @@ import (
 type AuthRepository interface {
 	FindUserByUsername(ctx context.Context, username string) (*types.AuthUser, error)
 	GetUserByID(ctx context.Context, userID uuid.UUID) (*types.AuthUser, error)
+	ListUsers(ctx context.Context) ([]types.AuthUser, error)
 	ListRolesByUserID(ctx context.Context, userID uuid.UUID) ([]string, error)
+	GetPrimaryRoleByUserID(ctx context.Context, userID uuid.UUID) (string, error)
+	CreateUser(ctx context.Context, user *types.AuthUser, role string) error
+	UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]any, role string) error
+	UpdatePasswordHash(ctx context.Context, userID uuid.UUID, passwordHash string, updatedAt time.Time) error
 	UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time) error
 }
 
@@ -50,6 +55,17 @@ func (r *authRepository) GetUserByID(ctx context.Context, userID uuid.UUID) (*ty
 	return &user, nil
 }
 
+func (r *authRepository) ListUsers(ctx context.Context) ([]types.AuthUser, error) {
+	var users []types.AuthUser
+	if err := r.db.WithContext(ctx).
+		Table("auth_users").
+		Order("created_at ASC").
+		Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("list users: %w", err)
+	}
+	return users, nil
+}
+
 func (r *authRepository) ListRolesByUserID(ctx context.Context, userID uuid.UUID) ([]string, error) {
 	var rows []types.AuthUserRole
 	if err := r.db.WithContext(ctx).
@@ -65,6 +81,68 @@ func (r *authRepository) ListRolesByUserID(ctx context.Context, userID uuid.UUID
 		roles = append(roles, row.Role)
 	}
 	return roles, nil
+}
+
+func (r *authRepository) GetPrimaryRoleByUserID(ctx context.Context, userID uuid.UUID) (string, error) {
+	roles, err := r.ListRolesByUserID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+	if len(roles) == 0 {
+		return "", fmt.Errorf("user role not found")
+	}
+	return roles[0], nil
+}
+
+func (r *authRepository) CreateUser(ctx context.Context, user *types.AuthUser, role string) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			return fmt.Errorf("create user: %w", err)
+		}
+		userRole := types.AuthUserRole{
+			UserID:     user.ID,
+			Role:       role,
+			AssignedAt: user.CreatedAt,
+		}
+		if err := tx.Create(&userRole).Error; err != nil {
+			return fmt.Errorf("create user role: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *authRepository) UpdateUser(ctx context.Context, userID uuid.UUID, updates map[string]any, role string) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if len(updates) > 0 {
+			if err := tx.Table("auth_users").Where("id = ?", userID).Updates(updates).Error; err != nil {
+				return fmt.Errorf("update user: %w", err)
+			}
+		}
+
+		if err := tx.Table("auth_user_roles").Where("user_id = ?", userID).Delete(&types.AuthUserRole{}).Error; err != nil {
+			return fmt.Errorf("delete existing roles: %w", err)
+		}
+
+		userRole := types.AuthUserRole{
+			UserID:     userID,
+			Role:       role,
+			AssignedAt: time.Now().UTC(),
+		}
+		if err := tx.Create(&userRole).Error; err != nil {
+			return fmt.Errorf("replace user role: %w", err)
+		}
+		return nil
+	})
+}
+
+func (r *authRepository) UpdatePasswordHash(ctx context.Context, userID uuid.UUID, passwordHash string, updatedAt time.Time) error {
+	if err := r.db.WithContext(ctx).Table("auth_users").Where("id = ?", userID).Updates(map[string]any{
+		"password_hash": passwordHash,
+		"updated_at":    updatedAt,
+	}).Error; err != nil {
+		return fmt.Errorf("update password hash: %w", err)
+	}
+	return nil
 }
 
 func (r *authRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID, at time.Time) error {

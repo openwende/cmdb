@@ -57,3 +57,36 @@ type AuthLoginResponse struct {
 	ExpiresIn   int64           `json:"expires_in"`
 	User        AuthUserProfile `json:"user"`
 }
+
+type AuthManagedUser struct {
+	ID          uuid.UUID  `json:"id"`
+	Username    string     `json:"username"`
+	DisplayName string     `json:"display_name"`
+	Status      string     `json:"status"`
+	Role        string     `json:"role"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+}
+
+type AuthListUsersResponse struct {
+	Items []AuthManagedUser `json:"items"`
+	Total int               `json:"total"`
+}
+
+type AuthCreateUserRequest struct {
+	Username    string `json:"username" binding:"required,min=3,max=64"`
+	DisplayName string `json:"display_name" binding:"required,min=1,max=128"`
+	Password    string `json:"password" binding:"required,min=8,max=128"`
+	Role        string `json:"role" binding:"required"`
+}
+
+type AuthUpdateUserRequest struct {
+	DisplayName string `json:"display_name" binding:"required,min=1,max=128"`
+	Status      string `json:"status" binding:"required"`
+	Role        string `json:"role" binding:"required"`
+}
+
+type AuthResetPasswordRequest struct {
+	Password string `json:"password" binding:"required,min=8,max=128"`
+}

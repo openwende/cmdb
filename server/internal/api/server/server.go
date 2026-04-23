@@ -107,6 +107,14 @@ func (s *Server) setupRoutes(db *storage.Database) {
 		{
 			authAPI.POST("/login", s.authHandler.Login)
 			authAPI.GET("/me", s.authHandler.Me)
+			adminAuthAPI := authAPI.Group("/users")
+			adminAuthAPI.Use(authMiddleware.RequireAdmin())
+			{
+				adminAuthAPI.GET("", s.authHandler.ListUsers)
+				adminAuthAPI.POST("", s.authHandler.CreateUser)
+				adminAuthAPI.PUT("/:id", s.authHandler.UpdateUser)
+				adminAuthAPI.PUT("/:id/password", s.authHandler.ResetPassword)
+			}
 		}
 
 		// Business Domains
