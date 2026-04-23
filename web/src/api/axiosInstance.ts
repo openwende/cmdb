@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AUTH_TOKEN_KEY, LOGIN_PATH } from '@/constants/auth';
 
 // --- Environment Variable for Base URL ---
 const LOCAL_API_URL = 'http://localhost:8080/api';
@@ -28,7 +29,7 @@ axiosInstance.interceptors.request.use(
     // ANNOTATION: This function is executed before each request is sent.
     // It receives the request configuration object.
     // Example: Retrieve token from localStorage (or your state management solution)
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
       // ANNOTATION: header for authenticated requests.
@@ -69,7 +70,10 @@ axiosInstance.interceptors.response.use(
         // For example, redirect to login page, dispatch a logout action,
         // or attempt a token refresh.
         // Example: window.location.href = '/login';
-        localStorage.removeItem('authToken'); // Clear potentially invalid token
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        if (window.location.pathname !== LOGIN_PATH) {
+          window.location.assign(LOGIN_PATH);
+        }
       } else if (status === 403) {
         // ANNOTATION: Handle 403 Forbidden errors.
       } else if (status === 404) {

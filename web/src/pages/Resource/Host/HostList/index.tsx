@@ -25,6 +25,7 @@ import './style.css';
 import { useDirectoryStore } from '@/store/DirectoryStore';
 import { usePoolHostStore } from '@/store/PoolHostStore';
 import { getHostList } from '@/api';
+import { useAuthStore } from '@/store/AuthStore';
 
 interface HostListProps {
   selectedId?: number;
@@ -48,6 +49,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const canWrite = useAuthStore((state) => state.canWrite());
   const { confirm } = Modal;
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const directories = useDirectoryStore((state) => state.directories);
@@ -183,6 +185,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   };
 
   const handleTransferMenuClick = (key: string) => {
+    if (!canWrite) return;
     // Release menu item
     if (key === TransferMenuItemType.hostPool) {
       setReleaseModalVisible(true);
@@ -218,6 +221,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   );
 
   const handleMoreMenuClick = (key: ResourceMoreKey) => {
+    if (!canWrite) return;
     if (key === ResourceMoreKey.Delete) {
       confirm({
         title: t('resource.host.messages.confirmDelete'),
@@ -235,6 +239,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
 
   const handleTransferHosts = useCallback(
     (targetModules: TreeData[]) => {
+      if (!canWrite) return;
       if (
         (transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool) ||
         transferModalType === TransferMenuItemType.otherBusiness
@@ -247,14 +252,15 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
       navigate(getTransferHostPath + '?' + searchParams.toString());
     },
-    [transferModalType, hostsNotInIdlePool, hostIdleStatuses],
+    [canWrite, transferModalType, hostsNotInIdlePool, hostIdleStatuses],
   );
 
   const handleReleaseHosts = useCallback((_dirId: number) => {
+    if (!canWrite) return;
     // TODO: api
     // params: selectedRowKeys, dirId
     setReleaseModalVisible(false);
-  }, []);
+  }, [canWrite]);
 
   const handleDeleteHistory = () => {
     navigate(deleteHistoryPath + '?' + searchParams.toString());
@@ -358,7 +364,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       <div className="host-list-header">
         <div className="header-left">
           {tabKey === TabsKey.Unassigned && (
-            <Button type="primary" onClick={() => setImportModalVisible(true)}>
+            <Button
+              type="primary"
+              onClick={() => setImportModalVisible(true)}
+              disabled={!canWrite}
+            >
               {t('resource.host.actions.importHost')}
             </Button>
           )}
@@ -378,7 +388,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                 title={isHostPoolHost ? t('resource.host.tooltips.onlyHostPoolHosts') : undefined}
                 styles={{ root: { maxWidth: 'none' } }}
               >
-                <Button disabled={selectedRowKeys.length === 0 || isHostPoolHost}>
+                <Button disabled={!canWrite || selectedRowKeys.length === 0 || isHostPoolHost}>
                   {t('resource.host.actions.assignTo')} <DownOutlined />
                 </Button>
               </Tooltip>
@@ -399,7 +409,9 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
                 }
                 styles={{ root: { maxWidth: 'none' } }}
               >
-                <Button disabled={selectedRowKeys.length === 0 || hostsNotAllInBizPool}>
+                <Button
+                  disabled={!canWrite || selectedRowKeys.length === 0 || hostsNotAllInBizPool}
+                >
                   {t('resource.host.actions.transferTo')} <DownOutlined />
                 </Button>
               </Tooltip>
@@ -426,7 +438,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             </Button>
           </Dropdown>
 
-          {tabKey === TabsKey.Unassigned && (
+          {tabKey === TabsKey.Unassigned && canWrite && (
             <Dropdown
               menu={{
                 items: resourceMoreMenuItems.map((item) => ({

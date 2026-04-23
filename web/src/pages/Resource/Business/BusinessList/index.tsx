@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 import { searchFieldOptions, LIFECYCLE } from '../../constants';
 import { CREATE_TYPES } from '@/constants/business';
 import { BusinessDetail } from '@/api/types/resource';
+import { useAuthStore } from '@/store/AuthStore';
 
 const { Option } = Select;
 
@@ -33,6 +34,7 @@ const BusinessList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const canWrite = useAuthStore((state) => state.canWrite());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [businessCount, setBusinessCount] = useState(0);
@@ -100,7 +102,11 @@ const BusinessList: React.FC = () => {
       title: t('resource.business.columns.actions'),
       dataIndex: 'action',
       render: (_: string, record: BusinessDetail) => (
-        <a onClick={() => handleArchive(record)}>{t('resource.business.actions.archive')}</a>
+        canWrite ? (
+          <a onClick={() => handleArchive(record)}>{t('resource.business.actions.archive')}</a>
+        ) : (
+          '--'
+        )
       ),
     },
   ];
@@ -154,11 +160,13 @@ const BusinessList: React.FC = () => {
   }, [location.search, navigate]);
 
   const handleCreate = () => {
+    if (!canWrite) return;
     setDrawerType('create');
     setDrawerVisible(true);
   };
 
   const handleEdit = () => {
+    if (!canWrite) return;
     setDrawerType('edit');
     setDrawerVisible(true);
   };
@@ -168,12 +176,13 @@ const BusinessList: React.FC = () => {
   };
 
   const handleArchive = (business: BusinessDetail) => {
+    if (!canWrite) return;
     setArchivingBusiness(business);
     setArchiveModalVisible(true);
   };
 
   const confirmArchive = async () => {
-    if (!archivingBusiness) return;
+    if (!canWrite || !archivingBusiness) return;
     try {
       const data = await updateBusiness(archivingBusiness.id, {
         ...archivingBusiness,
@@ -236,12 +245,12 @@ const BusinessList: React.FC = () => {
 
   return (
     <div className="business-list">
-      <div className="list-header">
+        <div className="list-header">
         <div className="list-operation">
-          <Button type="primary" onClick={handleCreate}>
+          <Button type="primary" onClick={handleCreate} disabled={!canWrite}>
             {t('resource.business.actions.create')}
           </Button>
-          <Button disabled={selectedRowKeys.length === 0} onClick={handleEdit}>
+          <Button disabled={!canWrite || selectedRowKeys.length === 0} onClick={handleEdit}>
             {t('resource.business.actions.batchEdit')}
           </Button>
         </div>

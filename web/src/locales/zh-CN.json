@@ -8,7 +8,7 @@
     "dynamicGroup": "主机分组",
     "businessSet": "业务集",
     "businessSetTopology": "拓扑工作区",
-    "modelManagement": "模型与类型",
+    "modelManagement": "资源类型",
     "modelOverview": "类型总览",
     "modelGroups": "类型分组",
     "modelTopology": "关系拓扑",
@@ -16,9 +16,9 @@
     "resourceContent": "资源目录",
     "project": "项目",
     "resourceBusiness": "业务台账",
-    "resourceModel": "模型与类型",
+    "resourceModel": "资源类型",
     "businessDetail": "业务详情",
-    "modelDetail": "模型详情",
+    "modelDetail": "类型详情",
     "archivedBusiness": "已归档业务",
     "host": "主机资源",
     "deleteHistory": "删除记录",
@@ -32,39 +32,43 @@
     "welcome": "欢迎使用配置管理平台",
     "subtitle": "统一管理基础设施与应用资源的配置信息",
     "stats": {
-      "models": "模型总数",
+      "businesses": "业务数",
+      "models": "资源类型数",
       "instances": "实例总数",
       "hosts": "主机总数",
-      "businesses": "业务总数",
-      "pending": "待接入"
+      "pending": "待接入",
+      "auditToday": "今日审计",
+      "auditTodaySuffix": " 条",
+      "systemHealth": "系统健康"
     },
     "quickActions": {
       "title": "快捷操作",
-      "createModel": "创建模型",
+      "createModel": "创建资源类型",
       "importHost": "导入主机",
       "viewTopology": "查看拓扑",
       "auditLog": "操作审计",
-      "createModelDesc": "定义新的资源模型",
+      "createModelDesc": "定义新的资源类型",
       "importHostDesc": "批量导入主机资源",
       "viewTopologyDesc": "查看业务拓扑结构",
       "auditLogDesc": "查看操作审计日志"
     },
     "recentModels": {
-      "title": "最近更新的模型",
+      "title": "最近更新的资源类型",
       "viewAll": "查看全部",
       "attributes": "个属性",
-      "noModels": "暂无模型数据"
+      "noModels": "暂无资源类型数据",
+      "updatedAt": "更新于 {{time}}"
     },
     "workspace": {
-      "connectedModels_one": "已接入 {{count}} 个模型",
-      "connectedModels_other": "已接入 {{count}} 个模型",
+      "connectedModels_one": "已接入 {{count}} 个资源类型",
+      "connectedModels_other": "已接入 {{count}} 个资源类型",
       "pendingSummary": "主机、业务、实例统计将随着资源图接入逐步开放。",
       "primaryCta": "进入业务拓扑",
       "primaryDesc": "从业务树进入主工作流，继续查看节点、主机和变更入口。",
       "secondary": {
         "resources": "进入资源目录",
         "resourcesDesc": "查看主机与基础资源，补齐台账接入。",
-        "models": "进入模型管理",
+        "models": "进入资源类型管理",
         "modelsDesc": "维护资源类型和 schema，扩展平台能力。"
       }
     }
@@ -74,6 +78,7 @@
       "platformName": "配置平台",
       "help": "帮助",
       "login": "登录",
+      "logout": "退出登录",
       "expandSidebar": "展开侧栏",
       "collapseSidebar": "收起侧栏"
     },
@@ -140,6 +145,25 @@
       }
     }
   },
+  "auth": {
+    "login": {
+      "title": "登录并进入工作区",
+      "subtitle": "先用最小 RBAC 把系统收口到可控状态。当前版本使用站内账号与 JWT，会优先保护全部 API 访问和写操作入口。",
+      "defaultAccount": "默认账号：admin / admin123456，editor / editor123456，viewer / viewer123456",
+      "submit": "登录",
+      "fields": {
+        "username": "用户名",
+        "password": "密码"
+      },
+      "placeholders": {
+        "username": "请输入用户名",
+        "password": "请输入密码"
+      },
+      "messages": {
+        "invalidCredentials": "用户名或密码错误"
+      }
+    }
+  },
   "business": {
     "topology": {
       "tabs": {
@@ -148,8 +172,13 @@
         "nodeInfo": "节点信息"
       },
       "workspace": {
+        "business": "当前业务",
         "currentNode": "当前节点",
+        "noBusiness": "请选择业务",
         "noNode": "请先在左侧选择节点",
+        "module": "模块",
+        "cluster": "集群",
+        "idlePool": "空闲机池",
         "selectNode": "先在左侧树中选择节点，右侧会切换到该节点的主机、服务和详情工作区。",
         "hostList": "查看当前节点下的主机，并从这里发起新增、转移和回收操作。",
         "serviceInstance": "查看当前节点下的服务实例，继续切换实例或进程视图。",
@@ -192,7 +221,11 @@
         },
         "pagination": {
           "selected": "已选择",
-          "items": "条"
+          "items": "条",
+          "total": "共 {{count}} 台主机"
+        },
+        "floating": {
+          "selectedCount": "已选择 {{count}} 台主机"
         }
       },
       "addHostModal": {
@@ -282,8 +315,8 @@
             "schemaDriven": "内置拓扑节点会优先读取当前业务下的表单 schema，避免继续依赖前端写死字段。"
           },
           "messages": {
-            "loadModelsFailed": "加载可创建模型失败",
-            "loadModelDetailFailed": "加载模型详情失败",
+            "loadModelsFailed": "加载可创建资源类型失败",
+            "loadModelDetailFailed": "加载类型详情失败",
             "createFailed": "创建节点失败"
           },
           "empty": {
@@ -838,13 +871,13 @@
     "model": {
       "columns": {
         "displayName": "显示名称",
-        "name": "模型名",
-        "modelName": "模型",
+        "name": "类型标识",
+        "modelName": "资源类型",
         "classification": "分类",
         "group": "分组",
         "groupName": "分组名",
         "groupDisplayName": "分组显示名",
-        "groupModelCount": "模型数",
+        "groupModelCount": "资源类型数",
         "icon": "图标",
         "mainline": "主线",
         "scope": "范围",
@@ -875,7 +908,7 @@
         "attributeOptions": "配置"
       },
       "actions": {
-        "create": "新建模型",
+        "create": "新建资源类型",
         "createGroup": "新建分组",
         "manageGroups": "管理分组",
         "refresh": "刷新",
@@ -893,7 +926,7 @@
         "editUniqueRule": "编辑唯一规则"
       },
       "fields": {
-        "name": "模型名",
+        "name": "类型标识",
         "displayName": "显示名称",
         "classification": "分类",
         "group": "所属分组",
@@ -904,8 +937,8 @@
         "isMainline": "是否主线",
         "mainlineScope": "主线范围",
         "mainlineLevel": "主线层级",
-        "parentModel": "父主线模型",
-        "builtIn": "内置模型",
+        "parentModel": "父主线类型",
+        "builtIn": "内置类型",
         "createdAt": "创建时间",
         "updatedAt": "更新时间",
         "healthStatus": "健康状态",
@@ -927,15 +960,15 @@
         "enumValues": "枚举值"
       },
       "placeholders": {
-        "search": "搜索模型名、显示名称或分类",
-        "name": "请输入模型名，例如 rack",
+        "search": "搜索类型标识、显示名称或分类",
+        "name": "请输入类型标识，例如 rack",
         "displayName": "请输入显示名称",
-        "group": "请选择模型分组",
+        "group": "请选择类型分组",
         "groupName": "请输入分组英文名，例如 database_assets",
         "groupDisplayName": "请输入分组显示名称",
         "icon": "请输入图标名，例如 rack",
         "description": "请输入描述",
-        "parentModel": "请选择父主线模型",
+        "parentModel": "请选择父主线类型",
         "business": "请选择业务",
         "parentNode": "请选择父节点",
         "instanceName": "请输入实例名称",
@@ -952,11 +985,11 @@
       "sections": {
         "attributes": "属性定义",
         "advanced": "高级配置",
-        "modelGroups": "模型分组",
-        "modelOverview": "模型总览"
+        "modelGroups": "类型分组",
+        "modelOverview": "类型总览"
       },
       "tabs": {
-        "overview": "模型信息",
+        "overview": "类型信息",
         "basic": "基本信息",
         "attributes": "属性管理",
         "fields": "字段设计",
@@ -970,20 +1003,20 @@
         "relations": "关系",
         "history": "变更记录",
         "importExport": "导入导出",
-        "groups": "模型分组",
+        "groups": "类型分组",
         "templates": "字段模板"
       },
       "groups": {
-        "all": "全部模型",
-        "mainline": "主线模型",
-        "business": "业务模型",
-        "resource": "资源模型",
-        "builtin": "内置模型"
+        "all": "全部资源类型",
+        "mainline": "主线类型",
+        "business": "业务类型",
+        "resource": "资源类型",
+        "builtin": "内置类型"
       },
       "options": {
         "classification": {
-          "business": "业务模型",
-          "resource": "资源模型"
+          "business": "业务类型",
+          "resource": "资源类型"
         },
         "scope": {
           "business": "业务级",
@@ -1002,10 +1035,10 @@
         }
       },
       "messages": {
-        "loadFailed": "加载模型失败",
-        "createFailed": "创建模型失败",
-        "loadGroupsFailed": "加载模型分组失败",
-        "createGroupFailed": "创建模型分组失败",
+        "loadFailed": "加载资源类型失败",
+        "createFailed": "创建资源类型失败",
+        "loadGroupsFailed": "加载类型分组失败",
+        "createGroupFailed": "创建类型分组失败",
         "loadInstancesFailed": "加载实例失败",
         "loadInstanceDetailFailed": "加载实例详情失败",
         "loadRelationDefinitionsFailed": "加载实例可用关系失败",
@@ -1020,11 +1053,11 @@
         "relationTargetRequired": "请先选择关系定义和目标实例",
         "instanceCreateFailed": "创建实例失败",
         "attributeCreateFailed": "创建属性失败",
-        "loadRelationsFailed": "加载模型关系失败",
-        "createRelationFailed": "创建模型关系失败",
-        "updateRelationFailed": "更新模型关系失败",
-        "deleteRelationSuccess": "删除模型关系成功",
-        "deleteRelationFailed": "删除模型关系失败",
+        "loadRelationsFailed": "加载类型关系失败",
+        "createRelationFailed": "创建类型关系失败",
+        "updateRelationFailed": "更新类型关系失败",
+        "deleteRelationSuccess": "删除类型关系成功",
+        "deleteRelationFailed": "删除类型关系失败",
         "loadUniqueRulesFailed": "加载唯一规则失败",
         "createUniqueRuleFailed": "创建唯一规则失败",
         "updateUniqueRuleFailed": "更新唯一规则失败",
@@ -1035,50 +1068,50 @@
         "loadParentFailed": "加载父节点失败"
       },
       "empty": {
-        "noAttributes": "该模型暂无属性定义",
-        "noInstances": "该模型暂无实例",
+        "noAttributes": "该类型暂无属性定义",
+        "noInstances": "该类型暂无实例",
         "noInstanceDetail": "暂无实例详情",
         "noInstanceRelations": "该实例暂无关联关系",
         "noInstanceHistory": "该实例暂无变更历史",
         "noInstanceTopology": "该实例暂无拓扑关系",
-        "noRelations": "该模型暂无关系定义",
-        "noUniqueRules": "该模型暂无唯一规则",
+        "noRelations": "该类型暂无关系定义",
+        "noUniqueRules": "该类型暂无唯一规则",
         "tabPending": "该能力将在后续阶段接入",
-        "noDescription": "暂无模型描述"
+        "noDescription": "暂无类型描述"
       },
       "helper": {
-        "modelBasics": "先完成对象基础定义，再按需启用主线能力。这样能把模型和拓扑挂载解耦。",
-        "advancedMainline": "只有需要参与业务主线拓扑的模型，才需要开启主线配置。",
-        "mainlineNotice": "主线模型需要配置范围、层级和父主线模型。当前 P1 仍不支持挂在 module 下。",
+        "modelBasics": "先完成对象基础定义，再按需启用主线能力。这样能把类型和拓扑挂载解耦。",
+        "advancedMainline": "只有需要参与业务主线拓扑的资源类型，才需要开启主线配置。",
+        "mainlineNotice": "主线类型需要配置范围、层级和父主线类型。当前 P1 仍不支持挂在 module 下。",
         "propertiesJson": "可以在 JSON 中补充任意属性，name / sort_order 会自动并入。",
         "parentNodeEmpty": "当前业务下未找到可挂载的父节点，请先确认父主线实例已存在。",
         "instanceBusinessScope": "业务主线实例创建时，通常需要先选择业务，再选择父节点。",
-        "instanceListNote": "实例录入仍由模型定义驱动，但它已经降级为模型详情里的次级能力。",
+        "instanceListNote": "实例录入仍由类型定义驱动，但它已经降级为类型详情里的次级能力。",
         "instanceHistoryPage": "先选择一个实例，再查看它的变更记录、关联关系和拓扑上下文。",
-        "instanceRelationsPage": "这里展示的是实例级实际关联数据，不同于模型层的关系设计。",
-        "instanceRelationCreate": "新增实例关联时，会先按模型关系定义约束目标模型和关联类型。",
+        "instanceRelationsPage": "这里展示的是实例级实际关联数据，不同于类型层的关系设计。",
+        "instanceRelationCreate": "新增实例关联时，会先按类型关系定义约束目标类型和关联方式。",
         "instanceConfigBlock": "配置字段来自实例 configs。",
         "instanceMetricsBlock": "状态字段来自实例 state.metrics。",
         "instanceTopologyPage": "当前拓扑共 {{nodeCount}} 个节点，{{edgeCount}} 条边。",
         "enumValues": "枚举值将用于实例表单下拉选项。",
-        "instanceFallbackForm": "该模型还没有自定义属性，当前先提供基础实例字段。",
-        "attributeDesigner": "先定义模型属性，再由实例表单自动按属性结构渲染。",
+        "instanceFallbackForm": "该类型还没有自定义属性，当前先提供基础实例字段。",
+        "attributeDesigner": "先定义类型属性，再由实例表单自动按属性结构渲染。",
         "attributeRoadmap": "这一页先聚焦属性结构和顺序，拖拽布局、字段分组和联合唯一规则放到下一轮。",
         "attributeSortHint": "当前按 sort_order 排序展示，下一轮再接拖拽和字段分组。",
-        "listOverview": "模型列表先按分组聚合浏览，主线只是模型的一种能力，不再作为唯一中心视角。",
-        "groupsPending": "模型分组会在后端补上可持久化能力后接入，这一轮先建立信息架构和分组视图。",
-        "groupsPage": "模型分组现在已经接入后端持久化，可以用来组织模型视图和创建入口。",
+        "listOverview": "资源类型列表先按分组聚合浏览，主线只是资源类型的一种能力，不再作为唯一中心视角。",
+        "groupsPending": "类型分组会在后端补上可持久化能力后接入，这一轮先建立信息架构和分组视图。",
+        "groupsPage": "类型分组现在已经接入后端持久化，可以用来组织资源类型视图和创建入口。",
         "previewNotice": "当前预览直接复用动态实例表单的字段映射，用来验证字段设计是否合理。",
-        "relationsPending": "模型关系设计还未接入前端，这里先保留占位。",
-        "relationsDesign": "模型关系定义了源模型能指向哪些目标模型，以及关系约束和删除策略。",
-        "relationsDesignHint": "这一页只处理模型层的关系设计，不处理实例之间的实际关联数据。",
+        "relationsPending": "类型关系设计还未接入前端，这里先保留占位。",
+        "relationsDesign": "类型关系定义了源类型能指向哪些目标类型，以及关系约束和删除策略。",
+        "relationsDesignHint": "这一页只处理类型层的关系设计，不处理实例之间的实际关联数据。",
         "relationsListNote": "关系设计会直接约束实例关联的可创建范围，删除前请确认没有线上实例在使用。",
-        "historyPending": "后续会在这里展示模型和属性的变更记录。",
+        "historyPending": "后续会在这里展示类型和属性的变更记录。",
         "uniquesPending": "联合唯一、辅助唯一和唯一冲突提示依赖下一轮的后端校验能力，这里先预留入口。",
-        "uniquesDesign": "唯一规则会在实例写入前执行校验，用来阻止重复资源进入模型实例表。",
+        "uniquesDesign": "唯一规则会在实例写入前执行校验，用来阻止重复资源进入类型实例表。",
         "uniquesDesignHint": "默认唯一规则通常对应主标识，辅助唯一规则用于补充业务上的重复约束。",
         "uniquesListNote": "更新唯一规则会直接影响后续实例创建和更新行为，调整前请确认已有数据不会产生冲突。",
-        "importExportPending": "后续会在这里接入模型导入导出和模板能力。"
+        "importExportPending": "后续会在这里接入类型导入导出和模板能力。"
       },
       "uniques": {
         "columns": {
@@ -1121,7 +1154,7 @@
       },
       "relations": {
         "columns": {
-          "targetModel": "目标模型",
+          "targetModel": "目标类型",
           "associationType": "关联类型",
           "mapping": "映射约束",
           "onDelete": "删除行为",
@@ -1129,7 +1162,7 @@
           "actions": "操作"
         },
         "fields": {
-          "targetModel": "目标模型",
+          "targetModel": "目标类型",
           "associationType": "关联类型",
           "mapping": "映射约束",
           "onDelete": "删除行为",
@@ -1143,7 +1176,7 @@
             "set_null": "置空"
           }
         },
-        "confirmDelete": "确认删除这条模型关系吗？",
+        "confirmDelete": "确认删除这条类型关系吗？",
         "confirmDeleteInstanceRelation": "确认删除这条实例关系吗？"
       }
     },
@@ -1152,6 +1185,9 @@
         "unassigned": "未分配",
         "assigned": "已分配",
         "all": "全部"
+      },
+      "cloudArea": {
+        "direct": "直连区域"
       },
       "columns": {
         "id": "ID",
@@ -1218,7 +1254,7 @@
     "import": {
       "title": "导入主机",
       "columns": {
-        "relatedModel": "关联的模型",
+        "relatedModel": "关联的资源类型",
         "uniqueIdentifier": "唯一校验标识"
       },
       "upload": {
@@ -1230,9 +1266,9 @@
       "steps": {
         "upload": "上传文件",
         "configure": "导入配置",
-        "selectModels": "选择关联模型",
+        "selectModels": "选择关联资源类型",
         "result": "导入结果",
-        "importRelatedModels": "是否导入关联的模型实例"
+        "importRelatedModels": "是否导入关联的类型实例"
       },
       "actions": {
         "startImport": "开始导入"
@@ -1246,11 +1282,11 @@
       },
       "messages": {
         "importInfo": "说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作",
-        "noRelatedModels": "暂无关联模型，无需选择"
+        "noRelatedModels": "暂无关联资源类型，无需选择"
       },
       "host": {
         "label": "主机",
-        "modelText": "(模型本身)",
+        "modelText": "(类型本身)",
         "uniqueLabel": "唯一校验标识"
       },
       "result": {
@@ -1312,7 +1348,6 @@
           "lifecycle": "生命周期",
           "timezone": "时区",
           "language": "语言",
-          "sres": "运维人员",
           "sres": "运维人员",
           "bizops": "产品人员",
           "testers": "测试人员",
@@ -1475,7 +1510,7 @@
         "business": "所属业务",
         "object": "操作对象",
         "action": "动作",
-        "modelType": "模型类型",
+        "modelType": "对象类别",
         "instance": "操作实例",
         "description": "操作描述",
         "time": "操作时间",
@@ -1666,7 +1701,7 @@
         "business": "所属业务",
         "object": "操作对象",
         "action": "动作",
-        "modelType": "模型类型",
+        "modelType": "对象类别",
         "instance": "操作实例",
         "description": "操作描述",
         "time": "操作时间",
@@ -1677,9 +1712,9 @@
       "overview": {
         "businessTotal": "业务总数",
         "hostTotal": "主机总数",
-        "modelTotal": "模型总数",
+        "modelTotal": "资源类型总数",
         "instanceTotal": "实例总数",
-        "instanceTooltip": "不包含业务、主机模型及实例"
+        "instanceTooltip": "不包含业务、主机类型及实例"
       },
       "host": {
         "title": "主机统计"

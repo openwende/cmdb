@@ -8,7 +8,7 @@
     "dynamicGroup": "Host Groups",
     "businessSet": "Business Set",
     "businessSetTopology": "Topology Workspace",
-    "modelManagement": "Models & Types",
+    "modelManagement": "Resource Types",
     "modelOverview": "Type Overview",
     "modelGroups": "Type Groups",
     "modelTopology": "Relationship Topology",
@@ -16,9 +16,9 @@
     "resourceContent": "Resource Content",
     "project": "Project",
     "resourceBusiness": "Business Inventory",
-    "resourceModel": "Models & Types",
+    "resourceModel": "Resource Types",
     "businessDetail": "Business Detail",
-    "modelDetail": "Model Detail",
+    "modelDetail": "Type Detail",
     "archivedBusiness": "Archived Business",
     "host": "Host Resources",
     "deleteHistory": "Deletion History",
@@ -32,39 +32,43 @@
     "welcome": "Welcome to Configuration Platform",
     "subtitle": "Unified management of infrastructure and application resources",
     "stats": {
-      "models": "Models",
+      "businesses": "Businesses",
+      "models": "Resource Types",
       "instances": "Instances",
       "hosts": "Hosts",
-      "businesses": "Businesses",
-      "pending": "Pending"
+      "pending": "Pending",
+      "auditToday": "Audits Today",
+      "auditTodaySuffix": "",
+      "systemHealth": "System Health"
     },
     "quickActions": {
       "title": "Quick Actions",
-      "createModel": "Create Model",
+      "createModel": "Create Resource Type",
       "importHost": "Import Hosts",
       "viewTopology": "View Topology",
       "auditLog": "Audit Logs",
-      "createModelDesc": "Define a new resource model",
+      "createModelDesc": "Define a new resource type",
       "importHostDesc": "Batch import host resources",
       "viewTopologyDesc": "View business topology",
       "auditLogDesc": "View operation audit logs"
     },
     "recentModels": {
-      "title": "Recently Updated Models",
+      "title": "Recently Updated Resource Types",
       "viewAll": "View All",
       "attributes": "attributes",
-      "noModels": "No models yet"
+      "noModels": "No resource types yet",
+      "updatedAt": "Updated {{time}}"
     },
     "workspace": {
-      "connectedModels_one": "{{count}} model connected",
-      "connectedModels_other": "{{count}} models connected",
+      "connectedModels_one": "{{count}} resource type connected",
+      "connectedModels_other": "{{count}} resource types connected",
       "pendingSummary": "Host, business, and instance metrics will open up as the resource graph comes online.",
       "primaryCta": "Open Business Topology",
       "primaryDesc": "Enter the main workflow from the business tree and continue into nodes, hosts, and change entry points.",
       "secondary": {
         "resources": "Open Resource Directory",
         "resourcesDesc": "Inspect hosts and infrastructure resources, then continue onboarding the inventory.",
-        "models": "Open Model Management",
+        "models": "Open Resource Types",
         "modelsDesc": "Maintain resource types and schemas to extend the platform."
       }
     }
@@ -74,6 +78,7 @@
       "platformName": "Configuration Platform",
       "help": "Help",
       "login": "Sign in",
+      "logout": "Sign out",
       "expandSidebar": "Expand sidebar",
       "collapseSidebar": "Collapse sidebar"
     },
@@ -140,6 +145,25 @@
       }
     }
   },
+  "auth": {
+    "login": {
+      "title": "Sign in to the workspace",
+      "subtitle": "This first RBAC cut keeps the product controlled with in-app accounts and JWT, protecting all API access and write entry points before anything more complex.",
+      "defaultAccount": "Default accounts: admin / admin123456, editor / editor123456, viewer / viewer123456",
+      "submit": "Sign in",
+      "fields": {
+        "username": "Username",
+        "password": "Password"
+      },
+      "placeholders": {
+        "username": "Enter username",
+        "password": "Enter password"
+      },
+      "messages": {
+        "invalidCredentials": "Invalid username or password"
+      }
+    }
+  },
   "business": {
     "topology": {
       "tabs": {
@@ -148,8 +172,13 @@
         "nodeInfo": "Node Info"
       },
       "workspace": {
+        "business": "Current business",
         "currentNode": "Current node",
+        "noBusiness": "Select business",
         "noNode": "Select a node from the tree first",
+        "module": "Module",
+        "cluster": "Cluster",
+        "idlePool": "Idle pool",
         "selectNode": "Select a node from the tree on the left. The panel on the right will switch to that node's hosts, services, and details.",
         "hostList": "Inspect hosts under the current node and launch add, transfer, or release actions from here.",
         "serviceInstance": "Inspect service instances under the current node and continue into instance or process views.",
@@ -192,7 +221,11 @@
         },
         "pagination": {
           "selected": "Selected",
-          "items": "items"
+          "items": "items",
+          "total": "{{count}} hosts in scope"
+        },
+        "floating": {
+          "selectedCount": "Selected {{count}} hosts"
         }
       },
       "addHostModal": {
@@ -282,8 +315,8 @@
             "schemaDriven": "Built-in topology nodes now read the business form schema first instead of relying on hardcoded frontend fields."
           },
           "messages": {
-            "loadModelsFailed": "Failed to load creatable models",
-            "loadModelDetailFailed": "Failed to load model detail",
+            "loadModelsFailed": "Failed to load creatable resource types",
+            "loadModelDetailFailed": "Failed to load type detail",
             "createFailed": "Failed to create topology node"
           },
           "empty": {
@@ -838,13 +871,13 @@
     "model": {
       "columns": {
         "displayName": "Display name",
-        "name": "Model name",
-        "modelName": "Model",
+        "name": "Type identifier",
+        "modelName": "Resource Type",
         "classification": "Classification",
         "group": "Group",
         "groupName": "Group name",
         "groupDisplayName": "Group display name",
-        "groupModelCount": "Model count",
+        "groupModelCount": "Type count",
         "icon": "Icon",
         "mainline": "Mainline",
         "scope": "Scope",
@@ -875,7 +908,7 @@
         "attributeOptions": "Options"
       },
       "actions": {
-        "create": "Create model",
+        "create": "Create resource type",
         "createGroup": "Create group",
         "manageGroups": "Manage groups",
         "refresh": "Refresh",
@@ -893,7 +926,7 @@
         "editUniqueRule": "Edit unique rule"
       },
       "fields": {
-        "name": "Model name",
+        "name": "Type identifier",
         "displayName": "Display name",
         "classification": "Classification",
         "group": "Group",
@@ -904,7 +937,7 @@
         "isMainline": "Mainline",
         "mainlineScope": "Mainline scope",
         "mainlineLevel": "Mainline level",
-        "parentModel": "Parent mainline model",
+        "parentModel": "Parent mainline type",
         "builtIn": "Built-in",
         "createdAt": "Created at",
         "updatedAt": "Updated at",
@@ -927,15 +960,15 @@
         "enumValues": "Enum values"
       },
       "placeholders": {
-        "search": "Search by model name, display name, or classification",
-        "name": "Enter model name, e.g. rack",
+        "search": "Search by type identifier, display name, or classification",
+        "name": "Enter type identifier, e.g. rack",
         "displayName": "Enter display name",
-        "group": "Select a model group",
+        "group": "Select a type group",
         "groupName": "Enter group key, e.g. database_assets",
         "groupDisplayName": "Enter group display name",
         "icon": "Enter icon name, e.g. rack",
         "description": "Enter description",
-        "parentModel": "Select parent mainline model",
+        "parentModel": "Select parent mainline type",
         "business": "Select business",
         "parentNode": "Select parent node",
         "instanceName": "Enter instance name",
@@ -952,8 +985,8 @@
       "sections": {
         "attributes": "Attributes",
         "advanced": "Advanced settings",
-        "modelGroups": "Model groups",
-        "modelOverview": "Model overview"
+        "modelGroups": "Type groups",
+        "modelOverview": "Type overview"
       },
       "tabs": {
         "overview": "Overview",
@@ -974,16 +1007,16 @@
         "templates": "Templates"
       },
       "groups": {
-        "all": "All models",
-        "mainline": "Mainline models",
-        "business": "Business models",
-        "resource": "Resource models",
-        "builtin": "Built-in models"
+        "all": "All resource types",
+        "mainline": "Mainline types",
+        "business": "Business types",
+        "resource": "Resource types",
+        "builtin": "Built-in types"
       },
       "options": {
         "classification": {
-          "business": "Business model",
-          "resource": "Resource model"
+          "business": "Business type",
+          "resource": "Resource type"
         },
         "scope": {
           "business": "Business",
@@ -1002,10 +1035,10 @@
         }
       },
       "messages": {
-        "loadFailed": "Failed to load models",
-        "createFailed": "Failed to create model",
-        "loadGroupsFailed": "Failed to load model groups",
-        "createGroupFailed": "Failed to create model group",
+        "loadFailed": "Failed to load resource types",
+        "createFailed": "Failed to create resource type",
+        "loadGroupsFailed": "Failed to load type groups",
+        "createGroupFailed": "Failed to create type group",
         "loadInstancesFailed": "Failed to load instances",
         "loadInstanceDetailFailed": "Failed to load instance detail",
         "loadRelationDefinitionsFailed": "Failed to load available instance relations",
@@ -1020,11 +1053,11 @@
         "relationTargetRequired": "Please select a relation definition and a target instance first",
         "instanceCreateFailed": "Failed to create instance",
         "attributeCreateFailed": "Failed to create attribute",
-        "loadRelationsFailed": "Failed to load model relations",
-        "createRelationFailed": "Failed to create model relation",
-        "updateRelationFailed": "Failed to update model relation",
-        "deleteRelationSuccess": "Model relation deleted successfully",
-        "deleteRelationFailed": "Failed to delete model relation",
+        "loadRelationsFailed": "Failed to load type relations",
+        "createRelationFailed": "Failed to create type relation",
+        "updateRelationFailed": "Failed to update type relation",
+        "deleteRelationSuccess": "Type relation deleted successfully",
+        "deleteRelationFailed": "Failed to delete type relation",
         "loadUniqueRulesFailed": "Failed to load unique rules",
         "createUniqueRuleFailed": "Failed to create unique rule",
         "updateUniqueRuleFailed": "Failed to update unique rule",
@@ -1035,50 +1068,50 @@
         "loadParentFailed": "Failed to load parent nodes"
       },
       "empty": {
-        "noAttributes": "No attributes defined for this model",
-        "noInstances": "No instances found for this model",
+        "noAttributes": "No attributes defined for this type",
+        "noInstances": "No instances found for this type",
         "noInstanceDetail": "No instance detail",
         "noInstanceRelations": "No relations for this instance",
         "noInstanceHistory": "No history for this instance",
         "noInstanceTopology": "No topology for this instance",
-        "noRelations": "No relation definitions found for this model",
-        "noUniqueRules": "No unique rules defined for this model",
+        "noRelations": "No relation definitions found for this type",
+        "noUniqueRules": "No unique rules defined for this type",
         "tabPending": "This section will be connected in a later phase",
-        "noDescription": "No model description"
+        "noDescription": "No type description"
       },
       "helper": {
-        "modelBasics": "Start with object basics first, then enable mainline behavior only when the model really belongs in topology.",
-        "advancedMainline": "Only models that should participate in the business mainline topology need mainline settings.",
-        "mainlineNotice": "Mainline models require scope, level, and a parent mainline model. Attaching under module is still not supported in P1.",
+        "modelBasics": "Start with object basics first, then enable mainline behavior only when the type really belongs in topology.",
+        "advancedMainline": "Only resource types that should participate in the business mainline topology need mainline settings.",
+        "mainlineNotice": "Mainline types require scope, level, and a parent mainline type. Attaching under module is still not supported in P1.",
         "propertiesJson": "Use JSON to add arbitrary properties. name / sort_order will be merged automatically.",
         "parentNodeEmpty": "No eligible parent node was found under this business. Create the parent mainline instance first.",
         "instanceBusinessScope": "Business-scope mainline instances usually require selecting a business before choosing a parent node.",
-        "instanceListNote": "Instance operations are still model-driven, but they are no longer the primary focus of the model detail view.",
+        "instanceListNote": "Instance operations are still type-driven, but they are no longer the primary focus of the type detail view.",
         "instanceHistoryPage": "Select an instance first, then inspect its history, relations, and topology context.",
-        "instanceRelationsPage": "This tab shows real instance-level relation data rather than model-level relation design.",
-        "instanceRelationCreate": "When creating an instance relation, the available target model and association type are constrained by model relation definitions.",
+        "instanceRelationsPage": "This tab shows real instance-level relation data rather than type-level relation design.",
+        "instanceRelationCreate": "When creating an instance relation, the available target type and association type are constrained by type relation definitions.",
         "instanceConfigBlock": "Configuration fields come from instance configs.",
         "instanceMetricsBlock": "State fields come from instance state.metrics.",
         "instanceTopologyPage": "Current topology contains {{nodeCount}} nodes and {{edgeCount}} edges.",
         "enumValues": "Enum values will be used as dropdown options in the instance form.",
-        "instanceFallbackForm": "This model has no custom attributes yet, so the drawer falls back to the basic instance fields.",
-        "attributeDesigner": "Define model attributes first, then let the instance form render from that schema.",
+        "instanceFallbackForm": "This type has no custom attributes yet, so the drawer falls back to the basic instance fields.",
+        "attributeDesigner": "Define type attributes first, then let the instance form render from that schema.",
         "attributeRoadmap": "This round focuses on attribute structure and ordering. Drag layout, field grouping, and composite unique rules come next.",
         "attributeSortHint": "Fields are currently ordered by sort_order. Drag sorting and field grouping will come in the next phase.",
-        "listOverview": "The model list is now grouped first. Mainline is treated as one capability of a model, not the only center of the experience.",
-        "groupsPending": "Persistent model groups will be connected after the backend adds storage support. This round only establishes the IA and grouped browsing.",
-        "groupsPage": "Model groups now persist in the backend and can be used to organize both browsing and creation flows.",
+        "listOverview": "Resource types are now grouped first. Mainline is treated as one capability of a type, not the only center of the experience.",
+        "groupsPending": "Persistent type groups will be connected after the backend adds storage support. This round only establishes the IA and grouped browsing.",
+        "groupsPage": "Type groups now persist in the backend and can be used to organize both browsing and creation flows.",
         "previewNotice": "The preview reuses the dynamic instance form mapping so schema changes can be validated immediately.",
-        "relationsPending": "Model relation design is not wired to the frontend yet, so this tab is a placeholder for now.",
-        "relationsDesign": "Model relations define which target models the current model can connect to, along with mapping and delete constraints.",
-        "relationsDesignHint": "This page manages model-level relation design only, not concrete instance-to-instance links.",
+        "relationsPending": "Type relation design is not wired to the frontend yet, so this tab is a placeholder for now.",
+        "relationsDesign": "Type relations define which target types the current type can connect to, along with mapping and delete constraints.",
+        "relationsDesignHint": "This page manages type-level relation design only, not concrete instance-to-instance links.",
         "relationsListNote": "These definitions directly constrain which instance relations can be created later. Check active usage before deleting.",
-        "historyPending": "This tab will later show model and attribute change history.",
+        "historyPending": "This tab will later show type and attribute change history.",
         "uniquesPending": "Composite unique rules, auxiliary uniqueness, and conflict feedback depend on the next backend validation pass, so this entry is reserved for now.",
-        "uniquesDesign": "Unique rules run before instance writes and prevent duplicate resources from entering the model.",
+        "uniquesDesign": "Unique rules run before instance writes and prevent duplicate resources from entering the type.",
         "uniquesDesignHint": "Default rules usually represent the primary identity, while auxiliary rules add business-specific duplicate constraints.",
         "uniquesListNote": "Updating unique rules changes later create and update behavior. Check existing data for conflicts before editing.",
-        "importExportPending": "This tab will later host model import/export and template capabilities."
+        "importExportPending": "This tab will later host type import/export and template capabilities."
       },
       "uniques": {
         "columns": {
@@ -1121,7 +1154,7 @@
       },
       "relations": {
         "columns": {
-          "targetModel": "Target model",
+          "targetModel": "Target type",
           "associationType": "Association type",
           "mapping": "Mapping",
           "onDelete": "On delete",
@@ -1129,7 +1162,7 @@
           "actions": "Actions"
         },
         "fields": {
-          "targetModel": "Target model",
+          "targetModel": "Target type",
           "associationType": "Association type",
           "mapping": "Mapping",
           "onDelete": "On delete",
@@ -1143,7 +1176,7 @@
             "set_null": "Set null"
           }
         },
-        "confirmDelete": "Delete this model relation?",
+        "confirmDelete": "Delete this type relation?",
         "confirmDeleteInstanceRelation": "Delete this instance relation?"
       }
     },
@@ -1152,6 +1185,9 @@
         "unassigned": "Unassigned",
         "assigned": "Assigned",
         "all": "All"
+      },
+      "cloudArea": {
+        "direct": "Direct connection area"
       },
       "columns": {
         "id": "ID",
@@ -1218,7 +1254,7 @@
     "import": {
       "title": "Import Host",
       "columns": {
-        "relatedModel": "Related model",
+        "relatedModel": "Related resource type",
         "uniqueIdentifier": "Unique identifier"
       },
       "upload": {
@@ -1230,9 +1266,9 @@
       "steps": {
         "upload": "Upload file",
         "configure": "Import configuration",
-        "selectModels": "Select related models",
+        "selectModels": "Select related resource types",
         "result": "Import result",
-        "importRelatedModels": "Import related model instances"
+        "importRelatedModels": "Import related type instances"
       },
       "actions": {
         "startImport": "Start import"
@@ -1246,11 +1282,11 @@
       },
       "messages": {
         "importInfo": "Note: Import editing requires exporting instances to be modified first, then completing editing before import editing operation",
-        "noRelatedModels": "No related models, no need to select"
+        "noRelatedModels": "No related resource types, no need to select"
       },
       "host": {
         "label": "Host",
-        "modelText": "(Model itself)",
+        "modelText": "(Type itself)",
         "uniqueLabel": "Unique identifier"
       },
       "result": {
@@ -1312,7 +1348,6 @@
           "lifecycle": "Lifecycle",
           "timezone": "Timezone",
           "language": "Language",
-          "sres": "SRE",
           "sres": "SRE/Operations",
           "bizops": "Product managers",
           "testers": "Testers",
@@ -1471,7 +1506,7 @@
         "business": "Business",
         "object": "Operation object",
         "action": "Action",
-        "modelType": "Model type",
+        "modelType": "Object category",
         "instance": "Operation instance",
         "description": "Operation description",
         "time": "Operation time",
@@ -1662,7 +1697,7 @@
         "business": "Business",
         "object": "Target",
         "action": "Action",
-        "modelType": "Model Type",
+        "modelType": "Object Category",
         "instance": "Operation Instance",
         "description": "Description",
         "time": "Operation Time",
@@ -1673,9 +1708,9 @@
       "overview": {
         "businessTotal": "Total Business",
         "hostTotal": "Total Hosts",
-        "modelTotal": "Total Models",
+        "modelTotal": "Total Resource Types",
         "instanceTotal": "Total Instances",
-        "instanceTooltip": "Excluding business and host models and instances"
+        "instanceTooltip": "Excluding business and host types and instances"
       },
       "host": {
         "title": "Host Statistics"

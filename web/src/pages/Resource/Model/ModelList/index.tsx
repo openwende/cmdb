@@ -10,6 +10,7 @@ import { createModel, listModelGroups, listModels } from '@/api';
 import { CreateModelPayload, ModelDefinition, ModelGroup } from '@/api/types/model';
 import CreateModelDrawer from '../components/CreateModelDrawer';
 import { buildModelDetailPath } from '..';
+import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -18,6 +19,7 @@ const ALL_GROUP_KEY = 'all';
 const ModelList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const canWrite = useAuthStore((state) => state.canWrite());
   const [models, setModels] = useState<ModelDefinition[]>([]);
   const [groups, setGroups] = useState<ModelGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,6 +78,9 @@ const ModelList: React.FC = () => {
   }, [searchValue, activeGroup]);
 
   const handleCreate = async (payload: CreateModelPayload) => {
+    if (!canWrite) {
+      return;
+    }
     try {
       await createModel(payload);
       message.success(t('common.message.createSuccess'));
@@ -208,10 +213,10 @@ const ModelList: React.FC = () => {
                 <UnorderedListOutlined />
               </button>
             </div>
-            <Button type="primary" onClick={() => setDrawerVisible(true)}>
+            <Button type="primary" onClick={() => setDrawerVisible(true)} disabled={!canWrite}>
               {t('resource.model.actions.create')}
             </Button>
-            <Button onClick={() => navigate('/model/groups')}>
+            <Button onClick={() => navigate('/model/groups')} disabled={!canWrite}>
               {t('resource.model.actions.manageGroups')}
             </Button>
           </Space>

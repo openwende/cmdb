@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import Function from '@/components/Layout/Header/Function';
 
@@ -17,6 +17,17 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('@/components/Layout/Header/Function/language', () => ({
   default: () => <div>language</div>,
+}));
+
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: () => ({
+    user: null,
+    logout: vi.fn(),
+  }),
 }));
 
 describe('header function copy', () => {
