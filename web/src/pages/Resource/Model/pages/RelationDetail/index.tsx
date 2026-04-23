@@ -26,11 +26,11 @@ import {
 import {
   AssociationType,
   CreateModelAssociationPayload,
+  DynamicModelSummary,
   ModelAssociation,
   UpdateModelAssociationPayload,
 } from '@/api/types/modelRelation';
 import { useModelPageContext } from '../../context';
-import { useModelRelationStore } from '@/store/ModelRelationStore';
 
 const mappingOptions: Array<{ value: '1:1' | '1:N' | 'N:N'; label: string }> = [
   { value: '1:1', label: '1:1' },
@@ -57,8 +57,7 @@ const RelationDetailPage: React.FC = () => {
   const [editingAssociation, setEditingAssociation] = useState<ModelAssociation | null>(null);
   const [associations, setAssociations] = useState<ModelAssociation[]>([]);
   const [associationTypes, setAssociationTypes] = useState<AssociationType[]>([]);
-  const modelCapabilities = useModelRelationStore((state) => state.capabilities);
-  const loadModelCapabilities = useModelRelationStore((state) => state.loadCapabilities);
+  const [targetModels, setTargetModels] = useState<DynamicModelSummary[]>([]);
 
   const selectedAssociationUID = Form.useWatch('association_uid', form);
   const selectedAssociationType = useMemo(
@@ -68,34 +67,24 @@ const RelationDetailPage: React.FC = () => {
 
   const targetModelMap = useMemo(() => {
     const map = new Map<string, string>();
-    modelCapabilities.forEach((item) => {
-      if (item.target_model_uid) {
-        map.set(
-          item.target_model_uid,
-          `${item.target_model_name || item.target_model_uid} (${item.target_model_uid})`,
-        );
-      }
-    });
     allModels.forEach((model) => {
-      if (!map.has(model.name)) {
-        map.set(model.name, `${model.display_name} (${model.name})`);
-      }
+      map.set(model.name, `${model.display_name} (${model.name})`);
     });
     return map;
-  }, [allModels, modelCapabilities]);
+  }, [allModels]);
 
   const targetModelOptions = useMemo(() => {
-    const seen = new Set<string>();
-    return modelCapabilities
-      .filter((item) => item.target_model_uid && !seen.has(item.target_model_uid))
-      .map((item) => {
-        seen.add(item.target_model_uid as string);
-        return {
-          value: item.target_model_uid as string,
-          label: `${item.target_model_name || item.target_model_uid} (${item.target_model_uid})`,
-        };
-      });
-  }, [modelCapabilities]);
+    if (targetModels.length > 0) {
+      return targetModels.map((model) => ({
+        value: model.uid,
+        label: `${model.name} (${model.uid})`,
+      }));
+    }
+    return allModels.map((model) => ({
+      value: model.name,
+      label: `${model.display_name} (${model.name})`,
+    }));
+  }, [targetModels, allModels]);
 
   const loadRelationData = async () => {
     try {
@@ -103,15 +92,16 @@ const RelationDetailPage: React.FC = () => {
       const [associationResponse, availableResponse] = await Promise.all([
         listModelAssociations(detailModel.name),
         getAvailableRelations(detailModel.name),
-        loadModelCapabilities(detailModel.name),
       ]);
       setAssociations(associationResponse.data.items || []);
       setAssociationTypes(availableResponse.data.association_types || []);
+      setTargetModels(availableResponse.data.target_models || []);
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.loadRelationsFailed'));
       setAssociations([]);
       setAssociationTypes([]);
+      setTargetModels([]);
     } finally {
       setLoading(false);
     }
@@ -271,7 +261,7 @@ const RelationDetailPage: React.FC = () => {
             <Button
               type="primary"
               onClick={openCreateDrawer}
-              disabled={associationTypes.length === 0 || targetModelOptions.length === 0}
+              disabled={associationTypes.length === 0}
             >
               {t('resource.model.actions.createRelation')}
             </Button>

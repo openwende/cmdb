@@ -64,27 +64,31 @@ const Statistics = lazy(() => import('../pages/Analysis/Statistics'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Wrap lazy-loaded components with Suspense and ErrorBoundary
-const withSuspense = (Component: React.LazyExoticComponent<any>) => (
-  <ErrorBoundary>
-    <Suspense
-      fallback={
-        <div
-          style={{
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '64px 0',
-          }}
-        >
-          <Spin size="large" />
-        </div>
-      }
-    >
-      <Component />
-    </Suspense>
-  </ErrorBoundary>
-);
+const withSuspense = (Component: React.LazyExoticComponent<any>) => {
+  // Use the component's generated name or a fallback string to ensure unique keys per route component
+  const errorBoundaryKey = typeof Component === 'function' && Component.name ? Component.name : Math.random().toString(36).substring(7);
+  return (
+    <ErrorBoundary key={errorBoundaryKey}>
+      <Suspense
+        fallback={
+          <div
+            style={{
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '64px 0',
+            }}
+          >
+            <Spin size="large" />
+          </div>
+        }
+      >
+        <Component />
+      </Suspense>
+    </ErrorBoundary>
+  );
+};
 
 export const routes: NavigationItem[] = [
   {

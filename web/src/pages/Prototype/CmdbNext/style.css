@@ -262,6 +262,639 @@
   margin-top: 16px;
 }
 
+.cmdb-topology-proto {
+  margin-top: 16px;
+  display: grid;
+  gap: 20px;
+}
+
+.cmdb-topology-proto__intro h2 {
+  margin: 0;
+  font-family:
+    'Canela',
+    'Iowan Old Style',
+    'Palatino Linotype',
+    'Songti SC',
+    serif;
+  font-size: clamp(2rem, 3.2vw, 3.2rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--ink-strong);
+}
+
+.cmdb-topology-proto__intro p:last-child {
+  margin: 14px 0 0;
+  max-width: 720px;
+  color: var(--ink-soft);
+  line-height: 1.65;
+}
+
+.cmdb-topology-proto__stage {
+  display: grid;
+  grid-template-columns: 64px 280px minmax(0, 1fr);
+  min-height: 760px;
+  border-radius: 28px;
+  overflow: hidden;
+  border: 1px solid rgba(81, 98, 127, 0.14);
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: var(--shadow-lg);
+}
+
+.cmdb-topology-proto__global-sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 0;
+  background: linear-gradient(180deg, rgba(19, 30, 52, 1), rgba(16, 25, 44, 0.96));
+}
+
+.cmdb-topology-proto__global-brand {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.98), rgba(37, 99, 235, 1));
+  color: rgba(255, 255, 255, 0.98);
+  font-weight: 800;
+  box-shadow: 0 10px 18px rgba(37, 99, 235, 0.3);
+}
+
+.cmdb-topology-proto__global-item {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: rgba(180, 194, 219, 0.92);
+  font-size: 18px;
+}
+
+.cmdb-topology-proto__global-item--active {
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.98), rgba(37, 99, 235, 1));
+  color: rgba(255, 255, 255, 0.98);
+}
+
+.cmdb-topology-proto__global-spacer {
+  flex: 1;
+}
+
+.cmdb-topology-proto__navigator {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(81, 98, 127, 0.12);
+  background:
+    linear-gradient(180deg, rgba(248, 246, 241, 0.92), rgba(252, 251, 248, 0.96)),
+    linear-gradient(180deg, rgba(44, 69, 113, 0.04), transparent);
+}
+
+.cmdb-topology-proto__biz-header {
+  position: relative;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(81, 98, 127, 0.12);
+}
+
+.cmdb-topology-proto__biz-trigger {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.cmdb-topology-proto__biz-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.cmdb-topology-proto__biz-arrow {
+  font-size: 10px;
+  color: var(--ink-soft);
+}
+
+.cmdb-topology-proto__biz-stats {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.cmdb-topology-proto__biz-stats span {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(81, 98, 127, 0.08);
+}
+
+.cmdb-topology-proto__biz-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 20px;
+  right: 20px;
+  z-index: 4;
+  border-radius: 16px;
+  border: 1px solid rgba(81, 98, 127, 0.14);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 20px 40px rgba(25, 32, 47, 0.18);
+  overflow: hidden;
+}
+
+.cmdb-topology-proto__biz-dropdown-search,
+.cmdb-topology-proto__navigator-search {
+  padding: 12px 16px;
+}
+
+.cmdb-topology-proto__biz-dropdown-search input,
+.cmdb-topology-proto__navigator-search input,
+.cmdb-topology-proto__toolbar-actions input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(81, 98, 127, 0.16);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink-strong);
+}
+
+.cmdb-topology-proto__biz-dropdown-list {
+  display: grid;
+  max-height: 240px;
+  overflow: auto;
+}
+
+.cmdb-topology-proto__biz-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 16px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.cmdb-topology-proto__biz-dropdown-item span:last-child {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.cmdb-topology-proto__biz-dropdown-item--active {
+  background: rgba(59, 130, 246, 0.08);
+  color: rgba(37, 99, 235, 1);
+  font-weight: 700;
+}
+
+.cmdb-topology-proto__biz-create {
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-top: 1px solid rgba(81, 98, 127, 0.12);
+  background: rgba(248, 250, 252, 0.92);
+  color: rgba(37, 99, 235, 1);
+  font-weight: 700;
+}
+
+.cmdb-topology-proto__tree {
+  flex: 1;
+  overflow: auto;
+  padding: 6px 8px 16px;
+}
+
+.cmdb-topology-proto__tree-node {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+}
+
+.cmdb-topology-proto__tree-node--active {
+  background: rgba(59, 130, 246, 0.1);
+  color: rgba(37, 99, 235, 1);
+  font-weight: 700;
+}
+
+.cmdb-topology-proto__tree-node--root {
+  color: var(--ink-strong);
+  font-weight: 700;
+}
+
+.cmdb-topology-proto__tree-expander {
+  width: 16px;
+  display: inline-flex;
+  justify-content: center;
+  color: var(--ink-soft);
+  font-size: 10px;
+}
+
+.cmdb-topology-proto__node-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+
+.cmdb-topology-proto__node-badge--business {
+  background: rgba(239, 246, 255, 1);
+  color: rgba(37, 99, 235, 1);
+  border-color: rgba(191, 219, 254, 1);
+}
+
+.cmdb-topology-proto__node-badge--set {
+  background: rgba(236, 253, 245, 1);
+  color: rgba(5, 150, 105, 1);
+  border-color: rgba(167, 243, 208, 1);
+}
+
+.cmdb-topology-proto__node-badge--module {
+  background: rgba(255, 251, 235, 1);
+  color: rgba(217, 119, 6, 1);
+  border-color: rgba(253, 230, 138, 1);
+}
+
+.cmdb-topology-proto__node-badge--idle {
+  background: rgba(243, 244, 246, 1);
+  color: rgba(75, 85, 99, 1);
+  border-color: rgba(209, 213, 219, 1);
+}
+
+.cmdb-topology-proto__tree-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmdb-topology-proto__tree-count {
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.cmdb-topology-proto__workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.cmdb-topology-proto__context-strip,
+.cmdb-topology-proto__tab-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 24px;
+  background: rgba(255, 255, 255, 0.98);
+}
+
+.cmdb-topology-proto__context-strip {
+  min-height: 56px;
+  border-bottom: 1px solid rgba(81, 98, 127, 0.12);
+}
+
+.cmdb-topology-proto__context-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cmdb-topology-proto__context-title h3 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  color: var(--ink-strong);
+}
+
+.cmdb-topology-proto__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.cmdb-topology-proto__breadcrumb span + span::before {
+  content: '/';
+  margin-right: 8px;
+  color: rgba(209, 213, 219, 1);
+}
+
+.cmdb-topology-proto__tab-toolbar {
+  min-height: 52px;
+  border-bottom: 1px solid rgba(81, 98, 127, 0.12);
+}
+
+.cmdb-topology-proto__tabs {
+  display: flex;
+  align-items: stretch;
+  gap: 28px;
+  height: 100%;
+}
+
+.cmdb-topology-proto__tabs button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  font-weight: 500;
+  padding: 0;
+  border-radius: 0;
+}
+
+.cmdb-topology-proto__tabs .is-active {
+  color: rgba(37, 99, 235, 1);
+  border-bottom-color: rgba(37, 99, 235, 1);
+}
+
+.cmdb-topology-proto__tab-badge {
+  padding: 0 8px;
+  border-radius: 999px;
+  background: rgba(243, 244, 246, 1);
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+
+.cmdb-topology-proto__tabs .is-active .cmdb-topology-proto__tab-badge {
+  background: rgba(239, 246, 255, 1);
+  color: rgba(37, 99, 235, 1);
+}
+
+.cmdb-topology-proto__toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cmdb-topology-proto__toolbar-actions input {
+  width: 260px;
+  border-radius: 999px;
+}
+
+.cmdb-topology-proto__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-weight: 600;
+}
+
+.cmdb-topology-proto__btn--primary {
+  background: linear-gradient(145deg, rgba(59, 130, 246, 0.98), rgba(37, 99, 235, 1));
+  color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
+}
+
+.cmdb-topology-proto__btn--outline {
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--ink);
+  border-color: rgba(209, 213, 219, 1);
+}
+
+.cmdb-topology-proto__btn--text {
+  color: rgba(37, 99, 235, 1);
+}
+
+.cmdb-topology-proto__btn--danger {
+  background: rgba(255, 255, 255, 0.98);
+  color: rgba(220, 38, 38, 1);
+  border-color: rgba(252, 165, 165, 1);
+}
+
+.cmdb-topology-proto__table-container {
+  flex: 1;
+  padding: 24px;
+  background: rgba(248, 250, 252, 1);
+  overflow: auto;
+}
+
+.cmdb-topology-proto__table-shell {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(81, 98, 127, 0.12);
+  background: rgba(255, 255, 255, 1);
+  box-shadow: var(--shadow-md);
+}
+
+.cmdb-topology-proto__table {
+  display: grid;
+}
+
+.cmdb-topology-proto__table-row {
+  display: grid;
+  grid-template-columns: 48px 160px minmax(0, 1fr) 140px 180px 100px;
+  align-items: center;
+}
+
+.cmdb-topology-proto__table-row--head {
+  background: rgba(249, 250, 251, 1);
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.cmdb-topology-proto__table-row--selected .cmdb-topology-proto__cell {
+  background: rgba(239, 246, 255, 1);
+}
+
+.cmdb-topology-proto__cell {
+  min-width: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(229, 231, 235, 1);
+}
+
+.cmdb-topology-proto__cell--check {
+  display: flex;
+  justify-content: center;
+}
+
+.cmdb-topology-proto__mono {
+  font-family:
+    'SFMono-Regular',
+    Consolas,
+    'Liberation Mono',
+    monospace;
+  font-weight: 600;
+}
+
+.cmdb-topology-proto__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cmdb-topology-proto__status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+}
+
+.cmdb-topology-proto__status-dot--up {
+  background: rgba(16, 185, 129, 1);
+  box-shadow: 0 0 0 2px rgba(209, 250, 229, 1);
+}
+
+.cmdb-topology-proto__status-dot--warmup {
+  background: rgba(245, 158, 11, 1);
+  box-shadow: 0 0 0 2px rgba(254, 243, 199, 1);
+}
+
+.cmdb-topology-proto__pagination {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 24px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.cmdb-topology-proto__fab-wrapper {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%) translateY(120px) scale(0.96);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 220ms ease-out,
+    opacity 220ms ease-out;
+}
+
+.cmdb-topology-proto__fab-wrapper--visible {
+  transform: translateX(-50%) translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.cmdb-topology-proto__fab {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px 10px 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(12px);
+}
+
+.cmdb-topology-proto__fab-count {
+  color: rgba(37, 99, 235, 1);
+  font-weight: 700;
+}
+
+.cmdb-topology-proto__fab-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(229, 231, 235, 1);
+}
+
+.cmdb-topology-proto__fab-close {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 0;
+  background: rgba(243, 244, 246, 1);
+  color: var(--ink-soft);
+}
+
+.cmdb-topology-proto__empty-state,
+.cmdb-topology-proto__placeholder {
+  display: grid;
+  gap: 8px;
+  padding: 36px 28px;
+  border-radius: 22px;
+  border: 1px dashed rgba(81, 98, 127, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: var(--shadow-md);
+}
+
+.cmdb-topology-proto__empty-state p,
+.cmdb-topology-proto__placeholder p {
+  margin: 0;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 11px;
+}
+
+.cmdb-topology-proto__empty-state strong,
+.cmdb-topology-proto__placeholder strong {
+  color: var(--ink-strong);
+  font-size: 1.2rem;
+}
+
+.cmdb-topology-proto__empty-state span {
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+
+@media (max-width: 1100px) {
+  .cmdb-topology-proto__stage {
+    grid-template-columns: 1fr;
+  }
+
+  .cmdb-topology-proto__global-sidebar {
+    flex-direction: row;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  .cmdb-topology-proto__context-strip,
+  .cmdb-topology-proto__tab-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+
+  .cmdb-topology-proto__toolbar-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cmdb-topology-proto__toolbar-actions input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 860px) {
+  .cmdb-topology-proto__table-row {
+    grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .cmdb-topology-proto__table-row .cmdb-topology-proto__cell:nth-child(4),
+  .cmdb-topology-proto__table-row .cmdb-topology-proto__cell:nth-child(5),
+  .cmdb-topology-proto__table-row .cmdb-topology-proto__cell:nth-child(6) {
+    display: none;
+  }
+}
+
 .cmdb-next__metric {
   padding: 18px 20px;
   border-radius: 22px;

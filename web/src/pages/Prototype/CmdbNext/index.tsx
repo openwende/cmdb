@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { NavLink, useParams } from 'react-router-dom';
 import {
   BranchesOutlined,
@@ -14,6 +14,7 @@ import './style.css';
 type SectionKey =
   | 'workbench'
   | 'topology'
+  | 'topology-workspace'
   | 'directory'
   | 'pools'
   | 'impact'
@@ -330,6 +331,63 @@ const sections: SectionDefinition[] = [
       { title: '搜索优先', meta: '用户先查资源，再理解归属，而不是先猜页面入口。' },
       { title: '详情统一', meta: '资源目录是统一台账，不是各类资源页拼盘。' },
       { title: '关系服务决策', meta: '关系视图为定位和分析服务，而不是为了炫耀图数据库。' },
+    ],
+  },
+  {
+    key: 'topology-workspace',
+    label: '拓扑工作台',
+    eyebrow: 'Operational Workspace',
+    title: '把业务拓扑改造成真正的操作台。',
+    description:
+      '这一版原型把业务切换、节点上下文、主机工作区和批量操作收进同一张界面，用来验证业务拓扑页的下一步重构方向。',
+    icon: <BranchesOutlined />,
+    sectionLabel: '业务切换 / 节点工作区 / 主机操作面',
+    primaryLabel: '切换到真实业务页',
+    secondaryLabel: '查看服务实例构想',
+    stats: [
+      { label: '业务切换', value: '一等入口', hint: '全局上下文优先于树导航' },
+      { label: '节点工作区', value: '统一操作面', hint: '树和表格形成闭环' },
+      { label: '批量动作', value: '状态可见', hint: '选中后进入 selection mode' },
+    ],
+    surfaces: [
+      {
+        id: 'workspace',
+        label: '拓扑主工作流',
+        meta: '业务切换 + 左树 + 主机列表',
+        badge: '高保真',
+        summary: '这不是概念稿，而是围绕真实工作流组织的可交互原型。',
+      },
+    ],
+    perspectives: [
+      {
+        key: 'workspace',
+        label: '工作区',
+        headline: '页面先回答上下文，再承接动作。',
+        summary: '业务切换、节点路径、资源范围和操作入口放到一张统一工作台里，避免用户在树、标题和弹窗之间来回找状态。',
+        callout: '拓扑页的价值不在树本身，而在节点上下文如何转化为操作效率。',
+        evidenceTitle: '原型关注点',
+        evidenceRows: [
+          ['业务切换', '始终可见，且成本低'],
+          ['节点上下文', '业务 / 路径 / 节点 / 统计同时出现'],
+          ['操作分层', '默认态与选择态明确切换'],
+        ],
+        timeline: [
+          '切换业务',
+          '选中节点',
+          '查看主机',
+          '进入批量操作',
+        ],
+      },
+    ],
+    commandDeck: [
+      { title: '切换业务', meta: '无需离开工作区即可切换全局上下文' },
+      { title: '查看节点', meta: '选中树节点后右侧立即切换工作面' },
+      { title: '验证批量动作', meta: '选中主机后切换到 selection mode' },
+    ],
+    designNotes: [
+      { title: '业务先于节点', meta: '先确认在哪个业务里，再在树中切节点。' },
+      { title: '上下文先于表格', meta: '表格只是节点工作区的一部分，不是整个页面。' },
+      { title: '操作分层', meta: '把高频动作、次级动作和选择态动作分开。' },
     ],
   },
   {
@@ -694,6 +752,608 @@ const footerNotes = [
   'Designed for SRE, platform, and operations review conversations.',
 ];
 
+type WorkspaceTabKey = 'hosts' | 'services' | 'node';
+
+interface WorkspaceHostItem {
+  id: string;
+  ip: string;
+  hostname: string;
+  status: string;
+  os: string;
+}
+
+type WorkspaceNodeType = 'business' | 'idle' | 'set' | 'module';
+
+interface WorkspaceNodeItem {
+  id: string;
+  label: string;
+  type: WorkspaceNodeType;
+  badge: string;
+  depth: number;
+  hostCount?: number;
+  hosts: WorkspaceHostItem[];
+}
+
+interface WorkspaceBusinessItem {
+  id: string;
+  label: string;
+  displayId: string;
+  clusterCount: number;
+  moduleCount: number;
+  hostCount: number;
+  nodes: WorkspaceNodeItem[];
+}
+
+const topologyWorkspaceBusinesses: WorkspaceBusinessItem[] = [
+  {
+    id: 'biz-honkai-cn',
+    label: 'ProbeSetBiz',
+    displayId: '#1773163724333',
+    clusterCount: 3,
+    moduleCount: 5,
+    hostCount: 128,
+    nodes: [
+      {
+        id: 'business-root',
+        label: 'ProbeSetBiz',
+        type: 'business',
+        badge: '业务',
+        depth: 0,
+        hostCount: 128,
+        hosts: [],
+      },
+      {
+        id: 'idle-pool',
+        label: '空闲机池',
+        type: 'idle',
+        badge: '空闲',
+        depth: 1,
+        hostCount: 0,
+        hosts: [],
+      },
+      {
+        id: 'set-probeset',
+        label: 'ProbeSet-renamed',
+        type: 'set',
+        badge: '集群',
+        depth: 1,
+        hostCount: 8,
+        hosts: [],
+      },
+      {
+        id: 'module-smoke',
+        label: 'SmokeModule',
+        type: 'module',
+        badge: '模块',
+        depth: 2,
+        hostCount: 3,
+        hosts: [
+          {
+            id: 'smoke-node-01',
+            ip: '10.0.0.12',
+            hostname: 'smoke-node-01',
+            status: 'running',
+            os: 'CentOS 7.9',
+          },
+          {
+            id: 'smoke-node-02',
+            ip: '10.0.0.15',
+            hostname: 'smoke-node-02',
+            status: 'running',
+            os: 'CentOS 7.9',
+          },
+          {
+            id: 'smoke-node-03',
+            ip: '10.0.0.42',
+            hostname: 'smoke-node-03',
+            status: 'running',
+            os: 'Ubuntu 22.04',
+          },
+        ],
+      },
+      {
+        id: 'module-db',
+        label: 'DB-Cluster',
+        type: 'module',
+        badge: '模块',
+        depth: 2,
+        hostCount: 5,
+        hosts: [],
+      },
+    ],
+  },
+  {
+    id: 'biz-genshin-global',
+    label: '原神/全球发布',
+    displayId: '#2048123456789',
+    clusterCount: 2,
+    moduleCount: 4,
+    hostCount: 64,
+    nodes: [
+      {
+        id: 'business-root-gs',
+        label: '原神/全球发布',
+        type: 'business',
+        badge: '业务',
+        depth: 0,
+        hostCount: 64,
+        hosts: [],
+      },
+      {
+        id: 'set-release',
+        label: '发布系统',
+        type: 'set',
+        badge: '集群',
+        depth: 1,
+        hostCount: 4,
+        hosts: [],
+      },
+      {
+        id: 'node-release-cluster',
+        label: '发布集群',
+        type: 'module',
+        badge: '模块',
+        depth: 2,
+        hostCount: 3,
+        hosts: [
+          {
+            id: 'gs-release-01',
+            ip: '10.88.3.12',
+            hostname: 'gs-release-01',
+            status: 'warmup',
+            os: 'Ubuntu 24.04',
+          },
+          {
+            id: 'gs-release-02',
+            ip: '10.88.3.18',
+            hostname: 'gs-release-02',
+            status: 'running',
+            os: 'Ubuntu 24.04',
+          },
+          {
+            id: 'gs-release-03',
+            ip: '10.88.3.24',
+            hostname: 'gs-release-03',
+            status: 'running',
+            os: 'Debian 12',
+          },
+        ],
+      },
+      {
+        id: 'node-idle-pool',
+        label: '跨区缓冲池',
+        type: 'idle',
+        badge: '空闲',
+        depth: 1,
+        hostCount: 0,
+        hosts: [],
+      },
+    ],
+  },
+];
+
+const TopologyWorkspacePrototype: React.FC = () => {
+  const [businessMenuOpen, setBusinessMenuOpen] = useState(false);
+  const [businessSearch, setBusinessSearch] = useState('');
+  const [treeSearch, setTreeSearch] = useState('');
+  const [activeBusinessId, setActiveBusinessId] = useState(topologyWorkspaceBusinesses[0].id);
+  const [activeNodeId, setActiveNodeId] = useState('module-smoke');
+  const [activeTab, setActiveTab] = useState<WorkspaceTabKey>('hosts');
+  const [searchValue, setSearchValue] = useState('');
+  const [selectedHostIds, setSelectedHostIds] = useState<string[]>([]);
+
+  const currentBusiness =
+    topologyWorkspaceBusinesses.find((business) => business.id === activeBusinessId)
+    || topologyWorkspaceBusinesses[0];
+
+  const selectableNodes = currentBusiness.nodes.filter((node) => node.type !== 'business');
+
+  const currentNode =
+    currentBusiness.nodes.find((node) => node.id === activeNodeId) || selectableNodes[0];
+
+  const currentSetNode = [...currentBusiness.nodes]
+    .reverse()
+    .find((node) => node.type === 'set' && node.depth < currentNode.depth);
+
+  const visibleBusinesses = topologyWorkspaceBusinesses.filter((business) => {
+    const keyword = businessSearch.trim().toLowerCase();
+    if (!keyword) return true;
+    return [business.label, business.displayId].some((value) => value.toLowerCase().includes(keyword));
+  });
+
+  const visibleNodes = currentBusiness.nodes.filter((node) => {
+    const keyword = treeSearch.trim().toLowerCase();
+    if (!keyword) return true;
+    return node.label.toLowerCase().includes(keyword);
+  });
+
+  const filteredHosts = useMemo(() => {
+    const keyword = searchValue.trim().toLowerCase();
+    if (!keyword) {
+      return currentNode.hosts;
+    }
+
+    return currentNode.hosts.filter((host) =>
+      [host.hostname, host.ip, host.os].some((value) =>
+        value.toLowerCase().includes(keyword),
+      ),
+    );
+  }, [currentNode.hosts, searchValue]);
+
+  useEffect(() => {
+    setActiveNodeId(currentBusiness.nodes.find((node) => node.type === 'module')?.id || '');
+    setSelectedHostIds([]);
+    setSearchValue('');
+    setTreeSearch('');
+  }, [currentBusiness]);
+
+  useEffect(() => {
+    setSelectedHostIds([]);
+  }, [currentNode.id]);
+
+  const handleBusinessSwitch = (businessId: string) => {
+    setActiveBusinessId(businessId);
+    setBusinessMenuOpen(false);
+  };
+
+  const toggleHostSelection = (hostId: string, checked: boolean) => {
+    setSelectedHostIds((current) =>
+      checked ? [...current, hostId] : current.filter((id) => id !== hostId),
+    );
+  };
+
+  const allVisibleSelected =
+    filteredHosts.length > 0 && filteredHosts.every((host) => selectedHostIds.includes(host.id));
+
+  const selectionCount = selectedHostIds.length;
+  const hostCountLabel = currentNode.hostCount ?? currentNode.hosts.length;
+
+  const currentPath = [currentBusiness.label];
+  if (currentSetNode) {
+    currentPath.push(currentSetNode.label);
+  }
+  if (currentNode.type !== 'set') {
+    currentPath.push(currentNode.label);
+  }
+
+  const clearSelection = () => setSelectedHostIds([]);
+
+  const badgeClassName = (type: WorkspaceNodeType) => {
+    switch (type) {
+      case 'business':
+        return 'cmdb-topology-proto__node-badge cmdb-topology-proto__node-badge--business';
+      case 'set':
+        return 'cmdb-topology-proto__node-badge cmdb-topology-proto__node-badge--set';
+      case 'module':
+        return 'cmdb-topology-proto__node-badge cmdb-topology-proto__node-badge--module';
+      case 'idle':
+      default:
+        return 'cmdb-topology-proto__node-badge cmdb-topology-proto__node-badge--idle';
+    }
+  };
+
+  return (
+    <main className="cmdb-next__workspace cmdb-topology-proto" aria-label="业务拓扑工作台原型">
+      <section className="cmdb-topology-proto__intro">
+        <p className="cmdb-next__eyebrow">Operational Workspace Prototype</p>
+        <h2>把业务拓扑改造成真正的操作台。</h2>
+        <p>
+          参考 HTML 原型稿重构为三段式工作界面：左侧全局导航、业务拓扑导航面板、右侧节点工作区，并以浮动批量操作栏接住真实操作节奏。
+        </p>
+      </section>
+
+      <section className="cmdb-topology-proto__stage">
+        <aside className="cmdb-topology-proto__global-sidebar" aria-label="全局原型导航">
+          <div className="cmdb-topology-proto__global-brand">W</div>
+          <button type="button" className="cmdb-topology-proto__global-item" aria-label="首页">
+            <span>🏠</span>
+          </button>
+          <button
+            type="button"
+            className="cmdb-topology-proto__global-item cmdb-topology-proto__global-item--active"
+            aria-label="业务拓扑"
+          >
+            <span>🏢</span>
+          </button>
+          <button type="button" className="cmdb-topology-proto__global-item" aria-label="模型管理">
+            <span>🧩</span>
+          </button>
+          <button type="button" className="cmdb-topology-proto__global-item" aria-label="数据分析">
+            <span>📊</span>
+          </button>
+          <div className="cmdb-topology-proto__global-spacer" />
+          <button type="button" className="cmdb-topology-proto__global-item" aria-label="设置">
+            <span>⚙️</span>
+          </button>
+        </aside>
+
+        <aside className="cmdb-topology-proto__navigator" aria-label="业务拓扑导航面板">
+          <div className="cmdb-topology-proto__biz-header">
+            <button
+              type="button"
+              className="cmdb-topology-proto__biz-trigger"
+              onClick={() => setBusinessMenuOpen((open) => !open)}
+              aria-expanded={businessMenuOpen}
+              aria-haspopup="true"
+              aria-label="切换当前业务"
+            >
+              <span className="cmdb-topology-proto__biz-title">
+                <span>🏢 {currentBusiness.label}</span>
+                <span className="cmdb-topology-proto__biz-arrow">▼</span>
+              </span>
+              <span className="cmdb-topology-proto__biz-stats">
+                <span>{currentBusiness.clusterCount} 集群</span>
+                <span>{currentBusiness.moduleCount} 模块</span>
+                <span>{currentBusiness.hostCount} 主机</span>
+              </span>
+            </button>
+
+            {businessMenuOpen && (
+              <div className="cmdb-topology-proto__biz-dropdown">
+                <div className="cmdb-topology-proto__biz-dropdown-search">
+                  <input
+                    type="search"
+                    value={businessSearch}
+                    onChange={(event) => setBusinessSearch(event.target.value)}
+                    placeholder="搜索业务名称或 ID..."
+                    aria-label="搜索业务"
+                  />
+                </div>
+                <div className="cmdb-topology-proto__biz-dropdown-list">
+                  {visibleBusinesses.map((business) => (
+                    <button
+                      type="button"
+                      key={business.id}
+                      className={`cmdb-topology-proto__biz-dropdown-item${
+                        business.id === currentBusiness.id
+                          ? ' cmdb-topology-proto__biz-dropdown-item--active'
+                          : ''
+                      }`}
+                      onClick={() => handleBusinessSwitch(business.id)}
+                      aria-label={`切换到业务 ${business.label}`}
+                    >
+                      <span>{business.label}</span>
+                      <span>{business.displayId}</span>
+                    </button>
+                  ))}
+                </div>
+                <button type="button" className="cmdb-topology-proto__biz-create">
+                  ⊕ 新建业务项目
+                </button>
+              </div>
+            )}
+          </div>
+
+          <div className="cmdb-topology-proto__navigator-search">
+            <input
+              type="search"
+              value={treeSearch}
+              onChange={(event) => setTreeSearch(event.target.value)}
+              placeholder="搜索节点名称..."
+              aria-label="搜索拓扑节点"
+            />
+          </div>
+
+          <div className="cmdb-topology-proto__tree">
+            {visibleNodes.map((node) => (
+              <button
+                type="button"
+                key={node.id}
+                className={`cmdb-topology-proto__tree-node${
+                  node.id === currentNode.id ? ' cmdb-topology-proto__tree-node--active' : ''
+                }${node.type === 'business' ? ' cmdb-topology-proto__tree-node--root' : ''}`}
+                style={{ paddingLeft: `${24 + node.depth * 20}px` }}
+                onClick={() => {
+                  if (node.type !== 'business') {
+                    setActiveNodeId(node.id);
+                  }
+                }}
+                aria-label={`切换到节点 ${node.label}`}
+              >
+                <span className="cmdb-topology-proto__tree-expander">
+                  {node.type === 'module' ? '' : '▼'}
+                </span>
+                <span className={badgeClassName(node.type)}>{node.badge}</span>
+                <span className="cmdb-topology-proto__tree-label">{node.label}</span>
+                {typeof node.hostCount === 'number' && node.type === 'module' ? (
+                  <span className="cmdb-topology-proto__tree-count">{node.hostCount}</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <section className="cmdb-topology-proto__workspace">
+          <header className="cmdb-topology-proto__context-strip">
+            <div className="cmdb-topology-proto__context-title">
+              <span className={badgeClassName(currentNode.type)}>{currentNode.badge}</span>
+              <h3>{currentNode.label}</h3>
+            </div>
+            <div
+              className="cmdb-topology-proto__breadcrumb"
+              aria-label={`当前节点路径 ${currentPath.join(' / ')}`}
+            >
+              <span>当前节点路径</span>
+              {currentPath.map((segment) => (
+                <span key={segment}>{segment}</span>
+              ))}
+            </div>
+          </header>
+
+          <div className="cmdb-topology-proto__tab-toolbar">
+            <div className="cmdb-topology-proto__tabs" role="tablist" aria-label="节点工作区页签">
+              <button
+                type="button"
+                role="tab"
+                aria-label="主机列表"
+                aria-selected={activeTab === 'hosts'}
+                className={activeTab === 'hosts' ? 'is-active' : ''}
+                onClick={() => setActiveTab('hosts')}
+              >
+                主机列表 <span className="cmdb-topology-proto__tab-badge">{hostCountLabel}</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-label="服务实例"
+                aria-selected={activeTab === 'services'}
+                className={activeTab === 'services' ? 'is-active' : ''}
+                onClick={() => setActiveTab('services')}
+              >
+                服务实例 <span className="cmdb-topology-proto__tab-badge">0</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-label="节点信息"
+                aria-selected={activeTab === 'node'}
+                className={activeTab === 'node' ? 'is-active' : ''}
+                onClick={() => setActiveTab('node')}
+              >
+                节点信息
+              </button>
+            </div>
+
+            <div className="cmdb-topology-proto__toolbar-actions">
+              <input
+                type="search"
+                value={searchValue}
+                onChange={(event) => setSearchValue(event.target.value)}
+                placeholder="搜索 IP / 主机名..."
+                aria-label="搜索主机"
+              />
+              <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--primary">
+                ⊕ 新增主机
+              </button>
+            </div>
+          </div>
+
+          {activeTab === 'hosts' ? (
+            <div className="cmdb-topology-proto__table-container">
+              {filteredHosts.length > 0 ? (
+                <div className="cmdb-topology-proto__table-shell">
+                  <div className="cmdb-topology-proto__table" role="table" aria-label="主机工作台表格">
+                    <div className="cmdb-topology-proto__table-row cmdb-topology-proto__table-row--head">
+                      <div className="cmdb-topology-proto__cell cmdb-topology-proto__cell--check">
+                        <input
+                          type="checkbox"
+                          checked={allVisibleSelected}
+                          ref={(element) => {
+                            if (element) {
+                              element.indeterminate =
+                                selectedHostIds.length > 0 && !allVisibleSelected;
+                            }
+                          }}
+                          onChange={(event) =>
+                            setSelectedHostIds(
+                              event.target.checked ? filteredHosts.map((host) => host.id) : [],
+                            )
+                          }
+                          aria-label="选择当前结果中的所有主机"
+                        />
+                      </div>
+                      <div className="cmdb-topology-proto__cell">IP 地址</div>
+                      <div className="cmdb-topology-proto__cell">主机名</div>
+                      <div className="cmdb-topology-proto__cell">状态</div>
+                      <div className="cmdb-topology-proto__cell">操作系统</div>
+                      <div className="cmdb-topology-proto__cell">操作</div>
+                    </div>
+
+                    {filteredHosts.map((host) => (
+                      <div
+                        key={host.id}
+                        className={`cmdb-topology-proto__table-row${
+                          selectedHostIds.includes(host.id) ? ' cmdb-topology-proto__table-row--selected' : ''
+                        }`}
+                      >
+                        <div className="cmdb-topology-proto__cell cmdb-topology-proto__cell--check">
+                          <input
+                            type="checkbox"
+                            checked={selectedHostIds.includes(host.id)}
+                            onChange={(event) => toggleHostSelection(host.id, event.target.checked)}
+                            aria-label={`选择主机 ${host.hostname}`}
+                          />
+                        </div>
+                        <div className="cmdb-topology-proto__cell cmdb-topology-proto__mono">{host.ip}</div>
+                        <div className="cmdb-topology-proto__cell">{host.hostname}</div>
+                        <div className="cmdb-topology-proto__cell">
+                          <span className="cmdb-topology-proto__status">
+                            <span
+                              className={`cmdb-topology-proto__status-dot${
+                                host.status === 'running'
+                                  ? ' cmdb-topology-proto__status-dot--up'
+                                  : ' cmdb-topology-proto__status-dot--warmup'
+                              }`}
+                            />
+                            {host.status === 'running' ? '运行中' : '预热中'}
+                          </span>
+                        </div>
+                        <div className="cmdb-topology-proto__cell">{host.os}</div>
+                        <div className="cmdb-topology-proto__cell">
+                          <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text">
+                            详情
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="cmdb-topology-proto__pagination">
+                    <span>共 {filteredHosts.length} 条记录</span>
+                    <div>
+                      <span>1 / 1 页</span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="cmdb-topology-proto__empty-state">
+                  <p>当前节点下暂无主机</p>
+                  <strong>{currentNode.label}</strong>
+                  <span>可以从资源池转移主机到这里，或等待下一次业务扩容时批量挂载。</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="cmdb-topology-proto__placeholder">
+              <p>{activeTab === 'services' ? '服务实例视图' : '节点信息视图'}</p>
+              <strong>这两个页签在下一轮继续深化，这一版先聚焦主机工作流。</strong>
+            </div>
+          )}
+
+          {selectionCount > 0 ? (
+            <div className="cmdb-topology-proto__fab-wrapper cmdb-topology-proto__fab-wrapper--visible">
+              <div className="cmdb-topology-proto__fab">
+                <span className="cmdb-topology-proto__fab-count">已选择 {selectionCount} 项主机</span>
+                <span className="cmdb-topology-proto__fab-divider" />
+                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline">
+                  转移到...
+                </button>
+                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline">
+                  追加到目标
+                </button>
+                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--danger">
+                  从模块移除
+                </button>
+                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text">
+                  复制 IP
+                </button>
+                <button
+                  type="button"
+                  className="cmdb-topology-proto__fab-close"
+                  onClick={clearSelection}
+                  aria-label="取消选择"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+          ) : null}
+        </section>
+      </section>
+    </main>
+  );
+};
+
 const getSection = (sectionKey?: string): SectionDefinition =>
   sectionMap.get((sectionKey as SectionKey) || 'workbench') || sections[0];
 
@@ -754,155 +1414,162 @@ const CmdbNextPrototype: React.FC = () => {
         ))}
       </nav>
 
-      <main className="cmdb-next__workspace">
-        <section className="cmdb-next__hero">
-          <div className="cmdb-next__hero-copy">
-            <p className="cmdb-next__eyebrow">{currentSection.eyebrow}</p>
-            <h2>{currentSection.title}</h2>
-            <p>{currentSection.description}</p>
-          </div>
-
-          <div className="cmdb-next__hero-actions">
-            <button type="button" className="cmdb-next__primary-action">
-              {currentSection.primaryLabel}
-            </button>
-            <button type="button" className="cmdb-next__secondary-action">
-              {currentSection.secondaryLabel}
-            </button>
-          </div>
-        </section>
-
-        <section className="cmdb-next__metrics" aria-label="Section stats">
-          {currentSection.stats.map((stat) => (
-            <article key={stat.label} className="cmdb-next__metric">
-              <span>{stat.label}</span>
-              <strong>{stat.value}</strong>
-              <p>{stat.hint}</p>
-            </article>
-          ))}
-        </section>
-
-        <div className="cmdb-next__main-grid">
-          <aside className="cmdb-next__surface-rail">
-            <div className="cmdb-next__panel-head">
-              <h3>对象轨道</h3>
-              <span>当前页面的核心对象</span>
-            </div>
-            <div className="cmdb-next__surface-list">
-              {currentSection.surfaces.map((item) => (
-                <button
-                  type="button"
-                  key={item.id}
-                  className={`cmdb-next__surface-item${
-                    item.id === selectedSurface.id ? ' cmdb-next__surface-item--active' : ''
-                  }`}
-                  onClick={() => setActiveSurface(item.id)}
-                >
-                  <div>
-                    <strong>{item.label}</strong>
-                    <p>{item.meta}</p>
-                  </div>
-                  <span>{item.badge}</span>
-                </button>
-              ))}
+      {currentSection.key === 'topology-workspace' ? (
+        <TopologyWorkspacePrototype />
+      ) : (
+        <main className="cmdb-next__workspace">
+          <section className="cmdb-next__hero">
+            <div className="cmdb-next__hero-copy">
+              <p className="cmdb-next__eyebrow">{currentSection.eyebrow}</p>
+              <h2>{currentSection.title}</h2>
+              <p>{currentSection.description}</p>
             </div>
 
-            <div className="cmdb-next__surface-summary">
-              <p className="cmdb-next__surface-summary-label">当前对象说明</p>
-              <p>{selectedSurface.summary}</p>
-            </div>
-          </aside>
-
-          <section className="cmdb-next__focus-stage">
-            <div className="cmdb-next__panel-head">
-              <h3>主操作台</h3>
-              <span>用同一张界面承接浏览、判断与动作</span>
-            </div>
-
-            <div className="cmdb-next__perspectives">
-              {currentSection.perspectives.map((perspective) => (
-                <button
-                  type="button"
-                  key={perspective.key}
-                  className={`cmdb-next__perspective${
-                    perspective.key === selectedPerspective.key
-                      ? ' cmdb-next__perspective--active'
-                      : ''
-                  }`}
-                  onClick={() => setActivePerspective(perspective.key)}
-                >
-                  {perspective.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="cmdb-next__focus-story">
-              <div className="cmdb-next__focus-intro">
-                <p className="cmdb-next__focus-tag">{selectedSurface.badge}</p>
-                <h3>{selectedPerspective.headline}</h3>
-                <p>{selectedPerspective.summary}</p>
-                <div className="cmdb-next__callout">{selectedPerspective.callout}</div>
-              </div>
-
-              <div className="cmdb-next__evidence-grid">
-                <div className="cmdb-next__evidence-card">
-                  <div className="cmdb-next__panel-head">
-                    <h4>{selectedPerspective.evidenceTitle}</h4>
-                    <span>{selectedSurface.label}</span>
-                  </div>
-                  <div className="cmdb-next__evidence-rows">
-                    {selectedPerspective.evidenceRows.map(([label, value]) => (
-                      <div key={label} className="cmdb-next__evidence-row">
-                        <span>{label}</span>
-                        <strong>{value}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="cmdb-next__timeline-card">
-                  <div className="cmdb-next__panel-head">
-                    <h4>交互节奏</h4>
-                    <span>用户在这一页如何工作</span>
-                  </div>
-                  <ol className="cmdb-next__timeline">
-                    {selectedPerspective.timeline.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ol>
-                </div>
-              </div>
+            <div className="cmdb-next__hero-actions">
+              <button type="button" className="cmdb-next__primary-action">
+                {currentSection.primaryLabel}
+              </button>
+              <button type="button" className="cmdb-next__secondary-action">
+                {currentSection.secondaryLabel}
+              </button>
             </div>
           </section>
 
-          <aside className="cmdb-next__operator-rail">
-            <div className="cmdb-next__panel-head">
-              <h3>操作与说明</h3>
-              <span>更像真实产品评审稿，而不是线框图</span>
-            </div>
+          <section className="cmdb-next__metrics" aria-label="Section stats">
+            {currentSection.stats.map((stat) => (
+              <article key={stat.label} className="cmdb-next__metric">
+                <span>{stat.label}</span>
+                <strong>{stat.value}</strong>
+                <p>{stat.hint}</p>
+              </article>
+            ))}
+          </section>
 
-            <div className="cmdb-next__operator-block">
-              <p className="cmdb-next__operator-label">Command deck</p>
-              {currentSection.commandDeck.map((item) => (
-                <div key={item.title} className="cmdb-next__operator-item">
-                  <strong>{item.title}</strong>
-                  <p>{item.meta}</p>
-                </div>
-              ))}
-            </div>
+          <div className="cmdb-next__main-grid">
+            <aside className="cmdb-next__surface-rail">
+              <div className="cmdb-next__panel-head">
+                <h3>对象轨道</h3>
+                <span>当前页面的核心对象</span>
+              </div>
+              <div className="cmdb-next__surface-list">
+                {currentSection.surfaces.map((item) => (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={`cmdb-next__surface-item${
+                      item.id === selectedSurface.id ? ' cmdb-next__surface-item--active' : ''
+                    }`}
+                    onClick={() => setActiveSurface(item.id)}
+                  >
+                    <div>
+                      <strong>{item.label}</strong>
+                      <p>{item.meta}</p>
+                    </div>
+                    <span>{item.badge}</span>
+                  </button>
+                ))}
+              </div>
 
-            <div className="cmdb-next__operator-block">
-              <p className="cmdb-next__operator-label">设计原则</p>
-              {currentSection.designNotes.map((item) => (
-                <div key={item.title} className="cmdb-next__operator-item cmdb-next__operator-item--soft">
-                  <strong>{item.title}</strong>
-                  <p>{item.meta}</p>
+              <div className="cmdb-next__surface-summary">
+                <p className="cmdb-next__surface-summary-label">当前对象说明</p>
+                <p>{selectedSurface.summary}</p>
+              </div>
+            </aside>
+
+            <section className="cmdb-next__focus-stage">
+              <div className="cmdb-next__panel-head">
+                <h3>主操作台</h3>
+                <span>用同一张界面承接浏览、判断与动作</span>
+              </div>
+
+              <div className="cmdb-next__perspectives">
+                {currentSection.perspectives.map((perspective) => (
+                  <button
+                    type="button"
+                    key={perspective.key}
+                    className={`cmdb-next__perspective${
+                      perspective.key === selectedPerspective.key
+                        ? ' cmdb-next__perspective--active'
+                        : ''
+                    }`}
+                    onClick={() => setActivePerspective(perspective.key)}
+                  >
+                    {perspective.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="cmdb-next__focus-story">
+                <div className="cmdb-next__focus-intro">
+                  <p className="cmdb-next__focus-tag">{selectedSurface.badge}</p>
+                  <h3>{selectedPerspective.headline}</h3>
+                  <p>{selectedPerspective.summary}</p>
+                  <div className="cmdb-next__callout">{selectedPerspective.callout}</div>
                 </div>
-              ))}
-            </div>
-          </aside>
-        </div>
-      </main>
+
+                <div className="cmdb-next__evidence-grid">
+                  <div className="cmdb-next__evidence-card">
+                    <div className="cmdb-next__panel-head">
+                      <h4>{selectedPerspective.evidenceTitle}</h4>
+                      <span>{selectedSurface.label}</span>
+                    </div>
+                    <div className="cmdb-next__evidence-rows">
+                      {selectedPerspective.evidenceRows.map(([label, value]) => (
+                        <div key={label} className="cmdb-next__evidence-row">
+                          <span>{label}</span>
+                          <strong>{value}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="cmdb-next__timeline-card">
+                    <div className="cmdb-next__panel-head">
+                      <h4>交互节奏</h4>
+                      <span>用户在这一页如何工作</span>
+                    </div>
+                    <ol className="cmdb-next__timeline">
+                      {selectedPerspective.timeline.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <aside className="cmdb-next__operator-rail">
+              <div className="cmdb-next__panel-head">
+                <h3>操作与说明</h3>
+                <span>更像真实产品评审稿，而不是线框图</span>
+              </div>
+
+              <div className="cmdb-next__operator-block">
+                <p className="cmdb-next__operator-label">Command deck</p>
+                {currentSection.commandDeck.map((item) => (
+                  <div key={item.title} className="cmdb-next__operator-item">
+                    <strong>{item.title}</strong>
+                    <p>{item.meta}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="cmdb-next__operator-block">
+                <p className="cmdb-next__operator-label">设计原则</p>
+                {currentSection.designNotes.map((item) => (
+                  <div
+                    key={item.title}
+                    className="cmdb-next__operator-item cmdb-next__operator-item--soft"
+                  >
+                    <strong>{item.title}</strong>
+                    <p>{item.meta}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </main>
+      )}
 
       <footer className="cmdb-next__footer">
         {footerNotes.map((note) => (

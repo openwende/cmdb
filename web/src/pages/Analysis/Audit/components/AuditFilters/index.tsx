@@ -54,7 +54,7 @@ const AuditFilters: React.FC<AuditFiltersProps> = ({ onSearch, loading, children
         labelAlign="right"
         colon={false}
       >
-        <Row gutter={280}>
+        <Row gutter={[16, 8]}>
           {/* Form items */}
           {children.map((child, index) => {
             const isLastChild = index === children.length - 1;

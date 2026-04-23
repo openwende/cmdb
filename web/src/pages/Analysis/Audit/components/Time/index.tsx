@@ -5,18 +5,19 @@ import dayjs from 'dayjs';
 
 const TimeFilter: React.FC = () => {
   const { t } = useTranslation();
-  // Default to today's date range
-  const today = dayjs();
-  const defaultValue: [any, any] = [today, today];
+  // Default to last 30 days — more useful for audit queries
+  const defaultValue: [any, any] = [dayjs().subtract(30, 'day'), dayjs()];
 
   return (
     <Form.Item
       name="timeRange"
       label={t('analysis.audit.filters.time')}
       initialValue={defaultValue}
+      style={{ minWidth: 0 }}
     >
       <DatePicker.RangePicker
-        style={{ width: '100%' }}
+        style={{ width: '100%', minWidth: 240 }}
+        format="YYYY-MM-DD"
         placeholder={[
           t('analysis.audit.placeholders.selectStartDate'),
           t('analysis.audit.placeholders.selectEndDate'),
