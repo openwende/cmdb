@@ -2,12 +2,14 @@ package business
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // MockBusinessRepository for testing
@@ -165,7 +167,7 @@ func TestLifecycleLogic(t *testing.T) {
 
 		_, err := service.UpdateBusiness(context.Background(), tn, id, req)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "invalid lifecycle value")
+		assert.True(t, errors.Is(err, apperrors.ErrInvalidInput))
 	})
 }
 
@@ -207,7 +209,7 @@ func TestDeleteBusiness(t *testing.T) {
 
 		err := service.DeleteBusiness(context.Background(), tn, id)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "只能删除归档")
+		assert.True(t, errors.Is(err, apperrors.ErrInvalidState))
 		assert.Contains(t, err.Error(), "online")
 	})
 
@@ -226,7 +228,7 @@ func TestDeleteBusiness(t *testing.T) {
 
 		err := service.DeleteBusiness(context.Background(), tn, id)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "只能删除归档")
+		assert.True(t, errors.Is(err, apperrors.ErrInvalidState))
 		assert.Contains(t, err.Error(), "testing")
 	})
 
@@ -235,9 +237,10 @@ func TestDeleteBusiness(t *testing.T) {
 		tn := "00000000-0000-0000-0000-000000000001"
 
 		mockRepo.ExpectedCalls = nil
-		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(nil, assert.AnError)
+		mockRepo.On("GetBusinessByID", mock.Anything, tn, id).Return(nil, apperrors.NotFoundError("business", id))
 
 		err := service.DeleteBusiness(context.Background(), tn, id)
 		assert.Error(t, err)
+		assert.True(t, errors.Is(err, apperrors.ErrNotFound))
 	})
 }

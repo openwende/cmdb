@@ -3,11 +3,13 @@ package business
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 
 	"github.com/google/uuid"
 )
@@ -134,31 +136,31 @@ func (s *service) GetBusiness(ctx context.Context, tenantID, id string) (*types.
 		return nil, err
 	}
 	if err := s.populatePersonnel(ctx, business); err != nil {
-		return nil, fmt.Errorf("failed to populate personnel: %w", err)
+		return nil, apperrors.InternalError("populate personnel", err)
 	}
 	return business, nil
 }
 
 func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *types.UpdateBusinessRequest) (*types.Business, error) {
-	// 首先获取现有业务
+	// First, get the existing business
 	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// 检查标识符是否已存在（如果要更新标识符）
+	// Check identifier uniqueness if updating
 	if req.Identifier != nil && *req.Identifier != business.Identifier {
 		exists, err := s.businessRepo.CheckIdentifierExists(ctx, tenantID, *req.Identifier, id)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check identifier: %w", err)
+			return nil, apperrors.InternalError("check identifier", err)
 		}
 		if exists {
-			return nil, fmt.Errorf("business with identifier '%s' already exists", *req.Identifier)
+			return nil, apperrors.AlreadyExistsError("business", *req.Identifier)
 		}
 		business.Identifier = *req.Identifier
 	}
 
-	// 更新字段
+	// Update fields
 	business.UpdatedAt = time.Now()
 	if req.Name != nil {
 		business.Name = *req.Name
@@ -171,7 +173,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 		case types.BusinessLifecycleTesting, types.BusinessLifecycleOnline, types.BusinessLifecycleOffline:
 			business.Lifecycle = *req.Lifecycle
 		default:
-			return nil, fmt.Errorf("invalid lifecycle value: %s", *req.Lifecycle)
+			return nil, apperrors.InvalidInputError("lifecycle", fmt.Sprintf("invalid value: %s", *req.Lifecycle))
 		}
 	}
 	if req.Timezone != nil {
@@ -194,15 +196,15 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 }
 
 func (s *service) DeleteBusiness(ctx context.Context, tenantID, id string) error {
-	// 首先获取业务信息以检查其生命周期状态
+	// Get business to check lifecycle status
 	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
 	if err != nil {
 		return err
 	}
 
-	// 只允许删除归档（offline）状态的业务
+	// Only allow deletion of archived (offline) businesses
 	if business.Lifecycle != types.BusinessLifecycleOffline {
-		return fmt.Errorf("只能删除归档（offline）状态的业务，当前业务状态为: %s", business.Lifecycle)
+		return apperrors.InvalidStateError("business", business.Lifecycle, "offline")
 	}
 
 	return s.businessRepo.DeleteBusiness(ctx, tenantID, id)
@@ -214,7 +216,7 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 		return nil, 0, err
 	}
 
-	// 使用批量查询解决 N+1 问题：1次查询代替 N 次
+	// Use batch query to solve N+1 problem: 1 query instead of N
 	if s.personnelRepo != nil && len(businesses) > 0 {
 		businessIDs := make([]uuid.UUID, len(businesses))
 		for i, b := range businesses {
@@ -223,7 +225,7 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 
 		allPersonnel, err := s.personnelRepo.ListByBusinessIDs(ctx, businessIDs)
 		if err != nil {
-			fmt.Printf("ERROR batch fetching personnel: %v\n", err)
+			log.Printf("ERROR batch fetching personnel: %v\n", err)
 		} else {
 			s.populatePersonnelBatch(businesses, allPersonnel)
 		}
@@ -231,15 +233,15 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 	return businesses, total, nil
 }
 
-// populatePersonnelBatch 批量填充人员信息到业务列表
+// populatePersonnelBatch batch populates personnel information into business list
 func (s *service) populatePersonnelBatch(businesses []types.Business, allPersonnel []types.BusinessPersonnel) {
-	// 按 businessID 分组人员
+	// Group personnel by businessID
 	personnelByBusiness := make(map[uuid.UUID][]types.BusinessPersonnel)
 	for _, p := range allPersonnel {
 		personnelByBusiness[p.BusinessID] = append(personnelByBusiness[p.BusinessID], p)
 	}
 
-	// 填充到对应的业务
+	// Populate to corresponding business
 	for i := range businesses {
 		personnel := personnelByBusiness[businesses[i].ID]
 		for _, p := range personnel {
@@ -257,7 +259,7 @@ func (s *service) populatePersonnelBatch(businesses []types.Business, allPersonn
 	}
 }
 
-// populatePersonnel 单个业务填充人员（用于 GetBusiness 等单条查询场景）
+// populatePersonnel populates personnel for a single business (used for GetBusiness and other single query scenarios)
 func (s *service) populatePersonnel(ctx context.Context, b *types.Business) error {
 	if s.personnelRepo == nil {
 		return nil
@@ -314,7 +316,7 @@ func (s *service) CreateBusinessSet(ctx context.Context, req *types.CreateBusine
 	// Using default tenant for MVP
 	tenantID := "00000000-0000-0000-0000-000000000001"
 	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID.String()); err != nil {
-		return nil, fmt.Errorf("related business not found: %w", err)
+		return nil, err
 	}
 
 	// Link the business set to the business within a transaction
@@ -351,10 +353,10 @@ func (s *service) UpdateBusinessSet(ctx context.Context, tenantID, id string, re
 	if req.Identifier != nil && *req.Identifier != businessSet.Identifier {
 		exists, err := s.businessSetRepo.CheckIdentifierExists(ctx, tenantID, *req.Identifier, id)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check identifier: %w", err)
+			return nil, apperrors.InternalError("check identifier", err)
 		}
 		if exists {
-			return nil, fmt.Errorf("business set with identifier '%s' already exists", *req.Identifier)
+			return nil, apperrors.AlreadyExistsError("business set", *req.Identifier)
 		}
 		businessSet.Identifier = *req.Identifier
 	}
@@ -390,7 +392,7 @@ func (s *service) AddBusinessToSet(ctx context.Context, businessSetID uuid.UUID,
 	// Verify the business exists
 	tenantID := "00000000-0000-0000-0000-000000000001"
 	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID.String()); err != nil {
-		return fmt.Errorf("business not found: %w", err)
+		return err
 	}
 
 	member := &types.BusinessSetMember{
