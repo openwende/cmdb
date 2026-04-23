@@ -41,6 +41,9 @@ func main() {
 	defer func() { _ = db.Close() }()
 
 	if os.Getenv("ENABLE_COMPAT_AUTOMIGRATE") == "true" {
+		if err := storage.MigrateRuntimeAuthSupportTables(db.DB()); err != nil {
+			log.Fatalf("Failed to run runtime auth migrations: %v", err)
+		}
 		if err := storage.MigrateRuntimeSupportTables(db.DB()); err != nil {
 			log.Fatalf("Failed to run runtime support migrations: %v", err)
 		}

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/spf13/viper"
 )
 
@@ -61,30 +62,30 @@ type DatabaseConfig struct {
 
 // AuthConfig represents authentication configuration
 type AuthConfig struct {
-	JWT          JWTConfig      `yaml:"jwt"`
-	PasswordHash PasswordConfig `yaml:"password"`
-	Session      SessionConfig  `yaml:"session"`
+	JWT          JWTConfig      `yaml:"jwt" mapstructure:"jwt"`
+	PasswordHash PasswordConfig `yaml:"password" mapstructure:"password"`
+	Session      SessionConfig  `yaml:"session" mapstructure:"session"`
 }
 
 // JWTConfig represents JWT configuration
 type JWTConfig struct {
-	Secret              string        `yaml:"secret" env:"JWT_SECRET"`
-	Issuer              string        `yaml:"issuer" env:"JWT_ISSUER"`
-	AccessTokenExpiry   time.Duration `yaml:"access_token_expiry" env:"JWT_ACCESS_TOKEN_EXPIRY"`
-	RefreshTokenExpiry  time.Duration `yaml:"refresh_token_expiry" env:"JWT_REFRESH_TOKEN_EXPIRY"`
-	RefreshTokenEnabled bool          `yaml:"refresh_token_enabled" env:"JWT_REFRESH_TOKEN_ENABLED"`
+	Secret              string        `yaml:"secret" mapstructure:"secret" env:"JWT_SECRET"`
+	Issuer              string        `yaml:"issuer" mapstructure:"issuer" env:"JWT_ISSUER"`
+	AccessTokenExpiry   time.Duration `yaml:"access_token_expiry" mapstructure:"access_token_expiry" env:"JWT_ACCESS_TOKEN_EXPIRY"`
+	RefreshTokenExpiry  time.Duration `yaml:"refresh_token_expiry" mapstructure:"refresh_token_expiry" env:"JWT_REFRESH_TOKEN_EXPIRY"`
+	RefreshTokenEnabled bool          `yaml:"refresh_token_enabled" mapstructure:"refresh_token_enabled" env:"JWT_REFRESH_TOKEN_ENABLED"`
 }
 
 // PasswordConfig represents password hashing configuration
 type PasswordConfig struct {
-	Algorithm string `yaml:"algorithm" env:"PASSWORD_ALGORITHM"` // bcrypt, argon2id
-	Cost      int    `yaml:"cost" env:"PASSWORD_COST"`           // bcrypt cost or argon2id iterations
+	Algorithm string `yaml:"algorithm" mapstructure:"algorithm" env:"PASSWORD_ALGORITHM"` // bcrypt, argon2id
+	Cost      int    `yaml:"cost" mapstructure:"cost" env:"PASSWORD_COST"`                // bcrypt cost or argon2id iterations
 }
 
 // SessionConfig represents session configuration
 type SessionConfig struct {
-	Timeout     time.Duration `yaml:"timeout" env:"SESSION_TIMEOUT"`
-	MaxSessions int           `yaml:"max_sessions" env:"SESSION_MAX_SESSIONS"`
+	Timeout     time.Duration `yaml:"timeout" mapstructure:"timeout" env:"SESSION_TIMEOUT"`
+	MaxSessions int           `yaml:"max_sessions" mapstructure:"max_sessions" env:"SESSION_MAX_SESSIONS"`
 }
 
 // LogConfig represents logging configuration
@@ -130,7 +131,11 @@ func Load(configPath string) (*Config, error) {
 
 	// Unmarshal config
 	var config Config
-	if err := v.Unmarshal(&config); err != nil {
+	if err := v.Unmarshal(&config, func(cfg *mapstructure.DecoderConfig) {
+		cfg.DecodeHook = mapstructure.ComposeDecodeHookFunc(
+			mapstructure.StringToTimeDurationHookFunc(),
+		)
+	}); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 

@@ -7,6 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/wend/cmdb-backend/internal/api/handlers"
+	authn "github.com/wend/cmdb-backend/internal/auth"
+	authcore "github.com/wend/cmdb-backend/internal/core/auth"
 	"github.com/wend/cmdb-backend/internal/core/business"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/core/instance"
@@ -22,6 +24,7 @@ type Server struct {
 	businessHandler *handlers.BusinessHandler
 	modelHandler    *handlers.ModelHandler
 	instanceHandler *handlers.InstanceHandler
+	authHandler     *handlers.AuthHandler
 }
 
 func NewServer(
@@ -41,6 +44,10 @@ func NewServer(
 	businessHandler := handlers.NewBusinessHandler(businessService)
 	modelHandler := handlers.NewModelHandler(modelService)
 	instanceHandler := handlers.NewInstanceHandler(instanceService)
+	authRepo := storage.NewAuthRepository(db.DB())
+	jwtManager := authn.NewJWTManager(cfg.Auth.JWT)
+	authService := authcore.NewService(authRepo, jwtManager)
+	authHandler := handlers.NewAuthHandler(authService, jwtManager)
 
 	s := &Server{
 		config:          cfg,
@@ -48,6 +55,7 @@ func NewServer(
 		businessHandler: businessHandler,
 		modelHandler:    modelHandler,
 		instanceHandler: instanceHandler,
+		authHandler:     authHandler,
 	}
 
 	s.setupRoutes(db) // Pass db connection for health check
@@ -72,6 +80,9 @@ func (s *Server) setupRoutes(db *storage.Database) {
 		c.Next()
 	})
 
+	authMiddleware := authn.NewMiddleware(authn.NewJWTManager(s.config.Auth.JWT))
+	s.router.Use(authMiddleware.ProtectAPI())
+
 	// Health check
 	s.router.GET("/health", func(c *gin.Context) {
 		dbStatus := "Connected"
@@ -92,6 +103,12 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// API v1
 	v1 := s.router.Group("/api/v1")
 	{
+		authAPI := v1.Group("/auth")
+		{
+			authAPI.POST("/login", s.authHandler.Login)
+			authAPI.GET("/me", s.authHandler.Me)
+		}
+
 		// Business Domains
 		businessAPI := v1.Group("/businesses")
 		{
