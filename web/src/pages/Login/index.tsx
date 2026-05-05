@@ -39,9 +39,11 @@ const LoginPage: React.FC = () => {
       await login(values.username, values.password);
       navigate(redirectTarget, { replace: true });
     } catch (error: any) {
-      const message =
-        error?.response?.data?.error || t('auth.login.messages.invalidCredentials');
-      setErrorMessage(message);
+      // Always use i18n for auth errors; backend error strings are not localized
+      const status = error?.response?.status;
+      const errorKey =
+        status === 401 ? 'auth.login.messages.invalidCredentials' : 'common.errors.requestFailed';
+      setErrorMessage(t(errorKey));
     }
   };
 
@@ -52,10 +54,9 @@ const LoginPage: React.FC = () => {
           <span className="login-page__eyebrow">{t('common.layout.platformName')}</span>
           <Typography.Title level={1}>{t('auth.login.title')}</Typography.Title>
           <Typography.Paragraph>{t('auth.login.subtitle')}</Typography.Paragraph>
-          <div className="login-page__hint">{t('auth.login.defaultAccount')}</div>
         </div>
 
-        <Card className="login-page__card" bordered={false}>
+        <Card className="login-page__card" variant="borderless">
           <Form layout="vertical" onFinish={handleFinish} autoComplete="off">
             <Form.Item
               label={t('auth.login.fields.username')}

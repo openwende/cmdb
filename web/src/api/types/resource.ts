@@ -54,8 +54,7 @@ export interface UpdateBusinessRequest {
  * 业务详情（展示层类型，包含响应字段）
  */
 export interface BusinessDetail {
-  id: string;
-  business_id?: number;
+  id: number;
   name: string;
   language: string;
   lifecycle?: 'testing' | 'online' | 'offline';

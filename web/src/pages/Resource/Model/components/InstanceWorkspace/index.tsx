@@ -371,16 +371,17 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     {
       title: t('resource.model.columns.actions'),
       key: 'actions',
-      width: 260,
+      fixed: 'right',
+      width: 240,
       render: (_value, record) => (
         <Space size="small" wrap>
-          <Button type="link" onClick={() => openInstanceDrawer(record, 'detail')}>
+          <Button type="link" size="small" onClick={() => openInstanceDrawer(record, 'detail')}>
             {t('resource.model.actions.viewInstanceDetail')}
           </Button>
-          <Button type="link" onClick={() => openInstanceDrawer(record, 'relations')}>
+          <Button type="link" size="small" onClick={() => openInstanceDrawer(record, 'relations')}>
             {t('resource.model.actions.viewInstanceRelations')}
           </Button>
-          <Button type="link" onClick={() => openInstanceDrawer(record, 'history')}>
+          <Button type="link" size="small" onClick={() => openInstanceDrawer(record, 'history')}>
             {t('resource.model.actions.viewInstanceHistory')}
           </Button>
         </Space>
@@ -566,7 +567,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
         rowKey="instance_key"
         loading={loading}
         pagination={false}
-        scroll={{ x: 1280 }}
+        scroll={{ x: 1200 }}
         dataSource={instances}
         columns={instanceColumns}
         expandable={{

@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Spin } from 'antd';
 import { Navigate } from 'react-router-dom';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
   NavigationItem,
   PrimaryNavKey,
@@ -10,6 +11,7 @@ import {
   ModelKey,
   ResourceKey,
   AnalysisKey,
+  AdminKey,
 } from './Types';
 import {
   AppstoreOutlined,
@@ -21,6 +23,7 @@ import {
   UnorderedListOutlined,
   GroupOutlined,
   NodeIndexOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 
 // Lazy load all page components
@@ -61,6 +64,7 @@ const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHisto
 const AnalysisPage = lazy(() => import('../pages/Analysis'));
 const AuditLogs = lazy(() => import('../pages/Analysis/Audit'));
 const Statistics = lazy(() => import('../pages/Analysis/Statistics'));
+const UserManagementPage = lazy(() => import('../pages/Admin/Users'));
 const NotFoundPage = lazy(() => import('../pages/NotFound'));
 
 // Wrap lazy-loaded components with Suspense and ErrorBoundary
@@ -96,12 +100,20 @@ export const routes: NavigationItem[] = [
     key: PrimaryNavKey.Home,
     path: '/',
     element: withSuspense(HomePage),
+    hideInMenu: true,
   },
   {
     name: 'routes.business',
     key: PrimaryNavKey.Business,
     path: '/business',
     element: withSuspense(BusinessEntryRedirect),
+  },
+  // Redirect legacy /topology to business entry (auto-redirects to first business)
+  {
+    key: 'topologyRedirect',
+    path: '/topology',
+    element: <Navigate to="/business" replace />,
+    hideInMenu: true,
   },
   {
     name: 'routes.business',
@@ -322,6 +334,12 @@ export const routes: NavigationItem[] = [
     element: withSuspense(AnalysisPage),
     children: [
       {
+        key: 'analysisIndex',
+        element: <Navigate to="audit" replace />,
+        index: true,
+        hideInMenu: true,
+      },
+      {
         name: 'routes.auditLogs',
         key: AnalysisKey.Audit,
         path: 'audit',
@@ -334,6 +352,28 @@ export const routes: NavigationItem[] = [
         path: 'statistics',
         element: withSuspense(Statistics),
         icon: <BarChartOutlined />,
+      },
+    ],
+  },
+  {
+    name: 'routes.userManagement',
+    key: PrimaryNavKey.AdminUsers,
+    path: '/admin',
+    icon: <TeamOutlined />,
+    element: <ProtectedRoute requiredRoles={['admin']} />,
+    children: [
+      {
+        key: 'adminIndex',
+        element: <Navigate to="users" replace />,
+        index: true,
+        hideInMenu: true,
+      },
+      {
+        name: 'routes.userList',
+        key: AdminKey.Users,
+        path: 'users',
+        element: withSuspense(UserManagementPage),
+        icon: <TeamOutlined />,
       },
     ],
   },

@@ -3,9 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Home from '@/pages/Home';
 
-const { mockNavigate, listModels } = vi.hoisted(() => ({
+const { mockNavigate, listModels, getBusinessList } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   listModels: vi.fn(async () => []),
+  getBusinessList: vi.fn(async () => ({
+    data: {
+      total: 0,
+    },
+  })),
 }));
 
 vi.mock('react-i18next', () => ({
@@ -16,6 +21,8 @@ vi.mock('react-i18next', () => ({
           'dashboard.stats.pending': '待接入',
           'dashboard.workspace.pendingSummary': '主机、业务、实例统计将随着资源图接入逐步开放。',
           'dashboard.workspace.primaryCta': '进入业务拓扑',
+          'dashboard.workspace.primaryCtaNoBusiness': '创建/选择业务',
+          'dashboard.workspace.primaryDescNoBusiness': '当前还没有业务，先进入业务列表创建或选择业务。',
           'dashboard.workspace.secondary.resources': '进入资源目录',
           'dashboard.workspace.secondary.models': '进入模型管理',
         } as Record<string, string>
@@ -29,6 +36,7 @@ vi.mock('react-router-dom', () => ({
 
 vi.mock('@/api', () => ({
   listModels,
+  getBusinessList,
 }));
 
 vi.mock('antd', () => ({
@@ -46,12 +54,23 @@ vi.mock('antd', () => ({
       {children}
     </button>
   ),
-  Skeleton: () => <div>loading</div>,
+  Skeleton: Object.assign(() => <div>loading</div>, {
+    Input: () => <div>loading-input</div>,
+  }),
+  Statistic: ({ value, suffix }: { value: number; suffix?: string }) => (
+    <span>
+      {value}
+      {suffix}
+    </span>
+  ),
 }));
 
 vi.mock('@ant-design/icons', () => ({
   ApartmentOutlined: () => <span>apartment</span>,
   CloudServerOutlined: () => <span>cloud</span>,
+  ClusterOutlined: () => <span>cluster</span>,
+  AuditOutlined: () => <span>audit</span>,
+  CheckCircleOutlined: () => <span>check</span>,
   AppstoreOutlined: () => <span>appstore</span>,
   DatabaseOutlined: () => <span>database</span>,
   PlusOutlined: () => <span>plus</span>,
@@ -87,7 +106,7 @@ describe('home dashboard copy', () => {
       expect(listModels).toHaveBeenCalled();
     });
 
-    expect(screen.getByText('进入业务拓扑')).toBeInTheDocument();
+    expect(screen.getByText('创建/选择业务')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '进入资源目录' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '进入模型管理' })).toBeInTheDocument();
     expect(screen.queryByText('dashboard.quickActions.title')).not.toBeInTheDocument();

@@ -81,7 +81,7 @@ const getObjName = (
 
 /**
  * 生成前端需要的节点 key
- * 格式: "biz-uuid" 或 "set-123" 或 "module-456"
+ * 格式: "biz-1001" 或 "set-123" 或 "module-456"
  */
 const generateNodeKey = (node: BackendTopologyNode): string => {
   return `${normalizeBackendNodeType(node)}-${node.node_id}`;
@@ -153,7 +153,7 @@ export const parseNodeKey = (key: string): { type: string; id: string } => {
   }
 
   const type = parts[0];
-  const id = parts.slice(1).join('-'); // 处理 UUID 中可能包含的 "-"
+  const id = parts[1];
 
   return { type, id };
 };

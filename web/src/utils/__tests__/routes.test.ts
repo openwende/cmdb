@@ -138,9 +138,9 @@ describe('Route Utilities', () => {
     });
 
     it('should parse business UUID path correctly', () => {
-      const result = parseBusinessInfoFromUrl('/business/9f4923a0-f02f-454c-a097-c8074c892cbf/topology');
+      const result = parseBusinessInfoFromUrl('/business/1001/topology');
       expect(result).toEqual({
-        id: '9f4923a0-f02f-454c-a097-c8074c892cbf',
+        id: 1001,
         type: BusinessType.Business,
       });
     });
@@ -178,8 +178,8 @@ describe('Route Utilities', () => {
     });
 
     it('should keep UUID business IDs intact', () => {
-      const id = getBusinessIdFromUrl('/business/9f4923a0-f02f-454c-a097-c8074c892cbf/topology');
-      expect(id).toBe('9f4923a0-f02f-454c-a097-c8074c892cbf');
+      const id = getBusinessIdFromUrl('/business/1001/topology');
+      expect(id).toBe(1001);
     });
   });
 });

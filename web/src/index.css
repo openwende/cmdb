@@ -28,15 +28,15 @@
   --color-border: #e2e8f0;
   --color-border-secondary: #f1f5f9;
   --color-text-primary: #0f172a;
-  --color-text-secondary: #475569;
-  --color-text-tertiary: #94a3b8;
-  --color-text-quaternary: #cbd5e1;
+  --color-text-secondary: #334155;
+  --color-text-tertiary: #475569;
+  --color-text-quaternary: #64748b;
 
   /* Header */
   --header-height: 52px;
   --header-bg: #0f172a;
   --color-header-text: #ffffff;
-  --color-header-text-muted: rgba(255, 255, 255, 0.75);
+  --color-header-text-muted: rgba(255, 255, 255, 0.78);
 
   /* Sidebar */
   --sidebar-width: 220px;
@@ -249,5 +249,20 @@ body,
   :root {
     --header-height: 48px;
     --sidebar-width: 0px;
+  }
+
+  .ant-btn {
+    min-height: 40px;
+  }
+
+  .ant-input,
+  .ant-input-search-button,
+  .ant-picker,
+  .ant-select-selector {
+    min-height: 40px;
+  }
+
+  .ant-form-item-label > label {
+    min-height: 24px;
   }
 }

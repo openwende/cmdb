@@ -18,6 +18,17 @@ export interface ModelDefinition {
   updated_at?: string;
 }
 
+export interface DynamicModelDefinition {
+  id: number;
+  uid: string;
+  name: string;
+  description?: string;
+  icon?: string;
+  is_paused?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface ModelAttribute {
   id: string;
   model_id: string;
@@ -94,7 +105,7 @@ export interface ModelInstance {
   id: string;
   model_id: string;
   tenant_id: string;
-  business_id?: string | null;
+  business_id?: number | null;
   properties: Record<string, unknown>;
   path?: string;
   created_at?: string;
@@ -119,6 +130,6 @@ export interface ListModelInstancesResponse {
 
 export interface CreateModelInstancePayload {
   properties: Record<string, unknown>;
-  business_id?: string;
+  business_id?: number;
   mainline_parent_ref_id?: string;
 }

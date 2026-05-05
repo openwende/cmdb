@@ -19,7 +19,7 @@ export enum BackendNodeType {
 export interface BackendTopologyNode {
   /** 节点唯一标识，格式: "business_uuid" 或 "set_id" 或 "module_id" */
   id: string;
-  /** 节点实际 ID（UUID 或数字 ID） */
+  /** 节点实际 ID（number for business nodes, number for set/module） */
   node_id: string | number;
   /** 节点名称 */
   name: string;
@@ -51,8 +51,8 @@ export interface BackendTopologyNode {
  * 获取拓扑树 API 请求参数
  */
 export interface GetTopologyTreeRequest {
-  /** 业务 ID（UUID） */
-  business_id?: string;
+  /** 业务 ID（整数） */
+  business_id?: number;
   /** 是否包含主机信息 */
   include_hosts?: boolean;
   /** 最大深度 */
@@ -71,7 +71,7 @@ export interface GetTopologyTreeResponse {
 }
 
 export interface CreateTopologySetPayload {
-  business_id: string;
+  business_id: number;
   name: string;
   description?: string;
   env_type?: string;

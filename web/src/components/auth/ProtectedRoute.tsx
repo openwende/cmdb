@@ -6,9 +6,10 @@ import { LOGIN_PATH } from '@/constants/auth';
 
 interface ProtectedRouteProps {
   requiredRoles?: string[];
+  children?: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRoles }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRoles, children }) => {
   const location = useLocation();
   const { token, user, loading, initialized, initialize } = useAuthStore();
 
@@ -43,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRoles }) => {
     }
   }
 
-  return <Outlet />;
+  return children ? <>{children}</> : <Outlet />;
 };
 
 export default ProtectedRoute;

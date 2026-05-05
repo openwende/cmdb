@@ -1,12 +1,12 @@
 import React from 'react';
 import { Form, DatePicker } from 'antd';
 import { useTranslation } from 'react-i18next';
-import dayjs from 'dayjs';
+import { getDefaultAuditTimeRange } from '@/pages/Analysis/utils';
 
 const TimeFilter: React.FC = () => {
   const { t } = useTranslation();
   // Default to last 30 days — more useful for audit queries
-  const defaultValue: [any, any] = [dayjs().subtract(30, 'day'), dayjs()];
+  const defaultValue = getDefaultAuditTimeRange();
 
   return (
     <Form.Item

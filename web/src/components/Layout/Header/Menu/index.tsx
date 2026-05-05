@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo } from 'react';
-import { Menu as AntMenu, message } from 'antd';
+import { Menu as AntMenu, Modal } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { routes } from '../../../../routes';
 import { PrimaryNavKey } from '../../../../routes/Types';
 import { useBusinessStore } from '../../../../store/BusinessStore';
+import { useAuthStore } from '@/store/AuthStore';
 import { getBusinessTopologyPath, isBusinessRelatedPage } from '@/utils/routes';
 import '../style.css';
 
@@ -12,7 +14,9 @@ const Menu: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { businessList, loadBusinessData, loading } = useBusinessStore();
+  const message = useAppMessage();
+  const { businessList, loadBusinessData, loading, error } = useBusinessStore();
+  const { hasRole } = useAuthStore();
 
   useEffect(() => {
     if (businessList.length === 0 && !loading) {
@@ -23,11 +27,12 @@ const Menu: React.FC = () => {
   const menuItems = useMemo(() => {
     return routes
       .filter((item) => !item.hideInMenu)
+      .filter((item) => item.key !== PrimaryNavKey.AdminUsers || hasRole('admin'))
       .map((item) => ({
         key: item.key,
         label: item.name ? t(item.name) : '',
       }));
-  }, [t]);
+  }, [hasRole, t]);
 
   // Determine which menu item is active based on the current path
   const getSelectedKey = () => {
@@ -59,20 +64,18 @@ const Menu: React.FC = () => {
         if (businessList.length > 0) {
           const firstBusiness = businessList[0];
           navigate(getBusinessTopologyPath(firstBusiness.id));
+        } else if (error || loading) {
+          // API error or still loading: show error toast, don't show misleading "create" modal
+          if (error) {
+            message.error(t('business.messages.loadBusinessFailed'));
+          }
         } else {
-          // If no business data, load data first, then navigate
-          loadBusinessData()
-            .then(() => {
-              const { businessList: updatedList } = useBusinessStore.getState();
-              if (updatedList.length > 0) {
-                navigate(getBusinessTopologyPath(updatedList[0].id));
-              } else {
-                message.warning('No business data available');
-              }
-            })
-            .catch(() => {
-              message.error('Failed to load business data');
-            });
+          // Truly no business data after successful load: prompt to create
+          Modal.confirm({
+            title: t('business.messages.noBusinessData'),
+            content: t('business.messages.noBusinessRedirect'),
+            onOk: () => navigate('/resource/business'),
+          });
         }
         return;
       }

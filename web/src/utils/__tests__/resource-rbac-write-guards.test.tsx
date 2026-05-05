@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import BusinessList from '@/pages/Resource/Business/BusinessList';
 import HostList from '@/pages/Resource/Host/HostList';
 import ModelList from '@/pages/Resource/Model/ModelList';
-import { TabsKey } from '@/pages/Resource/Types';
 
 let mockCanWrite = false;
 const mockNavigate = vi.fn();
@@ -239,6 +238,9 @@ vi.mock('antd', () => {
     },
     Dropdown: ({ children }: any) => <div>{children}</div>,
     Tooltip: ({ children }: any) => <div>{children}</div>,
+    Checkbox: ({ children, checked, onChange }: any) => (
+      <input type="checkbox" checked={checked} onChange={onChange} aria-label={children} />
+    ),
     Space,
     Select,
     DatePicker: {
@@ -265,6 +267,8 @@ vi.mock('@ant-design/icons', () => ({
   UnorderedListOutlined: () => null,
   AppstoreOutlined: () => null,
   ApartmentOutlined: () => null,
+  InboxOutlined: () => null,
+  CloseOutlined: () => null,
 }));
 
 describe('resource page RBAC write guards', () => {
@@ -288,15 +292,17 @@ describe('resource page RBAC write guards', () => {
   });
 
   it('blocks host write entry points for viewer users', async () => {
-    render(<HostList selectedId={1} tabKey={TabsKey.Unassigned} />);
+    render(<HostList selectedId={1} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'resource.host.actions.importHost' })).toBeInTheDocument();
+      expect(screen.getByTestId('select-all-hosts')).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByTestId('select-all-hosts'));
 
-    expect(screen.getByRole('button', { name: 'resource.host.actions.importHost' })).toBeDisabled();
+    expect(
+      screen.queryByRole('button', { name: 'resource.host.actions.importHost' }),
+    ).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /resource.host.actions.assignTo/ })).toBeDisabled();
     expect(screen.queryByText('resource.host.actions.more')).not.toBeInTheDocument();
   });

@@ -24,7 +24,12 @@ export enum PrimaryNavKey {
   Model = 'model',
   Resource = 'resource',
   Analysis = 'analysis',
+  AdminUsers = 'adminUsers',
   NotFound = 'notfound',
+}
+
+export enum AdminKey {
+  Users = 'adminUserList',
 }
 
 export enum BusinessNavKey {

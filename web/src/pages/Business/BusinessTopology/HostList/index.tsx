@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Table, Button, Dropdown, Input, message, Tooltip, Empty, Typography } from 'antd';
+import { Table, Button, Dropdown, Input, Tooltip, Empty, Typography, Checkbox, Spin } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { DownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
@@ -42,6 +43,7 @@ interface Props {
 
 const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChanged }) => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const navigate = useNavigate();
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
@@ -146,6 +148,18 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     setSelectedRowKeys([]);
   }, [selectedNode.key]);
 
+  const selectedNodeStatus = useMemo(() => {
+    return getSelectedNodeStatus([selectedNode]);
+  }, [selectedNode]);
+
+  const currentModuleId = useMemo(() => {
+    if (!selectedNodeStatus.isModule) {
+      return undefined;
+    }
+    const value = Number(selectedNode.nodeId || selectedNode.key.split('-')[1]);
+    return Number.isFinite(value) && value > 0 ? value : undefined;
+  }, [selectedNode.key, selectedNode.nodeId, selectedNodeStatus.isModule]);
+
   const selectedTransferHosts = useMemo(() => {
     const idleStatusMap = new Map(
       checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID).map((host) => [
@@ -159,15 +173,20 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       const cloud = hostInfo?.host.bk_cloud_id?.[0];
       const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
       const idleStatus = idleStatusMap.get(String(id));
+      const hostModuleId = Number(hostInfo?.module?.[0]?.bk_module_id);
+      const sourceModuleId =
+        currentModuleId ||
+        (Number.isFinite(hostModuleId) && hostModuleId > 0 ? hostModuleId : undefined);
 
       return {
         id,
         ip: hostInfo?.host.bk_host_innerip || '',
         cloudInfo: region,
         inIdlePool: idleStatus?.inIdlePool,
+        sourceModuleId,
       } as TransferHostItem;
     });
-  }, [hostsList, idleSetID, selectedRowKeys]);
+  }, [currentModuleId, hostsList, idleSetID, selectedRowKeys]);
 
   const hostsNotInIdlePool = selectedTransferHosts.some((item) => item.inIdlePool !== true);
 
@@ -243,10 +262,6 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     }
   };
 
-  const selectedNodeStatus = useMemo(() => {
-    return getSelectedNodeStatus([selectedNode]);
-  }, [selectedNode]);
-
   const handleConfirmAddHosts = useCallback(
     async (hosts: TransferHostItem[]) => {
       if (!selectedNodeStatus.isModule || !selectedNode.nodeId) {
@@ -288,10 +303,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
         return;
       }
 
-      setTransferHostData(selectedTransferHosts, targetModules, transferModalType);
+      const sourceModuleId =
+        transferModalType === TransferMenuItemType.businessModule ? currentModuleId : undefined;
+      setTransferHostData(selectedTransferHosts, targetModules, transferModalType, sourceModuleId);
       handleNavToTransferPage();
     },
     [
+      currentModuleId,
       handleNavToTransferPage,
       hostsNotInIdlePool,
       selectedTransferHosts,
@@ -462,8 +480,29 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     return isSetType && hasNoChildren;
   }, [selectedNode]);
 
-  const hostScopeTitle = useMemo(() => String(selectedNode.title), [selectedNode.title]);
   const hasSelection = selectedRowKeys.length > 0;
+  const toggleSelectedHost = (hostId: React.Key, checked: boolean) => {
+    setSelectedRowKeys((current) =>
+      checked ? Array.from(new Set([...current, hostId])) : current.filter((key) => key !== hostId),
+    );
+  };
+  const getCloudAreaLabel = (record: any) => {
+    const cloudInfo = record.host.bk_cloud_id;
+    if (!cloudInfo || cloudInfo.length === 0) return '--';
+    return cloudInfo[0].bk_inst_name;
+  };
+  const getModuleLabel = (record: any) =>
+    record.module.length > 0 ? record.module[0].bk_module_name : '--';
+  const getSetLabel = (record: any) => (record.set.length > 0 ? record.set[0].bk_set_name : '--');
+  const emptyHostDescription = selectedNodeStatus.isModule
+    ? t(
+        'business.topology.hostList.empty.noHostsInModule',
+        '当前模块暂无主机，可通过「新增」导入主机或从其他模块分配',
+      )
+    : t(
+        'business.topology.hostList.empty.selectModuleFirst',
+        '请在左侧拓扑树中选择一个模块节点查看主机',
+      );
 
   return (
     <>
@@ -483,22 +522,14 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       ) : (
         <div className="list-wrapper">
           <div className="host-workspace">
-            <div className="host-workspace__scope">
-              <div>
-                <div className="host-workspace__eyebrow">{t('business.topology.workspace.currentNode')}</div>
-                <div className="host-workspace__title">{hostScopeTitle}</div>
-              </div>
-              <div className="host-workspace__summary">
-                {t('business.topology.workspace.hostList')}
-              </div>
-            </div>
-
             <div className="host-workspace__toolbar">
               <div className="host-workspace__actions">
                 {selectedNodeStatus.isModule ? (
-                  <Button type="primary" onClick={handleAddHosts} disabled={!canWrite}>
-                    {t('business.topology.hostList.buttons.add')}
-                  </Button>
+                  <Tooltip title={!canWrite ? t('common.noPermission', '权限不足，无法操作') : undefined}>
+                    <Button type="primary" onClick={handleAddHosts} disabled={!canWrite}>
+                      {t('business.topology.hostList.buttons.add')}
+                    </Button>
+                  </Tooltip>
                 ) : (
                   <Tooltip title={t('business.topology.hostList.tooltips.onlyModuleCanAdd')}>
                     <Button type="primary" disabled>
@@ -507,9 +538,92 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                   </Tooltip>
                 )}
 
-                <Button disabled={!hasSelection || !canWrite}>
-                  {t('business.topology.hostList.buttons.edit')}
-                </Button>
+                {canWrite ? (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Transfer),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                    disabled={!hasSelection}
+                  >
+                    <Button
+                      disabled={!hasSelection}
+                      title={
+                        !hasSelection
+                          ? t('business.topology.hostList.tooltips.selectHostFirst', '请先勾选主机')
+                          : undefined
+                      }
+                    >
+                      {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                ) : null}
+
+                {canWrite && !selectedNodeStatus.isIdle ? (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Append),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                    disabled={!hasSelection}
+                  >
+                    <Button
+                      disabled={!hasSelection}
+                      title={
+                        !hasSelection
+                          ? t('business.topology.hostList.tooltips.selectHostFirst', '请先勾选主机')
+                          : undefined
+                      }
+                    >
+                      {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                ) : null}
+
+                {canWrite && selectedNodeStatus.isModule ? (
+                  <Dropdown
+                    menu={{
+                      ...getDropdownMenu(DropdownMenuType.Remove),
+                      onClick: ({ key }) => handleMenuClick(key),
+                    }}
+                    trigger={['click']}
+                    disabled={!hasSelection}
+                  >
+                    <Button
+                      disabled={!hasSelection}
+                      title={
+                        !hasSelection
+                          ? t('business.topology.hostList.tooltips.selectHostFirst', '请先勾选主机')
+                          : undefined
+                      }
+                    >
+                      {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
+                    </Button>
+                  </Dropdown>
+                ) : null}
+
+                <Dropdown
+                  menu={{
+                    ...getDropdownMenu(DropdownMenuType.Copy),
+                    onClick: ({ key }) => handleMenuClick(key as HostCopyKey),
+                  }}
+                  overlayStyle={{ width: 190 }}
+                  trigger={['click']}
+                  disabled={!hasSelection}
+                >
+                  <Button
+                    disabled={!hasSelection}
+                    title={
+                      !hasSelection
+                        ? t('business.topology.hostList.tooltips.selectHostFirst', '请先勾选主机')
+                        : undefined
+                    }
+                  >
+                    {t('business.topology.hostList.buttons.copy')} <DownOutlined />
+                  </Button>
+                </Dropdown>
 
                 {canWrite ? (
                   <Dropdown
@@ -548,19 +662,95 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 loading={loading}
                 rowKey={(record) => record.host.bk_host_id}
                 pagination={false}
+                scroll={{ x: 900 }}
                 locale={{
                   emptyText:
                     searchValue && hostsList.length === 0 ? (
                       <EmptySearchResult onClearFilter={handleClearSearch} />
+                    ) : !loading && hostsList.length === 0 ? (
+                      <Empty
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                        description={
+                          selectedNodeStatus.isModule
+                            ? emptyHostDescription
+                            : emptyHostDescription
+                        }
+                      >
+                        {selectedNodeStatus.isModule && canWrite ? (
+                          <Button type="primary" size="small" onClick={handleAddHosts}>
+                            {t('business.topology.hostList.buttons.add')}
+                          </Button>
+                        ) : null}
+                      </Empty>
                     ) : undefined,
                 }}
               />
             </div>
 
+            <div className="topology-host-mobile-list" aria-live="polite">
+              {loading ? (
+                <div className="topology-host-mobile-loading">
+                  <Spin />
+                </div>
+              ) : hostsList.length > 0 ? (
+                hostsList.map((record) => {
+                  const hostId = record.host.bk_host_id;
+                  const selected = selectedRowKeys.includes(hostId);
+                  return (
+                    <article key={hostId} className="topology-host-mobile-card">
+                      <div className="topology-host-mobile-card__head">
+                        <Checkbox
+                          checked={selected}
+                          onChange={(event) => toggleSelectedHost(hostId, event.target.checked)}
+                          aria-label={t('resource.host.actions.selectHost', {
+                            id: hostId,
+                            defaultValue: `选择主机 ${hostId}`,
+                          })}
+                        />
+                        <div>
+                          <div className="topology-host-mobile-card__title">
+                            {record.host.bk_host_innerip || hostId}
+                          </div>
+                          <div className="topology-host-mobile-card__meta">ID {hostId}</div>
+                        </div>
+                      </div>
+                      <dl className="topology-host-mobile-card__grid">
+                        <div>
+                          <dt>{t('resource.host.columns.innerIpv6')}</dt>
+                          <dd>{record.host.bk_host_innerip_v6 || '--'}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('resource.host.columns.cloudArea')}</dt>
+                          <dd>{getCloudAreaLabel(record)}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('business.topology.hostList.columns.moduleName')}</dt>
+                          <dd>{getModuleLabel(record)}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('business.topology.hostList.columns.clusterName')}</dt>
+                          <dd>{getSetLabel(record)}</dd>
+                        </div>
+                      </dl>
+                    </article>
+                  );
+                })
+              ) : (
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyHostDescription}>
+                  {selectedNodeStatus.isModule && canWrite ? (
+                    <Button type="primary" size="small" onClick={handleAddHosts}>
+                      {t('business.topology.hostList.buttons.add')}
+                    </Button>
+                  ) : null}
+                </Empty>
+              )}
+            </div>
+
             {hostsList.length > 0 && (
               <div className="pagination-wrapper">
                 <span className="host-workspace__pagination-copy">
-                  {t('business.topology.hostList.pagination.total', { count: total })}
+                  {t('business.topology.hostList.pagination.selected')} {selectedRowKeys.length}{' '}
+                  {t('business.topology.hostList.pagination.items')}
                 </span>
                 <Pagination
                   total={total}
@@ -575,81 +765,6 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                     setCurrentPage(1);
                   }}
                 />
-              </div>
-            )}
-
-            {hasSelection && (
-              <div className="host-floating-actions" data-testid="hostlist-floating-actions">
-                <div className="host-floating-actions__count">
-                  {t('business.topology.hostList.floating.selectedCount', {
-                    count: selectedRowKeys.length,
-                  })}
-                </div>
-                <span className="host-floating-actions__divider" />
-
-                {canWrite ? (
-                  <Dropdown
-                    menu={{
-                      ...getDropdownMenu(DropdownMenuType.Transfer),
-                      onClick: ({ key }) => handleMenuClick(key),
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button type="text">
-                      {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                ) : null}
-
-                {canWrite && !selectedNodeStatus.isIdle && (
-                  <Dropdown
-                    menu={{
-                      ...getDropdownMenu(DropdownMenuType.Append),
-                      onClick: ({ key }) => handleMenuClick(key),
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button type="text">
-                      {t('business.topology.hostList.buttons.appendTo')} <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                )}
-
-                {canWrite && selectedNodeStatus.isModule && (
-                  <Dropdown
-                    menu={{
-                      ...getDropdownMenu(DropdownMenuType.Remove),
-                      onClick: ({ key }) => handleMenuClick(key),
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button type="text">
-                      {t('business.topology.hostList.buttons.removeFrom')} <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                )}
-
-                <Dropdown
-                  menu={{
-                    ...getDropdownMenu(DropdownMenuType.Copy),
-                    onClick: ({ key }) => handleMenuClick(key as HostCopyKey),
-                  }}
-                  overlayStyle={{ width: 190 }}
-                  trigger={['click']}
-                >
-                  <Button type="text">
-                    {t('business.topology.hostList.buttons.copy')} <DownOutlined />
-                  </Button>
-                </Dropdown>
-
-                <button
-                  type="button"
-                  className="host-floating-actions__clear"
-                  data-testid="hostlist-clear-selection"
-                  onClick={() => setSelectedRowKeys([])}
-                >
-                  ×
-                </button>
               </div>
             )}
           </div>

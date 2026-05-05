@@ -20,20 +20,24 @@ const { mockLocationPathname, mockBusinessStore } = vi.hoisted(() => ({
   },
 }));
 
+let mockAuthUser: null | { roles: string[] } = null;
+
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
         {
           'routes.home': '首页',
-          'routes.business': '业务',
+          'routes.business': '业务拓扑',
           'routes.modelManagement': '模型与类型',
           'routes.resource': '资源目录',
           'routes.analysis': '审计与分析',
+          'routes.userManagement': '用户管理',
+          'routes.userList': '账号列表',
           'routes.modelOverview': '类型总览',
           'routes.modelGroups': '类型分组',
           'routes.modelTopology': '关系拓扑',
-          'routes.resourceBusiness': '业务台账',
+          'routes.resourceBusiness': '业务列表',
           'routes.host': '主机资源',
           'routes.auditLogs': '操作审计',
           'routes.operations': '运营概览',
@@ -56,6 +60,13 @@ vi.mock('react-router-dom', async () => {
 
 vi.mock('@/store/BusinessStore', () => ({
   useBusinessStore: () => mockBusinessStore,
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: () => ({
+    hasRole: (...roles: string[]) =>
+      Boolean(mockAuthUser && roles.some((role) => mockAuthUser?.roles.includes(role))),
+  }),
 }));
 
 vi.mock('@/utils/routes', () => ({
@@ -103,12 +114,13 @@ describe('navigation copy', () => {
     mockBusinessStore.businessList = [];
     mockBusinessStore.loadBusinessData = vi.fn();
     mockBusinessStore.loading = false;
+    mockAuthUser = null;
   });
 
   it('keeps entity-scoped business routes out of the top navigation', () => {
     render(<HeaderMenu />);
 
-    expect(screen.getAllByText('业务')).toHaveLength(1);
+    expect(screen.getAllByText('业务拓扑')).toHaveLength(1);
   });
 
   it('navigates the top-level business menu to the first available business topology', async () => {
@@ -118,7 +130,7 @@ describe('navigation copy', () => {
     const user = userEvent.setup();
     render(<HeaderMenu />);
 
-    await user.click(screen.getByText('业务'));
+    await user.click(screen.getByText('业务拓扑'));
 
     expect(mockNavigate).toHaveBeenCalledWith('/business/biz-1/topology');
   });
@@ -126,15 +138,26 @@ describe('navigation copy', () => {
   it('uses task-oriented labels in the top navigation', () => {
     render(<HeaderMenu />);
 
-    expect(screen.getByText('业务')).toBeInTheDocument();
+    expect(screen.getByText('业务拓扑')).toBeInTheDocument();
     expect(screen.getByText('模型与类型')).toBeInTheDocument();
     expect(screen.getByText('资源目录')).toBeInTheDocument();
     expect(screen.getByText('审计与分析')).toBeInTheDocument();
+    expect(screen.queryByText('用户管理')).not.toBeInTheDocument();
+  });
+
+  it('shows user management after analysis for admin users only', () => {
+    mockAuthUser = { roles: ['admin'] };
+
+    render(<HeaderMenu />);
+
+    const buttons = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(buttons).toEqual(['首页', '业务拓扑', '模型与类型', '资源目录', '审计与分析', '用户管理']);
   });
 
   it('uses task-oriented labels in model and resource sidebars', () => {
     const modelSection = routes.find((route) => route.key === PrimaryNavKey.Model);
     const resourceSection = routes.find((route) => route.key === PrimaryNavKey.Resource);
+    const adminSection = routes.find((route) => route.key === PrimaryNavKey.AdminUsers);
 
     const { rerender } = render(<Sidebar currentSection={modelSection} />);
 
@@ -144,7 +167,11 @@ describe('navigation copy', () => {
 
     rerender(<Sidebar currentSection={resourceSection} />);
 
-    expect(screen.getByText('业务台账')).toBeInTheDocument();
+    expect(screen.getByText('业务列表')).toBeInTheDocument();
     expect(screen.getByText('主机资源')).toBeInTheDocument();
+
+    rerender(<Sidebar currentSection={adminSection} />);
+
+    expect(screen.getByText('账号列表')).toBeInTheDocument();
   });
 });

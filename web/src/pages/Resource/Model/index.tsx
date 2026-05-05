@@ -1,5 +1,5 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 export const modelRootPath = '/model';
 export const modelOverviewPath = `${modelRootPath}/overview`;
@@ -8,6 +8,12 @@ export const buildModelDetailPath = (name: string, section: string = 'basic') =>
   `${modelRootPath}/${name}/${section}`;
 
 const ResourceModel: React.FC = () => {
+  const location = useLocation();
+
+  if (location.pathname === modelRootPath) {
+    return <Navigate to={modelOverviewPath} replace />;
+  }
+
   return <Outlet />;
 };
 

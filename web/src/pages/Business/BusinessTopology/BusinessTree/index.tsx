@@ -1,6 +1,7 @@
 import React, { Fragment, useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Spin, message } from 'antd';
+import { Input, Spin, Tooltip } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import TopologyTree from '../components/TopologyTree';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
@@ -11,6 +12,7 @@ import { getTopologyTree } from '@/api/services/business';
 import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import { useBusinessStore } from '@/store/BusinessStore';
 import { useMainlineStore } from '@/store/MainlineStore';
+import { useResponsive } from '@/utils/useResponsive';
 import './style.css';
 
 const MIN_WIDTH = 210;
@@ -23,6 +25,10 @@ interface Props {
   topologyVersion: number;
   onTopologyChanged: () => void;
   onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
+  currentBusinessName?: string;
+  currentBusinessDisplayId?: string;
+  businessList?: Array<{ id: number; name: string }>;
+  onBusinessSwitch?: (businessId: number) => void;
 }
 
 const BusinessTree: React.FC<Props> = ({
@@ -31,10 +37,16 @@ const BusinessTree: React.FC<Props> = ({
   topologyVersion,
   onTopologyChanged,
   onNodeSelect,
+  currentBusinessName,
+  currentBusinessDisplayId,
+  businessList = [],
+  onBusinessSwitch,
 }) => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const { currentBusiness } = useBusinessStore();
   const { topologySettings, loadTopologySettings } = useMainlineStore();
+  const { isMobile } = useResponsive();
   const [searchValue, setSearchValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -42,7 +54,16 @@ const BusinessTree: React.FC<Props> = ({
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
+  const [bizMenuOpen, setBizMenuOpen] = useState(false);
+  const bizMenuRef = useRef<HTMLDivElement>(null);
   const requestSequenceRef = useRef(0);
+
+  // Auto-collapse on mobile/narrow viewport
+  useEffect(() => {
+    if (isMobile) {
+      setCollapsed(false);
+    }
+  }, [isMobile]);
 
   const loadTopologyTree = React.useCallback(async () => {
     if (!currentBusiness) {
@@ -52,7 +73,7 @@ const BusinessTree: React.FC<Props> = ({
     }
 
     const requestSequence = ++requestSequenceRef.current;
-    const requestedBusinessID = currentBusiness.id.toString();
+    const requestedBusinessID = currentBusiness.id;
 
     setLoading(true);
     setFullTreeData([]);
@@ -95,6 +116,16 @@ const BusinessTree: React.FC<Props> = ({
   useEffect(() => {
     loadTopologyTree();
   }, [loadTopologyTree, topologyVersion]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (bizMenuRef.current && !bizMenuRef.current.contains(event.target as Node)) {
+        setBizMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const filteredTreeData = useMemo(() => {
     if (!searchValue.trim()) {
@@ -163,12 +194,43 @@ const BusinessTree: React.FC<Props> = ({
       {!collapsed && (
         <Fragment>
           <div className="biz-header">
-            <div className="biz-header-title">
-              <span>🏢 {currentBusiness?.name || t('business.topology.workspace.noBusiness')}</span>
+            <div className="biz-header-switcher" ref={bizMenuRef}>
+              <button
+                type="button"
+                className="biz-header-trigger"
+                data-testid="topology-business-switcher"
+                onClick={() => setBizMenuOpen((open) => !open)}
+              >
+                <span className="biz-header-trigger__label">
+                  🏢 {currentBusinessName || currentBusiness?.name || t('business.topology.workspace.noBusiness')}
+                </span>
+                <span className="biz-header-trigger__arrow">▾</span>
+              </button>
+              {bizMenuOpen && (
+                <div className="biz-header-dropdown">
+                  {businessList.map((biz) => (
+                    <button
+                      key={biz.id}
+                      type="button"
+                      className={`biz-header-dropdown__item${
+                        biz.name === (currentBusinessName || currentBusiness?.name) ? ' active' : ''
+                      }`}
+                      onClick={() => {
+                        setBizMenuOpen(false);
+                        onBusinessSwitch?.(biz.id);
+                      }}
+                    >
+                      {biz.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="biz-header-desc">
               <span className="stat-badge">{topologyNodeCount} {t('business.topology.tree.nodes', '节点')}</span>
-              {currentBusiness?.displayId && <span className="stat-badge">#{currentBusiness.displayId}</span>}
+              {(currentBusinessDisplayId || currentBusiness?.id) && (
+                <span className="stat-badge">#{currentBusinessDisplayId || currentBusiness?.id}</span>
+              )}
             </div>
           </div>
 
@@ -190,7 +252,8 @@ const BusinessTree: React.FC<Props> = ({
           <div className="topo-tree-container">
             {loading ? (
               <div style={{ textAlign: 'center', padding: '50px 0' }}>
-                <Spin tip={t('common.loading')} />
+                <Spin />
+                <div style={{ marginTop: 8, color: 'var(--color-text-tertiary)', fontSize: 13 }}>{t('common.loading')}</div>
               </div>
             ) : isEmptyTree ? (
               <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--color-text-tertiary)' }}>
@@ -222,24 +285,36 @@ const BusinessTree: React.FC<Props> = ({
         </Fragment>
       )}
       
-      <div
-        className="collapsed-button"
-        style={{
-          position: 'absolute',
-          right: -15,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: 16,
-          height: 100,
-        }}
-        onClick={() => setCollapsed((c) => !c)}
+      <Tooltip
+        title={collapsed ? t('business.topology.tree.expandPanel', '展开拓扑树') : t('business.topology.tree.collapsePanel', '收起拓扑树')}
+        placement="right"
       >
-        {collapsed ? (
-          <RightOutlined className="collapsed-icon" />
-        ) : (
-          <LeftOutlined className="collapsed-icon" />
-        )}
-      </div>
+        <button
+          type="button"
+          className="collapsed-button"
+          style={{
+            position: 'absolute',
+            right: -15,
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: 16,
+            height: 100,
+          }}
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={
+            collapsed
+              ? t('business.topology.tree.expandPanel', '展开拓扑树')
+              : t('business.topology.tree.collapsePanel', '收起拓扑树')
+          }
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? (
+            <RightOutlined className="collapsed-icon" />
+          ) : (
+            <LeftOutlined className="collapsed-icon" />
+          )}
+        </button>
+      </Tooltip>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import {
   AXIS_LINE_STYLE,
   AXIS_TICK_STYLE,
   AXIS_LABEL_STYLE,
+  CHART_COLOR_RANGE,
 } from '../constants';
 import './style.css';
 
@@ -59,6 +60,7 @@ const BarChart: React.FC<BarChartProps> = ({
         .encode('x', 'category')
         .encode('y', 'value')
         .encode('color', 'type')
+        .scale('color', { range: CHART_COLOR_RANGE })
         .style('maxWidth', BAR_MAX_WIDTH)
         // .style('inset', BAR_INSET)
         .axis('x', {
@@ -85,6 +87,7 @@ const BarChart: React.FC<BarChartProps> = ({
         .interval()
         .encode('x', 'category')
         .encode('y', 'value')
+        .style('fill', CHART_COLOR_RANGE[0])
         .style('maxWidth', BAR_MAX_WIDTH)
         .axis('x', {
           title: false,

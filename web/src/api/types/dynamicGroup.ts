@@ -28,7 +28,7 @@ export interface DynamicGroupRuleInfo {
 
 export interface DynamicGroupItem {
   id: string;
-  business_id: string;
+  business_id: number;
   bk_obj_id: string;
   target_model_uid: string;
   name: string;

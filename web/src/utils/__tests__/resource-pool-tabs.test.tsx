@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import HostList from '@/pages/Resource/Host/HostList';
-import { TabsKey } from '@/pages/Resource/Types';
 
 const {
   t,
@@ -11,36 +10,22 @@ const {
   mockFetchDirectories,
   mockSetPoolHostQuery,
   mockFetchPoolHosts,
-  mockSetTransferHostData,
 } = vi.hoisted(() => ({
   t: (key: string) => key,
   getHostList: vi.fn(async () => ({
     total: 1,
     page: 1,
     page_size: 20,
-    hosts: [
-      {
-        id: 'real-host-1',
-        primary_ip: '10.0.0.10',
-        ip_addresses: [],
-        status: 'running',
-        cloud_area_id: 'cloud-1',
-        business_ids: ['biz-1'],
-        module_ids: [101],
-      },
-    ],
+    hosts: [{ id: 'should-not-appear', primary_ip: '10.0.0.99' }],
   })),
   mockNavigate: vi.fn(),
   mockFetchDirectories: vi.fn(async () => {}),
   mockSetPoolHostQuery: vi.fn(),
   mockFetchPoolHosts: vi.fn(async () => {}),
-  mockSetTransferHostData: vi.fn(),
 }));
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    t,
-  }),
+  useTranslation: () => ({ t }),
 }));
 
 vi.mock('antd', () => ({
@@ -50,62 +35,36 @@ vi.mock('antd', () => ({
         <div key={record.host.bk_host_id}>
           <span>{record.host.bk_host_id}</span>
           <span>{record.host.bk_host_innerip}</span>
-          <span>{record.module[0]?.topo_module_name || '--'}</span>
         </div>
       ))}
     </div>
   ),
   Button: ({ children }: any) => <button type="button">{children}</button>,
+  Checkbox: ({ children }: any) => <label>{children}</label>,
   Input: { Search: () => <div /> },
   Dropdown: ({ children }: any) => <div>{children}</div>,
   message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   Modal: { confirm: vi.fn() },
   Tooltip: ({ children }: any) => <div>{children}</div>,
+  Empty: ({ description }: any) => <div>{description}</div>,
 }));
 
 vi.mock('@ant-design/icons', () => ({
   DownOutlined: () => null,
   ExclamationCircleFilled: () => null,
   HistoryOutlined: () => null,
-}));
-
-vi.mock('@/mock/resource', () => ({
-  assignedListMock: [
-    {
-      host: {
-        bk_host_id: 'mock-host-1',
-        bk_host_innerip: '10.0.0.2',
-        bk_host_innerip_v6: '',
-        bk_cloud_host_status: '--',
-        bk_cloud_id: [],
-      },
-      module: [
-        {
-          bk_module_id: 2,
-          topo_module_name: 'business2/set2/module2',
-        },
-      ],
-      set: [],
-    },
-  ],
-  allListMock: [],
+  InboxOutlined: () => null,
+  CloseOutlined: () => null,
 }));
 
 vi.mock('@/api/services/business', () => ({
   getHostList,
 }));
 
-vi.mock('@/store/TransferHostStore', () => ({
-  useTransferHostStore: () => ({
-    idleSetID: null,
-    setTransferHostData: mockSetTransferHostData,
-  }),
-}));
-
 vi.mock('@/store/DirectoryStore', () => ({
   useDirectoryStore: (selector: (state: any) => unknown) =>
     selector({
-      directories: [],
+      directories: [{ bk_module_id: 1, bk_module_name: '空闲机池' }],
       fetchDirectories: mockFetchDirectories,
     }),
 }));
@@ -113,16 +72,29 @@ vi.mock('@/store/DirectoryStore', () => ({
 vi.mock('@/store/PoolHostStore', () => ({
   usePoolHostStore: (selector: (state: any) => unknown) =>
     selector({
-      hosts: [],
-      total: 0,
+      hosts: [
+        {
+          host: {
+            bk_host_id: 'pool-host-1',
+            bk_host_innerip: '10.1.1.1',
+            bk_host_innerip_v6: '',
+            bk_cloud_host_status: 'running',
+            bk_cloud_id: [],
+          },
+          module: [{ bk_module_id: 1, topo_module_name: '资源池##1' }],
+          set: [{ bk_set_id: 1 }],
+        },
+      ],
+      total: 1,
       loading: false,
-      query: {
-        page: 1,
-        pageSize: 20,
-      },
+      query: { page: 1, pageSize: 20 },
       setQuery: mockSetPoolHostQuery,
       fetchHosts: mockFetchPoolHosts,
     }),
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) => selector({ canWrite: () => false }),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -134,14 +106,6 @@ vi.mock('@/pages/Resource/Host/components/AssignModal', () => ({
   default: () => null,
 }));
 
-vi.mock('@/pages/Business/BusinessTopology/components/TransferHostModal', () => ({
-  default: () => null,
-}));
-
-vi.mock('@/pages/Business/BusinessTopology/components/ReleaseHostModal', () => ({
-  default: () => null,
-}));
-
 vi.mock('@/pages/Resource/Host/components/ImportHost', () => ({
   default: () => null,
 }));
@@ -150,18 +114,31 @@ vi.mock('@/components/common/Pagination', () => ({
   default: () => <div data-testid="pagination" />,
 }));
 
-describe('resource pool tabs', () => {
+vi.mock('@/pages/Resource/utils', () => ({
+  getHostCopyValue: vi.fn(() => ''),
+  checkHostsInHostPool: vi.fn(() => []),
+}));
+
+describe('resource pool — pool-only view', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('loads assigned tab from the real host API instead of mock rows', async () => {
-    render(<HostList tabKey={TabsKey.Assigned} />);
+  it('renders pool hosts and does not call the assigned-host API', async () => {
+    render(<HostList selectedId={1} />);
 
     await waitFor(() => {
-      expect(screen.getByText('real-host-1')).toBeInTheDocument();
+      expect(screen.getByText('pool-host-1')).toBeInTheDocument();
     });
 
-    expect(screen.queryByText('business2/set2/module2')).not.toBeInTheDocument();
+    expect(getHostList).not.toHaveBeenCalled();
+  });
+
+  it('shows directory name in the toolbar context header', async () => {
+    render(<HostList selectedId={1} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('空闲机池')).toBeInTheDocument();
+    });
   });
 });

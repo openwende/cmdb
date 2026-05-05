@@ -9,7 +9,10 @@ import {
   ClusterOutlined,
 } from '@ant-design/icons';
 import StatisticsCard from '../components/Card';
-import { mockStatisticsData } from '@/mock/Analysis';
+import { getHostList } from '@/api/services/business';
+import { getBusinessList } from '@/api/services/resource';
+import { listDynamicModels, listModels } from '@/api/services/model';
+import { listAggregateInstances } from '@/api/services/modelInstance';
 import './style.css';
 
 // Define icon mapping
@@ -49,6 +52,49 @@ const Overview: React.FC = () => {
   const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([]);
 
   useEffect(() => {
+    const fetchStatistics = async () => {
+      const [
+        businessResult,
+        hostResult,
+        modelResult,
+        dynamicModelResult,
+      ] = await Promise.allSettled([
+        getBusinessList({ limit: 1, offset: 0 }),
+        getHostList({ params: { page: 1, page_size: 1 } }),
+        listModels(),
+        listDynamicModels(),
+      ]);
+
+      const businessTotal =
+        businessResult.status === 'fulfilled' ? businessResult.value?.data?.total ?? 0 : 0;
+      const hostTotal =
+        hostResult.status === 'fulfilled' ? (hostResult.value as any)?.total ?? 0 : 0;
+      const models = modelResult.status === 'fulfilled' ? modelResult.value : [];
+      const dynamicModels =
+        dynamicModelResult.status === 'fulfilled' ? dynamicModelResult.value : [];
+
+      const instanceModelUIDs = dynamicModels
+        .map((model) => model.uid)
+        .filter((uid) => uid !== 'business' && uid !== 'host');
+      const instanceResults = await Promise.allSettled(
+        instanceModelUIDs.map((modelUID) =>
+          listAggregateInstances(modelUID, { page: 1, page_size: 1 }),
+        ),
+      );
+      const instanceTotal = instanceResults.reduce((total, result) => {
+        if (result.status !== 'fulfilled') {
+          return total;
+        }
+        return total + (result.value.data?.pagination?.total || result.value.data?.items?.length || 0);
+      }, 0);
+
+      const rawStatisticsData = [
+        { id: 'biz', count: businessTotal },
+        { id: 'host', count: hostTotal },
+        { id: 'model', count: models.length },
+        { id: 'inst', count: instanceTotal },
+      ];
+
     // Define name mapping with i18n
     const STATISTICS_NAME_MAP = {
       biz: t('analysis.statistics.overview.businessTotal'),
@@ -63,7 +109,7 @@ const Overview: React.FC = () => {
     };
 
     // Format data on mount
-    const formattedData = mockStatisticsData.map((item) => ({
+      const formattedData = rawStatisticsData.map((item) => ({
       id: item.id,
       name: STATISTICS_NAME_MAP[item.id as keyof typeof STATISTICS_NAME_MAP],
       value: item.count,
@@ -71,7 +117,10 @@ const Overview: React.FC = () => {
       color: STATISTICS_COLOR_MAP[item.id as keyof typeof STATISTICS_COLOR_MAP],
       tooltip: STATISTICS_TOOLTIP_MAP[item.id as keyof typeof STATISTICS_TOOLTIP_MAP],
     }));
-    setStatisticsData(formattedData);
+      setStatisticsData(formattedData);
+    };
+
+    void fetchStatistics();
   }, [t]);
 
   const handleCardClick = (id: string) => {
@@ -91,7 +140,7 @@ const Overview: React.FC = () => {
     <div className="statistics-overview">
       <Row gutter={[24, 24]}>
         {statisticsData.map((data, index) => (
-          <Col key={index} span={6}>
+          <Col key={index} xs={24} sm={12} xl={6}>
             <StatisticsCard
               name={data.name}
               value={data.value}

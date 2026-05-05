@@ -127,7 +127,7 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
 
     const fetchBusinessDetail = async () => {
       try {
-        const response = await getBusinessDetail(businessID);
+        const response = await getBusinessDetail(Number(businessID));
         if (!cancelled && response?.data) {
           setHydratedDetail(response.data);
         }

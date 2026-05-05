@@ -1,5 +1,15 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
-import { Button, Table, Collapse, Tabs, TabsProps, Space, Tooltip, Popconfirm } from 'antd';
+import {
+  Button,
+  Table,
+  Collapse,
+  Tabs,
+  TabsProps,
+  Space,
+  Tooltip,
+  Popconfirm,
+  message,
+} from 'antd';
 import { EditOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTransferHostStore } from '@/store/TransferHostStore';
@@ -36,7 +46,7 @@ interface ServiceInstanceItem {
 const TransferHost: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { selectedHosts, targetModules, transferHostType, setTransferHostData } =
+  const { selectedHosts, targetModules, transferHostType, sourceModuleId, setTransferHostData } =
     useTransferHostStore();
   const [showEditHostModal, setShowEditHostModal] = useState(false);
   const [showAddProcessModal, setShowAddProcessModal] = useState(false);
@@ -67,7 +77,9 @@ const TransferHost: React.FC = () => {
 
   const selectedTopoPaths = useMemo(
     () =>
-      targetModules.map((module) => [...(module.parentPath || []), String(module.title)].join(' / ')),
+      targetModules.map((module) =>
+        [...(module.parentPath || []), String(module.title)].join(' / '),
+      ),
     [targetModules],
   );
 
@@ -75,6 +87,29 @@ const TransferHost: React.FC = () => {
     bindInfo
       .filter((i) => i.protocol && i.ip && i.port)
       .map((i) => `${i.protocol} ${i.ip}:${i.port}`);
+
+  const assertTransferResult = (response: any) => {
+    const result = response?.data?.data;
+    if (result?.failed > 0) {
+      throw new Error(
+        result.errors?.[0] || t('business.topology.transferHost.messages.transferFailed'),
+      );
+    }
+  };
+
+  const getTransferErrorMessage = (error: unknown) => {
+    const fallback = t('business.topology.transferHost.messages.transferFailed');
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const response = (error as { response?: { data?: { error?: string } } }).response;
+      if (response?.data?.error) {
+        return response.data.error;
+      }
+    }
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+    return fallback;
+  };
 
   const handleConfirm = async () => {
     const hostIDs = selectedHosts.map((host) => String(host.id));
@@ -89,10 +124,24 @@ const TransferHost: React.FC = () => {
         transferHostType === TransferMenuItemType.idlePool ||
         transferHostType === RemoveMenuItemKey.CurrentModule
       ) {
-        await transferTopologyHostsToPool({ host_ids: hostIDs });
+        const response = await transferTopologyHostsToPool({ host_ids: hostIDs });
+        assertTransferResult(response);
+        message.success(t('business.topology.transferHost.messages.transferSuccess'));
         backToPrePage();
         return;
       }
+
+      const transferGroups = selectedHosts.reduce((groups, host) => {
+        const hostSourceModuleId = host.sourceModuleId || sourceModuleId;
+        const groupKey =
+          transferHostType === TransferMenuItemType.businessModule && hostSourceModuleId
+            ? hostSourceModuleId
+            : 0;
+        const nextHosts = groups.get(groupKey) || [];
+        nextHosts.push(String(host.id));
+        groups.set(groupKey, nextHosts);
+        return groups;
+      }, new Map<number, string[]>());
 
       for (const module of targetModules) {
         const targetModuleID = Number(module.nodeId || module.key.split('-')[1]);
@@ -100,15 +149,29 @@ const TransferHost: React.FC = () => {
           continue;
         }
 
-        await transferTopologyHosts({
-          host_ids: hostIDs,
-          target_module_id: targetModuleID,
-        });
+        for (const [groupSourceModuleId, groupHostIDs] of transferGroups) {
+          const payload: {
+            host_ids: string[];
+            target_module_id: number;
+            source_module_id?: number;
+          } = {
+            host_ids: groupHostIDs,
+            target_module_id: targetModuleID,
+          };
+          if (transferHostType === TransferMenuItemType.businessModule && groupSourceModuleId) {
+            payload.source_module_id = groupSourceModuleId;
+          }
+
+          const response = await transferTopologyHosts(payload);
+          assertTransferResult(response);
+        }
       }
 
+      message.success(t('business.topology.transferHost.messages.transferSuccess'));
       backToPrePage();
     } catch (error) {
       console.error('Failed to confirm topology host transfer:', error);
+      message.error(getTransferErrorMessage(error));
     }
   };
 
@@ -131,10 +194,17 @@ const TransferHost: React.FC = () => {
 
   const handleConfirmEditHosts = useCallback(
     (hosts: TransferHostItem[]) => {
-      setTransferHostData(hosts, targetModules, transferHostType);
+      const sourceModuleByHost = new Map(
+        selectedHosts.map((host) => [String(host.id), host.sourceModuleId]),
+      );
+      const hostsWithSource = hosts.map((host) => ({
+        ...host,
+        sourceModuleId: host.sourceModuleId || sourceModuleByHost.get(String(host.id)),
+      }));
+      setTransferHostData(hostsWithSource, targetModules, transferHostType, sourceModuleId);
       setShowEditHostModal(false);
     },
-    [targetModules, transferHostType],
+    [selectedHosts, sourceModuleId, targetModules, transferHostType],
   );
 
   const getProcessKey = useCallback(
@@ -186,9 +256,9 @@ const TransferHost: React.FC = () => {
 
   const handleTransferNode = useCallback(
     (selectedNodes: TreeData[]) => {
-      setTransferHostData(selectedHosts, selectedNodes, transferHostType);
+      setTransferHostData(selectedHosts, selectedNodes, transferHostType, sourceModuleId);
     },
-    [selectedHosts, transferHostType],
+    [selectedHosts, sourceModuleId, transferHostType],
   );
 
   const handleServiceInstances = (): ServiceInstanceItem[] => {

@@ -83,7 +83,7 @@ export interface PersonnelSelectItemProps {
   handleFieldChange: (field: FormFieldName, checked: boolean) => void;
   isFieldDisabled: (fieldName: FormFieldName) => boolean;
   selectedFields?: FormFieldName[];
-  onDropdownVisibleChange?: (open: boolean) => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const PersonnelSelectItem: React.FC<PersonnelSelectItemProps> = ({
@@ -97,7 +97,7 @@ export const PersonnelSelectItem: React.FC<PersonnelSelectItemProps> = ({
   handleFieldChange,
   isFieldDisabled,
   selectedFields = [],
-  onDropdownVisibleChange,
+  onOpenChange,
 }) => {
   const { t } = useTranslation();
 
@@ -116,7 +116,7 @@ export const PersonnelSelectItem: React.FC<PersonnelSelectItemProps> = ({
         showSearch
         filterOption={false}
         onSearch={handleSearch}
-        onDropdownVisibleChange={onDropdownVisibleChange}
+        onOpenChange={onOpenChange}
         options={searchOptions}
         notFoundContent={isSearching ? <Spin size="small" /> : t('common.noMatch')}
         disabled={isFieldDisabled(fieldName)}

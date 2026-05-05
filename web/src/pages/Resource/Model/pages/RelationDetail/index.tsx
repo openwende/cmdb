@@ -11,11 +11,11 @@ import {
   Space,
   Table,
   Tag,
-  message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useAppMessage } from '@/utils/message';
 import {
   createModelAssociation,
   deleteModelAssociation,
@@ -49,7 +49,8 @@ const deleteActionOptions: Array<{
 
 const RelationDetailPage: React.FC = () => {
   const { t } = useTranslation();
-  const { detailModel, allModels } = useModelPageContext();
+  const message = useAppMessage();
+  const { detailModel, allModels, isDynamicModel } = useModelPageContext();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -87,6 +88,14 @@ const RelationDetailPage: React.FC = () => {
   }, [targetModels, allModels]);
 
   const loadRelationData = async () => {
+    if (!isDynamicModel) {
+      setAssociations([]);
+      setAssociationTypes([]);
+      setTargetModels([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const [associationResponse, availableResponse] = await Promise.all([
@@ -109,7 +118,7 @@ const RelationDetailPage: React.FC = () => {
 
   useEffect(() => {
     loadRelationData();
-  }, [detailModel.name]);
+  }, [detailModel.name, isDynamicModel]);
 
   const openCreateDrawer = () => {
     setEditingAssociation(null);
@@ -257,11 +266,13 @@ const RelationDetailPage: React.FC = () => {
         <div className="model-page-note">{t('resource.model.helper.relationsListNote')}</div>
         <div className="model-page-actions">
           <Space>
-            <Button onClick={() => loadRelationData()}>{t('resource.model.actions.refresh')}</Button>
+            <Button onClick={() => loadRelationData()} disabled={!isDynamicModel}>
+              {t('resource.model.actions.refresh')}
+            </Button>
             <Button
               type="primary"
               onClick={openCreateDrawer}
-              disabled={associationTypes.length === 0}
+              disabled={!isDynamicModel || associationTypes.length === 0}
             >
               {t('resource.model.actions.createRelation')}
             </Button>
@@ -269,7 +280,14 @@ const RelationDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {associations.length === 0 ? (
+      {!isDynamicModel ? (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('resource.model.unsupported.dynamicCapabilityTitle')}
+          description={t('resource.model.unsupported.relations')}
+        />
+      ) : associations.length === 0 ? (
         <Empty description={t('resource.model.empty.noRelations')} />
       ) : (
         <Table

@@ -109,6 +109,7 @@ export interface TransferHostItem {
   ip: string;
   inIdlePool?: boolean;
   cloudInfo?: string;
+  sourceModuleId?: number;
 }
 
 /**

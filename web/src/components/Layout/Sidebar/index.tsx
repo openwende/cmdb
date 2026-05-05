@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Layout, Menu } from 'antd';
+import { Divider, Layout, Menu } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './style.css';
 import { NavigationItem, PrimaryNavKey, EntityRouteType } from '../../../routes/Types';
@@ -13,6 +13,7 @@ import {
   isBusinessRelatedPage,
   buildEntityPath,
 } from '../../../utils/routes';
+import { useAuthStore } from '@/store/AuthStore';
 
 const { Sider } = Layout;
 
@@ -189,8 +190,38 @@ const Sidebar: React.FC<SidebarProps> = ({
       }));
   }, [t, sidebarItems]);
 
-  // Nothing to show
-  if (sidebarItems.length === 0) return null;
+  // Global navigation items for mobile overlay
+  const { hasRole } = useAuthStore();
+  const globalNavItems = useMemo(() => {
+    return routes
+      .filter((item: NavigationItem) => !item.hideInMenu)
+      .filter((item: NavigationItem) => item.key !== PrimaryNavKey.AdminUsers || hasRole('admin'))
+      .map((item: NavigationItem) => ({
+        key: item.key,
+        label: item.name ? t(item.name) : '',
+        icon: item.icon,
+      }));
+  }, [hasRole, t]);
+
+  const globalNavSelectedKey = useMemo(() => {
+    const path = location.pathname;
+    if (isBusinessRelatedPage(path)) return PrimaryNavKey.Business;
+    const matched = routes.find(
+      (item: NavigationItem) => path === item.path || path.startsWith(`${item.path}/`),
+    );
+    return matched ? matched.key : (routes[0]?.key ?? '');
+  }, [location.pathname]);
+
+  const onGlobalNavClick = (key: string) => {
+    const item = routes.find((nav: NavigationItem) => nav.key === key);
+    if (item?.path) {
+      navigate(item.path);
+      onClose?.();
+    }
+  };
+
+  // Nothing to show (no secondary nav AND not mobile)
+  if (sidebarItems.length === 0 && !isMobile) return null;
 
   // --- Mobile: overlay sidebar ---
   if (isMobile) {
@@ -208,21 +239,41 @@ const Sidebar: React.FC<SidebarProps> = ({
           className={`app-sidebar app-sidebar--mobile ${sidebarOpen ? 'app-sidebar--open' : ''}`}
           width={SIDEBAR_EXPANDED_WIDTH}
         >
-          {isBusinessRelated && <BusinessSelector collapsed={false} />}
+          {/* Global navigation — always visible on mobile */}
+          <div className="sidebar-section-label">{t('common.layout.primaryNavigation')}</div>
           <Menu
-            key={location.pathname}
             mode="inline"
-            selectedKeys={[selectedKey]}
-            items={menuItems}
-            className="sidebar-menu"
-            onClick={({ key }) => onMenuClick(key as string)}
+            selectedKeys={[globalNavSelectedKey]}
+            items={globalNavItems}
+            className="sidebar-menu sidebar-global-nav"
+            onClick={({ key }) => onGlobalNavClick(key as string)}
           />
+          {/* Secondary navigation — only when current section has children */}
+          {sidebarItems.length > 0 && (
+            <>
+              <Divider className="sidebar-section-divider" />
+              {isBusinessRelated && <BusinessSelector collapsed={false} />}
+              <div className="sidebar-section-label sidebar-section-label--secondary">
+                {t('common.layout.sectionNavigation')}
+              </div>
+              <Menu
+                key={location.pathname}
+                mode="inline"
+                selectedKeys={[selectedKey]}
+                items={menuItems}
+                className="sidebar-menu"
+                onClick={({ key }) => onMenuClick(key as string)}
+              />
+            </>
+          )}
         </Sider>
       </>
     );
   }
 
   // --- Desktop / Tablet ---
+  if (sidebarItems.length === 0) return null;
+
   return (
     <Sider
       className="app-sidebar"
@@ -240,7 +291,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         onClick={({ key }) => onMenuClick(key as string)}
       />
       {/* Hide the collapse toggle on tablet (always collapsed) */}
-      {!isTablet && (
+      {!isMobile && (
         <button
           type="button"
           onClick={toggleCollapsed}

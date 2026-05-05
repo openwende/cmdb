@@ -1,7 +1,7 @@
 {
   "routes": {
     "home": "首页",
-    "business": "业务",
+    "business": "业务拓扑",
     "businessTopology": "拓扑工作区",
     "transferHost": "转移主机",
     "serviceTemplate": "服务模板",
@@ -15,7 +15,7 @@
     "resource": "资源目录",
     "resourceContent": "资源目录",
     "project": "项目",
-    "resourceBusiness": "业务台账",
+    "resourceBusiness": "业务列表",
     "resourceModel": "资源类型",
     "businessDetail": "业务详情",
     "modelDetail": "类型详情",
@@ -23,6 +23,8 @@
     "host": "主机资源",
     "deleteHistory": "删除记录",
     "analysis": "审计与分析",
+    "userManagement": "用户管理",
+    "userList": "账号列表",
     "auditLogs": "操作审计",
     "operations": "运营概览",
     "notFound": "404"
@@ -64,12 +66,33 @@
       "connectedModels_other": "已接入 {{count}} 个资源类型",
       "pendingSummary": "主机、业务、实例统计将随着资源图接入逐步开放。",
       "primaryCta": "进入业务拓扑",
+      "primaryCtaNoBusiness": "创建/选择业务",
       "primaryDesc": "从业务树进入主工作流，继续查看节点、主机和变更入口。",
+      "primaryDescNoBusiness": "当前还没有业务，先进入业务列表创建或选择业务。",
       "secondary": {
         "resources": "进入资源目录",
         "resourcesDesc": "查看主机与基础资源，补齐台账接入。",
         "models": "进入资源类型管理",
         "modelsDesc": "维护资源类型和 schema，扩展平台能力。"
+      }
+    },
+    "onboarding": {
+      "title": "开始使用",
+      "noBusiness": {
+        "title": "创建您的第一个业务",
+        "desc": "业务是配置管理的顶层组织单元，所有资源和拓扑都归属于业务。",
+        "action": "创建业务",
+        "viewerDesc": "暂无业务数据，请联系管理员创建业务。"
+      },
+      "noModel": {
+        "title": "定义资源类型",
+        "desc": "资源类型定义了您要管理的数据结构，例如主机、容器、域名等。",
+        "action": "创建资源类型"
+      },
+      "readyImport": {
+        "title": "导入主机资源",
+        "desc": "业务和资源类型已就绪，可以开始导入主机等实际资源了。",
+        "action": "进入资源目录"
       }
     }
   },
@@ -80,7 +103,9 @@
       "login": "登录",
       "logout": "退出登录",
       "expandSidebar": "展开侧栏",
-      "collapseSidebar": "收起侧栏"
+      "collapseSidebar": "收起侧栏",
+      "primaryNavigation": "模块",
+      "sectionNavigation": "当前页面"
     },
     "rename": "重命名",
     "delete": "删除",
@@ -108,6 +133,18 @@
     },
     "form": {
       "rulesMessage": "该字段是必填项"
+    },
+    "errors": {
+      "requestFailed": "请求失败，请稍后重试",
+      "networkError": "网络连接失败，请检查网络后重试",
+      "unauthorized": "登录已过期，请重新登录",
+      "notFound": "请求的资源不存在",
+      "serverError": "服务器内部错误，请稍后重试",
+      "boundary": {
+        "title": "页面出错了",
+        "subtitle": "发生了意外错误，请重试",
+        "retry": "重试"
+      }
     },
     "components": {
       "businessSelector": {
@@ -148,7 +185,7 @@
   "auth": {
     "login": {
       "title": "登录并进入工作区",
-      "subtitle": "先用最小 RBAC 把系统收口到可控状态。当前版本使用站内账号与 JWT，会优先保护全部 API 访问和写操作入口。",
+      "subtitle": "统一管理基础设施与应用资源的配置信息，实现全链路可视化与变更可追溯。",
       "defaultAccount": "默认账号：admin / admin123456，editor / editor123456，viewer / viewer123456",
       "submit": "登录",
       "fields": {
@@ -209,6 +246,11 @@
     }
   },
   "business": {
+    "messages": {
+      "noBusinessData": "暂无业务数据，请先创建业务",
+      "noBusinessRedirect": "尚未创建任何业务，请先前往业务列表创建",
+      "loadBusinessFailed": "业务数据加载失败"
+    },
     "topology": {
       "tabs": {
         "hostList": "主机列表",
@@ -246,7 +288,9 @@
         },
         "empty": {
           "noModuleCreated": "该集群尚未创建模块",
-          "createNow": "立即创建"
+          "createNow": "立即创建",
+          "noHostsInModule": "当前模块暂无主机，可通过「新增」导入主机或从其他模块分配",
+          "selectModuleFirst": "请在拓扑树中选择一个模块节点查看主机"
         },
         "buttons": {
           "add": "新增",
@@ -459,7 +503,9 @@
           "title": "确定删除该进程?"
         },
         "messages": {
-          "noChangeInfo": "目标模块为源模块，无变更信息"
+          "noChangeInfo": "目标模块为源模块，无变更信息",
+          "transferSuccess": "主机转移成功",
+          "transferFailed": "主机转移失败"
         },
         "tabs": {
           "deleteServiceInstance": "删除服务实例",
@@ -909,6 +955,12 @@
       "objectTypes": {
         "host": "主机"
       }
+    },
+    "entryRedirect": {
+      "errorTitle": "业务数据加载失败",
+      "errorSubTitle": "无法获取业务列表，请检查网络后重试",
+      "retry": "重试",
+      "goToBusinessList": "前往业务管理"
     }
   },
   "resource": {
@@ -1032,6 +1084,13 @@
         "modelGroups": "类型分组",
         "modelOverview": "类型总览"
       },
+      "topologyPending": {
+        "title": "全局关系拓扑暂未开放",
+        "subtitle": "关系拓扑还在建设中。现在可以先维护资源类型、类型分组，或进入业务拓扑查看已接入节点。",
+        "backOverview": "返回类型总览",
+        "viewGroups": "查看类型分组",
+        "viewBusinessTopology": "进入业务拓扑"
+      },
       "tabs": {
         "overview": "类型信息",
         "basic": "基本信息",
@@ -1123,6 +1182,11 @@
         "tabPending": "该能力将在后续阶段接入",
         "noDescription": "暂无类型描述"
       },
+      "unsupported": {
+        "dynamicCapabilityTitle": "该功能暂不可用",
+        "uniqueRules": "当前资源类型的唯一规则功能暂时无法使用，请联系管理员确认类型配置。",
+        "relations": "当前资源类型的关系设计功能暂时无法使用，请联系管理员确认类型配置。"
+      },
       "helper": {
         "modelBasics": "先完成对象基础定义，再按需启用主线能力。这样能把类型和拓扑挂载解耦。",
         "advancedMainline": "只有需要参与业务主线拓扑的资源类型，才需要开启主线配置。",
@@ -1130,7 +1194,7 @@
         "propertiesJson": "可以在 JSON 中补充任意属性，name / sort_order 会自动并入。",
         "parentNodeEmpty": "当前业务下未找到可挂载的父节点，请先确认父主线实例已存在。",
         "instanceBusinessScope": "业务主线实例创建时，通常需要先选择业务，再选择父节点。",
-        "instanceListNote": "实例录入仍由类型定义驱动，但它已经降级为类型详情里的次级能力。",
+        "instanceListNote": "实例列表由该类型的属性结构驱动，可在此创建和管理该类型的资源实例。",
         "instanceHistoryPage": "先选择一个实例，再查看它的变更记录、关联关系和拓扑上下文。",
         "instanceRelationsPage": "这里展示的是实例级实际关联数据，不同于类型层的关系设计。",
         "instanceRelationCreate": "新增实例关联时，会先按类型关系定义约束目标类型和关联方式。",
@@ -1140,18 +1204,18 @@
         "enumValues": "枚举值将用于实例表单下拉选项。",
         "instanceFallbackForm": "该类型还没有自定义属性，当前先提供基础实例字段。",
         "attributeDesigner": "先定义类型属性，再由实例表单自动按属性结构渲染。",
-        "attributeRoadmap": "这一页先聚焦属性结构和顺序，拖拽布局、字段分组和联合唯一规则放到下一轮。",
-        "attributeSortHint": "当前按 sort_order 排序展示，下一轮再接拖拽和字段分组。",
+        "attributeRoadmap": "在此定义该资源类型的属性字段，包括字段名称、类型、是否必填等。属性定义会直接影响实例创建表单。",
+        "attributeSortHint": "字段按顺序排列展示，可通过调整 sort_order 值来改变字段在实例表单中的显示顺序。",
         "listOverview": "资源类型列表先按分组聚合浏览，主线只是资源类型的一种能力，不再作为唯一中心视角。",
-        "groupsPending": "类型分组会在后端补上可持久化能力后接入，这一轮先建立信息架构和分组视图。",
+        "groupsPending": "资源类型分组帮助您对类型进行归类管理，当前分组功能正在完善中。",
         "groupsPage": "类型分组现在已经接入后端持久化，可以用来组织资源类型视图和创建入口。",
         "previewNotice": "当前预览直接复用动态实例表单的字段映射，用来验证字段设计是否合理。",
         "relationsPending": "类型关系设计还未接入前端，这里先保留占位。",
         "relationsDesign": "类型关系定义了源类型能指向哪些目标类型，以及关系约束和删除策略。",
         "relationsDesignHint": "这一页只处理类型层的关系设计，不处理实例之间的实际关联数据。",
         "relationsListNote": "关系设计会直接约束实例关联的可创建范围，删除前请确认没有线上实例在使用。",
-        "historyPending": "后续会在这里展示类型和属性的变更记录。",
-        "uniquesPending": "联合唯一、辅助唯一和唯一冲突提示依赖下一轮的后端校验能力，这里先预留入口。",
+        "historyPending": "此处将显示该类型及其属性的变更历史记录。",
+        "uniquesPending": "唯一规则用于防止重复数据写入，规则生效后在实例创建和更新时会自动触发校验。",
         "uniquesDesign": "唯一规则会在实例写入前执行校验，用来阻止重复资源进入类型实例表。",
         "uniquesDesignHint": "默认唯一规则通常对应主标识，辅助唯一规则用于补充业务上的重复约束。",
         "uniquesListNote": "更新唯一规则会直接影响后续实例创建和更新行为，调整前请确认已有数据不会产生冲突。",
@@ -1326,7 +1390,9 @@
       },
       "messages": {
         "importInfo": "说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作",
-        "noRelatedModels": "暂无关联资源类型，无需选择"
+        "noRelatedModels": "暂无关联资源类型，无需选择",
+        "importFailed": "导入失败，请确认后端主机导入接口已启用",
+        "templateDownloadFailed": "模板下载失败，请确认后端模板接口已启用"
       },
       "host": {
         "label": "主机",
@@ -1368,7 +1434,8 @@
       "actions": {
         "create": "新建",
         "batchEdit": "批量编辑",
-        "archive": "归档"
+        "archive": "归档",
+        "viewDetail": "查看详情"
       },
       "tooltips": {
         "viewArchived": "查看已归档业务"
@@ -1677,6 +1744,9 @@
         "operationTarget": "操作对象",
         "action": "动作",
         "time": "时间",
+        "keyword": "关键词",
+        "timeRange": "时间范围",
+        "actionType": "动作类型",
         "account": "账号",
         "instance": "实例",
         "host": "主机"

@@ -12,11 +12,11 @@ import {
   Switch,
   Table,
   Tag,
-  message,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
+import { useAppMessage } from '@/utils/message';
 import {
   createModelUniqueRule,
   deleteModelUniqueRule,
@@ -32,7 +32,8 @@ import { useModelPageContext } from '../../context';
 
 const UniqueRulesPage: React.FC = () => {
   const { t } = useTranslation();
-  const { detailModel, attributes } = useModelPageContext();
+  const message = useAppMessage();
+  const { detailModel, attributes, isDynamicModel } = useModelPageContext();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -50,6 +51,12 @@ const UniqueRulesPage: React.FC = () => {
   );
 
   const loadRules = async () => {
+    if (!isDynamicModel) {
+      setRules([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       const response = await listModelUniqueRules(detailModel.name);
@@ -65,7 +72,7 @@ const UniqueRulesPage: React.FC = () => {
 
   useEffect(() => {
     loadRules();
-  }, [detailModel.name]);
+  }, [detailModel.name, isDynamicModel]);
 
   const openCreateDrawer = () => {
     setEditingRule(null);
@@ -249,15 +256,28 @@ const UniqueRulesPage: React.FC = () => {
         <div className="model-page-note">{t('resource.model.helper.uniquesListNote')}</div>
         <div className="model-page-actions">
           <Space>
-            <Button onClick={() => loadRules()}>{t('resource.model.actions.refresh')}</Button>
-            <Button type="primary" onClick={openCreateDrawer} disabled={attributeOptions.length === 0}>
+            <Button onClick={() => loadRules()} disabled={!isDynamicModel}>
+              {t('resource.model.actions.refresh')}
+            </Button>
+            <Button
+              type="primary"
+              onClick={openCreateDrawer}
+              disabled={!isDynamicModel || attributeOptions.length === 0}
+            >
               {t('resource.model.actions.createUniqueRule')}
             </Button>
           </Space>
         </div>
       </div>
 
-      {attributeOptions.length === 0 ? (
+      {!isDynamicModel ? (
+        <Alert
+          type="warning"
+          showIcon
+          message={t('resource.model.unsupported.dynamicCapabilityTitle')}
+          description={t('resource.model.unsupported.uniqueRules')}
+        />
+      ) : attributeOptions.length === 0 ? (
         <Empty description={t('resource.model.empty.noAttributes')} />
       ) : rules.length === 0 ? (
         <Empty description={t('resource.model.empty.noUniqueRules')} />

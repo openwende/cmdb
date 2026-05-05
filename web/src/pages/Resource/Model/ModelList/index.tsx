@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Button, Input, Space, Spin, Table, Tag, message } from 'antd';
+import { Button, Input, Space, Spin, Table, Tag } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import type { ColumnsType } from 'antd/es/table';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -19,6 +20,7 @@ const ALL_GROUP_KEY = 'all';
 const ModelList: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const message = useAppMessage();
   const canWrite = useAuthStore((state) => state.canWrite());
   const [models, setModels] = useState<ModelDefinition[]>([]);
   const [groups, setGroups] = useState<ModelGroup[]>([]);
@@ -201,14 +203,20 @@ const ModelList: React.FC = () => {
           <Space className="list-operation">
             <div className="view-toggle">
               <button
+                type="button"
                 className={`view-toggle__btn ${viewMode === 'card' ? 'view-toggle__btn--active' : ''}`}
                 onClick={() => setViewMode('card')}
+                aria-label={t('resource.model.viewMode.card', { defaultValue: '卡片视图' })}
+                aria-pressed={viewMode === 'card'}
               >
                 <AppstoreOutlined />
               </button>
               <button
+                type="button"
                 className={`view-toggle__btn ${viewMode === 'list' ? 'view-toggle__btn--active' : ''}`}
                 onClick={() => setViewMode('list')}
+                aria-label={t('resource.model.viewMode.list', { defaultValue: '列表视图' })}
+                aria-pressed={viewMode === 'list'}
               >
                 <UnorderedListOutlined />
               </button>
@@ -237,25 +245,30 @@ const ModelList: React.FC = () => {
           <>
             <div className="model-card-grid">
               {pagedModels.map((model) => (
-                <div
+                <button
                   key={model.id}
+                  type="button"
                   className="model-card"
                   onClick={() => navigate(buildModelDetailPath(model.name, 'basic'))}
+                  aria-label={t('resource.model.actions.viewModelDetail', {
+                    name: model.display_name,
+                    defaultValue: `查看 ${model.display_name} 详情`,
+                  })}
                 >
-                  <div className="model-card__header">
-                    <div className="model-card__icon">
+                  <span className="model-card__header">
+                    <span className="model-card__icon">
                       <ApartmentOutlined />
-                    </div>
-                    <div>
-                      <div className="model-card__title">{model.display_name}</div>
-                      <div className="model-card__subtitle">{model.name}</div>
-                    </div>
-                  </div>
-                  <div className="model-card__desc">
+                    </span>
+                    <span>
+                      <span className="model-card__title">{model.display_name}</span>
+                      <span className="model-card__subtitle">{model.name}</span>
+                    </span>
+                  </span>
+                  <span className="model-card__desc">
                     {model.description || t('resource.model.empty.noDescription')}
-                  </div>
-                  <div className="model-card__footer">
-                    <div>
+                  </span>
+                  <span className="model-card__footer">
+                    <span>
                       <Tag className="model-card__tag">
                         {t(`resource.model.options.classification.${model.classification}`, {
                           defaultValue: model.classification,
@@ -266,14 +279,14 @@ const ModelList: React.FC = () => {
                           {t('resource.model.options.boolean.yes')}
                         </Tag>
                       )}
-                    </div>
+                    </span>
                     <span className="model-card__time">
                       {model.updated_at
                         ? dayjs(model.updated_at).format('MM-DD HH:mm')
                         : ''}
                     </span>
-                  </div>
-                </div>
+                  </span>
+                </button>
               ))}
             </div>
             {pagedModels.length === 0 && !loading && (

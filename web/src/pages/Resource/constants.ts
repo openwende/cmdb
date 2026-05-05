@@ -118,12 +118,35 @@ export const hostDetailAttrs = [
 /**
  * Host unique identifier options - will use i18n keys
  */
+export enum HostUniqueKey {
+  CloudAreaPrimaryIp = 'cloud_area_id_primary_ip',
+  OuterIp = 'outer_ip',
+  CloudInstanceVendor = 'cloud_instance_id_vendor',
+  CloudAreaIpv6 = 'cloud_area_id_ipv6',
+  GseAgentId = 'gse_agent_id',
+}
+
 export const hostUniqueOptions = [
-  'resource.import.uniqueOptions.cloudAreaIpv4',
-  'resource.import.uniqueOptions.outerIpv4',
-  'resource.import.uniqueOptions.cloudInstanceVendor',
-  'resource.import.uniqueOptions.ipv6CloudArea',
-  'resource.import.uniqueOptions.gseAgentId',
+  {
+    value: HostUniqueKey.CloudAreaPrimaryIp,
+    label: 'resource.import.uniqueOptions.cloudAreaIpv4',
+  },
+  {
+    value: HostUniqueKey.OuterIp,
+    label: 'resource.import.uniqueOptions.outerIpv4',
+  },
+  {
+    value: HostUniqueKey.CloudInstanceVendor,
+    label: 'resource.import.uniqueOptions.cloudInstanceVendor',
+  },
+  {
+    value: HostUniqueKey.CloudAreaIpv6,
+    label: 'resource.import.uniqueOptions.ipv6CloudArea',
+  },
+  {
+    value: HostUniqueKey.GseAgentId,
+    label: 'resource.import.uniqueOptions.gseAgentId',
+  },
 ];
 
 /**

@@ -172,7 +172,7 @@ const CreateInstanceDrawer: React.FC<Props> = ({
             placeholder={t('resource.model.placeholders.business')}
             options={businesses.map((business) => ({
               value: business.id,
-              label: `${business.name} (${business.business_id || business.id})`,
+              label: `${business.name} (${business.id})`,
             }))}
           />
         </Form.Item>

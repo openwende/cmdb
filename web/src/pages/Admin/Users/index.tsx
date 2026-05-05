@@ -76,6 +76,7 @@ const UserDrawer: React.FC<{
       open={open}
       onClose={onClose}
       destroyOnClose
+      forceRender
       extra={
         <Space>
           <Button onClick={onClose}>{t('common.cancel')}</Button>
@@ -168,6 +169,7 @@ const PasswordDrawer: React.FC<{
       open={open}
       onClose={onClose}
       destroyOnClose
+      forceRender
       extra={
         <Space>
           <Button onClick={onClose}>{t('common.cancel')}</Button>

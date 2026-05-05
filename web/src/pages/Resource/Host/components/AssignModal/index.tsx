@@ -92,7 +92,7 @@ const AssignModal: React.FC<AssignModalProps> = ({
 
         {assignType === AssignType.Biz ? (
           <BusinessSelector
-            value={typeof selected === 'string' ? selected : null}
+            value={selected}
             onChange={setSelected}
             allowClear={false}
           />

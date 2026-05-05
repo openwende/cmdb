@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Col, Row, Button, Skeleton, Statistic } from 'antd';
+import { Card, Col, Row, Button, Skeleton } from 'antd';
 import {
   ApartmentOutlined,
   NodeIndexOutlined,
@@ -7,14 +7,15 @@ import {
   AppstoreOutlined,
   RightOutlined,
   ClusterOutlined,
-  AuditOutlined,
-  CheckCircleOutlined,
+  PlusOutlined,
+  ImportOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import { listModels, getBusinessList } from '@/api';
 import { ModelDefinition } from '@/api/types/model';
+import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 
 interface DashStats {
@@ -25,6 +26,7 @@ interface DashStats {
 const Home: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const canWrite = useAuthStore((state) => state.canWrite());
   const [models, setModels] = useState<ModelDefinition[]>([]);
   const [stats, setStats] = useState<DashStats>({ businessCount: 0, modelCount: 0 });
   const [loading, setLoading] = useState(true);
@@ -75,6 +77,7 @@ const Home: React.FC = () => {
       icon: <ClusterOutlined />,
       label: t('dashboard.stats.businesses'),
       value: stats.businessCount,
+      suffix: undefined,
       color: '#4f7fff',
       bg: '#eef2ff',
       path: '/resource/business',
@@ -84,28 +87,10 @@ const Home: React.FC = () => {
       icon: <AppstoreOutlined />,
       label: t('dashboard.stats.models'),
       value: stats.modelCount,
+      suffix: undefined,
       color: '#7c3aed',
       bg: '#f5f3ff',
       path: '/model/overview',
-    },
-    {
-      key: 'audit',
-      icon: <AuditOutlined />,
-      label: t('dashboard.stats.auditToday'),
-      value: 3,
-      suffix: t('dashboard.stats.auditTodaySuffix'),
-      color: '#059669',
-      bg: '#ecfdf5',
-      path: '/audit',
-    },
-    {
-      key: 'health',
-      icon: <CheckCircleOutlined />,
-      label: t('dashboard.stats.systemHealth'),
-      value: 100,
-      suffix: '%',
-      color: '#d97706',
-      bg: '#fffbeb',
     },
   ];
 
@@ -113,9 +98,15 @@ const Home: React.FC = () => {
     {
       key: 'topology',
       icon: <NodeIndexOutlined />,
-      title: t('dashboard.workspace.primaryCta'),
-      desc: t('dashboard.workspace.primaryDesc'),
-      path: '/business',
+      title:
+        stats.businessCount === 0
+          ? t('dashboard.workspace.primaryCtaNoBusiness')
+          : t('dashboard.workspace.primaryCta'),
+      desc:
+        stats.businessCount === 0
+          ? t('dashboard.workspace.primaryDescNoBusiness')
+          : t('dashboard.workspace.primaryDesc'),
+      path: stats.businessCount === 0 ? '/resource/business' : '/business',
       primary: true,
     },
     {
@@ -134,6 +125,13 @@ const Home: React.FC = () => {
     },
   ];
 
+  const handleCardKeyDown = (event: React.KeyboardEvent, path: string) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      navigate(path);
+    }
+  };
+
   return (
     <div className="dashboard">
       {/* ── Stats row ── */}
@@ -145,25 +143,38 @@ const Home: React.FC = () => {
                 <Skeleton.Input active size="large" style={{ marginTop: 8, width: 60 }} />
               </div>
             ))
-          : statsCards.map((card) => (
-              <div
-                key={card.key}
-                className={`dashboard__stat-card${card.path ? ' dashboard__stat-card--link' : ''}`}
-                onClick={card.path ? () => navigate(card.path!) : undefined}
-                role={card.path ? 'button' : undefined}
-                tabIndex={card.path ? 0 : undefined}
-              >
-                <div className="dashboard__stat-icon" style={{ color: card.color, background: card.bg }}>
+          : statsCards.map((card) => {
+              const statContent = (
+                <>
+                <span className="dashboard__stat-icon" style={{ color: card.color, background: card.bg }}>
                   {card.icon}
+                </span>
+                <span className="dashboard__stat-body">
+                  <span className="dashboard__stat-value">
+                    <span className="dashboard__stat-value-number">{card.value}</span>
+                    {card.suffix && <span className="dashboard__stat-value-suffix">{card.suffix}</span>}
+                  </span>
+                  <span className="dashboard__stat-label">{card.label}</span>
+                </span>
+                </>
+              );
+
+              return card.path ? (
+                <button
+                  key={card.key}
+                  type="button"
+                  className="dashboard__stat-card dashboard__stat-card--link"
+                  onClick={() => navigate(card.path)}
+                  aria-label={card.label}
+                >
+                  {statContent}
+                </button>
+              ) : (
+                <div key={card.key} className="dashboard__stat-card">
+                  {statContent}
                 </div>
-                <Statistic
-                  value={card.value}
-                  suffix={card.suffix}
-                  className="dashboard__stat-value"
-                />
-                <div className="dashboard__stat-label">{card.label}</div>
-              </div>
-            ))}
+              );
+            })}
       </div>
 
       {/* ── Welcome + Actions ── */}
@@ -213,6 +224,78 @@ const Home: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Onboarding next-step cards ── */}
+      {!loading && (
+        <div className="dashboard__section">
+          <div className="dashboard__section-header">
+            <h2 className="dashboard__section-title">{t('dashboard.onboarding.title')}</h2>
+          </div>
+          <Row gutter={[16, 16]}>
+            {(() => {
+              if (stats.businessCount === 0) {
+                if (!canWrite) {
+                  return (
+                    <Col xs={24} sm={12} lg={8}>
+                      <Card className="dashboard__onboarding-card">
+                        <div className="dashboard__onboarding-icon" style={{ color: '#4f7fff', background: '#eef2ff' }}>
+                          <ClusterOutlined />
+                        </div>
+                        <h3>{t('dashboard.onboarding.noBusiness.title')}</h3>
+                        <p>{t('dashboard.onboarding.noBusiness.viewerDesc')}</p>
+                      </Card>
+                    </Col>
+                  );
+                }
+                return (
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card className="dashboard__onboarding-card">
+                      <div className="dashboard__onboarding-icon" style={{ color: '#4f7fff', background: '#eef2ff' }}>
+                        <PlusOutlined />
+                      </div>
+                      <h3>{t('dashboard.onboarding.noBusiness.title')}</h3>
+                      <p>{t('dashboard.onboarding.noBusiness.desc')}</p>
+                      <Button type="primary" size="small" onClick={() => navigate('/resource/business')}>
+                        {t('dashboard.onboarding.noBusiness.action')}
+                      </Button>
+                    </Card>
+                  </Col>
+                );
+              }
+              if (stats.modelCount === 0) {
+                return (
+                  <Col xs={24} sm={12} lg={8}>
+                    <Card className="dashboard__onboarding-card">
+                      <div className="dashboard__onboarding-icon" style={{ color: '#7c3aed', background: '#f5f3ff' }}>
+                        <AppstoreOutlined />
+                      </div>
+                      <h3>{t('dashboard.onboarding.noModel.title')}</h3>
+                      <p>{t('dashboard.onboarding.noModel.desc')}</p>
+                      <Button type="primary" size="small" onClick={() => navigate('/model/overview')}>
+                        {t('dashboard.onboarding.noModel.action')}
+                      </Button>
+                    </Card>
+                  </Col>
+                );
+              }
+              return (
+                <Col xs={24} sm={12} lg={8}>
+                  <Card className="dashboard__onboarding-card">
+                    <div className="dashboard__onboarding-icon" style={{ color: '#059669', background: '#ecfdf5' }}>
+                      <ImportOutlined />
+                    </div>
+                    <h3>{t('dashboard.onboarding.readyImport.title')}</h3>
+                    <p>{t('dashboard.onboarding.readyImport.desc')}</p>
+                    <Button type="primary" size="small" onClick={() => navigate('/resource/host')}>
+                      {t('dashboard.onboarding.readyImport.action')}
+                    </Button>
+                  </Card>
+                </Col>
+              );
+            })()}
+          </Row>
+        </div>
+      )}
+
       {/* Recent Models */}
       <div className="dashboard__section">
         <div className="dashboard__section-header">
@@ -243,6 +326,13 @@ const Home: React.FC = () => {
                   className="dashboard__model-card"
                   hoverable
                   onClick={() => navigate(`/model/${model.name}/basic`)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => handleCardKeyDown(event, `/model/${model.name}/basic`)}
+                  aria-label={t('resource.model.actions.viewModelDetail', {
+                    name: model.display_name,
+                    defaultValue: `查看 ${model.display_name} 详情`,
+                  })}
                 >
                   <div className="dashboard__model-card-header">
                     <div className="dashboard__model-icon">
@@ -279,4 +369,3 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-

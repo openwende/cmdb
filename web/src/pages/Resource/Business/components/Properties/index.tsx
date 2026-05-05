@@ -30,7 +30,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
 
     try {
       setLoading(true);
-      const { data } = await getBusinessDetail(businessId);
+      const { data } = await getBusinessDetail(Number(businessId));
       setBusinessData(data);
     } catch (error) {
       console.error(error);
@@ -96,7 +96,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
     }
 
     try {
-      const data = await updateBusiness(businessId, editValues!);
+      const data = await updateBusiness(Number(businessId), editValues!);
       if (data.success) {
         setIsEditing(false);
         fetchBusinessDetail();

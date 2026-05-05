@@ -8,6 +8,7 @@ import {
   ModelGroup,
   ListModelInstancesParams,
   ListModelInstancesResponse,
+  DynamicModelDefinition,
   ModelDefinition,
   ModelDetailResponse,
   ModelInstance,
@@ -19,6 +20,12 @@ const URLS = {
 
 export const listModels = (): Promise<ModelDefinition[]> => {
   return axios.get(URLS.models);
+};
+
+export const listDynamicModels = async (): Promise<DynamicModelDefinition[]> => {
+  const response: { code: number; data: DynamicModelDefinition[]; message?: string } =
+    await axios.get('/v1/dynamic-models');
+  return response.data || [];
 };
 
 export const listModelGroups = (): Promise<ModelGroup[]> => {

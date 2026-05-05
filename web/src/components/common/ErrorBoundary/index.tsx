@@ -1,15 +1,17 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button, Result } from 'antd';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
+  t?: (key: string) => string;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
 }
 
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundaryClass extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -24,15 +26,17 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   };
 
   render() {
+    const { t } = this.props;
+
     if (this.state.hasError) {
       return (
         <Result
           status="error"
-          title="Something went wrong"
-          subTitle="An unexpected error occurred. Please try again."
+          title={t?.('common.errors.boundary.title') ?? 'Something went wrong'}
+          subTitle={t?.('common.errors.boundary.subtitle') ?? 'An unexpected error occurred. Please try again.'}
           extra={
             <Button type="primary" onClick={this.handleReset}>
-              Try Again
+              {t?.('common.errors.boundary.retry') ?? 'Try Again'}
             </Button>
           }
         />
@@ -42,5 +46,10 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     return this.props.children;
   }
 }
+
+const ErrorBoundary: React.FC<Omit<ErrorBoundaryProps, 't'>> = (props) => {
+  const { t } = useTranslation();
+  return <ErrorBoundaryClass {...props} t={t} />;
+};
 
 export default ErrorBoundary;

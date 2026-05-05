@@ -100,7 +100,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
   };
 
   const [searchValue, setSearchValue] = useState('');
-  const [selectedBizId, setSelectedBizId] = useState<string | undefined>();
+  const [selectedBizId, setSelectedBizId] = useState<number | undefined>();
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
   const [previewList, setPreviewList] = useState<TreeData[]>([]);
@@ -253,7 +253,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     }
   };
 
-  const handleBizChange = (bizId: string) => {
+  const handleBizChange = (bizId: number) => {
     setSelectedBizId(bizId);
     setSelectedKeys([]);
     setPreviewList([]);
@@ -316,7 +316,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     .filter((biz) => biz.id && biz.name)
     .map((biz) => ({
       key: biz.id,
-      label: `[${biz.displayId || biz.id}] ${biz.name}`,
+      label: `[${biz.id}] ${biz.name}`,
       value: biz.id,
     }));
 

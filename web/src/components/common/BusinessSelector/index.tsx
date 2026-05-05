@@ -1,13 +1,15 @@
-import React, { useEffect } from 'react';
-import { Select } from 'antd';
+import React, { useEffect, useMemo } from 'react';
+import { Button, Select, Space } from 'antd';
+import { ReloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useBusinessStore } from '@/store/BusinessStore';
 
 const { Option } = Select;
 
 export interface BusinessSelectorProps {
-  value?: string | null;
-  onChange?: (value: string) => void;
+  value?: number | string | null;
+  onChange?: (value: number | string) => void;
   allowClear?: boolean;
   showSearch?: boolean;
   disabled?: boolean;
@@ -25,7 +27,8 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
-  const { businessList, initialized, loading, loadBusinessData } = useBusinessStore();
+  const navigate = useNavigate();
+  const { businessList, initialized, loading, error, loadBusinessData } = useBusinessStore();
 
   useEffect(() => {
     if (!initialized && !loading) {
@@ -33,7 +36,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
     }
   }, [initialized, loading, loadBusinessData]);
 
-  const handleChange = (val: string) => {
+  const handleChange = (val: number | string) => {
     onChange?.(val);
   };
 
@@ -42,10 +45,50 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
     return children?.toLowerCase().includes(input.toLowerCase());
   };
 
+  const notFoundContent = useMemo(() => {
+    if (loading) return null;
+    if (error) {
+      return (
+        <div style={{ padding: '12px', textAlign: 'center' }}>
+          <div style={{ color: '#ff4d4f', marginBottom: 8 }}>{error}</div>
+          <Button size="small" icon={<ReloadOutlined />} onClick={() => loadBusinessData(true)}>
+            {t('business.entryRedirect.retry')}
+          </Button>
+        </div>
+      );
+    }
+    if (!initialized) {
+      return (
+        <div style={{ padding: '12px', textAlign: 'center' }}>
+          <div style={{ color: '#999', marginBottom: 8 }}>{t('business.messages.loadBusinessFailed')}</div>
+          <Button size="small" icon={<ReloadOutlined />} onClick={() => loadBusinessData(true)}>
+            {t('business.entryRedirect.retry')}
+          </Button>
+        </div>
+      );
+    }
+    if (businessList.length === 0) {
+      return (
+        <div style={{ padding: '12px', textAlign: 'center' }}>
+          <div style={{ color: '#999', marginBottom: 8 }}>{t('business.messages.noBusinessData')}</div>
+          <Space>
+            <Button size="small" icon={<ReloadOutlined />} onClick={() => loadBusinessData(true)}>
+              {t('business.entryRedirect.retry')}
+            </Button>
+            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/resource/business')}>
+              {t('common.components.businessSelector.createBusiness')}
+            </Button>
+          </Space>
+        </div>
+      );
+    }
+    return undefined;
+  }, [loading, initialized, error, businessList.length, loadBusinessData, navigate, t]);
+
   return (
     <Select
-      value={value}
-      onChange={handleChange}
+      value={value as any}
+      onChange={handleChange as any}
       placeholder={t('common.components.businessSelector.selectBusiness')}
       style={{ width: '100%' }}
       allowClear={allowClear}
@@ -54,10 +97,12 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
       size={size}
       className={className}
       filterOption={showSearch ? filterOption : false}
+      notFoundContent={notFoundContent}
+      loading={loading}
     >
       {businessList.map((biz) => (
         <Option key={biz.id} value={biz.id}>
-          {`[${biz.displayId || biz.id}] ${biz.name}`}
+          {`[${biz.id}] ${biz.name}`}
         </Option>
       ))}
     </Select>

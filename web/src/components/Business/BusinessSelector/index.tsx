@@ -76,14 +76,14 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     const [type, idStr] = value.split(':');
 
     if (type === BusinessType.Business) {
-      const business = getBusinessById(idStr, BusinessType.Business);
+      const business = getBusinessById(Number(idStr), BusinessType.Business);
       if (business) {
         setCurrentBusiness(business);
         // Always use replace to ensure page state refresh
         navigate(getBusinessTopologyPath(business.id), { replace: true });
       }
     } else if (type === BusinessType.BusinessSet) {
-      const businessSet = getBusinessById(idStr, BusinessType.BusinessSet);
+      const businessSet = getBusinessById(Number(idStr), BusinessType.BusinessSet);
       if (businessSet) {
         setCurrentBusiness(businessSet);
 
@@ -145,10 +145,10 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
               <Option
                 key={`${BusinessType.Business}:${business.id}`}
                 value={`${BusinessType.Business}:${business.id}`}
-                label={`${business.name} (${business.displayId || business.id})`}
+                label={`${business.name} (${business.id})`}
               >
                 {business.name}{' '}
-                <span className="option-id">({business.displayId || business.id})</span>
+                <span className="option-id">({business.id})</span>
               </Option>
             ))}
           </OptGroup>
@@ -160,10 +160,10 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
               <Option
                 key={`${BusinessType.BusinessSet}:${businessSet.id}`}
                 value={`${BusinessType.BusinessSet}:${businessSet.id}`}
-                label={`${businessSet.name} (${businessSet.displayId || businessSet.id})`}
+                label={`${businessSet.name} (${businessSet.id})`}
               >
                 {businessSet.name}{' '}
-                <span className="option-id">({businessSet.displayId || businessSet.id})</span>
+                <span className="option-id">({businessSet.id})</span>
               </Option>
             ))}
           </OptGroup>

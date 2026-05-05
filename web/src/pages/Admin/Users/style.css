@@ -26,6 +26,6 @@
 .user-admin__subtitle,
 .user-admin__password-hint {
   margin-top: var(--space-xs);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }

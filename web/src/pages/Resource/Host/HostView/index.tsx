@@ -1,57 +1,23 @@
 import React from 'react';
-import { Tabs } from 'antd';
-import { useTranslation } from 'react-i18next';
 import Directory, { unmodifiableDirIds } from '../Directory';
 import HostList from '../HostList';
-import { TabsKey, TabsProps } from '../../Types';
-import './style.css';
-import { useResourcePoolSceneStore } from '@/store/ResourcePoolSceneStore';
 import { useDirectoryStore } from '@/store/DirectoryStore';
+import './style.css';
 
 const HostPage: React.FC = () => {
-  const { t } = useTranslation();
-  const tab = useResourcePoolSceneStore((state) => state.tab);
-  const setTab = useResourcePoolSceneStore((state) => state.setTab);
-  const selectedId = useDirectoryStore((state) => state.activeDirectoryId) || unmodifiableDirIds[0];
+  const selectedId =
+    useDirectoryStore((state) => state.activeDirectoryId) || unmodifiableDirIds[0];
   const setSelectedId = useDirectoryStore((state) => state.setActiveDirectory);
 
-  const items: TabsProps[] = [
-    {
-      key: TabsKey.Unassigned,
-      label: t('resource.host.tabs.unassigned'),
-      children: (
-        <div className="unassigned-wrapper">
-          <Directory selectedId={selectedId} onSelect={setSelectedId} />
-          <div style={{ flex: 1 }}>
-            <HostList selectedId={selectedId} tabKey={TabsKey.Unassigned} />
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: TabsKey.Assigned,
-      label: t('resource.host.tabs.assigned'),
-      children: <HostList tabKey={TabsKey.Assigned} />,
-    },
-    {
-      key: TabsKey.All,
-      label: t('resource.host.tabs.all'),
-      children: <HostList tabKey={TabsKey.All} />,
-    },
-  ];
-
   return (
-    <>
-      <div className="host-wrapper">
-        <Tabs
-          activeKey={tab}
-          onChange={(key) => setTab(key as TabsKey)}
-          tabBarGutter={32}
-          destroyOnHidden
-          items={items}
-        />
+    <div className="host-wrapper">
+      <div className="host-layout">
+        <Directory selectedId={selectedId} onSelect={setSelectedId} />
+        <div className="host-layout__content">
+          <HostList selectedId={selectedId} />
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

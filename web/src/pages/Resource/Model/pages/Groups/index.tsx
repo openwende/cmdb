@@ -45,6 +45,7 @@ const CreateGroupDrawer: React.FC<{
       open={visible}
       onClose={onClose}
       destroyOnClose
+      forceRender
       extra={
         <Space>
           <Button onClick={onClose}>{t('common.cancel')}</Button>

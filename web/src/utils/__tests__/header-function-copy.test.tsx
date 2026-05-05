@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import Function from '@/components/Layout/Header/Function';
@@ -15,7 +15,6 @@ vi.mock('react-i18next', () => ({
           'common.layout.help': '帮助',
           'common.layout.login': '登录',
           'common.layout.logout': '退出登录',
-          'auth.userManagement.entry': '用户管理',
         } as Record<string, string>
       )[key] || key,
   }),
@@ -48,7 +47,7 @@ describe('header function copy', () => {
     expect(screen.queryByText('Login')).not.toBeInTheDocument();
   });
 
-  it('shows user management entry for admin users', () => {
+  it('shows current user and logout action for authenticated users', () => {
     vi.clearAllMocks();
     mockUser = {
       username: 'admin',
@@ -58,8 +57,8 @@ describe('header function copy', () => {
 
     render(<Function />);
 
-    expect(screen.getByText('用户管理')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('用户管理'));
-    expect(mockNavigate).toHaveBeenCalledWith('/admin/users');
+    expect(screen.getByText('管理员')).toBeInTheDocument();
+    expect(screen.getByText('退出登录')).toBeInTheDocument();
+    expect(screen.queryByText('用户管理')).not.toBeInTheDocument();
   });
 });

@@ -70,8 +70,31 @@ vi.mock('@/store/BusinessStore', () => ({
 }));
 
 vi.mock('@/pages/Business/BusinessTopology/BusinessTree', () => ({
-  default: ({ initialSelectedKey }: { initialSelectedKey?: string | null }) => (
-    <div data-testid="initial-selected-key">{initialSelectedKey ?? 'null'}</div>
+  default: ({
+    initialSelectedKey,
+    currentBusinessName,
+    businessList,
+    onBusinessSwitch,
+  }: {
+    initialSelectedKey?: string | null;
+    currentBusinessName?: string;
+    businessList?: Array<{ id: string; name: string }>;
+    onBusinessSwitch?: (businessId: string) => void;
+  }) => (
+    <div>
+      <div data-testid="initial-selected-key">{initialSelectedKey ?? 'null'}</div>
+      <button
+        data-testid="topology-business-switcher"
+        onClick={() => {
+          const nextId = businessList?.[1]?.id;
+          if (nextId) {
+            onBusinessSwitch?.(nextId);
+          }
+        }}
+      >
+        {currentBusinessName}
+      </button>
+    </div>
   ),
 }));
 
@@ -151,7 +174,7 @@ describe('topology view deeplink sync', () => {
     expect(nextParams.toString()).toBe('');
   });
 
-  it('shows a contextual workspace header for the selected node and active tab', () => {
+  it('keeps the tab workspace without rendering contextual node hints above the tabs', () => {
     mockSearch = 'node=module-3&tab=hostList';
     mockSelectedNode = {
       key: 'module-3',
@@ -162,12 +185,12 @@ describe('topology view deeplink sync', () => {
 
     render(<TopologyView />);
 
-    expect(screen.getByText('business.topology.workspace.currentNode')).toBeInTheDocument();
-    expect(screen.getAllByText('Smoke Module')).toHaveLength(2);
-    expect(screen.getByText('business.topology.workspace.hostList')).toBeInTheDocument();
+    expect(screen.getByText('business.topology.tabs.hostList')).toBeInTheDocument();
+    expect(screen.queryByText('business.topology.workspace.currentNode')).not.toBeInTheDocument();
+    expect(screen.queryByText('Smoke Module')).not.toBeInTheDocument();
   });
 
-  it('renders an in-page business switcher and breadcrumb path for the current node', () => {
+  it('renders the business switcher in the business tree without breadcrumb hints', () => {
     mockSearch = 'node=module-3&tab=hostList';
     mockSelectedNode = {
       key: 'module-3',
@@ -195,18 +218,13 @@ describe('topology view deeplink sync', () => {
     expect(screen.getByTestId('topology-business-switcher')).toHaveTextContent(
       'ProbeSetBiz-1773163724333',
     );
-    expect(screen.getByTestId('topology-node-breadcrumb')).toHaveTextContent(
-      'ProbeSetBiz-1773163724333',
-    );
-    expect(screen.getByTestId('topology-node-breadcrumb')).toHaveTextContent('ProbeSet-renamed');
-    expect(screen.getByTestId('topology-node-breadcrumb')).toHaveTextContent('Smoke Module');
+    expect(screen.queryByTestId('topology-node-breadcrumb')).not.toBeInTheDocument();
   });
 
   it('switches business from the workspace header', async () => {
     render(<TopologyView />);
 
     fireEvent.click(screen.getByTestId('topology-business-switcher'));
-    fireEvent.click(screen.getByRole('button', { name: /SmokeGameBiz/ }));
 
     expect(mockSetCurrentBusiness).toHaveBeenCalledWith(
       expect.objectContaining({

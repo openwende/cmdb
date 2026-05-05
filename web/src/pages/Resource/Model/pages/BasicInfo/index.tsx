@@ -6,7 +6,7 @@ import { useModelPageContext } from '../../context';
 
 const BasicInfoPage: React.FC = () => {
   const { t } = useTranslation();
-  const { detailModel, parentModelDisplayName } = useModelPageContext();
+  const { detailModel } = useModelPageContext();
 
   return (
     <div className="model-page">
@@ -16,17 +16,6 @@ const BasicInfoPage: React.FC = () => {
         </Descriptions.Item>
         <Descriptions.Item label={t('resource.model.fields.name')}>
           {detailModel.name}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.classification')}>
-          {t(`resource.model.options.classification.${detailModel.classification}`, {
-            defaultValue: detailModel.classification,
-          })}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.group')}>
-          {detailModel.group_display_name || detailModel.group_name || '--'}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.icon')}>
-          {detailModel.icon || '--'}
         </Descriptions.Item>
         <Descriptions.Item label={t('resource.model.fields.isMainline')}>
           {detailModel.is_mainline ? (
@@ -41,17 +30,6 @@ const BasicInfoPage: React.FC = () => {
           ) : (
             t('resource.model.options.boolean.no')
           )}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.mainlineScope')}>
-          {t(`resource.model.options.scope.${detailModel.mainline_scope || 'none'}`, {
-            defaultValue: detailModel.mainline_scope || '--',
-          })}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.mainlineLevel')}>
-          {detailModel.mainline_level ?? '--'}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('resource.model.fields.parentModel')} span={2}>
-          {parentModelDisplayName || '--'}
         </Descriptions.Item>
         <Descriptions.Item label={t('resource.model.fields.description')} span={2}>
           {detailModel.description || '--'}

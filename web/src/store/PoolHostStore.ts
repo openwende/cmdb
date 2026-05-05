@@ -10,15 +10,17 @@ interface PoolHostQuery {
 
 interface RawPoolHost {
   id: string;
+  display_id?: number;
   primary_ip?: string;
   ip_addresses?: string[];
   status?: string;
   cloud_area_id?: string | null;
+  cloud_area?: { id: string; name: string } | null;
 }
 
 interface PoolHostRow {
   host: {
-    bk_host_id: string;
+    bk_host_id: number | string;
     bk_host_innerip: string;
     bk_host_innerip_v6: string;
     bk_cloud_host_status: string;
@@ -55,10 +57,11 @@ const DEFAULT_QUERY: PoolHostQuery = {
 const adaptPoolHost = (item: RawPoolHost, directoryId?: number): PoolHostRow => {
   const ipv6 = item.ip_addresses?.find((address) => address.includes(':')) || '';
   const cloudID = item.cloud_area_id || '';
+  const cloudName = item.cloud_area?.name || cloudID;
 
   return {
     host: {
-      bk_host_id: item.id,
+      bk_host_id: item.display_id ?? item.id,
       bk_host_innerip: item.primary_ip || '',
       bk_host_innerip_v6: ipv6,
       bk_cloud_host_status: item.status || '--',
@@ -66,7 +69,7 @@ const adaptPoolHost = (item: RawPoolHost, directoryId?: number): PoolHostRow => 
         ? [
             {
               bk_inst_id: cloudID,
-              bk_inst_name: cloudID,
+              bk_inst_name: cloudName,
             },
           ]
         : [],
@@ -124,6 +127,7 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
       set({
         hosts: items.map((item) => adaptPoolHost(item, query.directoryId)),
         total: response?.data?.pagination?.total || 0,
+        loading: false,
       });
     } catch (error) {
       console.error('Failed to fetch pool hosts:', error);
@@ -131,9 +135,8 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
         hosts: [],
         total: 0,
         error: error instanceof Error ? error.message : 'Failed to fetch pool hosts',
+        loading: false,
       });
-    } finally {
-      set({ loading: false });
     }
   },
 

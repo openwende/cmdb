@@ -3,6 +3,8 @@ export {
   createTopologySet,
   createTopologyModule,
   getHostList,
+  importHostFile,
+  downloadHostImportTemplate,
   batchSearchObjectAttribute,
   searchObjectAttribute,
   getAvailableModels,
@@ -18,6 +20,7 @@ export {
 
 export {
   listModels,
+  listDynamicModels,
   listModelGroups,
   getModelDetail,
   createModel,

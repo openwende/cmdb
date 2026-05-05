@@ -227,9 +227,14 @@ const HostStatistics: React.FC = () => {
         </Tooltip>
       </div>
 
+      <div className="sample-data-notice">
+        <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge', '示例数据')}</span>
+        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip', '图表当前展示示例数据，尚未接入真实统计源')}</span>
+      </div>
+
       <Row gutter={[24, 24]}>
         {charts.map((chart, index) => (
-          <Col key={chart.id} span={chart.width === 50 ? 12 : 24}>
+          <Col key={chart.id} xs={24} xl={chart.width === 50 ? 12 : 24}>
             <ChartContainer
               id={chart.id}
               title={chart.name}

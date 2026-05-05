@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Button, Descriptions, Spin, Tabs, Tag, message } from 'antd';
+import { Button, Descriptions, Spin, Tabs, Tag } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
-import { getBusinessList, getModelDetail, listModels } from '@/api';
-import { ModelAttribute, ModelDefinition } from '@/api/types/model';
+import { getBusinessList, getModelDetail, listDynamicModels, listModels } from '@/api';
+import { DynamicModelDefinition, ModelAttribute, ModelDefinition } from '@/api/types/model';
 import { BusinessDetail } from '@/api/types/resource';
 import { buildModelDetailPath } from '..';
 import { ModelPageContextValue } from '../context';
@@ -13,6 +14,7 @@ import './style.css';
 
 const ModelLayout: React.FC = () => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const { name } = useParams<{ name: string }>();
   const location = useLocation();
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ const ModelLayout: React.FC = () => {
   const [detailModel, setDetailModel] = useState<ModelDefinition | null>(null);
   const [attributes, setAttributes] = useState<ModelAttribute[]>([]);
   const [allModels, setAllModels] = useState<ModelDefinition[]>([]);
+  const [dynamicModels, setDynamicModels] = useState<DynamicModelDefinition[]>([]);
   const [businesses, setBusinesses] = useState<BusinessDetail[]>([]);
 
   const parentModelName = useMemo(() => {
@@ -46,19 +49,39 @@ const ModelLayout: React.FC = () => {
 
     try {
       setLoading(true);
-      const [detail, models, businessResponse] = await Promise.all([
+      const [detailResult, modelsResult, businessResult] = await Promise.allSettled([
         getModelDetail(name),
         listModels(),
         getBusinessList({ limit: 100, offset: 0 }),
       ]);
+      const dynamicModelsResult = await listDynamicModels().catch((error) => {
+        console.error(error);
+        return [];
+      });
 
-      setDetailModel(detail.model);
-      setAttributes(detail.attributes || []);
-      setAllModels(models);
-      setBusinesses(businessResponse.data.items || []);
-    } catch (error) {
-      console.error(error);
-      message.error(t('resource.model.messages.loadFailed'));
+      if (detailResult.status === 'fulfilled') {
+        setDetailModel(detailResult.value.model);
+        setAttributes(detailResult.value.attributes || []);
+      } else {
+        console.error(detailResult.reason);
+        message.error(t('resource.model.messages.loadFailed'));
+        return;
+      }
+
+      if (modelsResult.status === 'fulfilled') {
+        setAllModels(modelsResult.value);
+      } else {
+        console.error(modelsResult.reason);
+      }
+
+      setDynamicModels(dynamicModelsResult);
+
+      if (businessResult.status === 'fulfilled') {
+        setBusinesses(businessResult.value.data.items || []);
+      } else {
+        console.error(businessResult.reason);
+        // Business list failed — non-blocking, model detail still renders
+      }
     } finally {
       setLoading(false);
     }
@@ -78,6 +101,8 @@ const ModelLayout: React.FC = () => {
         detailModel,
         attributes,
         allModels,
+        dynamicModels,
+        isDynamicModel: dynamicModels.some((item) => item.uid === detailModel.name),
         businesses,
         parentModelName,
         parentModelDisplayName,

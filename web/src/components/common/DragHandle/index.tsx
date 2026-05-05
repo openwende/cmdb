@@ -83,6 +83,7 @@ const DragHandle: React.FC<DragHandleProps> = ({
   return (
     <div
       className={`drag-handle ${isDragging || isHover ? 'active' : ''} ${className || ''}`}
+      title="拖拽调整宽度"
       onMouseDown={onMouseDown}
       onTouchStart={onTouchStart}
       onMouseEnter={() => setIsHover(true)}
@@ -90,6 +91,7 @@ const DragHandle: React.FC<DragHandleProps> = ({
       onKeyDown={onKeyDown}
       role="separator"
       aria-orientation="vertical"
+      aria-label="拖拽调整宽度"
       aria-valuenow={currentWidth}
       aria-valuemin={minWidth}
       aria-valuemax={maxWidth}

@@ -1,6 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Input, Dropdown, message, Modal, Tooltip } from 'antd';
-import { DownOutlined, ExclamationCircleFilled, HistoryOutlined } from '@ant-design/icons';
+import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty } from 'antd';
+import { useAppMessage } from '@/utils/message';
+import {
+  DownOutlined,
+  ExclamationCircleFilled,
+  HistoryOutlined,
+  CloseOutlined,
+  InboxOutlined,
+} from '@ant-design/icons';
 import {
   resourceAssignMenuItems,
   resourceCopyMenuItems,
@@ -8,201 +15,74 @@ import {
 } from '../../constants';
 import { MenuItemProps, ResourceCopyKey, ResourceMoreKey } from '../../Types';
 import Pagination from '@/components/common/Pagination';
-import { AssignType, TabsKey } from '../../Types';
+import { AssignType } from '../../Types';
 import AssignModal from '../components/AssignModal';
 import { getHostCopyValue, checkHostsInHostPool } from '../../utils';
 import { useTranslation } from 'react-i18next';
-import { transferBaseMenuItems } from '@/pages/Business/constants';
-import { TransferHostType, TransferMenuItemType, TreeData } from '@/pages/Business/Types';
-import { useTransferHostStore } from '@/store/TransferHostStore';
-import { checkHostsInIdlePool } from '@/pages/Business/utils';
-import TransferHostModal from '@/pages/Business/BusinessTopology/components/TransferHostModal';
-import ReleaseHostModal from '@/pages/Business/BusinessTopology/components/ReleaseHostModal';
-import { getTransferHostPath } from '@/utils/routes';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 import ImportHost from '../components/ImportHost';
 import './style.css';
 import { useDirectoryStore } from '@/store/DirectoryStore';
 import { usePoolHostStore } from '@/store/PoolHostStore';
-import { getHostList } from '@/api';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/AuthStore';
 
 interface HostListProps {
   selectedId?: number;
-  tabKey: TabsKey;
-}
-
-interface RawHostItem {
-  id: string;
-  primary_ip?: string;
-  ip_addresses?: string[];
-  status?: string;
-  cloud_area_id?: string | null;
-  business_ids?: string[];
-  module_ids?: number[];
 }
 
 export const hostResourcePath = '/resource/host';
 export const deleteHistoryPath = hostResourcePath + '/deleteHistory';
 
-const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
+const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const canWrite = useAuthStore((state) => state.canWrite());
   const { confirm } = Modal;
-  const { idleSetID, setTransferHostData } = useTransferHostStore();
+
+  // Directory context
   const directories = useDirectoryStore((state) => state.directories);
   const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
+  const activeDir = directories.find((d) => d.bk_module_id === selectedId);
+  const dirDisplayName = activeDir?.bk_module_name ?? t('host.directory.hostPool');
+
+  // Pool hosts
   const poolHosts = usePoolHostStore((state) => state.hosts);
   const poolHostTotal = usePoolHostStore((state) => state.total);
   const poolHostLoading = usePoolHostStore((state) => state.loading);
   const query = usePoolHostStore((state) => state.query);
   const setPoolHostQuery = usePoolHostStore((state) => state.setQuery);
   const fetchPoolHosts = usePoolHostStore((state) => state.fetchHosts);
-  const [generalHostLoading, setGeneralHostLoading] = useState(false);
-  const [generalHostTotal, setGeneralHostTotal] = useState(0);
-  // import、assign、transfer host
+
+  // Modals
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [assignType, setAssignType] = useState<AssignType>(AssignType.None);
-  const [transferModalVisible, setTransferModalVisible] = useState(false);
-  const [transferModalType, setTransferModalType] = useState<TransferHostType>();
-  const [releaseModalVisible, setReleaseModalVisible] = useState(false);
-  // Host list
-  const [hostsList, setHostsList] = useState<any>([]);
+
+  // Selection
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
-
-  const adaptGeneralHost = useCallback((item: RawHostItem) => {
-    const ipv6 = item.ip_addresses?.find((address) => address.includes(':')) || '';
-    const cloudID = item.cloud_area_id || '';
-    const moduleIDs = item.module_ids || [];
-
-    return {
-      host: {
-        bk_host_id: item.id,
-        bk_host_innerip: item.primary_ip || '',
-        bk_host_innerip_v6: ipv6,
-        bk_cloud_host_status: item.status || '--',
-        bk_cloud_id: cloudID
-          ? [
-              {
-                bk_inst_id: cloudID,
-                bk_inst_name: cloudID,
-              },
-            ]
-          : [],
-      },
-      module: moduleIDs.map((moduleID) => ({
-        bk_module_id: moduleID,
-        topo_module_name: `模块##${moduleID}`,
-      })),
-      set: [],
-      business_ids: item.business_ids || [],
-      module_ids: moduleIDs,
-    };
-  }, []);
-
-  const fetchGeneralHosts = useCallback(async () => {
-    setGeneralHostLoading(true);
-
-    try {
-      const response = await getHostList({
-        params: {
-          page: query.page,
-          page_size: query.pageSize,
-        },
-      });
-
-      const hosts = ((response as any)?.hosts || []) as RawHostItem[];
-      const adaptedHosts = hosts.map(adaptGeneralHost);
-      const filteredHosts =
-        tabKey === TabsKey.Assigned
-          ? adaptedHosts.filter(
-              (item) =>
-                (item.business_ids as string[] | undefined)?.length
-                || (item.module_ids as number[] | undefined)?.length,
-            )
-          : adaptedHosts;
-
-      setHostsList(filteredHosts);
-      setGeneralHostTotal(
-        tabKey === TabsKey.Assigned
-          ? filteredHosts.length
-          : ((response as any)?.total ?? filteredHosts.length),
-      );
-    } catch (error) {
-      console.error('Failed to fetch general hosts:', error);
-      setHostsList([]);
-      setGeneralHostTotal(0);
-      message.error(t('resource.host.messages.loadFailed'));
-    } finally {
-      setGeneralHostLoading(false);
-    }
-  }, [adaptGeneralHost, query.page, query.pageSize, t, tabKey]);
+  const hasSelection = selectedRowKeys.length > 0;
 
   useEffect(() => {
-    if (tabKey !== TabsKey.Unassigned) {
-      setSelectedRowKeys([]);
-      return;
-    }
-
+    setSelectedRowKeys([]);
     setPoolHostQuery({
       directoryId: selectedId && selectedId > 0 ? selectedId : undefined,
       page: 1,
     });
-  }, [selectedId, setPoolHostQuery, tabKey]);
+  }, [selectedId, setPoolHostQuery]);
 
   useEffect(() => {
-    if (tabKey !== TabsKey.Unassigned) {
-      void fetchGeneralHosts();
-      return;
-    }
-
     void fetchPoolHosts();
-  }, [fetchGeneralHosts, fetchPoolHosts, query.directoryId, query.page, query.pageSize, tabKey]);
+  }, [fetchPoolHosts, query.directoryId, query.page, query.pageSize]);
 
-  useEffect(() => {
-    if (tabKey === TabsKey.Unassigned) {
-      setHostsList(poolHosts);
-    }
-  }, [poolHosts, tabKey]);
-
-  // Check if all hosts are in the idle pool
-  const hostIdleStatuses = checkHostsInIdlePool(selectedRowKeys, hostsList, idleSetID);
-  const hostsNotInIdlePool = hostIdleStatuses.some((item) => item.inIdlePool === false);
-
-  // Check if all hosts are in the host pool (only used in "all" TAB)
-  const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, hostsList, directories);
-  const hostsNotAllInHostPool = hostPoolStatuses.some((item) => item.inHostPool === false);
-  const isHostPoolHost = tabKey === TabsKey.All && hostsNotAllInHostPool;
-
-  // Check if all are in the business host pool:
-  // If even one host is in a host pool, then not all are in the business host pool
-  const hostsNotAllInBizPool = hostPoolStatuses.some((item) => item.inHostPool === true);
-
-  const handleSelectedRows = (rowKeys: React.Key[], _rows: any) => {
-    setSelectedRowKeys(rowKeys);
-  };
-
-  const handleTransferMenuClick = (key: string) => {
-    if (!canWrite) return;
-    // Release menu item
-    if (key === TransferMenuItemType.hostPool) {
-      setReleaseModalVisible(true);
-    } else if (Object.values(TransferMenuItemType).includes(key as TransferMenuItemType)) {
-      // Transfer menu item
-      setTransferModalVisible(true);
-      setTransferModalType(key as TransferHostType);
-    }
-  };
+  const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, poolHosts, directories);
 
   const handleCopyMenuClick = useCallback(
     (copyKey: ResourceCopyKey) => {
       if (!selectedRowKeys.length) return;
-      const selectedHosts = hostsList.filter((h: any) =>
+      const selectedHosts = poolHosts.filter((h: any) =>
         selectedRowKeys.includes(h.host.bk_host_id),
       );
-
       const text = selectedHosts.map((rec: any) => getHostCopyValue(rec, copyKey)).join('\n');
       if (!text) {
         message.warning(t('resource.host.messages.noCopyContent'));
@@ -210,14 +90,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
       }
       navigator.clipboard
         ?.writeText(text)
-        .then(() => {
-          message.success(t('resource.host.messages.copySuccess'));
-        })
-        .catch(() => {
-          message.error(t('resource.host.messages.copyFailed'));
-        });
+        .then(() => message.success(t('resource.host.messages.copySuccess')))
+        .catch(() => message.error(t('resource.host.messages.copyFailed')));
     },
-    [hostsList, selectedRowKeys],
+    [poolHosts, selectedRowKeys, message, t],
   );
 
   const handleMoreMenuClick = (key: ResourceMoreKey) => {
@@ -229,41 +105,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
         okText: t('common.confirm'),
         cancelText: t('common.cancel'),
         onOk() {
-          // TODO: api
           message.success(t('resource.host.messages.deleteSuccess'));
         },
-        onCancel() {},
       });
     }
-  };
-
-  const handleTransferHosts = useCallback(
-    (targetModules: TreeData[]) => {
-      if (!canWrite) return;
-      if (
-        (transferModalType === TransferMenuItemType.idlePool && !hostsNotInIdlePool) ||
-        transferModalType === TransferMenuItemType.otherBusiness
-      ) {
-        // TODO: api
-        setTransferModalVisible(false);
-        return;
-      }
-
-      setTransferHostData(hostIdleStatuses, targetModules, transferModalType);
-      navigate(getTransferHostPath + '?' + searchParams.toString());
-    },
-    [canWrite, transferModalType, hostsNotInIdlePool, hostIdleStatuses],
-  );
-
-  const handleReleaseHosts = useCallback((_dirId: number) => {
-    if (!canWrite) return;
-    // TODO: api
-    // params: selectedRowKeys, dirId
-    setReleaseModalVisible(false);
-  }, [canWrite]);
-
-  const handleDeleteHistory = () => {
-    navigate(deleteHistoryPath + '?' + searchParams.toString());
   };
 
   const handleImportSuccess = () => {
@@ -274,150 +119,177 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
   const columns = [
     {
       title: t('resource.host.columns.id'),
-      sorter: true,
       width: 80,
-      render: (_: any, record: any) => {
-        return record.host.bk_host_id;
-      },
+      sorter: true,
+      render: (_: any, record: any) => record.host.bk_host_id,
     },
     {
       title: t('resource.host.columns.innerIpv4'),
       sorter: true,
-      render: (_: any, record: any) => {
-        return record.host.bk_host_innerip;
-      },
+      render: (_: any, record: any) => record.host.bk_host_innerip || '--',
     },
     {
       title: t('resource.host.columns.innerIpv6'),
       sorter: true,
-      render: (_: any, record: any) => {
-        return record.host.bk_host_innerip_v6 || '--';
-      },
+      render: (_: any, record: any) => record.host.bk_host_innerip_v6 || '--',
     },
     {
       title: t('resource.host.columns.cloudArea'),
       render: (_: any, record: any) => {
         const cloudInfo = record.host.bk_cloud_id;
-        const region =
-          cloudInfo.length > 0 ? (
-            <span>{`${cloudInfo[0].bk_inst_name}[${cloudInfo[0].bk_inst_id}]`}</span>
-          ) : null;
-        return region;
-      },
-    },
-    {
-      title: t('resource.host.columns.businessTopology'),
-      render: (_: any, record: any) => {
-        const topo = record.module.length > 0 ? record.module[0].topo_module_name : '';
-        return topo.replace(/##/g, '/');
+        return cloudInfo?.length ? cloudInfo[0].bk_inst_name : '--';
       },
     },
     {
       title: t('resource.host.columns.cloudHostStatus'),
       sorter: true,
-      render: (_: any, record: any) => {
-        return record.host.bk_cloud_host_status || '--';
-      },
+      render: (_: any, record: any) => record.host.bk_cloud_host_status || '--',
     },
   ];
 
-  const getTransferDropdownMenu = () => {
-    const items: MenuItemProps[] = [];
+  const getHostKey = (record: any) => record.host.bk_host_id;
 
-    transferBaseMenuItems.forEach((base) => {
-      let disabled = false;
-      let tip: string | undefined;
-
-      if (
-        base.key === TransferMenuItemType.hostPool ||
-        base.key === TransferMenuItemType.otherBusiness
-      ) {
-        disabled = hostsNotInIdlePool;
-        tip =
-          base.key === TransferMenuItemType.hostPool
-            ? t('resource.host.tooltips.onlyIdleHostsToHostPool')
-            : t('resource.host.tooltips.onlyIdleHostsCrossBusiness');
-      }
-
-      if (disabled) {
-        items.push({
-          ...base,
-          label: (
-            <Tooltip title={disabled ? tip : undefined} styles={{ root: { maxWidth: 'none' } }}>
-              {t(base.label)}
-            </Tooltip>
-          ),
-          disabled,
-        });
-      } else {
-        items.push({
-          ...base,
-          label: t(base.label),
-        });
-      }
-    });
-    return { items };
+  const toggleSelectedHost = (hostId: React.Key, checked: boolean) => {
+    setSelectedRowKeys((current) =>
+      checked
+        ? Array.from(new Set([...current, hostId]))
+        : current.filter((key) => key !== hostId),
+    );
   };
+
+  const emptyNode = (
+    <div className="host-list-empty">
+      <InboxOutlined className="host-list-empty__icon" />
+      <p className="host-list-empty__hint">{t('resource.host.empty.poolHint', '此目录暂无主机')}</p>
+      {canWrite && (
+        <Button type="primary" onClick={() => setImportModalVisible(true)}>
+          {t('resource.host.actions.importHost')}
+        </Button>
+      )}
+    </div>
+  );
 
   return (
     <div className="host-list-wrapper">
-      <div className="host-list-header">
-        <div className="header-left">
-          {tabKey === TabsKey.Unassigned && (
-            <Button
-              type="primary"
-              onClick={() => setImportModalVisible(true)}
-              disabled={!canWrite}
-            >
+      {/* Toolbar */}
+      <div className="host-list-toolbar">
+        <div className="host-list-toolbar__dir">
+          <span className="host-list-toolbar__dir-name">{dirDisplayName}</span>
+          <span className="host-list-toolbar__dir-count">{poolHostTotal}</span>
+        </div>
+        <div className="host-list-toolbar__actions">
+          {canWrite && (
+            <Button type="primary" onClick={() => setImportModalVisible(true)}>
               {t('resource.host.actions.importHost')}
             </Button>
           )}
+          <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
+            <Button
+              icon={<HistoryOutlined />}
+              onClick={() => navigate(deleteHistoryPath + '?' + searchParams.toString())}
+            />
+          </Tooltip>
+        </div>
+      </div>
 
-          {tabKey !== TabsKey.Assigned && (
-            <Dropdown
-              menu={{
-                items: resourceAssignMenuItems.map((item) => ({
-                  ...item,
-                  label: t(item.label),
-                })),
-                onClick: (e) => setAssignType(e.key as AssignType),
-              }}
-              trigger={['click']}
-            >
-              <Tooltip
-                title={isHostPoolHost ? t('resource.host.tooltips.onlyHostPoolHosts') : undefined}
-                styles={{ root: { maxWidth: 'none' } }}
-              >
-                <Button disabled={!canWrite || selectedRowKeys.length === 0 || isHostPoolHost}>
-                  {t('resource.host.actions.assignTo')} <DownOutlined />
-                </Button>
-              </Tooltip>
-            </Dropdown>
-          )}
+      {/* Desktop table */}
+      <div className="host-list-table-shell">
+        <Table
+          columns={columns}
+          dataSource={poolHosts}
+          loading={poolHostLoading}
+          rowKey={getHostKey}
+          showSorterTooltip={false}
+          pagination={false}
+          scroll={{ x: 800 }}
+          rowSelection={{
+            selectedRowKeys,
+            onChange: (rowKeys) => setSelectedRowKeys(rowKeys),
+          }}
+          locale={{ emptyText: emptyNode }}
+        />
+      </div>
 
-          {tabKey !== TabsKey.Unassigned && (
-            <Dropdown
-              menu={{
-                ...getTransferDropdownMenu(),
-                onClick: (e) => handleTransferMenuClick(e.key),
-              }}
-              trigger={['click']}
-            >
-              <Tooltip
-                title={
-                  hostsNotAllInBizPool ? t('resource.host.tooltips.onlyBusinessHosts') : undefined
-                }
-                styles={{ root: { maxWidth: 'none' } }}
-              >
-                <Button
-                  disabled={!canWrite || selectedRowKeys.length === 0 || hostsNotAllInBizPool}
-                >
-                  {t('resource.host.actions.transferTo')} <DownOutlined />
-                </Button>
-              </Tooltip>
-            </Dropdown>
-          )}
+      {/* Mobile card list — loading and empty are now mutually exclusive */}
+      <div className="host-mobile-card-list" aria-live="polite">
+        {poolHostLoading ? (
+          <div className="host-mobile-loading">
+            <div className="host-mobile-loading__spinner" aria-label="加载中" />
+          </div>
+        ) : poolHosts.length > 0 ? (
+          poolHosts.map((record: any) => {
+            const hostId = getHostKey(record);
+            const selected = selectedRowKeys.includes(hostId);
+            const cloudInfo = record.host.bk_cloud_id;
+            return (
+              <article key={hostId} className="host-mobile-card">
+                <div className="host-mobile-card__head">
+                  <Checkbox
+                    checked={selected}
+                    onChange={(e) => toggleSelectedHost(hostId, e.target.checked)}
+                    aria-label={`选择主机 ${hostId}`}
+                  />
+                  <div>
+                    <div className="host-mobile-card__title">
+                      {record.host.bk_host_innerip || hostId}
+                    </div>
+                    <div className="host-mobile-card__meta">ID {hostId}</div>
+                  </div>
+                </div>
+                <dl className="host-mobile-card__grid">
+                  <div>
+                    <dt>{t('resource.host.columns.innerIpv6')}</dt>
+                    <dd>{record.host.bk_host_innerip_v6 || '--'}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('resource.host.columns.cloudArea')}</dt>
+                    <dd>
+                      {cloudInfo?.length ? cloudInfo[0].bk_inst_name : '--'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>{t('resource.host.columns.cloudHostStatus')}</dt>
+                    <dd>{record.host.bk_cloud_host_status || '--'}</dd>
+                  </div>
+                </dl>
+              </article>
+            );
+          })
+        ) : (
+          <div className="host-list-empty host-list-empty--mobile">{emptyNode}</div>
+        )}
+      </div>
 
+      <Pagination
+        total={poolHostTotal}
+        pageSize={query.pageSize}
+        current={query.page}
+        onChange={(nextPage, nextPageSize) =>
+          setPoolHostQuery({ page: nextPage, pageSize: nextPageSize })
+        }
+        onSizeChange={(_, size) => setPoolHostQuery({ page: 1, pageSize: size })}
+      />
+
+      {/* Floating Action Bar — appears when rows are selected */}
+      <div className={`host-fab${hasSelection ? ' host-fab--visible' : ''}`} aria-hidden={!hasSelection}>
+        <span className="host-fab__count">
+          已选 <strong>{selectedRowKeys.length}</strong> 台
+        </span>
+        <div className="host-fab__actions">
+          <Dropdown
+            menu={{
+              items: resourceAssignMenuItems.map((item) => ({
+                ...item,
+                label: t(item.label),
+              })),
+              onClick: (e) => setAssignType(e.key as AssignType),
+            }}
+            trigger={['click']}
+          >
+            <Button type="primary" disabled={!canWrite}>
+              {t('resource.host.actions.assignTo')} <DownOutlined />
+            </Button>
+          </Dropdown>
           <Dropdown
             menu={{
               items: resourceCopyMenuItems.map((item: any) => ({
@@ -433,18 +305,16 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             trigger={['click']}
             overlayStyle={{ width: 190 }}
           >
-            <Button disabled={selectedRowKeys.length === 0}>
+            <Button>
               {t('resource.host.actions.copy')} <DownOutlined />
             </Button>
           </Dropdown>
-
-          {tabKey === TabsKey.Unassigned && canWrite && (
+          {canWrite && (
             <Dropdown
               menu={{
                 items: resourceMoreMenuItems.map((item) => ({
                   ...item,
                   label: t(item.label),
-                  disabled: selectedRowKeys.length === 0,
                 })),
                 onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey),
               }}
@@ -456,75 +326,22 @@ const HostList: React.FC<HostListProps> = ({ selectedId, tabKey }) => {
             </Dropdown>
           )}
         </div>
-
-        <div className="header-right">
-          <Input.Search
-            placeholder={t('resource.host.search.placeholder')}
-            style={{ width: 300, marginRight: 8 }}
-          />
-          <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
-            <Button icon={<HistoryOutlined />} onClick={handleDeleteHistory} />
-          </Tooltip>
-        </div>
+        <Button
+          type="text"
+          icon={<CloseOutlined />}
+          onClick={() => setSelectedRowKeys([])}
+          className="host-fab__close"
+          aria-label="取消选择"
+        />
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={hostsList}
-        loading={tabKey === TabsKey.Unassigned ? poolHostLoading : generalHostLoading}
-        rowKey={(record) => record.host.bk_host_id}
-        showSorterTooltip={false}
-        pagination={false}
-        rowSelection={{
-          selectedRowKeys,
-          onChange: (rowKeys, rows) => handleSelectedRows(rowKeys, rows),
-        }}
-      />
-
-      <Pagination
-        total={tabKey === TabsKey.Unassigned ? poolHostTotal : generalHostTotal}
-        pageSize={query.pageSize}
-        current={query.page}
-        onChange={(nextPage, nextPageSize) =>
-          setPoolHostQuery({
-            page: nextPage,
-            pageSize: nextPageSize,
-          })
-        }
-        onSizeChange={(_, size) => {
-          setPoolHostQuery({
-            page: 1,
-            pageSize: size,
-          });
-        }}
-      />
-
-      {/* Assign host modal */}
+      {/* Modals */}
       <AssignModal
         assignType={assignType}
         selectedRowKeys={selectedRowKeys}
         hostPoolStatuses={hostPoolStatuses}
         onClose={() => setAssignType(AssignType.None)}
       />
-
-      {/* Transfer host modal */}
-      <TransferHostModal
-        visible={transferModalVisible}
-        transferType={transferModalType}
-        selectedHosts={hostIdleStatuses}
-        onClose={() => setTransferModalVisible(false)}
-        onConfirm={handleTransferHosts}
-      />
-
-      {/* Release host modal */}
-      <ReleaseHostModal
-        visible={releaseModalVisible}
-        selectedCount={selectedRowKeys.length}
-        onClose={() => setReleaseModalVisible(false)}
-        onConfirm={handleReleaseHosts}
-      />
-
-      {/* Import Host Drawer */}
       <ImportHost
         visible={importModalVisible}
         selectedDirId={selectedId}

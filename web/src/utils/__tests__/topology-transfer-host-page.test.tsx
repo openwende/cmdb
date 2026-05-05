@@ -15,7 +15,11 @@ const {
   mockNavigate: vi.fn(),
   mockSetTransferHostData: vi.fn(),
   storeState: {
-    selectedHosts: [{ id: 'host-1', ip: '10.1.1.10' }],
+    selectedHosts: [{ id: 'host-1', ip: '10.1.1.10' }] as Array<{
+      id: string;
+      ip: string;
+      sourceModuleId?: number;
+    }>,
     targetModules: [
       {
         title: 's1',
@@ -27,6 +31,7 @@ const {
       },
     ],
     transferHostType: 'businessModule',
+    sourceModuleId: undefined as number | undefined,
   },
 }));
 
@@ -84,6 +89,7 @@ vi.mock('antd', () => ({
   Space: ({ children }: any) => <div>{children}</div>,
   Tooltip: ({ children }: any) => <div>{children}</div>,
   Popconfirm: ({ children }: any) => <div>{children}</div>,
+  message: { success: vi.fn(), error: vi.fn() },
 }));
 
 vi.mock('@ant-design/icons', () => ({
@@ -127,6 +133,7 @@ describe('topology transfer host page', () => {
       },
     ];
     storeState.transferHostType = 'businessModule';
+    storeState.sourceModuleId = undefined;
   });
 
   it('calls the real transfer api when confirming module transfers', async () => {
@@ -138,6 +145,39 @@ describe('topology transfer host page', () => {
       expect(transferTopologyHosts).toHaveBeenCalledWith({
         host_ids: ['host-1'],
         target_module_id: 4,
+      });
+    });
+  });
+
+  it('passes source module id when confirming true module-to-module transfers', async () => {
+    storeState.sourceModuleId = 3;
+
+    render(<TransferHost />);
+
+    fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
+
+    await waitFor(() => {
+      expect(transferTopologyHosts).toHaveBeenCalledWith({
+        host_ids: ['host-1'],
+        target_module_id: 4,
+        source_module_id: 3,
+      });
+    });
+  });
+
+  it('uses each selected host source module when transfer starts from set or business scope', async () => {
+    storeState.selectedHosts = [{ id: 'host-1', ip: '10.1.1.10', sourceModuleId: 5 }];
+    storeState.sourceModuleId = undefined;
+
+    render(<TransferHost />);
+
+    fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
+
+    await waitFor(() => {
+      expect(transferTopologyHosts).toHaveBeenCalledWith({
+        host_ids: ['host-1'],
+        target_module_id: 4,
+        source_module_id: 5,
       });
     });
   });

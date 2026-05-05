@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Drawer, Form, Input, Select, Button, Collapse, message } from 'antd';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
+import { Drawer, Form, Input, Select, Button, Collapse } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { useTranslation } from 'react-i18next';
 import { userListMock } from '@/mock/resource';
 import ConfirmModal from '@/components/common/ConfirmModal';
@@ -16,9 +17,6 @@ import {
 } from '../FormFields';
 import './style.css';
 
-const { Panel } = Collapse;
-
-// Get IANA time zones
 const defaultTimeZone = 'Asia/Shanghai';
 export const timezoneOptions: string[] = (Intl as any).supportedValuesOf
   ? (Intl as any).supportedValuesOf('timeZone')
@@ -34,6 +32,7 @@ interface DrawerProps {
 const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess }) => {
   const { t } = useTranslation();
   const { isMobile } = useResponsive();
+  const message = useAppMessage();
   const [lang, setLang] = useState<string>('chinese');
   const [searchOptions, setSearchOptions] = useState<{ value: string; label: string }[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -44,15 +43,23 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
   const [selectedFields, setSelectedFields] = useState<FormFieldName[]>([]);
   const [isFormChanged, setIsFormChanged] = useState<boolean>(false);
 
-  // Lifecycle and language options with i18n
-  const lifecycleOptions = LIFECYCLE_OPTIONS.map((option) => ({
-    ...option,
-    label: t(option.label),
-  }));
-  const languageOptions = LANGUAGE_OPTIONS.map((option) => ({
-    ...option,
-    label: option.label,
-  }));
+  // Lifecycle and language options with i18n (memoized to prevent useEffect loop)
+  const lifecycleOptions = useMemo(
+    () =>
+      LIFECYCLE_OPTIONS.map((option) => ({
+        ...option,
+        label: t(option.label),
+      })),
+    [t],
+  );
+  const languageOptions = useMemo(
+    () =>
+      LANGUAGE_OPTIONS.map((option) => ({
+        ...option,
+        label: option.label,
+      })),
+    [],
+  );
 
   // Utility function to determine if a field should be disabled
   const isFieldDisabled = (fieldName: FormFieldName): boolean => {
@@ -226,135 +233,147 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
       className="modify-drawer"
     >
       <Form form={form} layout="vertical" onValuesChange={handleFormValueChange}>
-        <Collapse defaultActiveKey={['base', 'role']} ghost>
-          <Panel header={t('resource.business.modify.sections.basic')} key="base">
-            <div className="form-grid">
-              <FormFieldItem
-                fieldName="name"
-                label={t('resource.business.modify.fields.name')}
-                required={true}
-                type={type}
-                handleFieldChange={handleFieldChange}
-                selectedFields={selectedFields}
-              >
-                <Input
-                  placeholder={t('resource.business.modify.placeholders.name')}
-                  disabled={isFieldDisabled('name')}
-                  className="select-input"
-                  maxLength={100}
-                  showCount
-                />
-              </FormFieldItem>
-              <FormFieldItem
-                fieldName="lifecycle"
-                label={t('resource.business.modify.fields.lifecycle')}
-                type={type}
-                handleFieldChange={handleFieldChange}
-                selectedFields={selectedFields}
-              >
-                <Select
-                  placeholder={t('resource.business.modify.placeholders.lifecycle')}
-                  options={lifecycleOptions}
-                  disabled={isFieldDisabled('lifecycle')}
-                  className="select-input"
-                />
-              </FormFieldItem>
+        <Collapse
+          defaultActiveKey={['base', 'role']}
+          ghost
+          items={[
+            {
+              key: 'base',
+              label: t('resource.business.modify.sections.basic'),
+              children: (
+                <div className="form-grid">
+                  <FormFieldItem
+                    fieldName="name"
+                    label={t('resource.business.modify.fields.name')}
+                    required={true}
+                    type={type}
+                    handleFieldChange={handleFieldChange}
+                    selectedFields={selectedFields}
+                  >
+                    <Input
+                      placeholder={t('resource.business.modify.placeholders.name')}
+                      disabled={isFieldDisabled('name')}
+                      className="select-input"
+                      maxLength={100}
+                      showCount
+                    />
+                  </FormFieldItem>
+                  <FormFieldItem
+                    fieldName="lifecycle"
+                    label={t('resource.business.modify.fields.lifecycle')}
+                    type={type}
+                    handleFieldChange={handleFieldChange}
+                    selectedFields={selectedFields}
+                  >
+                    <Select
+                      placeholder={t('resource.business.modify.placeholders.lifecycle')}
+                      options={lifecycleOptions}
+                      disabled={isFieldDisabled('lifecycle')}
+                      className="select-input"
+                    />
+                  </FormFieldItem>
 
-              {isCreateMode(type) && (
-                <FormFieldItem
-                  fieldName="timezone"
-                  label={t('resource.business.modify.fields.timezone')}
-                  required={true}
-                  type={type}
-                  handleFieldChange={handleFieldChange}
-                  selectedFields={selectedFields}
-                >
-                  <Select
-                    showSearch
-                    placeholder={t('resource.business.modify.placeholders.timezone')}
-                    filterOption={(input, option) =>
-                      (option?.value as string).toLowerCase().includes(input.toLowerCase())
-                    }
-                    options={timezoneOptions.map((tz) => ({ value: tz, label: tz }))}
-                    className="select-input"
+                  {isCreateMode(type) && (
+                    <FormFieldItem
+                      fieldName="timezone"
+                      label={t('resource.business.modify.fields.timezone')}
+                      required={true}
+                      type={type}
+                      handleFieldChange={handleFieldChange}
+                      selectedFields={selectedFields}
+                    >
+                      <Select
+                        showSearch
+                        placeholder={t('resource.business.modify.placeholders.timezone')}
+                        filterOption={(input, option) =>
+                          (option?.value as string).toLowerCase().includes(input.toLowerCase())
+                        }
+                        options={timezoneOptions.map((tz) => ({ value: tz, label: tz }))}
+                        className="select-input"
+                      />
+                    </FormFieldItem>
+                  )}
+                  <FormFieldItem
+                    fieldName="language"
+                    label={t('resource.business.modify.fields.language')}
+                    required={true}
+                    type={type}
+                    handleFieldChange={handleFieldChange}
+                    selectedFields={selectedFields}
+                  >
+                    <Select
+                      placeholder={t('resource.business.modify.placeholders.language')}
+                      onChange={setLang}
+                      options={languageOptions}
+                      disabled={isFieldDisabled('language')}
+                      className="select-input"
+                    />
+                  </FormFieldItem>
+                </div>
+              ),
+            },
+            {
+              key: 'role',
+              label: t('resource.business.modify.sections.roles'),
+              children: (
+                <div className="form-grid">
+                  <PersonnelSelectItem
+                    fieldName="sres"
+                    label={t('resource.business.modify.fields.sres')}
+                    required={true}
+                    type={type}
+                    isSearching={isSearching}
+                    searchOptions={searchOptions}
+                    handleSearch={handleSearch}
+                    handleFieldChange={handleFieldChange}
+                    isFieldDisabled={isFieldDisabled}
+                    selectedFields={selectedFields}
+                    onOpenChange={handleDropdownOpen}
                   />
-                </FormFieldItem>
-              )}
-              <FormFieldItem
-                fieldName="language"
-                label={t('resource.business.modify.fields.language')}
-                required={true}
-                type={type}
-                handleFieldChange={handleFieldChange}
-                selectedFields={selectedFields}
-              >
-                <Select
-                  placeholder={t('resource.business.modify.placeholders.language')}
-                  onChange={setLang}
-                  options={languageOptions}
-                  disabled={isFieldDisabled('language')}
-                  className="select-input"
-                />
-              </FormFieldItem>
-            </div>
-          </Panel>
-          <Panel header={t('resource.business.modify.sections.roles')} key="role">
-            <div className="form-grid">
-              <PersonnelSelectItem
-                fieldName="sres"
-                label={t('resource.business.modify.fields.sres')}
-                required={true}
-                type={type}
-                isSearching={isSearching}
-                searchOptions={searchOptions}
-                handleSearch={handleSearch}
-                handleFieldChange={handleFieldChange}
-                isFieldDisabled={isFieldDisabled}
-                selectedFields={selectedFields}
-                onDropdownVisibleChange={handleDropdownOpen}
-              />
 
-              <PersonnelSelectItem
-                fieldName="bizops"
-                label={t('resource.business.modify.fields.bizops')}
-                type={type}
-                isSearching={isSearching}
-                searchOptions={searchOptions}
-                handleSearch={handleSearch}
-                handleFieldChange={handleFieldChange}
-                isFieldDisabled={isFieldDisabled}
-                selectedFields={selectedFields}
-                onDropdownVisibleChange={handleDropdownOpen}
-              />
+                  <PersonnelSelectItem
+                    fieldName="bizops"
+                    label={t('resource.business.modify.fields.bizops')}
+                    type={type}
+                    isSearching={isSearching}
+                    searchOptions={searchOptions}
+                    handleSearch={handleSearch}
+                    handleFieldChange={handleFieldChange}
+                    isFieldDisabled={isFieldDisabled}
+                    selectedFields={selectedFields}
+                    onOpenChange={handleDropdownOpen}
+                  />
 
-              <PersonnelSelectItem
-                fieldName="testers"
-                label={t('resource.business.modify.fields.testers')}
-                type={type}
-                isSearching={isSearching}
-                searchOptions={searchOptions}
-                handleSearch={handleSearch}
-                handleFieldChange={handleFieldChange}
-                isFieldDisabled={isFieldDisabled}
-                selectedFields={selectedFields}
-                onDropdownVisibleChange={handleDropdownOpen}
-              />
+                  <PersonnelSelectItem
+                    fieldName="testers"
+                    label={t('resource.business.modify.fields.testers')}
+                    type={type}
+                    isSearching={isSearching}
+                    searchOptions={searchOptions}
+                    handleSearch={handleSearch}
+                    handleFieldChange={handleFieldChange}
+                    isFieldDisabled={isFieldDisabled}
+                    selectedFields={selectedFields}
+                    onOpenChange={handleDropdownOpen}
+                  />
 
-              <PersonnelSelectItem
-                fieldName="developers"
-                label={t('resource.business.modify.fields.developers')}
-                type={type}
-                isSearching={isSearching}
-                searchOptions={searchOptions}
-                handleSearch={handleSearch}
-                handleFieldChange={handleFieldChange}
-                isFieldDisabled={isFieldDisabled}
-                selectedFields={selectedFields}
-                onDropdownVisibleChange={handleDropdownOpen}
-              />
-            </div>
-          </Panel>
-        </Collapse>
+                  <PersonnelSelectItem
+                    fieldName="developers"
+                    label={t('resource.business.modify.fields.developers')}
+                    type={type}
+                    isSearching={isSearching}
+                    searchOptions={searchOptions}
+                    handleSearch={handleSearch}
+                    handleFieldChange={handleFieldChange}
+                    isFieldDisabled={isFieldDisabled}
+                    selectedFields={selectedFields}
+                    onOpenChange={handleDropdownOpen}
+                  />
+                </div>
+              ),
+            },
+          ]}
+        />
       </Form>
 
       <div className="button-container">

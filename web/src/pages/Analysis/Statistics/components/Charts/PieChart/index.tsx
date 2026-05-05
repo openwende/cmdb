@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
-import { DEFAULT_CHART_HEIGHT } from '../constants';
+import { CHART_COLOR_RANGE, DEFAULT_CHART_HEIGHT } from '../constants';
 import './style.css';
 
 interface PieChartData {
@@ -47,6 +47,7 @@ const PieChart: React.FC<PieChartProps> = ({
       .coordinate({ type: 'theta', outerRadius: 0.8 })
       .encode('y', 'value')
       .encode('color', 'type')
+      .scale('color', { range: CHART_COLOR_RANGE })
       .legend('color', {
         position: 'right',
         layout: { justifyContent: 'center' },

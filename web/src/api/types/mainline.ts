@@ -61,7 +61,7 @@ export interface GetTopologySettingsResponse {
 }
 
 export interface CreateMainlineNodePayload {
-  business_id: string;
+  business_id: number;
   model_uid: string;
   parent_model_uid?: string;
   parent_ref_id?: string;
@@ -85,7 +85,7 @@ export interface MainlineNodeResponse {
   code: number;
   data: {
     id: number;
-    business_id: string;
+    business_id: number;
     parent_id?: number | null;
     model_name: string;
     ref_id: string;

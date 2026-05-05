@@ -6,7 +6,6 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { ProcessItem } from '../../TransferHost';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
-const { Panel } = Collapse;
 
 const protocolOptions = ['TCP', 'UDP', 'TCP6', 'UDP6'];
 
@@ -261,8 +260,7 @@ const AddProcessModal: React.FC<Props> = ({
         <div className="process-content">
           <Form form={form} layout="vertical" onValuesChange={handleFormChange}>
             {/* Basic Info */}
-            <Collapse defaultActiveKey={['basic']} ghost>
-              <Panel header={t('business.topology.addProcessModal.sections.basicInfo')} key="basic">
+            <Collapse defaultActiveKey={['basic']} ghost items={[{ key: 'basic', label: t('business.topology.addProcessModal.sections.basicInfo'), children: (<>
                 <div className="form-row">
                   <Form.Item
                     name="processName"
@@ -354,15 +352,10 @@ const AddProcessModal: React.FC<Props> = ({
                     />
                   </Form.Item>
                 </div>
-              </Panel>
-            </Collapse>
+            </>)}]}/>
 
             {/* Listen Info */}
-            <Collapse defaultActiveKey={['listen']} ghost>
-              <Panel
-                header={t('business.topology.addProcessModal.sections.listenInfo')}
-                key="listen"
-              >
+            <Collapse defaultActiveKey={['listen']} ghost items={[{ key: 'listen', label: t('business.topology.addProcessModal.sections.listenInfo'), children: (<>
                 <div className="listen-content">
                   <Table
                     dataSource={listenInfoList}
@@ -379,15 +372,10 @@ const AddProcessModal: React.FC<Props> = ({
                     </div>
                   )}
                 </div>
-              </Panel>
-            </Collapse>
+            </>)}]}/>
 
             {/* Process Management Info */}
-            <Collapse ghost>
-              <Panel
-                header={t('business.topology.addProcessModal.sections.processManagementInfo')}
-                key="processManagement"
-              >
+            <Collapse ghost items={[{ key: 'processManagement', label: t('business.topology.addProcessModal.sections.processManagementInfo'), children: (<>
                 <div className="form-row">
                   <Form.Item
                     name="workPath"
@@ -583,8 +571,7 @@ const AddProcessModal: React.FC<Props> = ({
                     />
                   </Form.Item>
                 </div>
-              </Panel>
-            </Collapse>
+            </>)}]}/>
           </Form>
         </div>
       </Drawer>

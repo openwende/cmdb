@@ -29,9 +29,22 @@ const FieldDesignerPage: React.FC = () => {
     return Math.max(...attributes.map((item) => item.sort_order)) + 10;
   }, [attributes]);
 
-  const schemaFields = useMemo(() => {
-    return schemas[detailModel.name]?.fields || [];
-  }, [detailModel.name, schemas]);
+  const schemaFields = useMemo((): SchemaCenterField[] => {
+    const fromSchema = schemas[detailModel.name]?.fields ?? [];
+    if (fromSchema.length > 0) return fromSchema;
+    // Fall back to attributes from the model definition (e.g. when dynamic-models schema returns 404)
+    return attributes.map((attr) => ({
+      name: attr.name,
+      display_name: attr.display_name,
+      field_type: attr.field_type,
+      is_required: attr.is_required,
+      is_unique: attr.is_unique,
+      is_editable: attr.is_editable,
+      is_system: attr.is_system,
+      sort_order: attr.sort_order,
+      options: attr.options ?? undefined,
+    }));
+  }, [attributes, detailModel.name, schemas]);
 
   const handleCreateAttribute = async (payload: CreateModelAttributePayload) => {
     try {

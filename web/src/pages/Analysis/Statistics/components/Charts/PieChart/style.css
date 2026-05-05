@@ -9,6 +9,6 @@
   align-items: center;
   justify-content: center;
   height: 300px;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   font-size: 14px;
 }

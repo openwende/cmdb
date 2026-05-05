@@ -26,6 +26,25 @@ import {
 // --- API Endpoints ---
 const hostListApi = '/v1/hosts';
 
+export interface ImportHostFilePayload {
+  file: File;
+  directoryId?: number;
+  uniqueKey?: string;
+  importRelated?: boolean;
+  relatedModelKeys?: Array<string | number>;
+}
+
+export interface ImportHostFileResponse {
+  success?: boolean;
+  message?: string;
+  error?: string[];
+  errors?: string[];
+}
+
+export interface HostImportTemplateParams {
+  directoryId?: number;
+}
+
 // --- Business & Business Set List ---
 /**
  * 获取业务列表
@@ -166,7 +185,7 @@ export interface ServiceCategoryRecord {
   parent_id: number | null;
   root_id: number;
   is_builtin: boolean;
-  business_id?: string | null;
+  business_id?: number | null;
 }
 
 export interface ResourceDirectoryTreeNode {
@@ -181,7 +200,7 @@ export interface ProcessRecord {
   process_template_id: number;
   host_id: string;
   module_id: number;
-  business_id: string;
+  business_id: number;
   process_name: string;
   bind_info?: ProcessBindInfo[];
   start_command?: string;
@@ -211,7 +230,7 @@ export interface ListProcessesResponse {
 export const listProcesses = async (params: {
   page: number;
   page_size: number;
-  business_id?: string;
+  business_id?: number;
   module_id?: number;
   host_id?: string;
   process_template_id?: number;
@@ -275,7 +294,7 @@ export const createTopologyModule = async (payload: CreateTopologyModulePayload)
 };
 
 export const listServiceCategories = async (
-  businessId: string,
+  businessId: number,
 ): Promise<{ code: number; data: ServiceCategoryRecord[]; message?: string }> => {
   return axios.get('/v1/service-categories', {
     params: { business_id: businessId },
@@ -326,6 +345,7 @@ export const deleteTopologyModule = async (id: number) => {
 export const transferTopologyHosts = async (payload: {
   host_ids: string[];
   target_module_id: number;
+  source_module_id?: number;
 }) => {
   return axios.post('/v1/topology/hosts/transfer', payload);
 };
@@ -341,6 +361,44 @@ export const transferTopologyHostsToPool = async (payload: { host_ids: string[] 
  */
 export const getHostList = (params: any) => {
   return axios.get(hostListApi, params);
+};
+
+export const importHostFile = async ({
+  file,
+  directoryId,
+  uniqueKey,
+  importRelated,
+  relatedModelKeys,
+}: ImportHostFilePayload): Promise<ImportHostFileResponse> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append(
+    'params',
+    JSON.stringify({
+      directory_id: directoryId,
+      unique_key: uniqueKey,
+      import_related: Boolean(importRelated),
+      related_model_keys: relatedModelKeys || [],
+    }),
+  );
+
+  return axios.post('/v1/resource-pool/hosts/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
+
+export const downloadHostImportTemplate = ({
+  directoryId,
+}: HostImportTemplateParams = {}): Promise<Blob> => {
+  return axios.get('/v1/hosts/import/template', {
+    params: directoryId == null ? undefined : { directory_id: directoryId },
+    responseType: 'blob',
+    headers: {
+      Accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    },
+  }) as unknown as Promise<Blob>;
 };
 
 // --- Dyniamic Group ---

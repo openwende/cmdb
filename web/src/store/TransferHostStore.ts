@@ -7,11 +7,13 @@ interface TransferHostState {
   targetModules: TreeData[];
   idleSetID: number | null;
   transferHostType?: TransferHostType;
+  sourceModuleId?: number;
   setIdleSetID: (id: number) => void;
   setTransferHostData: (
     hosts: TransferHostItem[],
     node: TreeData[],
     transferType?: TransferHostType,
+    sourceModuleId?: number,
   ) => void;
 }
 
@@ -21,16 +23,19 @@ export const useTransferHostStore = create<TransferHostState>()(
       selectedHosts: [],
       targetModules: [],
       idleSetID: null,
+      sourceModuleId: undefined,
 
       setTransferHostData: (
         hosts: TransferHostItem[],
         modules: TreeData[],
         transferType?: TransferHostType,
+        sourceModuleId?: number,
       ) => {
         set({
           selectedHosts: hosts,
           targetModules: modules,
           transferHostType: transferType,
+          sourceModuleId,
         });
       },
 

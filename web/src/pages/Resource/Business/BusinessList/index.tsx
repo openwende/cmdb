@@ -7,11 +7,11 @@ import {
   Select,
   Tooltip,
   Space,
-  message,
   DatePicker,
   Spin,
   Empty,
 } from 'antd';
+import { useAppMessage } from '@/utils/message';
 import { HistoryOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
@@ -32,6 +32,7 @@ const PAGE_SIZE = 20;
 
 const BusinessList: React.FC = () => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const navigate = useNavigate();
   const location = useLocation();
   const canWrite = useAuthStore((state) => state.canWrite());
@@ -50,6 +51,7 @@ const BusinessList: React.FC = () => {
     [dayjs.Dayjs | null, dayjs.Dayjs | null] | null
   >(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Find current field option
   const currentFieldOption = searchFieldOptions.find((option) => option.value === searchField);
@@ -101,12 +103,18 @@ const BusinessList: React.FC = () => {
     {
       title: t('resource.business.columns.actions'),
       dataIndex: 'action',
+      width: 160,
       render: (_: string, record: BusinessDetail) => (
-        canWrite ? (
-          <a onClick={() => handleArchive(record)}>{t('resource.business.actions.archive')}</a>
-        ) : (
-          '--'
-        )
+        <Space size="small">
+          <Button type="link" size="small" onClick={() => handleDetail(record.id)}>
+            {t('resource.business.actions.viewDetail')}
+          </Button>
+          {canWrite && (
+            <Button type="link" size="small" danger onClick={() => handleArchive(record)}>
+              {t('resource.business.actions.archive')}
+            </Button>
+          )}
+        </Space>
       ),
     },
   ];
@@ -114,31 +122,19 @@ const BusinessList: React.FC = () => {
   const fetchBusinessList = async () => {
     try {
       setLoading(true);
-      // TODO: Use these params when backend API supports filtering
-      // const params = {
-      //   field: searchField,
-      //   textValue: searchText,
-      //   dateRange: searchDateRange
-      //     ? {
-      //         startDate: searchDateRange[0]?.format('YYYY-MM-DD HH:mm:ss'),
-      //         endDate: searchDateRange[1]?.format('YYYY-MM-DD HH:mm:ss'),
-      //       }
-      //     : null,
-      // };
+      setFetchError(null);
       const { data } = await getBusinessList({
-        limit: 100,
-        offset: 0,
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
       });
       const activeBusinesses = data.items.filter(
         (item: BusinessDetail) => item.lifecycle !== LIFECYCLE.OFFLINE,
       );
-      const start = (page - 1) * pageSize;
-      const end = start + pageSize;
-
-      setBusinessList(activeBusinesses.slice(start, end));
-      setBusinessCount(activeBusinesses.length);
+      setBusinessList(activeBusinesses);
+      setBusinessCount(data.total);
     } catch (error) {
       console.error(error);
+      setFetchError(error instanceof Error ? error.message : t('common.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -314,8 +310,28 @@ const BusinessList: React.FC = () => {
         locale={{
           emptyText: loading ? (
             <Spin className="table-spin" />
+          ) : fetchError ? (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={fetchError}
+            />
           ) : (
-            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t('common.noData')}
+            >
+              {canWrite && (
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    setDrawerType('create');
+                    setDrawerVisible(true);
+                  }}
+                >
+                  {t('resource.business.actions.create')}
+                </Button>
+              )}
+            </Empty>
           ),
         }}
       />

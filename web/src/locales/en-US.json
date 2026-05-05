@@ -1,7 +1,7 @@
 {
   "routes": {
     "home": "Home",
-    "business": "Business",
+    "business": "Business Topology",
     "businessTopology": "Topology Workspace",
     "transferHost": "Transfer Host",
     "serviceTemplate": "Service Template",
@@ -15,7 +15,7 @@
     "resource": "Resource Directory",
     "resourceContent": "Resource Content",
     "project": "Project",
-    "resourceBusiness": "Business Inventory",
+    "resourceBusiness": "Business List",
     "resourceModel": "Resource Types",
     "businessDetail": "Business Detail",
     "modelDetail": "Type Detail",
@@ -23,6 +23,8 @@
     "host": "Host Resources",
     "deleteHistory": "Deletion History",
     "analysis": "Audit & Analysis",
+    "userManagement": "User Management",
+    "userList": "Accounts",
     "auditLogs": "Audit",
     "operations": "Operations Overview",
     "notFound": "404"
@@ -64,12 +66,33 @@
       "connectedModels_other": "{{count}} resource types connected",
       "pendingSummary": "Host, business, and instance metrics will open up as the resource graph comes online.",
       "primaryCta": "Open Business Topology",
+      "primaryCtaNoBusiness": "Create or Select Business",
       "primaryDesc": "Enter the main workflow from the business tree and continue into nodes, hosts, and change entry points.",
+      "primaryDescNoBusiness": "No business exists yet. Start from the business list to create or select one.",
       "secondary": {
         "resources": "Open Resource Directory",
         "resourcesDesc": "Inspect hosts and infrastructure resources, then continue onboarding the inventory.",
         "models": "Open Resource Types",
         "modelsDesc": "Maintain resource types and schemas to extend the platform."
+      }
+    },
+    "onboarding": {
+      "title": "Getting Started",
+      "noBusiness": {
+        "title": "Create your first business",
+        "desc": "A business is the top-level organizational unit for configuration management. All resources and topology belong to a business.",
+        "action": "Create Business",
+        "viewerDesc": "No business data available. Please contact an administrator to create a business."
+      },
+      "noModel": {
+        "title": "Define resource types",
+        "desc": "Resource types define the data structures you want to manage, such as hosts, containers, domains, etc.",
+        "action": "Create Resource Type"
+      },
+      "readyImport": {
+        "title": "Import host resources",
+        "desc": "Businesses and resource types are ready. You can now start importing hosts and other actual resources.",
+        "action": "Open Resource Directory"
       }
     }
   },
@@ -80,7 +103,9 @@
       "login": "Sign in",
       "logout": "Sign out",
       "expandSidebar": "Expand sidebar",
-      "collapseSidebar": "Collapse sidebar"
+      "collapseSidebar": "Collapse sidebar",
+      "primaryNavigation": "Modules",
+      "sectionNavigation": "Current page"
     },
     "rename": "Rename",
     "delete": "Delete",
@@ -108,6 +133,18 @@
     },
     "form": {
       "rulesMessage": "This field is required"
+    },
+    "errors": {
+      "requestFailed": "Request failed. Please try again later.",
+      "networkError": "Network connection failed. Please check your network.",
+      "unauthorized": "Session expired. Please log in again.",
+      "notFound": "The requested resource does not exist",
+      "serverError": "Internal server error. Please try again later.",
+      "boundary": {
+        "title": "Something went wrong",
+        "subtitle": "An unexpected error occurred. Please try again.",
+        "retry": "Try Again"
+      }
     },
     "components": {
       "businessSelector": {
@@ -148,7 +185,7 @@
   "auth": {
     "login": {
       "title": "Sign in to the workspace",
-      "subtitle": "This first RBAC cut keeps the product controlled with in-app accounts and JWT, protecting all API access and write entry points before anything more complex.",
+      "subtitle": "Unified configuration management for infrastructure and application resources — with full traceability and visibility across your stack.",
       "defaultAccount": "Default accounts: admin / admin123456, editor / editor123456, viewer / viewer123456",
       "submit": "Sign in",
       "fields": {
@@ -209,6 +246,11 @@
     }
   },
   "business": {
+    "messages": {
+      "noBusinessData": "No business data available. Please create a business first.",
+      "noBusinessRedirect": "No businesses yet. Please create one first.",
+      "loadBusinessFailed": "Failed to load business data"
+    },
     "topology": {
       "tabs": {
         "hostList": "Host List",
@@ -246,7 +288,9 @@
         },
         "empty": {
           "noModuleCreated": "No modules created for this cluster yet",
-          "createNow": "Create now"
+          "createNow": "Create now",
+          "noHostsInModule": "No hosts in this module. Add hosts or assign from another module.",
+          "selectModuleFirst": "Select a module node in the topology tree to view hosts"
         },
         "buttons": {
           "add": "Add",
@@ -459,7 +503,9 @@
           "title": "Confirm to delete this process?"
         },
         "messages": {
-          "noChangeInfo": "Target module is the same as source module, no change information"
+          "noChangeInfo": "Target module is the same as source module, no change information",
+          "transferSuccess": "Host transfer succeeded",
+          "transferFailed": "Host transfer failed"
         },
         "tabs": {
           "deleteServiceInstance": "Delete service instance",
@@ -909,6 +955,12 @@
       "objectTypes": {
         "host": "Host"
       }
+    },
+    "entryRedirect": {
+      "errorTitle": "Failed to load business data",
+      "errorSubTitle": "Unable to fetch business list. Please check your network and try again.",
+      "retry": "Retry",
+      "goToBusinessList": "Go to Business Management"
     }
   },
   "resource": {
@@ -1032,6 +1084,13 @@
         "modelGroups": "Type groups",
         "modelOverview": "Type overview"
       },
+      "topologyPending": {
+        "title": "Global relationship topology is not available yet",
+        "subtitle": "Relationship topology is still being built. You can maintain resource types and groups now, or open business topology to inspect connected nodes.",
+        "backOverview": "Back to type overview",
+        "viewGroups": "View type groups",
+        "viewBusinessTopology": "Open business topology"
+      },
       "tabs": {
         "overview": "Overview",
         "basic": "Basic info",
@@ -1122,6 +1181,11 @@
         "noUniqueRules": "No unique rules defined for this type",
         "tabPending": "This section will be connected in a later phase",
         "noDescription": "No type description"
+      },
+      "unsupported": {
+        "dynamicCapabilityTitle": "This type is not connected to dynamic-model capabilities yet",
+        "uniqueRules": "This type comes from the resource type API, but the backend dynamic-model API cannot resolve it yet. Unique rules are disabled to avoid repeated 404 requests.",
+        "relations": "This type comes from the resource type API, but the backend dynamic-model API cannot resolve it yet. Relation design is disabled to avoid repeated 404 requests."
       },
       "helper": {
         "modelBasics": "Start with object basics first, then enable mainline behavior only when the type really belongs in topology.",
@@ -1326,7 +1390,9 @@
       },
       "messages": {
         "importInfo": "Note: Import editing requires exporting instances to be modified first, then completing editing before import editing operation",
-        "noRelatedModels": "No related resource types, no need to select"
+        "noRelatedModels": "No related resource types, no need to select",
+        "importFailed": "Import failed. Check that the backend host import API is enabled.",
+        "templateDownloadFailed": "Template download failed. Check that the backend template API is enabled."
       },
       "host": {
         "label": "Host",
@@ -1368,7 +1434,8 @@
       "actions": {
         "create": "Create",
         "batchEdit": "Batch edit",
-        "archive": "Archive"
+        "archive": "Archive",
+        "viewDetail": "View detail"
       },
       "tooltips": {
         "viewArchived": "View archived business"
@@ -1673,6 +1740,9 @@
         "operationTarget": "Target",
         "action": "Action",
         "time": "Time",
+        "keyword": "Keyword",
+        "timeRange": "Time Range",
+        "actionType": "Action Type",
         "account": "Account",
         "instance": "Instance",
         "host": "Host"

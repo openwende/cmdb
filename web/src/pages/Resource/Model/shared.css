@@ -40,7 +40,23 @@
 }
 
 .model-page-subtitle {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   margin-top: var(--space-xs);
   font-size: var(--font-size-sm);
+}
+
+@media (max-width: 767px) {
+  .model-page-container {
+    margin: var(--space-sm);
+    padding: var(--space-lg);
+  }
+
+  .model-page-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .model-page-actions {
+    flex-wrap: wrap;
+  }
 }

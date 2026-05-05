@@ -246,12 +246,15 @@ describe('business topology host list', () => {
       keyword: '',
     });
     expect(screen.getByText('SmokeModule-1773163733771')).toBeInTheDocument();
-    expect(screen.getAllByText('ProbeSet-1773163724333')).toHaveLength(2);
+    expect(screen.getByText('ProbeSet-1773163724333')).toBeInTheDocument();
     expect(screen.queryByText('game')).not.toBeInTheDocument();
     expect(screen.queryByText('otherBusiness')).not.toBeInTheDocument();
+    expect(screen.queryByText('business.topology.workspace.currentNode')).not.toBeInTheDocument();
+    expect(screen.queryByText('business.topology.workspace.hostList')).not.toBeInTheDocument();
+    expect(screen.getByText('business.topology.hostList.pagination.selected 0 business.topology.hostList.pagination.items')).toBeInTheDocument();
   });
 
-  it('shows floating bulk actions when hosts are selected and hides them after clearing selection', async () => {
+  it('keeps bulk actions in the top toolbar after the add button and enables them when hosts are selected', async () => {
     render(
       <HostList
         selectedNode={{
@@ -278,23 +281,20 @@ describe('business topology host list', () => {
       expect(screen.getByText('real-host-1')).toBeInTheDocument();
     });
 
-    expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
+    const toolbarButtonsBefore = screen.getAllByRole('button').map((button) => button.textContent);
+    expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.add');
+    expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.transferTo ');
+    expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.appendTo ');
+    expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.removeFrom ');
+    expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.copy ');
+    expect(toolbarButtonsBefore).not.toContain('business.topology.hostList.buttons.edit');
 
     fireEvent.click(screen.getByLabelText('select-host-real-host-1'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('hostlist-floating-actions')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('business.topology.hostList.floating.selectedCount')).toBeInTheDocument();
+    expect(screen.getByText('business.topology.hostList.pagination.selected 1 business.topology.hostList.pagination.items')).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.transferTo')).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.appendTo')).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.removeFrom')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('hostlist-clear-selection'));
-
-    await waitFor(() => {
-      expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
-    });
+    expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
   });
 });

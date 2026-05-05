@@ -12,6 +12,7 @@ import {
   Empty,
   Result,
 } from 'antd';
+import type { UploadFile } from 'antd/es/upload/interface';
 import {
   InboxOutlined,
   CloseOutlined,
@@ -20,10 +21,16 @@ import {
   HddOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons';
+import * as XLSX from 'xlsx';
 import { useTranslation } from 'react-i18next';
-import { hostUniqueOptions } from '@/pages/Resource/constants';
-import { hostImportStatus1, hostImportStatus2, modelListMock } from '@/mock/resource';
-import hostImportTemplateUrl from '@/assets/templates/host_import_template.xlsx';
+import { HostUniqueKey, hostUniqueOptions } from '@/pages/Resource/constants';
+import { modelListMock } from '@/mock/resource';
+import {
+  batchCreateHosts,
+  addHostsToPoolDirectory,
+  type BatchCreateHostItem,
+} from '@/api/services/resource';
+import { useAppMessage } from '@/utils/message';
 import './style.css';
 
 const { Dragger } = Upload;
@@ -35,6 +42,22 @@ interface ImportHostProps {
   onClose: () => void;
   onImportSuccess: () => void;
 }
+
+interface RelatedModelRow {
+  key: React.Key;
+  name: string;
+  unique: string;
+}
+
+interface ImportErrorResponse {
+  response?: {
+    data?: {
+      error?: string | string[];
+      message?: string;
+    };
+  };
+}
+
 enum Step {
   One = 0,
   Two = 1,
@@ -53,15 +76,19 @@ const ImportHost: React.FC<ImportHostProps> = ({
   onImportSuccess,
 }) => {
   const { t } = useTranslation();
-  const [fileList, setFileList] = useState<any[]>([]);
+  const message = useAppMessage();
+  const [drawerOpen, setDrawerOpen] = useState(visible);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   // Step2 states
   const [step, setStep] = useState(Step.One);
+  const [submitting, setSubmitting] = useState(false);
   const [importRelated, setImportRelated] = useState(false);
-  const [uniqueKey, setUniqueKey] = useState(hostUniqueOptions[0]);
+  const [uniqueKey, setUniqueKey] = useState<HostUniqueKey>(hostUniqueOptions[0].value);
   // Mock related models data (empty for now)
-  const [modelList, setModelList] = useState<any[]>([]);
+  const [modelList, setModelList] = useState<RelatedModelRow[]>([]);
   const [selectedKeys, setSelectedKeys] = useState<React.Key[]>([]);
   const [importStatus, setImportStatus] = useState<ImportStatus>(ImportStatus.None);
+  const [resultErrors, setResultErrors] = useState<string[]>([]);
 
   const columns = [
     { title: t('resource.import.columns.relatedModel'), dataIndex: 'name' },
@@ -72,12 +99,33 @@ const ImportHost: React.FC<ImportHostProps> = ({
     if (step === Step.Two && modelList.length === 0) {
       setModelList(modelListMock);
     }
-  }, [step]);
+  }, [modelList.length, step]);
+
+  const getResponseErrors = (error: unknown) => {
+    const data = (error as ImportErrorResponse)?.response?.data;
+    if (Array.isArray(data?.error)) {
+      return data.error;
+    }
+    if (typeof data?.error === 'string') {
+      return [data.error];
+    }
+    if (typeof data?.message === 'string') {
+      return [data.message];
+    }
+    return undefined;
+  };
+
+  useEffect(() => {
+    setDrawerOpen(visible);
+    if (!visible) {
+      resetAll();
+    }
+  }, [visible]);
 
   const uploadProps = {
     multiple: false,
     accept: '.xlsx',
-    beforeUpload: (file: any) => {
+    beforeUpload: (file: UploadFile) => {
       setFileList([file]);
       // prevent auto upload
       return false;
@@ -94,37 +142,115 @@ const ImportHost: React.FC<ImportHostProps> = ({
   };
 
   const handleImport = async () => {
-    if (fileList.length === 0) return;
-    const formData = new FormData();
-    formData.append('file', fileList[0]);
-    formData.append('params', JSON.stringify({ bk_module_id: selectedDirId, op: 2 }));
+    const file = fileList[0]?.originFileObj || (fileList[0] as unknown as File);
+    if (!file) return;
 
-    // TODO: replace with real api
-    // await axiosInstance.post('/host/import', formData });
+    setSubmitting(true);
+    setResultErrors([]);
 
-    setTimeout(() => {
-      const res = Math.random() > 0.5 ? hostImportStatus2 : hostImportStatus1;
-      if (res.success) {
+    try {
+      // Step 1: parse xlsx client-side
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const allRows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' });
+
+      // Skip header row (index 0); map remaining non-empty rows
+      const hosts: BatchCreateHostItem[] = allRows
+        .slice(1)
+        .filter((row) => row[0] || row[1]) // at least host_name or primary_ip present
+        .map((row) => {
+          const extraIPs = [row[2], row[3]].filter(Boolean) as string[];
+          return {
+            host_name: String(row[0] || row[1] || '').trim(),
+            primary_ip: String(row[1] || '').trim(),
+            ...(extraIPs.length ? { ip_addresses: extraIPs } : {}),
+            ...(row[4] ? { os_type: String(row[4]).trim().toLowerCase() } : {}),
+            ...(row[5] ? { os_version: String(row[5]).trim() } : {}),
+          };
+        })
+        .filter((h) => h.primary_ip); // primary_ip is required
+
+      if (hosts.length === 0) {
+        setImportStatus(ImportStatus.Fail);
+        setResultErrors([t('resource.import.messages.noValidRows', '文件中没有有效的主机行')]);
+        setStep(Step.Result);
+        return;
+      }
+
+      // Step 2: batch create hosts
+      const batchResult = await batchCreateHosts(hosts);
+      const createdIds: string[] = batchResult.created_ids ?? [];
+
+      // Step 3: move created hosts into the target directory (if specified)
+      if (selectedDirId && createdIds.length > 0) {
+        await addHostsToPoolDirectory(selectedDirId, createdIds);
+      }
+
+      const errors: string[] = (batchResult.errors ?? []).map(
+        (e) => `行 ${e.index + 2} (${e.host_name}): ${e.error}`,
+      );
+
+      if (batchResult.successful > 0) {
         onImportSuccess();
         setImportStatus(ImportStatus.Success);
       } else {
         setImportStatus(ImportStatus.Fail);
+        setResultErrors(errors.length ? errors : [t('resource.import.messages.importFailed')]);
       }
+
+      if (errors.length > 0) {
+        setResultErrors(errors);
+      }
+    } catch (error: unknown) {
+      console.error(error);
+      setImportStatus(ImportStatus.Fail);
+      setResultErrors(getResponseErrors(error) ?? [t('resource.import.messages.importFailed')]);
+      message.error(t('resource.import.messages.importFailed'));
+    } finally {
+      setSubmitting(false);
       setStep(Step.Result);
-    }, 1000);
+    }
+  };
+
+  const handleDownloadTemplate = (event: React.MouseEvent<HTMLElement>) => {
+    event.preventDefault();
+
+    const rows = [
+      ['主机名', '内网IP', '外网IP', '内网IPv6', '操作系统类型', '操作系统版本'],
+      ['web-server-01', '10.0.0.1', '', '', 'linux', 'CentOS 7.9'],
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '主机导入');
+    const buf = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer;
+    const url = URL.createObjectURL(
+      new Blob([buf], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'host_import_template.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   const handleClose = () => {
+    setDrawerOpen(false);
     onClose();
-    // wait for animation end
-    setTimeout(resetAll, 1000);
+    setTimeout(resetAll, 300);
   };
 
   const resetAll = () => {
     setFileList([]);
     setImportRelated(false);
-    setUniqueKey(hostUniqueOptions[0]);
+    setUniqueKey(hostUniqueOptions[0].value);
     setImportStatus(ImportStatus.None);
+    setResultErrors([]);
+    setSubmitting(false);
     setStep(Step.One);
     setSelectedKeys([]);
   };
@@ -154,8 +280,8 @@ const ImportHost: React.FC<ImportHostProps> = ({
         ) : (
           <div className="file-card">
             <FileExcelOutlined />
-            <span className="file-name">{fileList[0].name}</span>
-            <span className="file-size">{(fileList[0].size / 1024).toFixed(2)}KB</span>
+            <span className="file-name">{fileList[0]?.name || ''}</span>
+            <span className="file-size">{((fileList[0]?.size || 0) / 1024).toFixed(2)}KB</span>
             <CloseOutlined className="file-remove" onClick={() => setFileList([])} />
           </div>
         )}
@@ -163,7 +289,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
         {/* hint & download */}
         <div className="bottom-hint">
           <Text>{t('resource.import.upload.fileHint')} </Text>
-          <Link href={hostImportTemplateUrl} download="host_import_template.xlsx">
+          <Link onClick={handleDownloadTemplate}>
             <VerticalAlignBottomOutlined />
             {t('resource.import.upload.downloadTemplate')}
           </Link>
@@ -195,11 +321,14 @@ const ImportHost: React.FC<ImportHostProps> = ({
               </span>
               <span>
                 <span className="unique-label">{t('resource.import.host.uniqueLabel')}</span>
-                <Select
+                <Select<HostUniqueKey>
                   size="small"
-                  options={hostUniqueOptions.map((v: any) => ({ label: t(v), value: v }))}
+                  options={hostUniqueOptions.map((option) => ({
+                    label: t(option.label),
+                    value: option.value,
+                  }))}
                   value={uniqueKey}
-                  onChange={setUniqueKey}
+                  onChange={(value) => setUniqueKey(value)}
                   style={{ width: 180, fontSize: 12 }}
                 />
               </span>
@@ -245,7 +374,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
       >
         {!isSuccess && (
           <>
-            {hostImportStatus1.error.map((err) => (
+            {(resultErrors.length > 0 ? resultErrors : [t('resource.import.messages.importFailed')]).map((err) => (
               <p key={err}>
                 <CloseCircleOutlined className="error-icon" /> {err}
               </p>
@@ -258,12 +387,40 @@ const ImportHost: React.FC<ImportHostProps> = ({
 
   return (
     <Drawer
-      open={visible}
+      open={drawerOpen}
       title={t('resource.import.title')}
       width={720}
       onClose={handleClose}
       destroyOnHidden={true}
       className="import-host-drawer"
+      footer={
+        step !== Step.Result ? (
+          <div className="drawer-actions">
+            {step === Step.One && (
+              <Button type="primary" disabled={fileList.length === 0} onClick={handleNext}>
+                {t('common.next')}
+              </Button>
+            )}
+            {step === Step.Two && (
+              <>
+                <Button onClick={handlePrev} disabled={submitting}>
+                  {t('common.previous')}
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={handleImport}
+                  loading={submitting}
+                >
+                  {t('resource.import.actions.startImport')}
+                </Button>
+              </>
+            )}
+            <Button onClick={handleClose} disabled={submitting}>
+              {t('common.cancel')}
+            </Button>
+          </div>
+        ) : null
+      }
     >
       {/* Step area */}
       {step !== Step.Result && (
@@ -282,30 +439,6 @@ const ImportHost: React.FC<ImportHostProps> = ({
       {step === Step.One && renderStepOne()}
       {step === Step.Two && renderStepTwo()}
       {step === Step.Result && renderResult()}
-
-      {/* actions */}
-      {step !== Step.Result && (
-        <div className="drawer-actions">
-          {step === Step.One && (
-            <Button type="primary" disabled={fileList.length === 0} onClick={handleNext}>
-              {t('common.next')}
-            </Button>
-          )}
-          {step === Step.Two && (
-            <>
-              <Button onClick={handlePrev}>{t('common.previous')}</Button>
-              <Button
-                type="primary"
-                onClick={handleImport}
-                disabled={importRelated && selectedKeys.length === 0}
-              >
-                {t('resource.import.actions.startImport')}
-              </Button>
-            </>
-          )}
-          <Button onClick={handleClose}>{t('common.cancel')}</Button>
-        </div>
-      )}
     </Drawer>
   );
 };

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import axios from '@/api/axiosInstance';
+import { AxiosError } from 'axios';
 
 export interface SchemaCenterField {
   name: string;
@@ -33,7 +34,7 @@ interface SchemaCenterStoreState {
   loading: boolean;
   error: string | null;
   loadSchema: (modelUID: string) => Promise<void>;
-  loadFormSchema: (modelUID: string, scene: string, businessID?: string) => Promise<void>;
+  loadFormSchema: (modelUID: string, scene: string, businessID?: number) => Promise<void>;
   reset: () => void;
 }
 
@@ -64,10 +65,20 @@ export const useSchemaCenterStore = create<SchemaCenterStoreState>((set, get) =>
         },
       }));
     } catch (error) {
-      console.error('Failed to load schema:', error);
-      set({
-        error: error instanceof Error ? error.message : 'Failed to load schema',
-      });
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.status === 404) {
+        set((state) => ({
+          schemas: {
+            ...state.schemas,
+            [modelUID]: { model_uid: modelUID, fields: [] },
+          },
+        }));
+      } else {
+        console.error('Failed to load schema:', error);
+        set({
+          error: error instanceof Error ? error.message : 'Failed to load schema',
+        });
+      }
     } finally {
       set({ loading: false });
     }
@@ -99,10 +110,20 @@ export const useSchemaCenterStore = create<SchemaCenterStoreState>((set, get) =>
         },
       }));
     } catch (error) {
-      console.error('Failed to load form schema:', error);
-      set({
-        error: error instanceof Error ? error.message : 'Failed to load form schema',
-      });
+      const axiosError = error as AxiosError;
+      if (axiosError.response?.status === 404) {
+        set((state) => ({
+          formSchemas: {
+            ...state.formSchemas,
+            [key]: { model_uid: modelUID, scene, fields: [] },
+          },
+        }));
+      } else {
+        console.error('Failed to load form schema:', error);
+        set({
+          error: error instanceof Error ? error.message : 'Failed to load form schema',
+        });
+      }
     } finally {
       set({ loading: false });
     }

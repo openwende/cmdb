@@ -1,4 +1,5 @@
 export { default as AuditFilters } from './AuditFilters';
+export { default as AuditPanel } from './AuditPanel';
 export { default as AuditTable } from '../AuditList';
 export { default as OperationTarget } from './OperationTarget';
 export { default as Action } from './Action';

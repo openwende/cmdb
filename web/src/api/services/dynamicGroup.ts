@@ -9,27 +9,27 @@ import {
 } from '../types/dynamicGroup';
 
 export const listDynamicGroups = async (
-  businessID: string,
+  businessID: number,
   params?: { limit?: number; offset?: number; target?: string; keyword?: string },
 ): Promise<ListDynamicGroupsResponse> => {
   return axios.get(`/v1/businesses/${businessID}/dynamic-groups`, { params });
 };
 
 export const getDynamicGroupMeta = async (
-  businessID: string,
+  businessID: number,
 ): Promise<DynamicGroupMetaResponse> => {
   return axios.get(`/v1/businesses/${businessID}/dynamic-groups/meta`);
 };
 
 export const createDynamicGroup = async (
-  businessID: string,
+  businessID: number,
   payload: UpsertDynamicGroupPayload,
 ): Promise<{ code: number; data: DynamicGroupItem; message?: string }> => {
   return axios.post(`/v1/businesses/${businessID}/dynamic-groups`, payload);
 };
 
 export const updateDynamicGroup = async (
-  businessID: string,
+  businessID: number,
   groupID: string,
   payload: UpsertDynamicGroupPayload,
 ): Promise<{ code: number; data: DynamicGroupItem; message?: string }> => {
@@ -37,14 +37,14 @@ export const updateDynamicGroup = async (
 };
 
 export const deleteDynamicGroup = async (
-  businessID: string,
+  businessID: number,
   groupID: string,
 ): Promise<{ code: number; data: { message: string } }> => {
   return axios.delete(`/v1/businesses/${businessID}/dynamic-groups/${groupID}`);
 };
 
 export const previewDynamicGroup = async (
-  businessID: string,
+  businessID: number,
   payload: PreviewDynamicGroupPayload,
 ): Promise<PreviewDynamicGroupResponse> => {
   return axios.post(`/v1/businesses/${businessID}/dynamic-groups/preview`, payload);

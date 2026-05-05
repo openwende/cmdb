@@ -26,10 +26,10 @@ describe('topology de-mock api layer', () => {
   it('loads service categories from the backend', async () => {
     vi.mocked(axios.get).mockResolvedValueOnce({ code: 0, data: [] });
 
-    await listServiceCategories('biz-1');
+    await listServiceCategories(1);
 
     expect(axios.get).toHaveBeenCalledWith('/v1/service-categories', {
-      params: { business_id: 'biz-1' },
+      params: { business_id: 1 },
     });
   });
 

@@ -1,3 +1,13 @@
 .audit-page {
   padding: var(--space-xs) var(--space-xl) var(--space-lg);
 }
+
+@media (max-width: 767px) {
+  .audit-page {
+    padding: var(--space-xs) var(--space-sm) var(--space-lg);
+  }
+
+  .audit-page .ant-tabs-nav {
+    margin-bottom: var(--space-sm);
+  }
+}
