@@ -242,6 +242,10 @@
       "messages": {
         "loadFailed": "Failed to load users",
         "passwordResetSuccess": "Password reset successfully"
+      },
+      "validation": {
+        "passwordLength": "Password must be {{min}}-{{max}} characters",
+        "passwordNoOuterSpaces": "Password cannot start or end with spaces"
       }
     }
   },

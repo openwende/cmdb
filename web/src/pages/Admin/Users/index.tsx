@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Drawer, Form, Input, Select, Space, Table, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -12,6 +12,11 @@ import {
   updateAuthUser,
 } from '@/api/services/auth';
 import { useTranslation } from 'react-i18next';
+import {
+  buildPasswordRules,
+  getUserManagementErrorMessage,
+  normalizePassword,
+} from './passwordValidation';
 import './style.css';
 
 const ROLE_OPTIONS = ['admin', 'editor', 'viewer'];
@@ -27,6 +32,7 @@ const UserDrawer: React.FC<{
 }> = ({ open, loading, mode, initialUser, onClose, onSubmit }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
+  const passwordRules = buildPasswordRules(t);
 
   useEffect(() => {
     if (!open) {
@@ -56,7 +62,7 @@ const UserDrawer: React.FC<{
       await onSubmit({
         username: values.username.trim(),
         display_name: values.display_name.trim(),
-        password: values.password,
+        password: normalizePassword(values.password),
         role: values.role,
       });
       return;
@@ -105,7 +111,8 @@ const UserDrawer: React.FC<{
           <Form.Item
             label={t('auth.userManagement.fields.password')}
             name="password"
-            rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+            rules={passwordRules}
+            validateFirst
           >
             <Input.Password placeholder={t('auth.userManagement.placeholders.password')} />
           </Form.Item>
@@ -150,6 +157,7 @@ const PasswordDrawer: React.FC<{
 }> = ({ open, loading, user, onClose, onSubmit }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
+  const passwordRules = buildPasswordRules(t);
 
   useEffect(() => {
     if (!open) {
@@ -159,7 +167,7 @@ const PasswordDrawer: React.FC<{
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
-    await onSubmit(values.password);
+    await onSubmit(normalizePassword(values.password));
   };
 
   return (
@@ -186,7 +194,8 @@ const PasswordDrawer: React.FC<{
         <Form.Item
           label={t('auth.userManagement.fields.password')}
           name="password"
-          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+          rules={passwordRules}
+          validateFirst
         >
           <Input.Password placeholder={t('auth.userManagement.placeholders.password')} />
         </Form.Item>
@@ -206,7 +215,7 @@ const UserManagementPage: React.FC = () => {
   const [passwordDrawerVisible, setPasswordDrawerVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<AuthManagedUser | null>(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await listAuthUsers();
@@ -217,11 +226,11 @@ const UserManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
 
   useEffect(() => {
     void fetchUsers();
-  }, []);
+  }, [fetchUsers]);
 
   const handleCreate = () => {
     setEditingUser(null);
@@ -254,15 +263,15 @@ const UserManagementPage: React.FC = () => {
       }
       setDrawerVisible(false);
       await fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       message.error(
-        error?.message
-          || (drawerMode === 'create'
-            ? t('common.message.createFailed')
-            : t('common.message.updateFailed')),
+        getUserManagementErrorMessage(
+          error,
+          drawerMode === 'create' ? t('common.message.createFailed') : t('common.message.updateFailed'),
+          t,
+        ),
       );
-      throw error;
     } finally {
       setSubmitting(false);
     }
@@ -275,10 +284,9 @@ const UserManagementPage: React.FC = () => {
       await resetAuthUserPassword(editingUser.id, { password });
       message.success(t('auth.userManagement.messages.passwordResetSuccess'));
       setPasswordDrawerVisible(false);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      message.error(error?.message || t('common.message.updateFailed'));
-      throw error;
+      message.error(getUserManagementErrorMessage(error, t('common.message.updateFailed'), t));
     } finally {
       setPasswordSubmitting(false);
     }

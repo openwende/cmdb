@@ -242,6 +242,10 @@
       "messages": {
         "loadFailed": "加载用户列表失败",
         "passwordResetSuccess": "密码重置成功"
+      },
+      "validation": {
+        "passwordLength": "密码长度需为 {{min}}-{{max}} 个字符",
+        "passwordNoOuterSpaces": "密码不能包含首尾空格"
       }
     }
   },
