@@ -7,7 +7,7 @@ import { TopoTreeNodeType } from '@/pages/Business/Types';
 const {
   t,
   getTopologyNodeHosts,
-  transferTopologyHostsToPool,
+  reclaimTopologyHostsToPool,
   mockNavigate,
   mockSetTransferHostData,
 } = vi.hoisted(() => ({
@@ -43,7 +43,7 @@ const {
       },
     },
   })),
-  transferTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
+  reclaimTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
   mockNavigate: vi.fn(),
   mockSetTransferHostData: vi.fn(),
 }));
@@ -66,7 +66,7 @@ vi.mock('@/utils/routes', () => ({
 
 vi.mock('@/api/services/business', () => ({
   getTopologyNodeHosts,
-  transferTopologyHostsToPool,
+  reclaimTopologyHostsToPool,
 }));
 
 vi.mock('@/store/TransferHostStore', () => ({
@@ -74,6 +74,17 @@ vi.mock('@/store/TransferHostStore', () => ({
     idleSetID: null,
     setTransferHostData: mockSetTransferHostData,
   }),
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
 }));
 
 vi.mock('antd', () => ({
@@ -97,6 +108,14 @@ vi.mock('antd', () => ({
       {children}
     </button>
   ),
+  Checkbox: ({ checked, onChange, ...props }: any) => (
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(event) => onChange?.({ target: { checked: event.target.checked } })}
+      {...props}
+    />
+  ),
   Dropdown: ({ children, menu }: any) => (
     <div>
       {children}
@@ -110,6 +129,7 @@ vi.mock('antd', () => ({
   Input: { Search: () => <div /> },
   message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   Tooltip: ({ children }: any) => <div>{children}</div>,
+  Spin: () => <div data-testid="spin" />,
   Empty: ({ children, description }: any) => (
     <div>
       <div>{description}</div>
@@ -159,15 +179,15 @@ describe('business topology release host modal', () => {
     vi.clearAllMocks();
   });
 
-  it('calls the transfer-to-pool api when releasing selected hosts', async () => {
+  it('calls the resource-pool reclaim api with the selected directory when releasing hosts', async () => {
     render(
       <HostList
         selectedNode={{
-          title: 'SmokeModule',
-          key: 'module-3',
-          nodeId: '3',
+          title: '空闲机',
+          key: 'idle_module-5',
+          nodeId: '5',
           type: TopoTreeNodeType.Module,
-          backendType: 'module',
+          backendType: 'idle_module',
           children: [],
         }}
         parentNodes={[]}
@@ -176,7 +196,7 @@ describe('business topology release host modal', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('10.1.1.10')).toBeInTheDocument();
+      expect(screen.getAllByText('10.1.1.10').length).toBeGreaterThan(0);
     });
 
     expect(screen.queryByText('otherBusiness')).not.toBeInTheDocument();
@@ -186,8 +206,9 @@ describe('business topology release host modal', () => {
     fireEvent.click(screen.getByText('confirm-release'));
 
     await waitFor(() => {
-      expect(transferTopologyHostsToPool).toHaveBeenCalledWith({
+      expect(reclaimTopologyHostsToPool).toHaveBeenCalledWith({
         host_ids: ['real-host-1'],
+        directory_id: 1,
       });
     });
   });

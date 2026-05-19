@@ -1696,8 +1696,11 @@
         "correctName": "Please enter correct directory name",
         "existName": "Directory name already exists",
         "addSuccess": "Created successfully",
+        "addFailed": "Failed to create, please try again",
         "renameSuccess": "Modified successfully",
+        "renameFailed": "Failed to rename, please try again",
         "deleteSuccess": "Deleted successfully",
+        "deleteFailed": "Failed to delete, please try again",
         "pinSuccess": "Pinned",
         "unpinSuccess": "Unpinned"
       },
@@ -1723,7 +1726,9 @@
         "text": {
           "biz": "Business list",
           "pool": "Directory list"
-        }
+        },
+        "success": "Assigned successfully",
+        "error": "Assignment failed, please try again"
       }
     }
   },

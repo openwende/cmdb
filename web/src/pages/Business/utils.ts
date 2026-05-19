@@ -148,10 +148,13 @@ export function checkHostsInIdlePool(
   idleSetID: number | null,
 ): TransferHostItem[] {
   if (idleSetID == null) return [];
-  return selectedRowKeys.map((key) => {
+  return selectedRowKeys.flatMap((key) => {
     const hostItem = allHostsData.find((h) => h.host.bk_host_id === key);
+    if (!hostItem?.host) {
+      return [];
+    }
     const inIdlePool = hostItem?.set?.some((s: any) => s.bk_set_id === idleSetID) ?? false;
-    return { id: key, ip: hostItem.host.bk_host_innerip, inIdlePool };
+    return [{ id: key, ip: hostItem.host.bk_host_innerip, inIdlePool }];
   });
 }
 

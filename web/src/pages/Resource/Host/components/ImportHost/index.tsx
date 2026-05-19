@@ -374,7 +374,10 @@ const ImportHost: React.FC<ImportHostProps> = ({
       >
         {!isSuccess && (
           <>
-            {(resultErrors.length > 0 ? resultErrors : [t('resource.import.messages.importFailed')]).map((err) => (
+            {(resultErrors.length > 0
+              ? resultErrors
+              : [t('resource.import.messages.importFailed')]
+            ).map((err) => (
               <p key={err}>
                 <CloseCircleOutlined className="error-icon" /> {err}
               </p>
@@ -389,9 +392,10 @@ const ImportHost: React.FC<ImportHostProps> = ({
     <Drawer
       open={drawerOpen}
       title={t('resource.import.title')}
-      width={720}
+      width="min(720px, 100vw)"
       onClose={handleClose}
       destroyOnHidden={true}
+      rootClassName="import-host-drawer-root"
       className="import-host-drawer"
       footer={
         step !== Step.Result ? (
@@ -406,11 +410,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
                 <Button onClick={handlePrev} disabled={submitting}>
                   {t('common.previous')}
                 </Button>
-                <Button
-                  type="primary"
-                  onClick={handleImport}
-                  loading={submitting}
-                >
+                <Button type="primary" onClick={handleImport} loading={submitting}>
                   {t('resource.import.actions.startImport')}
                 </Button>
               </>

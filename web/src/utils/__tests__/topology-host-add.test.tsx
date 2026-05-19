@@ -54,6 +54,7 @@ vi.mock('@/utils/routes', () => ({
 
 vi.mock('@/api/services/business', () => ({
   getTopologyNodeHosts,
+  reclaimTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
   transferTopologyHosts,
 }));
 
@@ -62,6 +63,17 @@ vi.mock('@/store/TransferHostStore', () => ({
     idleSetID: null,
     setTransferHostData: mockSetTransferHostData,
   }),
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
 }));
 
 vi.mock('antd', () => ({
@@ -75,11 +87,7 @@ vi.mock('antd', () => ({
   Input: {
     Search: ({ value = '', onChange, onSearch, placeholder }: any) => (
       <div>
-        <input
-          aria-label={placeholder}
-          value={value}
-          onChange={(event) => onChange?.(event)}
-        />
+        <input aria-label={placeholder} value={value} onChange={(event) => onChange?.(event)} />
         <button type="button" onClick={() => onSearch?.(value)}>
           search
         </button>
@@ -88,6 +96,13 @@ vi.mock('antd', () => ({
   },
   message: { success: messageSuccess, error: messageError, warning: vi.fn() },
   Tooltip: ({ children }: any) => <div>{children}</div>,
+  Spin: () => <div data-testid="spin" />,
+  Checkbox: ({ checked, onChange, children, ...props }: any) => (
+    <label>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange?.(event)} {...props} />
+      {children}
+    </label>
+  ),
   Empty: ({ children, description }: any) => (
     <div>
       <div>{description}</div>
@@ -106,10 +121,7 @@ vi.mock('@ant-design/icons', () => ({
 vi.mock('@/pages/Business/BusinessTopology/components/AddHostModal', () => ({
   default: ({ visible, onConfirm }: any) =>
     visible ? (
-      <button
-        type="button"
-        onClick={() => onConfirm([{ id: 'host-1', ip: '10.1.1.10' }])}
-      >
+      <button type="button" onClick={() => onConfirm([{ id: 'host-1', ip: '10.1.1.10' }])}>
         confirm-add-host
       </button>
     ) : null,

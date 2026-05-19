@@ -13,11 +13,23 @@ import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import { useBusinessStore } from '@/store/BusinessStore';
 import { useMainlineStore } from '@/store/MainlineStore';
 import { useResponsive } from '@/utils/useResponsive';
+import { useTransferHostStore } from '@/store/TransferHostStore';
 import './style.css';
 
 const MIN_WIDTH = 210;
 const MAX_WIDTH = 480;
 const DEFAULT_WIDTH = 280;
+
+const findIdleSetNode = (nodes: TreeData[]): TreeData | null => {
+  for (const node of nodes) {
+    if (node.backendType === 'idle_set') return node;
+    if (node.children) {
+      const found = findIdleSetNode(node.children);
+      if (found) return found;
+    }
+  }
+  return null;
+};
 
 interface Props {
   selectedNode: TreeData | null;
@@ -47,6 +59,7 @@ const BusinessTree: React.FC<Props> = ({
   const { currentBusiness } = useBusinessStore();
   const { topologySettings, loadTopologySettings } = useMainlineStore();
   const { isMobile } = useResponsive();
+  const setIdleSetID = useTransferHostStore((state) => state.setIdleSetID);
   const [searchValue, setSearchValue] = useState<string>('');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [expandedKeys, setExpandedKeys] = useState<string[]>([]);
@@ -89,7 +102,12 @@ const BusinessTree: React.FC<Props> = ({
       }
 
       if (response.code === 0 && response.data) {
-        setFullTreeData(adaptTopologyTree(response.data));
+        const adaptedTree = adaptTopologyTree(response.data);
+        setFullTreeData(adaptedTree);
+        const idleSetNode = findIdleSetNode(adaptedTree);
+        if (idleSetNode !== null) {
+          setIdleSetID(Number(idleSetNode.nodeId));
+        }
       } else {
         message.error(response.message || t('business.topology.tree.loadError'));
         setFullTreeData([]);
@@ -107,7 +125,7 @@ const BusinessTree: React.FC<Props> = ({
         setLoading(false);
       }
     }
-  }, [currentBusiness, t, topologySettings?.max_topology_level]);
+  }, [currentBusiness, setIdleSetID, t, topologySettings?.max_topology_level]);
 
   useEffect(() => {
     loadTopologySettings();

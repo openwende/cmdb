@@ -25,10 +25,7 @@ export const getBusinessList = (
 export const getBusinessDetail = (id: number): Promise<ApiResponse<BusinessDetail>> => {
   return axios.get(`${URLS.business}/${id}`);
 };
-export const updateBusiness = (
-  id: number,
-  data: UpdateBusinessRequest,
-): Promise<ApiResponse> => {
+export const updateBusiness = (id: number, data: UpdateBusinessRequest): Promise<ApiResponse> => {
   return axios.put(`${URLS.business}/${id}`, data);
 };
 export const deleteBusiness = (id: number): Promise<ApiResponse> => {
@@ -58,9 +55,73 @@ export interface BatchOperationResult {
   errors?: string[];
 }
 
-export const batchCreateHosts = (
-  hosts: BatchCreateHostItem[],
-): Promise<BatchCreateHostsResult> => {
+interface ResourcePoolTopologyNode {
+  node_id: string | number;
+  node_type: string;
+  is_default?: boolean;
+  extra?: {
+    bk_module_id?: string | number;
+    [key: string]: unknown;
+  };
+  children?: ResourcePoolTopologyNode[];
+}
+
+interface ResourcePoolTopologyResponse {
+  code: number;
+  data?: ResourcePoolTopologyNode[];
+  message?: string;
+}
+
+const findIdleModuleId = (nodes: ResourcePoolTopologyNode[] = []): number | undefined => {
+  for (const node of nodes) {
+    const isIdleModule =
+      node.node_type === 'idle_module' || (node.node_type === 'module' && node.is_default);
+
+    if (isIdleModule) {
+      const moduleId = Number(node.extra?.bk_module_id ?? node.node_id);
+      return Number.isFinite(moduleId) ? moduleId : undefined;
+    }
+
+    const childMatch = findIdleModuleId(node.children || []);
+    if (childMatch !== undefined) {
+      return childMatch;
+    }
+  }
+
+  return undefined;
+};
+
+const fetchBusinessTopologyNodes = async (bizId: number): Promise<ResourcePoolTopologyNode[]> => {
+  const response: ResourcePoolTopologyResponse = await axios.get('/v1/topology/tree', {
+    params: {
+      business_id: bizId,
+      include_hosts: false,
+      max_depth: 10,
+    },
+  });
+
+  return response.data || [];
+};
+
+const getBusinessIdleModuleId = async (bizId: number): Promise<number> => {
+  const nodes = await fetchBusinessTopologyNodes(bizId);
+  const idleModuleId = findIdleModuleId(nodes);
+  if (idleModuleId !== undefined) {
+    return idleModuleId;
+  }
+
+  await axios.post(`/v1/topology/businesses/${bizId}/initialize`);
+
+  const initializedNodes = await fetchBusinessTopologyNodes(bizId);
+  const initializedIdleModuleId = findIdleModuleId(initializedNodes);
+  if (initializedIdleModuleId === undefined) {
+    throw new Error('未找到业务空闲机池模块');
+  }
+
+  return initializedIdleModuleId;
+};
+
+export const batchCreateHosts = (hosts: BatchCreateHostItem[]): Promise<BatchCreateHostsResult> => {
   return axios.post(URLS.hostsBatch, {
     hosts,
     skip_errors: true,
@@ -78,3 +139,26 @@ export const addHostsToPoolDirectory = (
   });
 };
 
+export const assignHostsToBusinessIdlePool = (
+  bizId: number,
+  hostIds: string[],
+): Promise<BatchOperationResult> => {
+  return getBusinessIdleModuleId(bizId).then(async (targetModuleId) => {
+    return axios.post('/v1/resource-pool/hosts/allocate', {
+      target_module_id: targetModuleId,
+      host_ids: hostIds,
+    });
+  });
+};
+
+export const createPoolDirectory = (name: string): Promise<{ id: number; name: string }> => {
+  return axios.post('/v1/resource-pool/directories', { name });
+};
+
+export const renamePoolDirectory = (id: number, name: string): Promise<void> => {
+  return axios.put(`/v1/resource-pool/directories/${id}`, { name });
+};
+
+export const deletePoolDirectory = (id: number): Promise<void> => {
+  return axios.delete(`/v1/resource-pool/directories/${id}`);
+};

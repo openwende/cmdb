@@ -11,7 +11,9 @@ import { useAuthStore } from '@/store/AuthStore';
 
 const getNodeAllowedActions = (node: TreeData): string[] | null => {
   const allowedActions = node.extra?.allowed_actions;
-  return Array.isArray(allowedActions) ? allowedActions.filter((item) => typeof item === 'string') : null;
+  return Array.isArray(allowedActions)
+    ? allowedActions.filter((item) => typeof item === 'string')
+    : null;
 };
 
 interface Props {
@@ -141,9 +143,15 @@ const TopologyTree: React.FC<Props> = ({
   };
 
   const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
-    const nodeCount = Number(node.extra?.host_count ?? node.children?.length ?? 0);
+    const showHostCount = node.type === TopoTreeNodeType.Module;
+    const hostCount = Number(node.extra?.host_count ?? 0);
+    const childCount = Number(node.extra?.child_count ?? node.children?.length ?? 0);
+    const nodeCount = showHostCount ? Math.max(hostCount, childCount) : 0;
 
     if (tailEleType === TailEleType.Count) {
+      if (!showHostCount) {
+        return null;
+      }
       return (
         <span className="right-wrapper">
           <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>{nodeCount}</span>
@@ -160,9 +168,9 @@ const TopologyTree: React.FC<Props> = ({
             <Button type="primary" size="small" onClick={(e) => handleCreate(e, node)}>
               {t('resource.business.actions.create')}
             </Button>
-          ) : (
+          ) : showHostCount ? (
             <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>{nodeCount}</span>
-          )}
+          ) : null}
         </span>
       );
     }
@@ -182,9 +190,7 @@ const TopologyTree: React.FC<Props> = ({
         style={{ cursor: 'pointer' }}
       >
         <span className="left-wrapper">
-          {customTitlePrefix
-            ? customTitlePrefix(node, isSelected)
-            : renderNodeBadge(node)}
+          {customTitlePrefix ? customTitlePrefix(node, isSelected) : renderNodeBadge(node)}
           <span className="title-text">{node.title}</span>
         </span>
         {renderTailElement(node, hoveredKey!, isSelected)}
@@ -196,14 +202,18 @@ const TopologyTree: React.FC<Props> = ({
     const typeStr = node.type?.toLowerCase() || 'biz';
     let label = t('business.topology.workspace.business', '业务');
     switch (node.type) {
-      case TopoTreeNodeType.Module: label = t('business.topology.workspace.module', '模块'); break;
-      case TopoTreeNodeType.Set: label = t('business.topology.workspace.cluster', '集群'); break;
-      case TopoTreeNodeType.Idle: label = t('business.topology.workspace.idlePool', '空闲'); break;
+      case TopoTreeNodeType.Module:
+        label = t('business.topology.workspace.module', '模块');
+        break;
+      case TopoTreeNodeType.Set:
+        label = t('business.topology.workspace.cluster', '集群');
+        break;
+      case TopoTreeNodeType.Idle:
+        label = t('business.topology.workspace.idlePool', '空闲');
+        break;
     }
 
-    return (
-      <span className={`node-badge badge-${typeStr}`}>{label}</span>
-    );
+    return <span className={`node-badge badge-${typeStr}`}>{label}</span>;
   };
 
   const { node: targetNode, parents: parentNodes } = useMemo(() => {

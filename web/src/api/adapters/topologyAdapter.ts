@@ -20,10 +20,7 @@ const toDisplayLabel = (value?: string): string => {
     return '节点';
   }
 
-  const normalized = value
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const normalized = value.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
 
   if (!normalized) {
     return '节点';
@@ -52,7 +49,7 @@ const mapNodeType = (backendType: string): string => {
     [BackendNodeType.Business]: TopoTreeNodeType.Biz,
     [BackendNodeType.Set]: TopoTreeNodeType.Set,
     [BackendNodeType.Module]: TopoTreeNodeType.Module,
-    [BackendNodeType.IdleSet]: TopoTreeNodeType.Set,
+    [BackendNodeType.IdleSet]: TopoTreeNodeType.Idle,
     [BackendNodeType.IdleModule]: TopoTreeNodeType.Module,
   };
 
@@ -110,6 +107,7 @@ export const adaptTopologyNode = (
     expandable: backendNode.expandable,
     extra: {
       ...backendNode.extra,
+      child_count: backendNode.child_count,
       is_default: backendNode.is_default,
     },
   };

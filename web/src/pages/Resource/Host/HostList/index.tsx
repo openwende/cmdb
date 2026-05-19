@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty } from 'antd';
+import { Table, Button, Dropdown, Modal, Tooltip, Checkbox } from 'antd';
 import { useAppMessage } from '@/utils/message';
 import {
   DownOutlined,
@@ -13,7 +13,7 @@ import {
   resourceCopyMenuItems,
   resourceMoreMenuItems,
 } from '../../constants';
-import { MenuItemProps, ResourceCopyKey, ResourceMoreKey } from '../../Types';
+import { ResourceCopyKey, ResourceMoreKey } from '../../Types';
 import Pagination from '@/components/common/Pagination';
 import { AssignType } from '../../Types';
 import AssignModal from '../components/AssignModal';
@@ -44,6 +44,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   // Directory context
   const directories = useDirectoryStore((state) => state.directories);
   const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
+  const removePoolHosts = usePoolHostStore((state) => state.removeHosts);
   const activeDir = directories.find((d) => d.bk_module_id === selectedId);
   const dirDisplayName = activeDir?.bk_module_name ?? t('host.directory.hostPool');
 
@@ -121,7 +122,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       title: t('resource.host.columns.id'),
       width: 80,
       sorter: true,
-      render: (_: any, record: any) => record.host.bk_host_id,
+      render: (_: any, record: any) => record.host.bk_host_display_id ?? record.host.bk_host_id,
     },
     {
       title: t('resource.host.columns.innerIpv4'),
@@ -151,9 +152,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
 
   const toggleSelectedHost = (hostId: React.Key, checked: boolean) => {
     setSelectedRowKeys((current) =>
-      checked
-        ? Array.from(new Set([...current, hostId]))
-        : current.filter((key) => key !== hostId),
+      checked ? Array.from(new Set([...current, hostId])) : current.filter((key) => key !== hostId),
     );
   };
 
@@ -219,6 +218,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
         ) : poolHosts.length > 0 ? (
           poolHosts.map((record: any) => {
             const hostId = getHostKey(record);
+            const hostDisplayId = record.host.bk_host_display_id ?? hostId;
             const selected = selectedRowKeys.includes(hostId);
             const cloudInfo = record.host.bk_cloud_id;
             return (
@@ -227,13 +227,13 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                   <Checkbox
                     checked={selected}
                     onChange={(e) => toggleSelectedHost(hostId, e.target.checked)}
-                    aria-label={`选择主机 ${hostId}`}
+                    aria-label={`选择主机 ${hostDisplayId}`}
                   />
                   <div>
                     <div className="host-mobile-card__title">
                       {record.host.bk_host_innerip || hostId}
                     </div>
-                    <div className="host-mobile-card__meta">ID {hostId}</div>
+                    <div className="host-mobile-card__meta">ID {hostDisplayId}</div>
                   </div>
                 </div>
                 <dl className="host-mobile-card__grid">
@@ -243,9 +243,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                   </div>
                   <div>
                     <dt>{t('resource.host.columns.cloudArea')}</dt>
-                    <dd>
-                      {cloudInfo?.length ? cloudInfo[0].bk_inst_name : '--'}
-                    </dd>
+                    <dd>{cloudInfo?.length ? cloudInfo[0].bk_inst_name : '--'}</dd>
                   </div>
                   <div>
                     <dt>{t('resource.host.columns.cloudHostStatus')}</dt>
@@ -271,7 +269,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       />
 
       {/* Floating Action Bar — appears when rows are selected */}
-      <div className={`host-fab${hasSelection ? ' host-fab--visible' : ''}`} aria-hidden={!hasSelection}>
+      <div
+        className={`host-fab${hasSelection ? ' host-fab--visible' : ''}`}
+        aria-hidden={!hasSelection}
+      >
         <span className="host-fab__count">
           已选 <strong>{selectedRowKeys.length}</strong> 台
         </span>
@@ -341,6 +342,14 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
         selectedRowKeys={selectedRowKeys}
         hostPoolStatuses={hostPoolStatuses}
         onClose={() => setAssignType(AssignType.None)}
+        onSuccess={(type) => {
+          if (type === AssignType.Biz) {
+            removePoolHosts(selectedRowKeys.map(String));
+          }
+          setSelectedRowKeys([]);
+          void fetchDirectories();
+          void fetchPoolHosts();
+        }}
       />
       <ImportHost
         visible={importModalVisible}

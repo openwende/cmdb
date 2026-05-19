@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Table, Button, Dropdown, Input, Tooltip, Empty, Typography, Checkbox, Spin } from 'antd';
 import { useAppMessage } from '@/utils/message';
@@ -8,8 +8,8 @@ import Pagination from '@/components/common/Pagination';
 import {
   getTopologyNodeHosts,
   TopologyNodeHostItem,
+  reclaimTopologyHostsToPool,
   transferTopologyHosts,
-  transferTopologyHostsToPool,
 } from '@/api/services/business';
 import {
   TransferHostItem,
@@ -61,6 +61,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const [releaseModalVisible, setReleaseModalVisible] = useState(false);
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const canWrite = useAuthStore((state) => state.canWrite());
+  const requestSeqRef = useRef(0);
 
   const adaptTopologyHost = useCallback((item: TopologyNodeHostItem) => {
     return {
@@ -101,10 +102,14 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const fetchNodeHosts = useCallback(async () => {
     const nodeType = selectedNode.backendType || selectedNode.type;
     const nodeId = selectedNode.nodeId;
+    const canContainHosts = selectedNode.type === TopoTreeNodeType.Module;
+    const requestSeq = requestSeqRef.current + 1;
+    requestSeqRef.current = requestSeq;
 
-    if (!nodeType || !nodeId) {
+    if (!canContainHosts || !nodeType || !nodeId) {
       setHostsList([]);
       setTotal(0);
+      setLoading(false);
       return;
     }
 
@@ -119,19 +124,29 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       const items = response?.data?.items || [];
       const pagination = response?.data?.pagination;
 
+      if (requestSeq !== requestSeqRef.current) {
+        return;
+      }
+
       setHostsList(items.map(adaptTopologyHost));
       setTotal(pagination?.total ?? items.length);
     } catch (error) {
+      if (requestSeq !== requestSeqRef.current) {
+        return;
+      }
       console.error('Failed to fetch topology node hosts:', error);
       setHostsList([]);
       setTotal(0);
       message.error(t('resource.host.messages.loadFailed'));
     } finally {
-      setLoading(false);
+      if (requestSeq === requestSeqRef.current) {
+        setLoading(false);
+      }
     }
   }, [
     adaptTopologyHost,
     currentPage,
+    message,
     pageSize,
     searchValue,
     selectedNode.backendType,
@@ -156,7 +171,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     if (!selectedNodeStatus.isModule) {
       return undefined;
     }
-    const value = Number(selectedNode.nodeId || selectedNode.key.split('-')[1]);
+    const value = Number(selectedNode.nodeId || selectedNode.key.split('-').at(-1));
     return Number.isFinite(value) && value > 0 ? value : undefined;
   }, [selectedNode.key, selectedNode.nodeId, selectedNodeStatus.isModule]);
 
@@ -182,11 +197,11 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
         id,
         ip: hostInfo?.host.bk_host_innerip || '',
         cloudInfo: region,
-        inIdlePool: idleStatus?.inIdlePool,
+        inIdlePool: selectedNodeStatus.isIdle || idleStatus?.inIdlePool,
         sourceModuleId,
       } as TransferHostItem;
     });
-  }, [currentModuleId, hostsList, idleSetID, selectedRowKeys]);
+  }, [currentModuleId, hostsList, idleSetID, selectedNodeStatus.isIdle, selectedRowKeys]);
 
   const hostsNotInIdlePool = selectedTransferHosts.some((item) => item.inIdlePool !== true);
 
@@ -264,7 +279,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
 
   const handleConfirmAddHosts = useCallback(
     async (hosts: TransferHostItem[]) => {
-      if (!selectedNodeStatus.isModule || !selectedNode.nodeId) {
+      if (!selectedNodeStatus.isModule) {
+        message.error(
+          t(
+            'business.topology.hostList.tooltips.onlyModuleCanAdd',
+            '只有模块节点才能绑定主机，请选择模块后重试',
+          ),
+        );
+        return;
+      }
+      if (!selectedNode.nodeId) {
         setTransferHostData(hosts, [selectedNode]);
         handleNavToTransferPage();
         return;
@@ -319,13 +343,23 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   );
 
   const handleReleaseHosts = useCallback(
-    async (_dirId: number) => {
+    async (dirId: number) => {
       try {
-        await transferTopologyHostsToPool({
+        const response = await reclaimTopologyHostsToPool({
           host_ids: selectedTransferHosts.map((host) => String(host.id)),
+          directory_id: dirId,
         });
+
+        const failedCount = Number(response?.data?.failed ?? 0);
+        if (failedCount > 0) {
+          const failedMessage =
+            response?.data?.failed_items?.[0]?.message || response?.data?.errors?.[0];
+          throw new Error(failedMessage || t('resource.host.messages.loadFailed'));
+        }
+
         message.success(t('resource.host.messages.removeSuccess'));
         setReleaseModalVisible(false);
+        setSelectedRowKeys([]);
         onTopologyChanged();
         await fetchNodeHosts();
       } catch (error) {
@@ -333,7 +367,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
         message.error(t('resource.host.messages.loadFailed'));
       }
     },
-    [fetchNodeHosts, onTopologyChanged, selectedTransferHosts, t],
+    [fetchNodeHosts, message, onTopologyChanged, selectedTransferHosts, t],
   );
 
   const handleSearch = (value: string) => {
@@ -396,7 +430,13 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       transferBaseMenuItems
         .filter((base) => base.key !== TransferMenuItemType.otherBusiness)
         .forEach((base) => {
-          if (base.key === TransferMenuItemType.hostPool) {
+          if (base.key === TransferMenuItemType.idlePool) {
+            items.push({
+              ...base,
+              label: t(base.label),
+              disabled: !hostsNotInIdlePool,
+            } as any);
+          } else if (base.key === TransferMenuItemType.hostPool) {
             const disabled = hostsNotInIdlePool;
             const tip = t('business.topology.hostList.transfer.hostPoolTip');
             items.push({
@@ -525,7 +565,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
             <div className="host-workspace__toolbar">
               <div className="host-workspace__actions">
                 {selectedNodeStatus.isModule ? (
-                  <Tooltip title={!canWrite ? t('common.noPermission', '权限不足，无法操作') : undefined}>
+                  <Tooltip
+                    title={!canWrite ? t('common.noPermission', '权限不足，无法操作') : undefined}
+                  >
                     <Button type="primary" onClick={handleAddHosts} disabled={!canWrite}>
                       {t('business.topology.hostList.buttons.add')}
                     </Button>
@@ -545,14 +587,19 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                       onClick: ({ key }) => handleMenuClick(key),
                     }}
                     trigger={['click']}
-                    disabled={!hasSelection}
+                    disabled={!hasSelection || !selectedNodeStatus.isModule}
                   >
                     <Button
-                      disabled={!hasSelection}
+                      disabled={!hasSelection || !selectedNodeStatus.isModule}
                       title={
-                        !hasSelection
-                          ? t('business.topology.hostList.tooltips.selectHostFirst', '请先勾选主机')
-                          : undefined
+                        !selectedNodeStatus.isModule
+                          ? t('business.topology.hostList.tooltips.onlyModuleCanAdd')
+                          : !hasSelection
+                            ? t(
+                                'business.topology.hostList.tooltips.selectHostFirst',
+                                '请先勾选主机',
+                              )
+                            : undefined
                       }
                     >
                       {t('business.topology.hostList.buttons.transferTo')} <DownOutlined />
@@ -560,7 +607,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                   </Dropdown>
                 ) : null}
 
-                {canWrite && !selectedNodeStatus.isIdle ? (
+                {canWrite && selectedNodeStatus.isModule && !selectedNodeStatus.isIdle ? (
                   <Dropdown
                     menu={{
                       ...getDropdownMenu(DropdownMenuType.Append),
@@ -670,11 +717,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                     ) : !loading && hostsList.length === 0 ? (
                       <Empty
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={
-                          selectedNodeStatus.isModule
-                            ? emptyHostDescription
-                            : emptyHostDescription
-                        }
+                        description={emptyHostDescription}
                       >
                         {selectedNodeStatus.isModule && canWrite ? (
                           <Button type="primary" size="small" onClick={handleAddHosts}>

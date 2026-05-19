@@ -20,7 +20,8 @@ interface RawPoolHost {
 
 interface PoolHostRow {
   host: {
-    bk_host_id: number | string;
+    bk_host_id: string;
+    bk_host_display_id?: number | string;
     bk_host_innerip: string;
     bk_host_innerip_v6: string;
     bk_cloud_host_status: string;
@@ -46,6 +47,7 @@ interface PoolHostStoreState {
   error: string | null;
   setQuery: (query: Partial<PoolHostQuery>) => void;
   fetchHosts: () => Promise<void>;
+  removeHosts: (ids: string[]) => void;
   reset: () => void;
 }
 
@@ -61,7 +63,8 @@ const adaptPoolHost = (item: RawPoolHost, directoryId?: number): PoolHostRow => 
 
   return {
     host: {
-      bk_host_id: item.display_id ?? item.id,
+      bk_host_id: item.id,
+      bk_host_display_id: item.display_id ?? item.id,
       bk_host_innerip: item.primary_ip || '',
       bk_host_innerip_v6: ipv6,
       bk_cloud_host_status: item.status || '--',
@@ -139,6 +142,16 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
       });
     }
   },
+
+  removeHosts: (ids) =>
+    set((state) => {
+      const idSet = new Set(ids);
+      const nextHosts = state.hosts.filter((h) => !idSet.has(String(h.host.bk_host_id)));
+      return {
+        hosts: nextHosts,
+        total: Math.max(0, state.total - (state.hosts.length - nextHosts.length)),
+      };
+    }),
 
   reset: () =>
     set({

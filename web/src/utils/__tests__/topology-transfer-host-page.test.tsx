@@ -195,4 +195,29 @@ describe('topology transfer host page', () => {
       });
     });
   });
+
+  it('uses the idle-pool api instead of module transfer when confirming idle-pool moves', async () => {
+    storeState.transferHostType = 'idlePool';
+    storeState.targetModules = [
+      {
+        title: '空闲机',
+        key: 'idle_module-5',
+        nodeId: '5',
+        type: 'module',
+        backendType: 'idle_module',
+        parentPath: ['biz-a', 'idle-set'],
+      },
+    ];
+
+    render(<TransferHost />);
+
+    fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
+
+    await waitFor(() => {
+      expect(transferTopologyHostsToPool).toHaveBeenCalledWith({
+        host_ids: ['host-1'],
+      });
+    });
+    expect(transferTopologyHosts).not.toHaveBeenCalled();
+  });
 });

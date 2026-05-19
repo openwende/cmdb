@@ -13,7 +13,7 @@ export const getHostCopyValue = (record: any, copyKey: ResourceCopyKey) => {
   const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
   switch (copyKey) {
     case ResourceCopyKey.Id:
-      return String(record.host.bk_host_id);
+      return String(record.host.bk_host_display_id ?? record.host.bk_host_id);
     case ResourceCopyKey.IPv4:
       return record.host.bk_host_innerip || '';
     case ResourceCopyKey.IPv6:
@@ -74,7 +74,7 @@ export function checkHostsInHostPool(
     const moduleId = hasSingleModule ? modules[0].bk_module_id : null;
     const inHostPool = hasSingleModule && hostPoolModuleIds.includes(moduleId as number);
     return {
-      id: Number(key),
+      id: key,
       ip: hostItem?.host?.bk_host_innerip ?? '',
       moduleId,
       inHostPool,

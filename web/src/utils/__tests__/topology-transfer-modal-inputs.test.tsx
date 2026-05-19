@@ -59,6 +59,7 @@ vi.mock('@/utils/routes', () => ({
 
 vi.mock('@/api/services/business', () => ({
   getTopologyNodeHosts,
+  reclaimTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
 }));
 
 vi.mock('@/store/TransferHostStore', () => ({
@@ -66,6 +67,17 @@ vi.mock('@/store/TransferHostStore', () => ({
     idleSetID: null,
     setTransferHostData: mockSetTransferHostData,
   }),
+}));
+
+vi.mock('@/store/AuthStore', () => ({
+  useAuthStore: (selector: any) =>
+    selector
+      ? selector({
+          canWrite: () => true,
+        })
+      : {
+          canWrite: () => true,
+        },
 }));
 
 vi.mock('antd', () => ({
@@ -76,7 +88,9 @@ vi.mock('antd', () => ({
       ))}
       <button
         type="button"
-        onClick={() => rowSelection?.onChange?.(dataSource.map((record: any) => record.host.bk_host_id))}
+        onClick={() =>
+          rowSelection?.onChange?.(dataSource.map((record: any) => record.host.bk_host_id))
+        }
       >
         select-hosts
       </button>
@@ -100,6 +114,13 @@ vi.mock('antd', () => ({
   Input: { Search: () => <div /> },
   message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   Tooltip: ({ children }: any) => <div>{children}</div>,
+  Spin: () => <div data-testid="spin" />,
+  Checkbox: ({ checked, onChange, children, ...props }: any) => (
+    <label>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange?.(event)} {...props} />
+      {children}
+    </label>
+  ),
   Empty: ({ children, description }: any) => (
     <div>
       <div>{description}</div>
@@ -121,7 +142,9 @@ vi.mock('@/pages/Business/BusinessTopology/components/AddHostModal', () => ({
 
 vi.mock('@/pages/Business/BusinessTopology/components/TransferHostModal', () => ({
   default: ({ visible, selectedHosts }: any) =>
-    visible ? <div>selected-hosts:{selectedHosts.map((host: any) => host.ip).join(',')}</div> : null,
+    visible ? (
+      <div>selected-hosts:{selectedHosts.map((host: any) => host.ip).join(',')}</div>
+    ) : null,
 }));
 
 vi.mock('@/pages/Business/BusinessTopology/components/ReleaseHostModal', () => ({
@@ -149,28 +172,27 @@ describe('business topology transfer modal inputs', () => {
     render(
       <HostList
         selectedNode={{
-          title: 'ProbeSet-renamed',
-          key: 'set-4',
-          nodeId: '4',
-          type: TopoTreeNodeType.Set,
-          backendType: 'set',
-          children: [
-            {
-              title: 's1',
-              key: 'module-9',
-              nodeId: '9',
-              type: TopoTreeNodeType.Module,
-              backendType: 'module',
-            },
-          ],
+          title: 's1',
+          key: 'module-3',
+          nodeId: '3',
+          type: TopoTreeNodeType.Module,
+          backendType: 'module',
         }}
-        parentNodes={[]}
+        parentNodes={[
+          {
+            title: 'ProbeSet-renamed',
+            key: 'set-4',
+            nodeId: '4',
+            type: TopoTreeNodeType.Set,
+            backendType: 'set',
+          },
+        ]}
         onTopologyChanged={() => undefined}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('10.1.1.10')).toBeInTheDocument();
+      expect(screen.getAllByText('10.1.1.10').length).toBeGreaterThan(0);
     });
 
     fireEvent.click(screen.getByText('select-hosts'));

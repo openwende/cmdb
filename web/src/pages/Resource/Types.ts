@@ -48,7 +48,7 @@ export enum ResourceMoreKey {
 }
 // Host pool status
 export interface HostPoolStatus {
-  id: number;
+  id: React.Key;
   ip: string;
   moduleId: number | null;
   inHostPool: boolean;

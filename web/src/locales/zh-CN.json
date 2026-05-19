@@ -262,7 +262,7 @@
         "nodeInfo": "节点信息"
       },
       "workspace": {
-        "business": "当前业务",
+        "business": "业",
         "currentNode": "当前节点",
         "noBusiness": "请选择业务",
         "noNode": "请先在左侧选择节点",
@@ -473,7 +473,7 @@
       "releaseHostModal": {
         "title": "确认归还主机池",
         "confirmMessagePrefix": "确认将",
-        "confirmMessageSuffix": "台空闲机池转移到主机池？",
+        "confirmMessageSuffix": "台空闲主机转移到主机池？",
         "warning": "请务必确认业务进程已停止或主机处于关机状态",
         "selectDirectory": "归还至目录"
       },
@@ -1700,8 +1700,11 @@
         "correctName": "请输入正确的目录名称",
         "existName": "目录名称已存在",
         "addSuccess": "新建成功",
+        "addFailed": "新建失败，请稍后重试",
         "renameSuccess": "修改成功",
+        "renameFailed": "修改失败，请稍后重试",
         "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败，请稍后重试",
         "pinSuccess": "已置顶",
         "unpinSuccess": "已取消置顶"
       },
@@ -1727,7 +1730,9 @@
         "text": {
           "biz": "业务列表",
           "pool": "目录列表"
-        }
+        },
+        "success": "分配成功",
+        "error": "分配失败，请稍后重试"
       }
     }
   },

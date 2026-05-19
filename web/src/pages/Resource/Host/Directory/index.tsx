@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, message, InputRef } from 'antd';
+import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, InputRef } from 'antd';
 import {
   PlusOutlined,
   FolderOutlined,
@@ -15,6 +15,8 @@ import PinSvg from '@/assets/icons/pin.svg?react';
 import UnpinSvg from '@/assets/icons/unpin.svg?react';
 import './style.css';
 import { useDirectoryStore } from '@/store/DirectoryStore';
+import { useAppMessage } from '@/utils/message';
+import { createPoolDirectory, renamePoolDirectory, deletePoolDirectory } from '@/api/services/resource';
 
 // The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
@@ -31,6 +33,7 @@ const Directory: React.FC<{
   onSelect: (id: number) => void;
 }> = ({ selectedId, onSelect }) => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const { confirm } = Modal;
   const directories = useDirectoryStore((state) => state.directories);
   const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
@@ -66,8 +69,7 @@ const Directory: React.FC<{
   };
 
   // Confirm the creation of a new directory
-  const handleAddConfirm = () => {
-    // Trigger the error message
+  const handleAddConfirm = async () => {
     if (inputValue.trim() === '') {
       message.error(t('host.directory.message.correctName'));
       return;
@@ -78,35 +80,15 @@ const Directory: React.FC<{
       return;
     }
 
-    // TODO: api
-    setDirs([
-      // Idle host
-      dirs[0],
-      {
-        bk_module_id: Date.now(),
-        bk_module_name: inputValue,
-        default: 4,
-        host_count: 0,
-        children: [],
-      },
-      ...dirs.slice(1),
-    ]);
-    setPinnedDirs([
-      // Idle host
-      pinnedDirs[0],
-      {
-        bk_module_id: Date.now(),
-        bk_module_name: inputValue,
-        default: 4,
-        host_count: 0,
-        children: [],
-      },
-      ...pinnedDirs.slice(1),
-    ]);
-
-    setNewDir(false);
-    setInputValue('');
-    message.success(t('host.directory.message.addSuccess'));
+    try {
+      await createPoolDirectory(inputValue.trim());
+      await fetchDirectories();
+      setNewDir(false);
+      setInputValue('');
+      message.success(t('host.directory.message.addSuccess'));
+    } catch {
+      message.error(t('host.directory.message.addFailed'));
+    }
   };
 
   // Directory to be renamed
@@ -117,7 +99,7 @@ const Directory: React.FC<{
   };
 
   // Confirm the renaming of a directory
-  const handleRenameConfirm = (id: number) => {
+  const handleRenameConfirm = async (id: number) => {
     if (inputValue.trim() === '') {
       message.error(t('host.directory.message.correctName'));
       return;
@@ -128,10 +110,15 @@ const Directory: React.FC<{
       return;
     }
 
-    setDirs(dirs.map((d) => (d.bk_module_id === id ? { ...d, bk_module_name: inputValue } : d)));
-    setEditDirId(null);
-    setInputValue('');
-    message.success(t('host.directory.message.renameSuccess'));
+    try {
+      await renamePoolDirectory(id, inputValue.trim());
+      await fetchDirectories();
+      setEditDirId(null);
+      setInputValue('');
+      message.success(t('host.directory.message.renameSuccess'));
+    } catch {
+      message.error(t('host.directory.message.renameFailed'));
+    }
   };
 
   // Check if the input value is available
@@ -175,14 +162,17 @@ const Directory: React.FC<{
       content: t('host.directory.confirm.content'),
       okText: t('common.confirm'),
       cancelText: t('common.cancel'),
-      onOk() {
-        // TODO: api
-        setDirs(dirs.filter((d) => d.bk_module_id !== id));
-        setPinnedDirs(pinnedDirs.filter((d) => d.bk_module_id !== id));
-        if (selectedId === id) {
-          void onSelect(unmodifiableDirIds[0]);
+      async onOk() {
+        try {
+          await deletePoolDirectory(id);
+          await fetchDirectories();
+          if (selectedId === id) {
+            void onSelect(unmodifiableDirIds[0]);
+          }
+          message.success(t('host.directory.message.deleteSuccess'));
+        } catch {
+          message.error(t('host.directory.message.deleteFailed'));
         }
-        message.success(t('host.directory.message.deleteSuccess'));
       },
       onCancel() {},
     });

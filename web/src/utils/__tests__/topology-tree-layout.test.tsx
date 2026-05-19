@@ -29,12 +29,9 @@ vi.mock('@/store/AuthStore', () => ({
         },
 }));
 
-vi.mock(
-  '@/pages/Business/BusinessTopology/components/CreateNodeModal',
-  () => ({
-    default: () => null,
-  }),
-);
+vi.mock('@/pages/Business/BusinessTopology/components/CreateNodeModal', () => ({
+  default: () => null,
+}));
 
 vi.mock('antd', () => ({
   Button: ({ children }: { children?: React.ReactNode }) => <button>{children}</button>,
@@ -106,7 +103,7 @@ describe('topology tree layout', () => {
     expect(styleContent).toContain('overflow-wrap: anywhere;');
   });
 
-  it('renders real topology counts instead of a hardcoded zero', () => {
+  it('renders host counts only on module nodes', () => {
     render(
       <TopologyTree
         treeData={[
@@ -122,7 +119,8 @@ describe('topology tree layout', () => {
                 objName: '模',
                 title: 'SmokeModule-1773163733771',
                 extra: {
-                  host_count: 2,
+                  host_count: 0,
+                  child_count: 2,
                 },
               },
             ],
@@ -133,7 +131,7 @@ describe('topology tree layout', () => {
       />,
     );
 
-    expect(within(screen.getByTestId('tree-node-set-4')).getByText('1')).toBeInTheDocument();
+    expect(within(screen.getByTestId('tree-node-set-4')).queryByText('1')).not.toBeInTheDocument();
     expect(within(screen.getByTestId('tree-node-module-3')).getByText('2')).toBeInTheDocument();
   });
 

@@ -5,15 +5,16 @@ import { AssignType } from '@/pages/Resource/Types';
 import { HostPoolStatus } from '@/pages/Resource/Types';
 import BusinessSelector from '@/components/common/BusinessSelector';
 import { useDirectoryStore } from '@/store/DirectoryStore';
+import { useAppMessage } from '@/utils/message';
+import { addHostsToPoolDirectory, assignHostsToBusinessIdlePool } from '@/api/services/resource';
 import './style.css';
-
-const { Option } = Select;
 
 interface AssignModalProps {
   assignType: AssignType;
   selectedRowKeys: React.Key[];
   hostPoolStatuses?: HostPoolStatus[];
   onClose: () => void;
+  onSuccess?: (type: AssignType) => void;
 }
 
 const AssignModal: React.FC<AssignModalProps> = ({
@@ -21,33 +22,39 @@ const AssignModal: React.FC<AssignModalProps> = ({
   selectedRowKeys,
   hostPoolStatuses = [],
   onClose,
+  onSuccess,
 }) => {
   const { t } = useTranslation();
+  const message = useAppMessage();
   const [selected, setSelected] = useState<string | number | null>(null);
-  const { directories, loading, fetchDirectories } = useDirectoryStore();
+  const [loading, setLoading] = useState(false);
+  const { directories, loading: dirLoading, fetchDirectories } = useDirectoryStore();
 
   useEffect(() => {
-    if (assignType === AssignType.HostPool && directories.length === 0 && !loading) {
+    if (assignType === AssignType.HostPool && directories.length === 0 && !dirLoading) {
       void fetchDirectories();
     }
-  }, [assignType, directories.length, fetchDirectories, loading]);
+  }, [assignType, directories.length, fetchDirectories, dirLoading]);
 
-  const onOk = () => {
-    // TODO: api
-    // let payload = {};
-    // if (assignType === AssignType.Biz) {
-    //     payload = {
-    //         bk_biz_id: selected,
-    //         bk_host_id: selectedRowKeys
-    //     }
-    // } else {
-    //     payload = {
-    //         bk_module_id: selected,
-    //         bk_host_id: selectedRowKeys
-    //     }
-    // }
-    setSelected(null);
-    onClose();
+  const onOk = async () => {
+    if (selected === null) return;
+    const hostIds = selectedRowKeys.map(String);
+    setLoading(true);
+    try {
+      if (assignType === AssignType.Biz) {
+        await assignHostsToBusinessIdlePool(selected as number, hostIds);
+      } else {
+        await addHostsToPoolDirectory(selected as number, hostIds);
+      }
+      message.success(t('host.assign.modal.success'));
+      setSelected(null);
+      onClose();
+      onSuccess?.(assignType);
+    } catch {
+      message.error(t('host.assign.modal.error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onCancel = () => {
@@ -55,10 +62,14 @@ const AssignModal: React.FC<AssignModalProps> = ({
     onClose();
   };
 
-  // Exclude a directory if it already contains all hosts.
-  const shouldDirExclude = (dirId: number) => {
+  const isAlreadyInDir = (dirId: number) => {
+    if (hostPoolStatuses.length === 0) return false;
     return hostPoolStatuses.every((it) => it.moduleId === dirId);
   };
+
+  const directoryOptions = directories
+    .filter((dir) => !isAlreadyInDir(dir.bk_module_id))
+    .map((dir) => ({ value: dir.bk_module_id, label: dir.bk_module_name }));
 
   return (
     <Modal
@@ -74,7 +85,7 @@ const AssignModal: React.FC<AssignModalProps> = ({
       closable={false}
       onOk={onOk}
       onCancel={onCancel}
-      okButtonProps={{ disabled: !selected }}
+      okButtonProps={{ disabled: !selected, loading }}
       className="assign-modal"
     >
       <Typography.Text className="selected-tip">
@@ -98,23 +109,16 @@ const AssignModal: React.FC<AssignModalProps> = ({
           />
         ) : (
           <Select
-            showSearch={true}
+            showSearch
             value={selected}
             onChange={setSelected}
             style={{ width: '100%' }}
             placeholder={t('host.assign.modal.placeholder.pool')}
+            options={directoryOptions}
             filterOption={(input, option) =>
-              (option?.children as any).toLowerCase().includes(input.toLowerCase())
+              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
             }
-          >
-            {directories
-              .filter((dir) => !shouldDirExclude(dir.bk_module_id))
-              .map((dir) => (
-                <Option key={dir.bk_module_id} value={dir.bk_module_id}>
-                  {dir.bk_module_name}
-                </Option>
-              ))}
-          </Select>
+          />
         )}
       </div>
     </Modal>

@@ -354,6 +354,14 @@ export const transferTopologyHostsToPool = async (payload: { host_ids: string[] 
   return axios.post('/v1/topology/hosts/transfer-to-pool', payload);
 };
 
+export const reclaimTopologyHostsToPool = async (payload: {
+  host_ids: string[];
+  directory_id: number;
+  remark?: string;
+}) => {
+  return axios.post('/v1/resource-pool/hosts/reclaim', payload);
+};
+
 /**
  * 获取主机列表
  * @param params 查询参数

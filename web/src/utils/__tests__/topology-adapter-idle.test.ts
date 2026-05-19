@@ -32,7 +32,9 @@ describe('topology adapter idle nodes', () => {
 
     expect(idleSetNode.key).toBe('idle_set-3');
     expect(idleSetNode.backendType).toBe(BackendNodeType.IdleSet);
+    expect(idleSetNode.extra?.child_count).toBe(1);
     expect(idleSetNode.children?.[0].key).toBe('idle_module-2');
     expect(idleSetNode.children?.[0].backendType).toBe(BackendNodeType.IdleModule);
+    expect(idleSetNode.children?.[0].extra?.child_count).toBe(0);
   });
 });

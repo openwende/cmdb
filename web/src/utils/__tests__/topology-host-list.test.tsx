@@ -59,6 +59,7 @@ vi.mock('@/utils/routes', () => ({
 
 vi.mock('@/api/services/business', () => ({
   getTopologyNodeHosts,
+  reclaimTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
 }));
 
 vi.mock('@/mock/business', () => ({
@@ -138,7 +139,9 @@ vi.mock('antd', () => ({
               </label>
               <span>{record.host.bk_host_id}</span>
               <span>{record.host.bk_host_innerip}</span>
-              <span>{record.module[0]?.bk_module_name || record.module[0]?.topo_module_name || '--'}</span>
+              <span>
+                {record.module[0]?.bk_module_name || record.module[0]?.topo_module_name || '--'}
+              </span>
               <span>{record.set[0]?.bk_set_name || '--'}</span>
             </div>
           );
@@ -151,7 +154,24 @@ vi.mock('antd', () => ({
       {children}
     </button>
   ),
-  Dropdown: ({ children }: any) => <div>{children}</div>,
+  Dropdown: ({ children, disabled, menu }: any) => (
+    <div>
+      {children}
+      <div>
+        {menu?.items?.map((item: any) => (
+          <button
+            key={item.key}
+            data-testid={`dropdown-item-${item.key}`}
+            disabled={disabled || item.disabled}
+            onClick={() => menu.onClick?.({ key: item.key })}
+            type="button"
+          >
+            {typeof item.label === 'string' ? item.label : item.key}
+          </button>
+        ))}
+      </div>
+    </div>
+  ),
   Input: {
     Search: ({ value, onChange, onSearch, placeholder }: any) => (
       <input
@@ -174,6 +194,13 @@ vi.mock('antd', () => ({
       {children}
     </div>
   ),
+  Checkbox: ({ checked, onChange, children, ...props }: any) => (
+    <label>
+      <input type="checkbox" checked={checked} onChange={(event) => onChange?.(event)} {...props} />
+      {children}
+    </label>
+  ),
+  Spin: () => <div data-testid="spin" />,
   Typography: {
     Text: ({ children }: any) => <span>{children}</span>,
   },
@@ -212,7 +239,7 @@ describe('business topology host list', () => {
     vi.clearAllMocks();
   });
 
-  it('loads set hosts from topology host api instead of legacy mock rows', async () => {
+  it('does not load or display hosts on set nodes', async () => {
     render(
       <HostList
         selectedNode={{
@@ -236,22 +263,16 @@ describe('business topology host list', () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText('real-host-1')).toBeInTheDocument();
-    });
-
-    expect(getTopologyNodeHosts).toHaveBeenCalledWith('set-4', {
-      page: 1,
-      page_size: 20,
-      keyword: '',
-    });
-    expect(screen.getByText('SmokeModule-1773163733771')).toBeInTheDocument();
-    expect(screen.getByText('ProbeSet-1773163724333')).toBeInTheDocument();
+    expect(getTopologyNodeHosts).not.toHaveBeenCalled();
+    expect(screen.queryByText('real-host-1')).not.toBeInTheDocument();
+    expect(screen.queryByText('10.1.1.10')).not.toBeInTheDocument();
     expect(screen.queryByText('game')).not.toBeInTheDocument();
     expect(screen.queryByText('otherBusiness')).not.toBeInTheDocument();
     expect(screen.queryByText('business.topology.workspace.currentNode')).not.toBeInTheDocument();
     expect(screen.queryByText('business.topology.workspace.hostList')).not.toBeInTheDocument();
-    expect(screen.getByText('business.topology.hostList.pagination.selected 0 business.topology.hostList.pagination.items')).toBeInTheDocument();
+    expect(
+      screen.getAllByText('business.topology.hostList.empty.selectModuleFirst').length,
+    ).toBeGreaterThan(0);
   });
 
   it('keeps bulk actions in the top toolbar after the add button and enables them when hosts are selected', async () => {
@@ -291,10 +312,99 @@ describe('business topology host list', () => {
 
     fireEvent.click(screen.getByLabelText('select-host-real-host-1'));
 
-    expect(screen.getByText('business.topology.hostList.pagination.selected 1 business.topology.hostList.pagination.items')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'business.topology.hostList.pagination.selected 1 business.topology.hostList.pagination.items',
+      ),
+    ).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.transferTo')).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.appendTo')).toBeInTheDocument();
     expect(screen.getByText('business.topology.hostList.buttons.removeFrom')).toBeInTheDocument();
     expect(screen.queryByTestId('hostlist-floating-actions')).not.toBeInTheDocument();
+  });
+
+  it('only allows adding hosts on module nodes', async () => {
+    render(
+      <HostList
+        selectedNode={{
+          title: 'ProbeSet-1773163724333',
+          key: 'set-4',
+          nodeId: '4',
+          type: TopoTreeNodeType.Set,
+          backendType: 'set',
+          children: [
+            {
+              title: 'SmokeModule-1773163733771',
+              key: 'module-3',
+              nodeId: '3',
+              type: TopoTreeNodeType.Module,
+              backendType: 'module',
+            },
+          ],
+        }}
+        parentNodes={[]}
+        onTopologyChanged={() => undefined}
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'business.topology.hostList.buttons.add' }),
+    ).toBeDisabled();
+    expect(getTopologyNodeHosts).not.toHaveBeenCalled();
+    expect(screen.queryByText('real-host-1')).not.toBeInTheDocument();
+  });
+
+  it('allows releasing selected hosts from idle modules to host pool even when the row has no set metadata', async () => {
+    getTopologyNodeHosts.mockResolvedValueOnce({
+      code: 0,
+      data: {
+        items: [
+          {
+            host_id: 'idle-host-1',
+            inner_ipv4: '10.252.2.142',
+            inner_ipv6: '',
+            cloud_area: {
+              id: 'cloud-1',
+              name: '默认云区域',
+            },
+            module: {
+              id: 5,
+              name: '空闲机',
+            },
+            set: undefined as any,
+            status: 'running',
+          },
+        ],
+        pagination: {
+          page: 1,
+          page_size: 20,
+          total: 1,
+          total_page: 1,
+        },
+      },
+    });
+
+    render(
+      <HostList
+        selectedNode={{
+          title: '空闲机',
+          key: 'idle_module-5',
+          nodeId: '5',
+          type: TopoTreeNodeType.Module,
+          backendType: 'idle_module',
+        }}
+        parentNodes={[]}
+        onTopologyChanged={() => undefined}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('idle-host-1')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText('select-host-idle-host-1'));
+
+    expect(screen.getByTestId('dropdown-item-hostPool')).toBeEnabled();
+    expect(screen.getByTestId('dropdown-item-idlePool')).toBeDisabled();
   });
 });

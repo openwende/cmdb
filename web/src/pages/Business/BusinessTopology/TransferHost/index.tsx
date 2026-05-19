@@ -89,7 +89,9 @@ const TransferHost: React.FC = () => {
       .map((i) => `${i.protocol} ${i.ip}:${i.port}`);
 
   const assertTransferResult = (response: any) => {
-    const result = response?.data?.data;
+    // axiosInstance already unwraps response.data, so HTTP body is `response` here.
+    // Body shape: { code, data: { total, successful, failed, errors } }
+    const result = response?.data;
     if (result?.failed > 0) {
       throw new Error(
         result.errors?.[0] || t('business.topology.transferHost.messages.transferFailed'),
@@ -120,10 +122,15 @@ const TransferHost: React.FC = () => {
     }
 
     try {
-      if (
-        transferHostType === TransferMenuItemType.idlePool ||
-        transferHostType === RemoveMenuItemKey.CurrentModule
-      ) {
+      if (transferHostType === TransferMenuItemType.idlePool) {
+        const response = await transferTopologyHostsToPool({ host_ids: hostIDs });
+        assertTransferResult(response);
+        message.success(t('business.topology.transferHost.messages.transferSuccess'));
+        backToPrePage();
+        return;
+      }
+
+      if (transferHostType === RemoveMenuItemKey.CurrentModule) {
         const response = await transferTopologyHostsToPool({ host_ids: hostIDs });
         assertTransferResult(response);
         message.success(t('business.topology.transferHost.messages.transferSuccess'));
@@ -144,7 +151,7 @@ const TransferHost: React.FC = () => {
       }, new Map<number, string[]>());
 
       for (const module of targetModules) {
-        const targetModuleID = Number(module.nodeId || module.key.split('-')[1]);
+        const targetModuleID = Number(module.nodeId || module.key.split('-').at(-1));
         if (!targetModuleID) {
           continue;
         }
