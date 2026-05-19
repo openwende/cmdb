@@ -2,13 +2,12 @@ import React, { Fragment, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Breadcrumb as AntBreadcrumb } from 'antd';
 import type { ItemType as AntdBreadcrumbItemType } from 'antd/es/breadcrumb/Breadcrumb';
-import { useLocation, useNavigate, useMatches, Link, UIMatch } from 'react-router-dom';
-import { NavigationItem } from '../../../routes/Types';
+import { useLocation, useMatches, Link, UIMatch } from 'react-router-dom';
+import { NavigationItem, PrimaryNavKey } from '../../../routes/Types';
 import './style.css';
 
 const Breadcrumb: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const matches = useMatches();
   const { t } = useTranslation();
 
@@ -21,6 +20,10 @@ const Breadcrumb: React.FC = () => {
       const routeConfig = (match.handle as { navigationItem: NavigationItem })?.navigationItem;
 
       if (!routeConfig) {
+        return;
+      }
+
+      if (routeConfig.key === PrimaryNavKey.Home) {
         return;
       }
 
@@ -83,7 +86,7 @@ const Breadcrumb: React.FC = () => {
     });
 
     setBreadcrumbItems(items);
-  }, [location, matches, navigate, t]);
+  }, [location, matches, t]);
 
   return (
     <Fragment>

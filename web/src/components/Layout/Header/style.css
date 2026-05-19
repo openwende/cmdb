@@ -134,11 +134,7 @@
     min-height: 40px;
   }
 
-  .header-auth {
-    gap: 6px;
-  }
-
-  .header-auth__user {
-    display: none;
+  .header-auth-trigger {
+    max-width: 88px;
   }
 }

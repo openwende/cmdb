@@ -85,13 +85,20 @@ vi.mock('antd', () => ({
   Menu: ({
     items,
     onClick,
+    selectedKeys = [],
   }: {
     items?: { key: string; label: React.ReactNode }[];
     onClick?: ({ key }: { key: string }) => void;
+    selectedKeys?: string[];
   }) => (
     <nav>
       {items?.map((item) => (
-        <button type="button" key={item.key} onClick={() => onClick?.({ key: item.key })}>
+        <button
+          type="button"
+          key={item.key}
+          aria-current={selectedKeys.includes(item.key) ? 'page' : undefined}
+          onClick={() => onClick?.({ key: item.key })}
+        >
           {item.label}
         </button>
       ))}
@@ -138,11 +145,31 @@ describe('navigation copy', () => {
   it('uses task-oriented labels in the top navigation', () => {
     render(<HeaderMenu />);
 
+    expect(screen.getByText('首页')).toBeInTheDocument();
     expect(screen.getByText('业务拓扑')).toBeInTheDocument();
     expect(screen.getByText('模型与类型')).toBeInTheDocument();
     expect(screen.getByText('资源目录')).toBeInTheDocument();
     expect(screen.getByText('审计与分析')).toBeInTheDocument();
     expect(screen.queryByText('用户管理')).not.toBeInTheDocument();
+  });
+
+  it('navigates the home menu directly to the dashboard page', async () => {
+    mockLocationPathname.value = '/model/overview';
+
+    const user = userEvent.setup();
+    render(<HeaderMenu />);
+
+    await user.click(screen.getByText('首页'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+
+  it('selects the home menu by default on the root path', () => {
+    mockLocationPathname.value = '/';
+
+    render(<HeaderMenu />);
+
+    expect(screen.getByRole('button', { name: '首页' })).toHaveAttribute('aria-current', 'page');
   });
 
   it('shows user management after analysis for admin users only', () => {

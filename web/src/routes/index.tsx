@@ -100,7 +100,6 @@ export const routes: NavigationItem[] = [
     key: PrimaryNavKey.Home,
     path: '/',
     element: withSuspense(HomePage),
-    hideInMenu: true,
   },
   {
     name: 'routes.business',

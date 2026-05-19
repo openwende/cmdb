@@ -1,4 +1,6 @@
 import React from 'react';
+import { Button, Dropdown } from 'antd';
+import type { MenuProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/AuthStore';
@@ -18,13 +20,29 @@ const Login: React.FC = () => {
     );
   }
 
+  const menuItems: MenuProps['items'] = [
+    {
+      key: 'logout',
+      label: t('common.layout.logout'),
+    },
+  ];
+
+  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
+    if (key === 'logout') {
+      logout(true);
+    }
+  };
+
   return (
-    <div className="header-auth">
-      <span className="header-auth__user">{user.display_name || user.username}</span>
-      <button type="button" className="header-auth-button" onClick={() => logout(true)}>
-        {t('common.layout.logout')}
-      </button>
-    </div>
+    <Dropdown
+      menu={{ items: menuItems, onClick: handleMenuClick }}
+      placement="bottom"
+      trigger={['hover']}
+    >
+      <Button type="text" className="header-auth-button header-auth-trigger">
+        {user.display_name || user.username}
+      </Button>
+    </Dropdown>
   );
 };
 
