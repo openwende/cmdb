@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button, Dropdown } from 'antd';
 import type { MenuProps } from 'antd';
+import { DownOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/AuthStore';
@@ -39,7 +40,12 @@ const Login: React.FC = () => {
       placement="bottom"
       trigger={['hover']}
     >
-      <Button type="text" className="header-auth-button header-auth-trigger">
+      <Button
+        type="text"
+        className="header-auth-button header-auth-trigger"
+        icon={<DownOutlined />}
+        iconPosition="end"
+      >
         {user.display_name || user.username}
       </Button>
     </Dropdown>
