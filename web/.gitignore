@@ -15,6 +15,7 @@ tmp/
 docs/plans/
 src/**/*.d.ts
 !src/vite-env.d.ts
+.claude/settings.local.json
 
 # Playwright MCP
 .playwright-mcp/
