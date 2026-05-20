@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Table, Button, Space, Drawer, Form, Input, message, Popconfirm } from 'antd';
+import { Table, Button, Space, Drawer, Form, Input, message, Popconfirm, Empty } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
 import {
@@ -74,7 +74,12 @@ const groupProcesses = (items: ProcessRecord[]): ProcessGroupRow[] => {
   return Array.from(groups.values());
 };
 
-const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRowKeys, expandAll }) => {
+const Process: React.FC<Props> = ({
+  selectedNode,
+  selectedRowKeys,
+  setSelectedRowKeys,
+  expandAll,
+}) => {
   const { t } = useTranslation();
   const [current, setCurrent] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -258,9 +263,7 @@ const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRo
               {t('business.topology.serviceInstance.process.fields.createTime')}：
               {activeProcess?.created_at || '--'}
             </div>
-            <div>
-              {t('business.topology.serviceInstance.process.fields.creator')}：--
-            </div>
+            <div>{t('business.topology.serviceInstance.process.fields.creator')}：--</div>
             <div>
               {t('business.topology.serviceInstance.process.form.processName')}：
               {activeProcess?.process_name || '--'}
@@ -290,7 +293,14 @@ const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRo
             dataSource={activeProcess?.bind_info || []}
             pagination={false}
             size="small"
-            locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
+            locale={{
+              emptyText: (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={t('business.topology.serviceInstance.process.table.noData')}
+                />
+              ),
+            }}
           />
 
           <div style={{ marginTop: 16 }}>
@@ -342,7 +352,9 @@ const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRo
           >
             <Input
               value={draft.startupParams}
-              placeholder={t('business.topology.serviceInstance.process.form.placeholders.startupParams')}
+              placeholder={t(
+                'business.topology.serviceInstance.process.form.placeholders.startupParams',
+              )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setDraft((currentDraft) => ({
                   ...currentDraft,
@@ -357,7 +369,9 @@ const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRo
           >
             <Input
               value={draft.description}
-              placeholder={t('business.topology.serviceInstance.process.form.placeholders.description')}
+              placeholder={t(
+                'business.topology.serviceInstance.process.form.placeholders.description',
+              )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setDraft((currentDraft) => ({
                   ...currentDraft,
@@ -397,7 +411,14 @@ const Process: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRo
         }}
         pagination={false}
         bordered
-        locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
+        locale={{
+          emptyText: (
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t('business.topology.serviceInstance.process.table.noData')}
+            />
+          ),
+        }}
       />
 
       {/* Pagination */}

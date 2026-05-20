@@ -1,6 +1,6 @@
 import React, { Fragment, useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Spin, Tooltip } from 'antd';
+import { Input, Spin } from 'antd';
 import { useAppMessage } from '@/utils/message';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import TopologyTree from '../components/TopologyTree';
@@ -37,10 +37,6 @@ interface Props {
   topologyVersion: number;
   onTopologyChanged: () => void;
   onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
-  currentBusinessName?: string;
-  currentBusinessDisplayId?: string;
-  businessList?: Array<{ id: number; name: string }>;
-  onBusinessSwitch?: (businessId: number) => void;
 }
 
 const BusinessTree: React.FC<Props> = ({
@@ -49,10 +45,6 @@ const BusinessTree: React.FC<Props> = ({
   topologyVersion,
   onTopologyChanged,
   onNodeSelect,
-  currentBusinessName,
-  currentBusinessDisplayId,
-  businessList = [],
-  onBusinessSwitch,
 }) => {
   const { t } = useTranslation();
   const message = useAppMessage();
@@ -67,8 +59,6 @@ const BusinessTree: React.FC<Props> = ({
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
-  const [bizMenuOpen, setBizMenuOpen] = useState(false);
-  const bizMenuRef = useRef<HTMLDivElement>(null);
   const requestSequenceRef = useRef(0);
 
   // Auto-collapse on mobile/narrow viewport
@@ -135,16 +125,6 @@ const BusinessTree: React.FC<Props> = ({
     loadTopologyTree();
   }, [loadTopologyTree, topologyVersion]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (bizMenuRef.current && !bizMenuRef.current.contains(event.target as Node)) {
-        setBizMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const filteredTreeData = useMemo(() => {
     if (!searchValue.trim()) {
       return fullTreeData;
@@ -198,7 +178,6 @@ const BusinessTree: React.FC<Props> = ({
 
   const isEmptySearchResult = filteredTreeData.length === 0 && searchValue;
   const isEmptyTree = fullTreeData.length === 0 && !loading;
-  const topologyNodeCount = useMemo(() => collectAllKeys(fullTreeData).length, [fullTreeData]);
 
   return (
     <div
@@ -211,47 +190,6 @@ const BusinessTree: React.FC<Props> = ({
     >
       {!collapsed && (
         <Fragment>
-          <div className="biz-header">
-            <div className="biz-header-switcher" ref={bizMenuRef}>
-              <button
-                type="button"
-                className="biz-header-trigger"
-                data-testid="topology-business-switcher"
-                onClick={() => setBizMenuOpen((open) => !open)}
-              >
-                <span className="biz-header-trigger__label">
-                  🏢 {currentBusinessName || currentBusiness?.name || t('business.topology.workspace.noBusiness')}
-                </span>
-                <span className="biz-header-trigger__arrow">▾</span>
-              </button>
-              {bizMenuOpen && (
-                <div className="biz-header-dropdown">
-                  {businessList.map((biz) => (
-                    <button
-                      key={biz.id}
-                      type="button"
-                      className={`biz-header-dropdown__item${
-                        biz.name === (currentBusinessName || currentBusiness?.name) ? ' active' : ''
-                      }`}
-                      onClick={() => {
-                        setBizMenuOpen(false);
-                        onBusinessSwitch?.(biz.id);
-                      }}
-                    >
-                      {biz.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="biz-header-desc">
-              <span className="stat-badge">{topologyNodeCount} {t('business.topology.tree.nodes', '节点')}</span>
-              {(currentBusinessDisplayId || currentBusiness?.id) && (
-                <span className="stat-badge">#{currentBusinessDisplayId || currentBusiness?.id}</span>
-              )}
-            </div>
-          </div>
-
           <div className="topo-search">
             <Input.Search
               id="business-topology-search"
@@ -303,36 +241,31 @@ const BusinessTree: React.FC<Props> = ({
         </Fragment>
       )}
       
-      <Tooltip
-        title={collapsed ? t('business.topology.tree.expandPanel', '展开拓扑树') : t('business.topology.tree.collapsePanel', '收起拓扑树')}
-        placement="right"
+      <button
+        type="button"
+        className="collapsed-button"
+        style={{
+          position: 'absolute',
+          right: -16,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 16,
+          height: 100,
+        }}
+        onClick={() => setCollapsed((c) => !c)}
+        aria-label={
+          collapsed
+            ? t('business.topology.tree.expandPanel', '展开拓扑树')
+            : t('business.topology.tree.collapsePanel', '收起拓扑树')
+        }
+        aria-expanded={!collapsed}
       >
-        <button
-          type="button"
-          className="collapsed-button"
-          style={{
-            position: 'absolute',
-            right: -15,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 16,
-            height: 100,
-          }}
-          onClick={() => setCollapsed((c) => !c)}
-          aria-label={
-            collapsed
-              ? t('business.topology.tree.expandPanel', '展开拓扑树')
-              : t('business.topology.tree.collapsePanel', '收起拓扑树')
-          }
-          aria-expanded={!collapsed}
-        >
-          {collapsed ? (
-            <RightOutlined className="collapsed-icon" />
-          ) : (
-            <LeftOutlined className="collapsed-icon" />
-          )}
-        </button>
-      </Tooltip>
+        {collapsed ? (
+          <RightOutlined className="collapsed-icon" />
+        ) : (
+          <LeftOutlined className="collapsed-icon" />
+        )}
+      </button>
     </div>
   );
 };

@@ -1,6 +1,17 @@
+.node-info-wrapper {
+  box-sizing: border-box;
+  padding: 16px 0 24px 24px;
+  background: var(--color-bg-layout);
+}
+
 .node-info-container {
+  box-sizing: border-box;
   background: var(--color-bg-container);
-  padding: 24px;
+  padding: 8px;
+
+  .node-info-container {
+    padding: 0;
+  }
 
   .category-label {
     margin-bottom: 8px;
@@ -45,5 +56,11 @@
   .basic-info {
     font-weight: bold;
     color: var(--color-text-primary);
+  }
+}
+
+@media (max-width: 767px) {
+  .node-info-wrapper {
+    padding: 12px;
   }
 }

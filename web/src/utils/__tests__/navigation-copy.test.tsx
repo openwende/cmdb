@@ -28,7 +28,9 @@ vi.mock('react-i18next', () => ({
       (
         {
           'routes.home': '首页',
-          'routes.business': '业务拓扑',
+          'routes.business': '业务',
+          'routes.businessTopology': '业务拓扑',
+          'routes.dynamicGroup': '动态分组',
           'routes.modelManagement': '模型与类型',
           'routes.resource': '资源目录',
           'routes.analysis': '审计与分析',
@@ -71,10 +73,12 @@ vi.mock('@/store/AuthStore', () => ({
 
 vi.mock('@/utils/routes', () => ({
   getBusinessTopologyPath: (businessId: string) => `/business/${businessId}/topology`,
-  isBusinessRelatedPage: () => false,
-  isBusinessSetPage: () => false,
-  isBusinessPage: () => false,
-  buildEntityPath: () => '',
+  isBusinessRelatedPage: (pathname: string) =>
+    pathname.startsWith('/business/') || pathname.startsWith('/business-set/'),
+  isBusinessSetPage: (pathname: string) => pathname.startsWith('/business-set/'),
+  isBusinessPage: (pathname: string) => pathname.startsWith('/business/'),
+  buildEntityPath: (pathSegments: string[], entityType: string, itemPath: string) =>
+    `/${entityType}/${pathSegments[2]}/${itemPath}`,
 }));
 
 vi.mock('@/components/Business/BusinessSelector', () => ({
@@ -108,6 +112,7 @@ vi.mock('antd', () => ({
   Layout: {
     Sider: ({ children }: { children?: React.ReactNode }) => <aside>{children}</aside>,
   },
+  Divider: ({ className }: { className?: string }) => <hr className={className} />,
   message: {
     warning: vi.fn(),
     error: vi.fn(),
@@ -127,7 +132,7 @@ describe('navigation copy', () => {
   it('keeps entity-scoped business routes out of the top navigation', () => {
     render(<HeaderMenu />);
 
-    expect(screen.getAllByText('业务拓扑')).toHaveLength(1);
+    expect(screen.getAllByText('业务')).toHaveLength(1);
   });
 
   it('navigates the top-level business menu to the first available business topology', async () => {
@@ -137,7 +142,7 @@ describe('navigation copy', () => {
     const user = userEvent.setup();
     render(<HeaderMenu />);
 
-    await user.click(screen.getByText('业务拓扑'));
+    await user.click(screen.getByText('业务'));
 
     expect(mockNavigate).toHaveBeenCalledWith('/business/biz-1/topology');
   });
@@ -146,7 +151,7 @@ describe('navigation copy', () => {
     render(<HeaderMenu />);
 
     expect(screen.getByText('首页')).toBeInTheDocument();
-    expect(screen.getByText('业务拓扑')).toBeInTheDocument();
+    expect(screen.getByText('业务')).toBeInTheDocument();
     expect(screen.getByText('模型与类型')).toBeInTheDocument();
     expect(screen.getByText('资源目录')).toBeInTheDocument();
     expect(screen.getByText('审计与分析')).toBeInTheDocument();
@@ -178,7 +183,27 @@ describe('navigation copy', () => {
     render(<HeaderMenu />);
 
     const buttons = screen.getAllByRole('button').map((button) => button.textContent);
-    expect(buttons).toEqual(['首页', '业务拓扑', '模型与类型', '资源目录', '审计与分析', '用户管理']);
+    expect(buttons).toEqual(['首页', '业务', '模型与类型', '资源目录', '审计与分析', '用户管理']);
+  });
+
+  it('shows business-scoped secondary navigation under the business menu', async () => {
+    mockLocationPathname.value = '/business/1000/topology';
+
+    const businessSection = routes.find((route) => route.key === PrimaryNavKey.Business);
+
+    const user = userEvent.setup();
+    render(<Sidebar currentSection={businessSection} />);
+
+    expect(screen.getByText('business-selector')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '业务拓扑' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    );
+    expect(screen.getByText('动态分组')).toBeInTheDocument();
+
+    await user.click(screen.getByText('动态分组'));
+
+    expect(mockNavigate).toHaveBeenCalledWith('/business/1000/dynamicGroup');
   });
 
   it('uses task-oriented labels in model and resource sidebars', () => {

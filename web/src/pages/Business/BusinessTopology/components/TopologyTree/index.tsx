@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
+import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import CreateNodeModal from '../CreateNodeModal';
 import { getBusinessTopologyChildModels } from '@/pages/Business/BusinessTopology/modelRules';
@@ -15,6 +16,11 @@ const getNodeAllowedActions = (node: TreeData): string[] | null => {
     ? allowedActions.filter((item) => typeof item === 'string')
     : null;
 };
+
+const isIdlePoolNode = (node: TreeData): boolean =>
+  node.backendType === 'idle_set' ||
+  node.type === TopoTreeNodeType.Idle ||
+  String(node.title ?? '').includes('空闲机池');
 
 interface Props {
   treeData: TreeData[];
@@ -132,6 +138,10 @@ const TopologyTree: React.FC<Props> = ({
   };
 
   const canCreateChildren = (node: TreeData) => {
+    if (isIdlePoolNode(node)) {
+      return false;
+    }
+
     const allowedActions = getNodeAllowedActions(node);
     if (allowedActions) {
       return allowedActions.includes('create_child');
@@ -165,7 +175,12 @@ const TopologyTree: React.FC<Props> = ({
       return (
         <span className="right-wrapper">
           {isHovered && canWrite && canCreateChildrenForNode ? (
-            <Button type="primary" size="small" onClick={(e) => handleCreate(e, node)}>
+            <Button
+              type="primary"
+              size="small"
+              className="topology-tree-create-button"
+              onClick={(e) => handleCreate(e, node)}
+            >
               {t('resource.business.actions.create')}
             </Button>
           ) : showHostCount ? (
@@ -190,7 +205,9 @@ const TopologyTree: React.FC<Props> = ({
         style={{ cursor: 'pointer' }}
       >
         <span className="left-wrapper">
-          {customTitlePrefix ? customTitlePrefix(node, isSelected) : renderNodeBadge(node)}
+          {customTitlePrefix
+            ? customTitlePrefix(node, isSelected)
+            : renderNodeBadge(node, isSelected)}
           <span className="title-text">{node.title}</span>
         </span>
         {renderTailElement(node, hoveredKey!, isSelected)}
@@ -198,22 +215,69 @@ const TopologyTree: React.FC<Props> = ({
     );
   };
 
-  const renderNodeBadge = (node: TreeData) => {
+  const renderNodeBadge = (node: TreeData, isSelected: boolean) => {
     const typeStr = node.type?.toLowerCase() || 'biz';
-    let label = t('business.topology.workspace.business', '业务');
+    const title = typeof node.title === 'string' ? node.title : String(node.title ?? '');
+    const lifecycle = String(node.extra?.lifecycle ?? '').toLowerCase();
+    const isFaultIdleNode = title.includes('故障') || lifecycle.includes('fault');
+    const isIdleVisualNode =
+      node.backendType === 'idle_set' ||
+      node.backendType === 'idle_module' ||
+      node.type === TopoTreeNodeType.Idle ||
+      title.includes('空闲机池') ||
+      title.includes('待回收') ||
+      title.includes('空闲机') ||
+      isFaultIdleNode;
+
+    if (isIdleVisualNode) {
+      const IdleIcon = isFaultIdleNode ? WarningOutlined : InboxOutlined;
+      const selectedIconStyle: React.CSSProperties | undefined = isSelected
+        ? {
+            backgroundColor: '#eff6ff',
+            color: '#2563eb',
+            borderColor: '#bfdbfe',
+            boxShadow: '0 0 0 3px #eff6ff',
+          }
+        : undefined;
+      return (
+        <span
+          className={`node-badge node-badge--icon badge-idle${
+            isFaultIdleNode ? ' badge-idle-fault' : ''
+          }${isSelected ? ' selected' : ''}`}
+          style={selectedIconStyle}
+        >
+          <IdleIcon />
+        </span>
+      );
+    }
+
+    let label = '业';
     switch (node.type) {
       case TopoTreeNodeType.Module:
-        label = t('business.topology.workspace.module', '模块');
+        label = '模';
         break;
       case TopoTreeNodeType.Set:
-        label = t('business.topology.workspace.cluster', '集群');
-        break;
-      case TopoTreeNodeType.Idle:
-        label = t('business.topology.workspace.idlePool', '空闲');
+        label = '集';
         break;
     }
 
-    return <span className={`node-badge badge-${typeStr}`}>{label}</span>;
+    const selectedCircleStyle: React.CSSProperties | undefined = isSelected
+      ? {
+          backgroundColor: '#2563eb',
+          color: '#ffffff',
+          borderColor: '#bfdbfe',
+          boxShadow: '0 0 0 3px #eff6ff',
+        }
+      : undefined;
+
+    return (
+      <span
+        className={`node-badge node-badge--circle badge-${typeStr}${isSelected ? ' selected' : ''}`}
+        style={selectedCircleStyle}
+      >
+        {label}
+      </span>
+    );
   };
 
   const { node: targetNode, parents: parentNodes } = useMemo(() => {

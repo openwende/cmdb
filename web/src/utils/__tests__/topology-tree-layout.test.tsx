@@ -95,12 +95,17 @@ describe('topology tree layout', () => {
     expect(titleText).toHaveClass('title-text');
   });
 
-  it('allows tree rows to grow instead of forcing a fixed height', () => {
+  it('keeps topology tree rows at a fixed 36px height', () => {
     const treenodeBlock = styleContent.match(/\.ant-tree-treenode\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const switcherBlock = styleContent.match(/\.ant-tree-switcher\s*\{([\s\S]*?)\}/)?.[1] ?? '';
+    const titleWrapperBlock = styleContent.match(/\.title-wrapper\s*\{([\s\S]*?)\}/)?.[1] ?? '';
 
+    expect(treenodeBlock).toContain('height: 36px;');
     expect(treenodeBlock).toContain('min-height: 36px;');
-    expect(treenodeBlock).not.toMatch(/(^|\s)height:\s*36px;/);
-    expect(styleContent).toContain('overflow-wrap: anywhere;');
+    expect(switcherBlock).toContain('height: 36px;');
+    expect(switcherBlock).toContain('line-height: 36px;');
+    expect(titleWrapperBlock).toContain('height: 36px;');
+    expect(styleContent).toContain('white-space: nowrap;');
   });
 
   it('renders host counts only on module nodes', () => {
@@ -157,5 +162,30 @@ describe('topology tree layout', () => {
     fireEvent.mouseEnter(screen.getByText('Smoke Business'));
 
     expect(screen.getByText('resource.business.actions.create')).toBeInTheDocument();
+  });
+
+  it('does not show create action for idle pool nodes', () => {
+    render(
+      <TopologyTree
+        treeData={[
+          {
+            key: 'idle_set-5',
+            type: TopoTreeNodeType.Set,
+            backendType: 'idle_set',
+            objName: '集',
+            title: '空闲机池',
+            extra: {
+              allowed_actions: ['create_child'],
+            },
+          },
+        ]}
+        tailEleType={TailEleType.All}
+        onNodeSelect={() => undefined}
+      />,
+    );
+
+    fireEvent.mouseEnter(screen.getByText('空闲机池'));
+
+    expect(screen.queryByText('resource.business.actions.create')).not.toBeInTheDocument();
   });
 });

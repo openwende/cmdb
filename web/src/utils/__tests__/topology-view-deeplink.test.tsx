@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import TopologyView from '@/pages/Business/BusinessTopology/TopologyView';
@@ -8,7 +8,6 @@ import { BusinessType } from '@/store/BusinessStore';
 const mockSelectNode = vi.fn(async () => {});
 const mockReset = vi.fn();
 const mockSetSearchParams = vi.fn();
-const mockNavigate = vi.fn();
 const mockSetCurrentBusiness = vi.fn();
 const mockLoadBusinessData = vi.fn(async () => {});
 let mockSelectedNode: any = null;
@@ -35,7 +34,6 @@ vi.mock('react-router-dom', async () => {
       search: mockSearch ? `?${mockSearch}` : '',
     }),
     useSearchParams: () => [new URLSearchParams(mockSearch), mockSetSearchParams],
-    useNavigate: () => mockNavigate,
   };
 });
 
@@ -72,28 +70,11 @@ vi.mock('@/store/BusinessStore', () => ({
 vi.mock('@/pages/Business/BusinessTopology/BusinessTree', () => ({
   default: ({
     initialSelectedKey,
-    currentBusinessName,
-    businessList,
-    onBusinessSwitch,
   }: {
     initialSelectedKey?: string | null;
-    currentBusinessName?: string;
-    businessList?: Array<{ id: string; name: string }>;
-    onBusinessSwitch?: (businessId: string) => void;
   }) => (
     <div>
       <div data-testid="initial-selected-key">{initialSelectedKey ?? 'null'}</div>
-      <button
-        data-testid="topology-business-switcher"
-        onClick={() => {
-          const nextId = businessList?.[1]?.id;
-          if (nextId) {
-            onBusinessSwitch?.(nextId);
-          }
-        }}
-      >
-        {currentBusinessName}
-      </button>
     </div>
   ),
 }));
@@ -134,7 +115,6 @@ describe('topology view deeplink sync', () => {
     mockSelectNode.mockClear();
     mockReset.mockClear();
     mockSetSearchParams.mockClear();
-    mockNavigate.mockClear();
     mockSetCurrentBusiness.mockClear();
     mockLoadBusinessData.mockClear();
   });
@@ -190,7 +170,7 @@ describe('topology view deeplink sync', () => {
     expect(screen.queryByText('Smoke Module')).not.toBeInTheDocument();
   });
 
-  it('renders the business switcher in the business tree without breadcrumb hints', () => {
+  it('keeps the topology tree free of the legacy business switcher and breadcrumb hints', () => {
     mockSearch = 'node=module-3&tab=hostList';
     mockSelectedNode = {
       key: 'module-3',
@@ -215,22 +195,7 @@ describe('topology view deeplink sync', () => {
 
     render(<TopologyView />);
 
-    expect(screen.getByTestId('topology-business-switcher')).toHaveTextContent(
-      'ProbeSetBiz-1773163724333',
-    );
+    expect(screen.queryByTestId('topology-business-switcher')).not.toBeInTheDocument();
     expect(screen.queryByTestId('topology-node-breadcrumb')).not.toBeInTheDocument();
-  });
-
-  it('switches business from the workspace header', async () => {
-    render(<TopologyView />);
-
-    fireEvent.click(screen.getByTestId('topology-business-switcher'));
-
-    expect(mockSetCurrentBusiness).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'biz-2',
-      }),
-    );
-    expect(mockNavigate).toHaveBeenCalledWith('/business/biz-2/topology');
   });
 });

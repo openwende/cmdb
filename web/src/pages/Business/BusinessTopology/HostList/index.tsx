@@ -534,15 +534,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const getModuleLabel = (record: any) =>
     record.module.length > 0 ? record.module[0].bk_module_name : '--';
   const getSetLabel = (record: any) => (record.set.length > 0 ? record.set[0].bk_set_name : '--');
-  const emptyHostDescription = selectedNodeStatus.isModule
-    ? t(
-        'business.topology.hostList.empty.noHostsInModule',
-        '当前模块暂无主机，可通过「新增」导入主机或从其他模块分配',
-      )
-    : t(
-        'business.topology.hostList.empty.selectModuleFirst',
-        '请在左侧拓扑树中选择一个模块节点查看主机',
-      );
+  const emptyHostDescription = t('common.noData', '暂无数据');
 
   return (
     <>

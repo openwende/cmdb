@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Tabs } from 'antd';
-import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import BusinessTree from '../BusinessTree';
 import HostList from '../HostList';
@@ -15,7 +15,6 @@ import { useBusinessStore } from '@/store/BusinessStore';
 const BusinessTopology: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('hostList');
   const [view, setView] = useState<'instance' | 'process'>('instance');
@@ -29,16 +28,6 @@ const BusinessTopology: React.FC = () => {
   useEffect(() => {
     loadBusinessData();
   }, [loadBusinessData]);
-
-  const handleBusinessSwitch = useCallback(
-    (nextBusinessId: number) => {
-      const nextBiz = businessList.find((biz) => biz.id === nextBusinessId);
-      if (!nextBiz) return;
-      setCurrentBusiness(nextBiz);
-      navigate(getBusinessTopologyPath(nextBiz.id));
-    },
-    [businessList, navigate, setCurrentBusiness],
-  );
 
   useEffect(() => {
     if (location.pathname !== currentBusinessTopoPath) {
@@ -161,10 +150,6 @@ const BusinessTopology: React.FC = () => {
         topologyVersion={topologyVersion}
         onTopologyChanged={handleTopologyChanged}
         onNodeSelect={handleNodeSelect}
-        currentBusinessName={currentBusiness?.name}
-        currentBusinessDisplayId={String(currentBusiness?.id)}
-        businessList={businessList.map((biz) => ({ id: biz.id, name: biz.name }))}
-        onBusinessSwitch={handleBusinessSwitch}
       />
       <div className="main-workspace">
         <Tabs

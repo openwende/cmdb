@@ -60,7 +60,12 @@ const createDraftFromProcess = (process: ProcessRecord | null): ProcessDraft => 
   description: process?.description || '',
 });
 
-const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedRowKeys, expandAll }) => {
+const Instance: React.FC<Props> = ({
+  selectedNode,
+  selectedRowKeys,
+  setSelectedRowKeys,
+  expandAll,
+}) => {
   const { t } = useTranslation();
   const detail = useInstanceSceneStore((state) => state.detail);
   const loading = useInstanceSceneStore((state) => state.loading);
@@ -434,9 +439,7 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
               {t('business.topology.serviceInstance.process.fields.createTime')}：
               {activeProcess?.created_at || '--'}
             </div>
-            <div>
-              {t('business.topology.serviceInstance.process.fields.creator')}：--
-            </div>
+            <div>{t('business.topology.serviceInstance.process.fields.creator')}：--</div>
             <div>
               {t('business.topology.serviceInstance.process.form.processName')}：
               {activeProcess?.process_name || '--'}
@@ -518,7 +521,9 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
           >
             <Input
               value={draft.startupParams}
-              placeholder={t('business.topology.serviceInstance.process.form.placeholders.startupParams')}
+              placeholder={t(
+                'business.topology.serviceInstance.process.form.placeholders.startupParams',
+              )}
               onChange={(event) =>
                 setDraft((currentDraft) => ({
                   ...currentDraft,
@@ -533,7 +538,9 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
           >
             <Input
               value={draft.description}
-              placeholder={t('business.topology.serviceInstance.process.form.placeholders.description')}
+              placeholder={t(
+                'business.topology.serviceInstance.process.form.placeholders.description',
+              )}
               onChange={(event) =>
                 setDraft((currentDraft) => ({
                   ...currentDraft,
@@ -578,9 +585,12 @@ const Instance: React.FC<Props> = ({ selectedNode, selectedRowKeys, setSelectedR
           emptyText: loading ? (
             <Spin />
           ) : error ? (
-            <Empty description={error} />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={error} />
           ) : (
-            <Empty description={t('business.topology.serviceInstance.process.table.noData')} />
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={t('business.topology.serviceInstance.process.table.noData')}
+            />
           ),
         }}
       />

@@ -48,36 +48,46 @@ const NodeInfo: React.FC<Props> = ({ onTopologyChanged }) => {
     };
   }, [detail, selectedNode]);
 
-  // If no node is selected
-  if (!nodeType) {
-    return <Alert message={t('business.topology.nodeInfo.selectNodeMessage')} type="info" />;
-  }
+  const renderContent = () => {
+    if (!nodeType) {
+      return <Alert message={t('business.topology.nodeInfo.selectNodeMessage')} type="info" />;
+    }
 
-  if (loading) {
-    return <Spin style={{ margin: '24px auto', display: 'block' }} />;
-  }
+    if (loading) {
+      return <Spin style={{ margin: '24px auto', display: 'block' }} />;
+    }
 
-  if (error) {
-    return <Alert message={error} type="error" />;
-  }
+    if (error) {
+      return <Alert message={error} type="error" />;
+    }
 
-  if (!enrichedNode) {
-    return <Alert message={t('business.topology.nodeInfo.selectNodeMessage')} type="info" />;
-  }
+    if (!enrichedNode) {
+      return <Alert message={t('business.topology.nodeInfo.selectNodeMessage')} type="info" />;
+    }
 
-  // Render appropriate node info based on type
+    return (
+      <>
+        {nodeType === TopoTreeNodeType.Biz && <BusinessNodeInfo selectedNode={enrichedNode} />}
+        {nodeType === TopoTreeNodeType.Idle && <IdleNodeInfo selectedNode={enrichedNode} />}
+        {nodeType === TopoTreeNodeType.Set && (
+          <SetNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
+        )}
+        {nodeType === TopoTreeNodeType.Module && (
+          <ModuleNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
+        )}
+        {![
+          TopoTreeNodeType.Biz,
+          TopoTreeNodeType.Idle,
+          TopoTreeNodeType.Set,
+          TopoTreeNodeType.Module,
+        ].includes(nodeType as TopoTreeNodeType) && <GenericNodeInfo selectedNode={enrichedNode} />}
+      </>
+    );
+  };
+
   return (
-    <div className="node-info-container">
-      {nodeType === TopoTreeNodeType.Biz && <BusinessNodeInfo selectedNode={enrichedNode} />}
-      {nodeType === TopoTreeNodeType.Idle && <IdleNodeInfo selectedNode={enrichedNode} />}
-      {nodeType === TopoTreeNodeType.Set && (
-        <SetNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
-      )}
-      {nodeType === TopoTreeNodeType.Module && (
-        <ModuleNodeInfo selectedNode={enrichedNode} onTopologyChanged={onTopologyChanged} />
-      )}
-      {![TopoTreeNodeType.Biz, TopoTreeNodeType.Idle, TopoTreeNodeType.Set, TopoTreeNodeType.Module]
-        .includes(nodeType as TopoTreeNodeType) && <GenericNodeInfo selectedNode={enrichedNode} />}
+    <div className="node-info-wrapper">
+      <div className="node-info-container">{renderContent()}</div>
     </div>
   );
 };

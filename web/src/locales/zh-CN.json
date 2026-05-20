@@ -1,11 +1,11 @@
 {
   "routes": {
     "home": "首页",
-    "business": "业务拓扑",
-    "businessTopology": "拓扑工作区",
+    "business": "业务",
+    "businessTopology": "业务拓扑",
     "transferHost": "转移主机",
     "serviceTemplate": "服务模板",
-    "dynamicGroup": "主机分组",
+    "dynamicGroup": "动态分组",
     "businessSet": "业务集",
     "businessSetTopology": "拓扑工作区",
     "modelManagement": "资源类型",

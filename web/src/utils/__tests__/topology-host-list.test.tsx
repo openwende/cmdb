@@ -270,9 +270,7 @@ describe('business topology host list', () => {
     expect(screen.queryByText('otherBusiness')).not.toBeInTheDocument();
     expect(screen.queryByText('business.topology.workspace.currentNode')).not.toBeInTheDocument();
     expect(screen.queryByText('business.topology.workspace.hostList')).not.toBeInTheDocument();
-    expect(
-      screen.getAllByText('business.topology.hostList.empty.selectModuleFirst').length,
-    ).toBeGreaterThan(0);
+    expect(screen.getAllByText('common.noData').length).toBeGreaterThan(0);
   });
 
   it('keeps bulk actions in the top toolbar after the add button and enables them when hosts are selected', async () => {

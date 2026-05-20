@@ -18,7 +18,7 @@ import { useAuthStore } from '@/store/AuthStore';
 const { Sider } = Layout;
 
 const SIDEBAR_COLLAPSED_WIDTH = 60;
-const SIDEBAR_EXPANDED_WIDTH = 220;
+const SIDEBAR_EXPANDED_WIDTH = 259;
 
 interface SidebarProps {
   currentSection: NavigationItem | undefined;
@@ -48,23 +48,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   const effectiveCollapsed = isTablet ? true : isMobile ? false : collapsed;
 
   // Get sidebar menu items
-  // if current path is a business set, get menu items from business set configuration
-  const getSidebarItems = (): NavigationItem[] => {
-    // If there's no current section, return empty array
-    if (!currentSection) return [];
-
-    // Check if the path is for a business set
-    if (isBusinessSetPage(location.pathname)) {
-      // Find business set configuration from routes
-      const businessSetRoute = routes.find((route: NavigationItem) => {
-        return route.key === PrimaryNavKey.BusinessSet;
-      });
-      return businessSetRoute?.children || [];
+  const getSidebarSection = (): NavigationItem | undefined => {
+    if (isBusinessPage(location.pathname)) {
+      return routes.find((route: NavigationItem) => route.key === 'businessEntity');
     }
 
-    // Default: return the current section's children
-    return currentSection.children || [];
+    if (isBusinessSetPage(location.pathname)) {
+      return routes.find((route: NavigationItem) => route.key === PrimaryNavKey.BusinessSet);
+    }
+
+    return currentSection;
   };
+
+  const sidebarSection = getSidebarSection();
+  const sidebarItems = sidebarSection?.children || [];
 
   // Check if current path matches route pattern (supports dynamic params like :id)
   const matchesRoute = (currentPath: string, routePattern: string): boolean => {
@@ -77,8 +74,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       (pattern, index) => pattern.startsWith(':') || pattern === currentSegments[index],
     );
   };
-
-  const sidebarItems = getSidebarItems();
 
   // Get the currently selected sidebar item
   const getSelectedKey = () => {
@@ -104,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         let selectedItem = sidebarItems.find((item: NavigationItem) => {
           if (!item.path) return false;
           // Build full path for matching
-          const fullPattern = `${currentSection?.path}/${item.path}`;
+          const fullPattern = `${sidebarSection?.path}/${item.path}`;
           return matchesRoute(path, fullPattern);
         });
 
@@ -116,12 +111,12 @@ const Sidebar: React.FC<SidebarProps> = ({
             return item.children.some((child: NavigationItem) => {
               if (child.path) {
                 // Build full child path pattern
-                const childPattern = `${currentSection?.path}/${item.path}/${child.path}`;
+                const childPattern = `${sidebarSection?.path}/${item.path}/${child.path}`;
                 return matchesRoute(path, childPattern);
               }
               // For index routes, check if path matches parent
               if (child.index) {
-                const parentPattern = `${currentSection?.path}/${item.path}`;
+                const parentPattern = `${sidebarSection?.path}/${item.path}`;
                 return matchesRoute(path, parentPattern);
               }
               return false;
@@ -136,8 +131,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     // Fallback for dynamic sub-routes (e.g., /model/:name/basic → highlight 'overview')
     // If path starts with the current section's path but no sidebar item matched,
     // return the key of the first visible sidebar item as a contextual hint
-    if (currentSection?.path && location.pathname.startsWith(currentSection.path + '/')) {
-      const firstVisible = sidebarItems.find((item: NavigationItem) => !item.hideInMenu && item.path);
+    if (sidebarSection?.path && location.pathname.startsWith(sidebarSection.path + '/')) {
+      const firstVisible = sidebarItems.find(
+        (item: NavigationItem) => !item.hideInMenu && item.path,
+      );
       if (firstVisible) return firstVisible.key;
     }
 
@@ -164,12 +161,12 @@ const Sidebar: React.FC<SidebarProps> = ({
           : '';
       }
       // Other paths
-      else if (currentSection) {
+      else if (sidebarSection) {
         // Use original logic directly
         fullPath =
           item.path && item.path.startsWith('/')
             ? item.path
-            : `${currentSection.path}/${item.path || ''}`;
+            : `${sidebarSection.path}/${item.path || ''}`;
       }
       navigate(fullPath);
     }
@@ -228,13 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
       <>
         {/* Backdrop */}
-        {sidebarOpen && (
-          <div
-            className="sidebar-backdrop"
-            onClick={onClose}
-            aria-hidden="true"
-          />
-        )}
+        {sidebarOpen && <div className="sidebar-backdrop" onClick={onClose} aria-hidden="true" />}
         <Sider
           className={`app-sidebar app-sidebar--mobile ${sidebarOpen ? 'app-sidebar--open' : ''}`}
           width={SIDEBAR_EXPANDED_WIDTH}
@@ -253,6 +244,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             <>
               <Divider className="sidebar-section-divider" />
               {isBusinessRelated && <BusinessSelector collapsed={false} />}
+              {isBusinessRelated && <Divider className="business-sidebar-divider" />}
               <div className="sidebar-section-label sidebar-section-label--secondary">
                 {t('common.layout.sectionNavigation')}
               </div>
@@ -281,6 +273,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* Display business selector in business and business set sections */}
       {isBusinessRelated && <BusinessSelector collapsed={effectiveCollapsed} />}
+      {isBusinessRelated && <Divider className="business-sidebar-divider" />}
       <Menu
         key={location.pathname}
         mode="inline"
@@ -296,7 +289,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           type="button"
           onClick={toggleCollapsed}
           className="menu-toggler"
-          aria-label={collapsed ? t('common.layout.expandSidebar') : t('common.layout.collapseSidebar')}
+          aria-label={
+            collapsed ? t('common.layout.expandSidebar') : t('common.layout.collapseSidebar')
+          }
           aria-expanded={!collapsed}
         >
           {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}

@@ -89,6 +89,12 @@
   border-color: var(--color-border) !important;
 }
 
+.business-sidebar-divider {
+  flex-shrink: 0;
+  margin: 0 !important;
+  border-color: var(--color-border) !important;
+}
+
 .sidebar-section-label {
   padding: 14px 18px 4px;
   color: var(--color-text-quaternary);

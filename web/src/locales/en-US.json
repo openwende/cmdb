@@ -1,11 +1,11 @@
 {
   "routes": {
     "home": "Home",
-    "business": "Business Topology",
-    "businessTopology": "Topology Workspace",
+    "business": "Business",
+    "businessTopology": "Business Topology",
     "transferHost": "Transfer Host",
     "serviceTemplate": "Service Template",
-    "dynamicGroup": "Host Groups",
+    "dynamicGroup": "Dynamic Group",
     "businessSet": "Business Set",
     "businessSetTopology": "Topology Workspace",
     "modelManagement": "Resource Types",

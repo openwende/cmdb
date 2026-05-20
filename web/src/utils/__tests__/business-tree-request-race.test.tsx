@@ -96,6 +96,7 @@ vi.mock('antd', () => ({
     },
   },
   Spin: ({ tip }: { tip: string }) => <div>{tip}</div>,
+  Tooltip: ({ children }: any) => <>{children}</>,
   message: {
     error: vi.fn(),
   },

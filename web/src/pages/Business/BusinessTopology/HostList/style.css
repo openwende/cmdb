@@ -1,8 +1,8 @@
 .list-wrapper {
   position: relative;
-  height: 100%;
-  padding: 16px;
-  background: var(--color-bg-container);
+  box-sizing: border-box;
+  padding: 16px 0 24px 24px;
+  background: var(--color-bg-layout);
 }
 
 .host-workspace {
@@ -10,7 +10,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  min-height: 100%;
+  min-height: 0;
+  padding: 8px;
+  background: var(--color-bg-container);
 }
 
 .host-workspace__toolbar {
@@ -41,7 +43,7 @@
   overflow-x: auto;
   border: none;
   border-radius: 0;
-  background: transparent;
+  background: var(--color-bg-container);
   box-shadow: none;
 }
 
@@ -50,7 +52,13 @@
 }
 
 .host-workspace__table-shell .ant-table-wrapper {
-  background: transparent;
+  background: var(--color-bg-container);
+}
+
+.host-workspace__table-shell .ant-table,
+.host-workspace__table-shell .ant-table-container,
+.host-workspace__table-shell .ant-table-content {
+  background: var(--color-bg-container);
 }
 
 .host-workspace__table-shell .ant-table-thead > tr > th {

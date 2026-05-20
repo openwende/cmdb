@@ -2,6 +2,10 @@
   user-select: none;
 }
 
+.topology-tree.ant-tree {
+  background: transparent;
+}
+
 .topology-tree .ant-tree {
   height: 100%;
   background: transparent;
@@ -10,6 +14,7 @@
 .topology-tree .ant-tree-treenode {
   display: flex;
   align-items: center;
+  height: 36px;
   min-height: 36px;
   padding: 0;
   margin-bottom: 2px;
@@ -19,9 +24,10 @@
 .topology-tree .ant-tree-node-content-wrapper {
   overflow: visible;
   flex: 1;
+  height: 36px;
   border-radius: var(--radius-sm);
   transition: all 0.2s;
-  padding: 6px;
+  padding: 0 4px;
 }
 
 .topology-tree .ant-tree-node-content-wrapper:hover {
@@ -36,14 +42,63 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 36px;
+  line-height: 36px;
 }
 
 .topology-tree .title-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   width: 100%;
+  height: 36px;
+}
+
+.topology-tree .node-badge {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-right: 8px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: #c4c6cc;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: none;
+  transition:
+    background-color 0.18s ease,
+    color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.topology-tree .node-badge--icon {
+  background: transparent;
+  color: var(--color-text-quaternary);
+  border-color: transparent;
+  font-size: 14px;
+}
+
+.topology-tree .node-badge.selected,
+.topology-tree .ant-tree-node-selected .node-badge,
+.topology-tree .title-wrapper.active .node-badge {
+  background: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #bfdbfe !important;
+  box-shadow: 0 0 0 3px #eff6ff !important;
+}
+
+.topology-tree .node-badge--icon.selected,
+.topology-tree .ant-tree-node-selected .node-badge--icon,
+.topology-tree .title-wrapper.active .node-badge--icon {
+  background: #eff6ff !important;
+  color: #2563eb !important;
+}
+
+.topology-tree .badge-idle-fault {
+  color: var(--color-warning);
 }
 
 /* When the node content is selected, make title bold and primary colored */
@@ -57,13 +112,15 @@
   align-items: center;
   min-width: 0;
   flex: 1;
+  height: 36px;
 }
 
 .topology-tree .title-text {
   min-width: 0;
   line-height: 20px;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: var(--color-text-main);
 }
 
@@ -72,6 +129,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  height: 36px;
 }
 
 .topology-tree .suffix-count {
@@ -79,4 +137,14 @@
   font-variant-numeric: tabular-nums;
   font-size: 12px;
   font-weight: 400;
+}
+
+.topology-tree .topology-tree-create-button.ant-btn-sm {
+  width: 40px;
+  min-width: 40px;
+  height: 26px;
+  padding: 0;
+  font-size: 13px;
+  line-height: 26px;
+  border-radius: var(--radius-sm);
 }
