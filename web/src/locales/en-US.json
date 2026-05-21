@@ -123,7 +123,7 @@
     "noMatch": "No matching personnel",
     "noData": "No data",
     "notSet": "Not set",
-    "loading": "Loading...",
+    "loading": "",
     "message": {
       "createSuccess": "Created successfully",
       "createFailed": "Failed to create",
@@ -1855,7 +1855,7 @@
           "half": "50%",
           "full": "100%"
         },
-        "loading": "Loading...",
+        "loading": "",
         "noData": "No data",
         "startDate": "Start Date",
         "endDate": "End Date"

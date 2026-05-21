@@ -26,16 +26,29 @@
       margin-bottom: 10px;
     }
 
-    .custom-title-prefix {
+    .node-badge {
       display: flex;
       align-items: center;
       justify-content: center;
       width: 20px;
       height: 20px;
+      padding: 0;
+      margin-right: 8px;
       border-radius: 50%;
-      background-color: var(--color-text-quaternary);
-      color: var(--color-bg-container);
-      margin-right: 10px;
+      border: 1px solid transparent;
+      background: #c4c6cc;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1;
+      box-shadow: none;
+    }
+
+    .node-badge.selected {
+      background: var(--color-primary) !important;
+      color: #ffffff !important;
+      border-color: transparent !important;
+      box-shadow: none !important;
     }
   }
 
@@ -64,6 +77,19 @@
         color: var(--color-primary);
         font-weight: 700;
       }
+
+      .ant-btn-link {
+        color: var(--color-primary);
+
+        &:hover,
+        &:focus-visible {
+          color: var(--color-primary-hover);
+        }
+
+        &:disabled {
+          color: var(--color-text-quaternary);
+        }
+      }
     }
 
     .ant-list {
@@ -88,22 +114,35 @@
 
       .preview-item-content {
         display: flex;
+        align-items: center;
 
-        .preview-prefix {
+        .node-badge {
           display: flex;
           align-items: center;
           justify-content: center;
           width: 20px;
           height: 20px;
+          padding: 0;
+          margin-right: 8px;
           border-radius: 50%;
-          background-color: var(--color-text-quaternary);
-          color: var(--color-bg-container);
+          border: 1px solid transparent;
+          background: #c4c6cc;
+          color: #ffffff;
           font-size: 12px;
+          font-weight: 600;
+          line-height: 1;
+          box-shadow: none;
+        }
+
+        .node-badge.selected {
+          background: var(--color-primary) !important;
+          color: #ffffff !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
         }
 
         .preview-name {
           font-size: 12px;
-          margin-left: 10px;
         }
       }
     }
@@ -111,7 +150,7 @@
     .preview-path {
       color: var(--color-text-tertiary);
       font-size: 12px;
-      margin-left: 30px;
+      margin-left: 28px;
     }
 
     .preview-remove {

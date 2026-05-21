@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
 import {
@@ -110,7 +111,11 @@ const BarChart: React.FC<BarChartProps> = ({
   }, [data, height, loading, stacked]);
 
   if (loading) {
-    return <div className="chart-loading">{t('analysis.statistics.chart.loading')}</div>;
+    return (
+      <div className="chart-loading">
+        <Spin />
+      </div>
+    );
   }
 
   if (!data || !data.length) {

@@ -1,6 +1,6 @@
 .archived-business {
   background-color: var(--color-bg-container);
-  margin: 16px 20px;
+  margin: 0 0 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;

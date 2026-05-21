@@ -1,5 +1,5 @@
 .transfer-container {
-  margin: 16px 20px;
+  margin: 0 0 16px;
   padding: 16px;
   background-color: var(--color-bg-container);
 
@@ -131,10 +131,23 @@
       }
 
       .host-content {
+        .ant-table-placeholder {
+          display: none;
+        }
+
         .add-button {
           font-size: 12px;
           line-height: 42px;
           text-align: center;
+
+          .ant-btn-link {
+            color: var(--color-primary);
+
+            &:hover,
+            &:focus-visible {
+              color: var(--color-primary-hover);
+            }
+          }
         }
 
         .bind-number {
@@ -142,11 +155,29 @@
           color: var(--color-text-tertiary);
           border-radius: 8px;
           padding: 0 6px;
-          margin-left: 6;
-          font-size: 12;
+          margin-left: 6px;
+          font-size: 12px;
           display: inline-block;
-          min-width: 18;
+          min-width: 18px;
           text-align: center;
+        }
+
+        .ant-btn-link.process-action-edit {
+          color: var(--color-primary);
+
+          &:hover,
+          &:focus-visible {
+            color: var(--color-primary-hover);
+          }
+        }
+
+        .ant-btn-link.process-action-delete {
+          color: var(--color-error);
+
+          &:hover,
+          &:focus-visible {
+            color: #b91c1c;
+          }
         }
       }
 

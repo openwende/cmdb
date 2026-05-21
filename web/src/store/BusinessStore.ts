@@ -49,7 +49,7 @@ export const useBusinessStore = create<BusinessStoreState>((set, get) => ({
       return;
     }
 
-    // 如果正在加载中，避免重复请求
+    // Avoid duplicate requests while the list is already loading.
     if (state.loading) {
       return;
     }

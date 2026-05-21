@@ -123,7 +123,7 @@
     "noMatch": "无匹配人员",
     "noData": "暂无数据",
     "notSet": "未设置",
-    "loading": "加载中...",
+    "loading": "",
     "message": {
       "createSuccess": "创建成功",
       "createFailed": "创建失败",
@@ -1859,7 +1859,7 @@
           "half": "50%",
           "full": "100%"
         },
-        "loading": "加载中...",
+        "loading": "",
         "noData": "暂无数据",
         "startDate": "开始日期",
         "endDate": "结束日期"

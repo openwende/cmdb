@@ -51,6 +51,7 @@ const Directory: React.FC<{
   const [sidebarWidth, setSidebarWidth] = useState<number>(DEFAULT_WIDTH);
   // State for the collapsed
   const [collapsed, setCollapsed] = useState<boolean>(false);
+  const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([unmodifiableDirIds[0]]);
 
   useEffect(() => {
     void fetchDirectories();
@@ -349,44 +350,49 @@ const Directory: React.FC<{
 
   return (
     <div
-      className="directory-wrapper"
+      className={`directory-wrapper${collapsed ? ' directory-wrapper--collapsed' : ''}`}
       style={{
-        width: collapsed ? 0 : sidebarWidth,
-        minWidth: collapsed ? 0 : MIN_WIDTH,
-        maxWidth: collapsed ? 0 : MAX_WIDTH,
+        width: collapsed ? 1 : sidebarWidth,
+        minWidth: collapsed ? 1 : MIN_WIDTH,
+        maxWidth: collapsed ? 1 : MAX_WIDTH,
         marginRight: collapsed ? 0 : 20,
       }}
     >
-      {/* The search input and the add icon */}
-      <div className="directory-header">
-        <Input.Search placeholder={t('host.directory.grouped')} size="middle" />
-        <Tooltip title={t('host.directory.add')}>
-          <PlusOutlined className="directory-add" onClick={handleAdd} />
-        </Tooltip>
-      </div>
-      {/* The directory tree */}
-      <Tree
-        treeData={getDirectoryData()}
-        defaultExpandAll={true}
-        showLine={true}
-        blockNode={true}
-        selectedKeys={selectedKeys}
-        onSelect={(keys) => {
-          if (keys.length) {
-            void onSelect(keys[0] as number);
-          }
-        }}
-        titleRender={renderTitle}
-        className="directory-tree"
-      />
-      {/* The dragger */}
-      <DragHandle
-        minWidth={MIN_WIDTH}
-        maxWidth={MAX_WIDTH}
-        currentWidth={sidebarWidth}
-        onWidthChange={setSidebarWidth}
-        className="no-grabber"
-      />
+      {!collapsed && (
+        <>
+          {/* The search input and the add icon */}
+          <div className="directory-header">
+            <Input.Search placeholder={t('host.directory.grouped')} size="middle" />
+            <Tooltip title={t('host.directory.add')}>
+              <PlusOutlined className="directory-add" onClick={handleAdd} />
+            </Tooltip>
+          </div>
+          {/* The directory tree */}
+          <Tree
+            treeData={getDirectoryData()}
+            expandedKeys={expandedKeys}
+            onExpand={(keys) => setExpandedKeys(keys)}
+            showLine={true}
+            blockNode={true}
+            selectedKeys={selectedKeys}
+            onSelect={(keys) => {
+              if (keys.length) {
+                void onSelect(keys[0] as number);
+              }
+            }}
+            titleRender={renderTitle}
+            className="directory-tree"
+          />
+          {/* The dragger */}
+          <DragHandle
+            minWidth={MIN_WIDTH}
+            maxWidth={MAX_WIDTH}
+            currentWidth={sidebarWidth}
+            onWidthChange={setSidebarWidth}
+            className="no-grabber"
+          />
+        </>
+      )}
       {/* The collapsed button */}
       <div
         className="collapsed-button"

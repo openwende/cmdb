@@ -185,10 +185,15 @@ const AddProcessModal: React.FC<Props> = ({
       key: 'action',
       render: (_: any, record: ListenInfo) => (
         <Space>
-          <Button type="link" onClick={handleAddListenInfo}>
+          <Button type="link" className="listen-action-add" onClick={handleAddListenInfo}>
             {t('business.topology.addProcessModal.buttons.add')}
           </Button>
-          <Button type="link" danger onClick={() => handleDeleteListenInfo(record.id)}>
+          <Button
+            type="link"
+            danger
+            className="listen-action-delete"
+            onClick={() => handleDeleteListenInfo(record.id)}
+          >
             {t('business.topology.addProcessModal.buttons.delete')}
           </Button>
         </Space>
@@ -363,6 +368,7 @@ const AddProcessModal: React.FC<Props> = ({
                     pagination={false}
                     rowKey="id"
                     size="small"
+                    locale={{ emptyText: null }}
                   />
                   {listenInfoList.length === 0 && (
                     <div className="add-button">

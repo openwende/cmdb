@@ -4,7 +4,6 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import BusinessTree from '../BusinessTree';
 import HostList from '../HostList';
-import ServiceInstance from '../ServiceInstance';
 import NodeInfo from '../NodeInfo';
 import './style.css';
 import { TreeData } from '../../Types';
@@ -17,12 +16,12 @@ const BusinessTopology: React.FC = () => {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState('hostList');
-  const [view, setView] = useState<'instance' | 'process'>('instance');
   const [topologyVersion, setTopologyVersion] = useState(0);
   const businessId = getBusinessIdFromUrl();
   const currentBusinessTopoPath = businessId ? getBusinessTopologyPath(businessId) : '';
   const { selectedNode, parentNodes, selectNode, reset } = useTopologySceneStore();
-  const { currentBusiness, businessList, setCurrentBusiness, loadBusinessData } = useBusinessStore();
+  const { currentBusiness, businessList, setCurrentBusiness, loadBusinessData } =
+    useBusinessStore();
   const previousBusinessIdRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -35,23 +34,14 @@ const BusinessTopology: React.FC = () => {
     }
 
     const tabParam = searchParams.get('tab') || 'hostList';
-    const viewParam = searchParams.get('view') as 'instance' | 'process' | null;
-
-    setActiveTab(tabParam);
-    if (tabParam === 'serviceInstance' && viewParam) {
-      setView(viewParam);
-    } else {
-      setView('instance');
-    }
+    setActiveTab(tabParam === 'nodeInfo' ? 'nodeInfo' : 'hostList');
   }, [currentBusinessTopoPath, location.pathname, searchParams]);
 
   const handleTabChange = (key: string) => {
     setActiveTab(key);
     const params = new URLSearchParams(searchParams);
     params.set('tab', key);
-    if (key !== 'serviceInstance') {
-      params.delete('view');
-    }
+    params.delete('view');
     setSearchParams(params);
   };
 
@@ -65,13 +55,6 @@ const BusinessTopology: React.FC = () => {
     },
     [searchParams, selectNode, setSearchParams],
   );
-
-  const handleViewChange = (v: 'instance' | 'process') => {
-    setView(v);
-    const params = new URLSearchParams(searchParams);
-    params.set('view', v);
-    setSearchParams(params);
-  };
 
   const handleTopologyChanged = useCallback(() => {
     setTopologyVersion((current) => current + 1);
@@ -94,7 +77,6 @@ const BusinessTopology: React.FC = () => {
     }
 
     setActiveTab('hostList');
-    setView('instance');
     setSearchParams(new URLSearchParams());
   }, [businessId, setSearchParams]);
 
@@ -103,9 +85,7 @@ const BusinessTopology: React.FC = () => {
       return;
     }
 
-    const matchedBusiness = businessList.find(
-      (item) => item.id === businessId,
-    );
+    const matchedBusiness = businessList.find((item) => item.id === businessId);
     if (matchedBusiness && matchedBusiness.id !== currentBusiness?.id) {
       setCurrentBusiness(matchedBusiness);
     }
@@ -115,20 +95,12 @@ const BusinessTopology: React.FC = () => {
     {
       key: 'hostList',
       label: t('business.topology.tabs.hostList'),
-      children:
-        selectedNode && (
-          <HostList
-            selectedNode={selectedNode}
-            parentNodes={parentNodes}
-            onTopologyChanged={handleTopologyChanged}
-          />
-        ),
-    },
-    {
-      key: 'serviceInstance',
-      label: t('business.topology.tabs.serviceInstance'),
       children: selectedNode && (
-        <ServiceInstance selectedNode={selectedNode} view={view} setView={handleViewChange} />
+        <HostList
+          selectedNode={selectedNode}
+          parentNodes={parentNodes}
+          onTopologyChanged={handleTopologyChanged}
+        />
       ),
     },
     {

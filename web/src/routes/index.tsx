@@ -1,5 +1,4 @@
 import React, { lazy, Suspense } from 'react';
-import { Spin } from 'antd';
 import { Navigate } from 'react-router-dom';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
@@ -15,7 +14,6 @@ import {
 } from './Types';
 import {
   AppstoreOutlined,
-  ContainerOutlined,
   DiffOutlined,
   BarChartOutlined,
   ProductOutlined,
@@ -24,6 +22,7 @@ import {
   GroupOutlined,
   NodeIndexOutlined,
   TeamOutlined,
+  ProfileOutlined,
 } from '@ant-design/icons';
 
 // Lazy load all page components
@@ -70,24 +69,13 @@ const NotFoundPage = lazy(() => import('../pages/NotFound'));
 // Wrap lazy-loaded components with Suspense and ErrorBoundary
 const withSuspense = (Component: React.LazyExoticComponent<any>) => {
   // Use the component's generated name or a fallback string to ensure unique keys per route component
-  const errorBoundaryKey = typeof Component === 'function' && Component.name ? Component.name : Math.random().toString(36).substring(7);
+  const errorBoundaryKey =
+    typeof Component === 'function' && Component.name
+      ? Component.name
+      : Math.random().toString(36).substring(7);
   return (
     <ErrorBoundary key={errorBoundaryKey}>
-      <Suspense
-        fallback={
-          <div
-            style={{
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '64px 0',
-            }}
-          >
-            <Spin size="large" />
-          </div>
-        }
-      >
+      <Suspense fallback={null}>
         <Component />
       </Suspense>
     </ErrorBoundary>
@@ -126,7 +114,7 @@ export const routes: NavigationItem[] = [
         key: BusinessNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
-        icon: <ContainerOutlined />,
+        icon: <ProfileOutlined />,
         children: [
           {
             key: BusinessNavKey.TopologyView,
@@ -164,7 +152,7 @@ export const routes: NavigationItem[] = [
         key: BusinessSetNavKey.Topology,
         path: 'topology',
         element: withSuspense(BusinessTopology),
-        icon: <ContainerOutlined />,
+        icon: <ProfileOutlined />,
       },
     ],
   },

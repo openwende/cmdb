@@ -1,6 +1,6 @@
 .model-list {
   background-color: var(--color-bg-container);
-  margin: var(--space-lg) var(--space-xl);
+  margin: 0 0 var(--space-lg);
   padding: var(--space-xl);
   display: grid;
   grid-template-columns: 200px minmax(0, 1fr);

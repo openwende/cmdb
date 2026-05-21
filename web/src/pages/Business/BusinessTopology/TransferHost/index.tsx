@@ -23,7 +23,7 @@ import {
   TreeData,
   RemoveMenuItemKey,
 } from '@/pages/Business/Types';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getBusinessTopologyPath, getBusinessIdFromUrl } from '../../../../utils/routes';
 import TransferHostModal from '../components/TransferHostModal';
 import { transferTopologyHosts, transferTopologyHostsToPool } from '@/api/services/business';
@@ -46,6 +46,7 @@ interface ServiceInstanceItem {
 const TransferHost: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { selectedHosts, targetModules, transferHostType, sourceModuleId, setTransferHostData } =
     useTransferHostStore();
   const [showEditHostModal, setShowEditHostModal] = useState(false);
@@ -191,7 +192,7 @@ const TransferHost: React.FC = () => {
     const businessId = getBusinessIdFromUrl();
     if (businessId) {
       const topoPath = getBusinessTopologyPath(businessId);
-      navigate(topoPath + window.location.search, { replace: true });
+      navigate(`${topoPath}${location.search}`, { replace: true });
     }
   };
 
@@ -399,6 +400,7 @@ const TransferHost: React.FC = () => {
                                         <Button
                                           type="link"
                                           size="small"
+                                          className="process-action-edit"
                                           onClick={() =>
                                             handleEditProcess(module.key, String(host.id), record)
                                           }
@@ -415,7 +417,12 @@ const TransferHost: React.FC = () => {
                                           okText={t('common.confirm')}
                                           cancelText={t('common.cancel')}
                                         >
-                                          <Button type="link" danger size="small">
+                                          <Button
+                                            type="link"
+                                            danger
+                                            size="small"
+                                            className="process-action-delete"
+                                          >
                                             {t('common.delete')}
                                           </Button>
                                         </Popconfirm>
@@ -430,6 +437,7 @@ const TransferHost: React.FC = () => {
                             pagination={false}
                             size="small"
                             rowKey="id"
+                            locale={{ emptyText: null }}
                           />
                           <div className="add-button">
                             <Button

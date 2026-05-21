@@ -7,7 +7,7 @@
 .node-info-container {
   box-sizing: border-box;
   background: var(--color-bg-container);
-  padding: 8px;
+  padding: 16px;
 
   .node-info-container {
     padding: 0;
@@ -57,6 +57,12 @@
     font-weight: bold;
     color: var(--color-text-primary);
   }
+}
+
+.node-info-loading {
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
 }
 
 @media (max-width: 767px) {

@@ -1,6 +1,8 @@
 .topology-wrapper {
+  --topology-content-offset: 42px;
+
   display: flex;
-  height: calc(100vh - var(--header-height));
+  height: calc(100vh - var(--header-height) - var(--topology-content-offset));
   width: 100%;
   overflow: hidden;
 }
@@ -13,6 +15,7 @@
   min-width: 0;
   position: relative;
   overflow-x: auto;
+  user-select: none;
 }
 
 .topology-tabs {
@@ -60,7 +63,7 @@
   .topology-wrapper {
     flex-direction: column;
     height: auto;
-    min-height: calc(100vh - var(--header-height));
+    min-height: calc(100vh - var(--header-height) - var(--topology-content-offset));
     overflow: visible;
   }
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { Chart } from '@antv/g2';
 import { CHART_COLOR_RANGE, DEFAULT_CHART_HEIGHT } from '../constants';
@@ -73,7 +74,11 @@ const PieChart: React.FC<PieChartProps> = ({
   }, [data, height, loading]);
 
   if (loading) {
-    return <div className="chart-loading">{t('analysis.statistics.chart.loading')}</div>;
+    return (
+      <div className="chart-loading">
+        <Spin />
+      </div>
+    );
   }
 
   if (!data || !data.length) {

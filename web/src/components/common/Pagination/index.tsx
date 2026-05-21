@@ -8,6 +8,7 @@ interface PaginationProps {
   current: number;
   onChange: (page: number, pageSize: number) => void;
   onSizeChange: (current: number, size: number) => void;
+  size?: 'default' | 'small';
 }
 
 const Pagination: React.FC<PaginationProps> = ({
@@ -16,6 +17,7 @@ const Pagination: React.FC<PaginationProps> = ({
   current,
   onChange,
   onSizeChange,
+  size,
 }) => {
   const { t } = useTranslation();
 
@@ -29,6 +31,7 @@ const Pagination: React.FC<PaginationProps> = ({
       current={current}
       onChange={onChange}
       onShowSizeChange={onSizeChange}
+      size={size}
       align="end"
     />
   );

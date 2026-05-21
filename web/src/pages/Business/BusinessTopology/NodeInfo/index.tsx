@@ -54,7 +54,11 @@ const NodeInfo: React.FC<Props> = ({ onTopologyChanged }) => {
     }
 
     if (loading) {
-      return <Spin style={{ margin: '24px auto', display: 'block' }} />;
+      return (
+        <div className="node-info-loading">
+          <Spin />
+        </div>
+      );
     }
 
     if (error) {

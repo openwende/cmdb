@@ -96,12 +96,20 @@ vi.mock('@/store/AuthStore', () => ({
 }));
 
 vi.mock('antd', () => ({
-  Table: ({ dataSource = [], rowSelection, rowKey, locale }: any) => {
+  Table: ({ dataSource = [], rowSelection, rowKey, locale, loading }: any) => {
     const selectedKeys = rowSelection?.selectedRowKeys ?? [];
     const resolvedKey = (record: any) =>
       typeof rowKey === 'function' ? rowKey(record) : record[rowKey ?? 'key'];
     const allKeys = dataSource.map((record: any) => resolvedKey(record));
     const allChecked = allKeys.length > 0 && selectedKeys.length === allKeys.length;
+
+    if (loading?.spinning) {
+      return (
+        <div data-testid="host-table-loading" data-loading-size={loading.size ?? ''}>
+          loading
+        </div>
+      );
+    }
 
     if (!dataSource.length) {
       return <div>{locale?.emptyText ?? null}</div>;
@@ -306,6 +314,7 @@ describe('business topology host list', () => {
     expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.appendTo ');
     expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.removeFrom ');
     expect(toolbarButtonsBefore).toContain('business.topology.hostList.buttons.copy ');
+    expect(toolbarButtonsBefore).not.toContain('business.topology.hostList.buttons.more ');
     expect(toolbarButtonsBefore).not.toContain('business.topology.hostList.buttons.edit');
 
     fireEvent.click(screen.getByLabelText('select-host-real-host-1'));
@@ -350,6 +359,94 @@ describe('business topology host list', () => {
     ).toBeDisabled();
     expect(getTopologyNodeHosts).not.toHaveBeenCalled();
     expect(screen.queryByText('real-host-1')).not.toBeInTheDocument();
+  });
+
+  it('does not render secondary add buttons inside empty host table states', async () => {
+    getTopologyNodeHosts.mockResolvedValueOnce({
+      code: 0,
+      data: {
+        items: [],
+        pagination: {
+          page: 1,
+          page_size: 20,
+          total: 0,
+          total_page: 0,
+        },
+      },
+    });
+
+    render(
+      <HostList
+        selectedNode={{
+          title: 'SmokeModule-1773163733771',
+          key: 'module-3',
+          nodeId: '3',
+          type: TopoTreeNodeType.Module,
+          backendType: 'module',
+        }}
+        parentNodes={[
+          {
+            title: 'ProbeSet-1773163724333',
+            key: 'set-4',
+            nodeId: '4',
+            type: TopoTreeNodeType.Set,
+            backendType: 'set',
+          },
+        ]}
+        onTopologyChanged={() => undefined}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText('common.noData').length).toBeGreaterThan(0);
+    });
+
+    expect(
+      screen.getAllByRole('button', { name: 'business.topology.hostList.buttons.add' }),
+    ).toHaveLength(1);
+  });
+
+  it('shows the default-sized table loading spinner while host data is loading', async () => {
+    let resolveRequest: (value: any) => void = () => undefined;
+    getTopologyNodeHosts.mockImplementationOnce(
+      () =>
+        new Promise<any>((resolve) => {
+          resolveRequest = resolve;
+        }),
+    );
+
+    render(
+      <HostList
+        selectedNode={{
+          title: 'SmokeModule-1773163733771',
+          key: 'module-3',
+          nodeId: '3',
+          type: TopoTreeNodeType.Module,
+          backendType: 'module',
+        }}
+        parentNodes={[]}
+        onTopologyChanged={() => undefined}
+      />,
+    );
+
+    expect(screen.getByTestId('host-table-loading')).toHaveAttribute('data-loading-size', '');
+
+    resolveRequest({
+      code: 0,
+      data: {
+        items: [],
+        pagination: {
+          page: 1,
+          page_size: 20,
+          total: 0,
+          total_page: 0,
+        },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('host-table-loading')).not.toBeInTheDocument();
+    });
   });
 
   it('allows releasing selected hosts from idle modules to host pool even when the row has no set metadata', async () => {

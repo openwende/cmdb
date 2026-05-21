@@ -94,7 +94,7 @@ vi.mock('@/store/PoolHostStore', () => ({
 }));
 
 vi.mock('@/store/AuthStore', () => ({
-  useAuthStore: (selector: any) => selector({ canWrite: () => false }),
+  useAuthStore: (selector: any) => selector({ canWrite: () => true }),
 }));
 
 vi.mock('react-router-dom', () => ({
@@ -134,11 +134,15 @@ describe('resource pool — pool-only view', () => {
     expect(getHostList).not.toHaveBeenCalled();
   });
 
-  it('shows directory name in the toolbar context header', async () => {
+  it('shows bulk actions in the toolbar instead of the directory context header', async () => {
     render(<HostList selectedId={1} />);
 
     await waitFor(() => {
-      expect(screen.getByText('空闲机池')).toBeInTheDocument();
+      expect(screen.getByText('resource.host.actions.assign')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('resource.host.actions.copy')).toBeInTheDocument();
+    expect(screen.getByText('resource.host.actions.more')).toBeInTheDocument();
+    expect(screen.queryByText('空闲机池')).not.toBeInTheDocument();
   });
 });

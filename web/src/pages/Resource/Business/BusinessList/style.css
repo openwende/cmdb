@@ -1,6 +1,6 @@
 .business-list {
   background-color: var(--color-bg-container);
-  margin: 16px 20px;
+  margin: 0 0 16px;
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -39,7 +39,7 @@
 /* --- Tablet (768px – 1023px) --- */
 @media (max-width: 1023px) {
   .business-list {
-    margin: 12px;
+    margin: 0 0 12px;
   }
 
   .business-list .list-header .list-search .search-input,
@@ -51,7 +51,7 @@
 /* --- Mobile (< 768px) --- */
 @media (max-width: 767px) {
   .business-list {
-    margin: 8px;
+    margin: 0 0 8px;
     padding: 12px;
   }
 

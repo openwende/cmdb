@@ -18,4 +18,12 @@
       color: var(--color-primary);
     }
   }
+
+  .ant-breadcrumb-link a {
+    color: var(--color-primary);
+
+    &:hover {
+      color: var(--color-primary-hover);
+    }
+  }
 }

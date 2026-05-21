@@ -33,6 +33,11 @@ export const useTopologySceneStore = create<TopologySceneStoreState>((set) => ({
       parentNodes,
     });
 
+    if (typeof node !== 'string' && node.extra?.isSyntheticIdleModule) {
+      useNodeDetailStore.getState().reset();
+      return;
+    }
+
     await useNodeDetailStore.getState().loadNodeDetail(nodeId);
   },
 

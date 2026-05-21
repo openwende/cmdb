@@ -1,7 +1,7 @@
 /* Shared styles for model management pages */
 
 .model-page-container {
-  margin: var(--space-lg) var(--space-xl);
+  margin: 0 0 var(--space-lg);
   padding: var(--space-lg) var(--space-xl) var(--space-xl);
   background: var(--color-bg-container);
   border-radius: var(--radius-lg);
@@ -47,7 +47,7 @@
 
 @media (max-width: 767px) {
   .model-page-container {
-    margin: var(--space-sm);
+    margin: 0 0 var(--space-sm);
     padding: var(--space-lg);
   }
 

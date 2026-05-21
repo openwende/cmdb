@@ -17,15 +17,16 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'dashboard.stats.pending': '待接入',
           'dashboard.workspace.pendingSummary': '主机、业务、实例统计将随着资源图接入逐步开放。',
           'dashboard.workspace.primaryCta': '进入业务拓扑',
           'dashboard.workspace.primaryCtaNoBusiness': '创建/选择业务',
-          'dashboard.workspace.primaryDescNoBusiness': '当前还没有业务，先进入业务列表创建或选择业务。',
+          'dashboard.workspace.primaryDescNoBusiness':
+            '当前还没有业务，先进入业务列表创建或选择业务。',
           'dashboard.workspace.secondary.resources': '进入资源目录',
           'dashboard.workspace.secondary.models': '进入模型管理',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));
@@ -43,17 +44,12 @@ vi.mock('antd', () => ({
   Card: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Col: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
   Row: ({ children }: { children?: React.ReactNode }) => <div>{children}</div>,
-  Button: ({
-    children,
-    onClick,
-  }: {
-    children?: React.ReactNode;
-    onClick?: () => void;
-  }) => (
+  Button: ({ children, onClick }: { children?: React.ReactNode; onClick?: () => void }) => (
     <button type="button" onClick={onClick}>
       {children}
     </button>
   ),
+  Spin: () => <div data-testid="spin" />,
   Skeleton: Object.assign(() => <div>loading</div>, {
     Input: () => <div>loading-input</div>,
   }),
@@ -92,9 +88,7 @@ describe('home dashboard copy', () => {
       expect(listModels).toHaveBeenCalled();
     });
 
-    expect(
-      screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。')).toBeInTheDocument();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
     expect(screen.queryAllByText('待接入')).toHaveLength(0);
   });
@@ -119,9 +113,7 @@ describe('home dashboard copy', () => {
       expect(listModels).toHaveBeenCalled();
     });
 
-    expect(
-      screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
-    ).toBeInTheDocument();
+    expect(screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。')).toBeInTheDocument();
     expect(screen.queryAllByText('待接入')).toHaveLength(0);
   });
 });

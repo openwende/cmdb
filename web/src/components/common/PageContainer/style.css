@@ -7,7 +7,7 @@
 
 .page-container__header {
   flex-shrink: 0;
-  padding: var(--space-xl) var(--space-2xl) 0;
+  padding: var(--space-xl) 0 0;
 }
 
 .page-container__breadcrumb {
@@ -71,15 +71,15 @@
 .page-container__body {
   flex: 1;
   min-height: 0;
-  padding: var(--space-xl) var(--space-2xl) var(--space-2xl);
+  padding: 0 0 var(--space-2xl);
   overflow-y: auto;
 }
 
 /* Compact mode */
 .page-container--compact .page-container__header {
-  padding: var(--space-lg) var(--space-xl) 0;
+  padding: var(--space-lg) 0 0;
 }
 
 .page-container--compact .page-container__body {
-  padding: var(--space-lg) var(--space-xl) var(--space-xl);
+  padding: 0 0 var(--space-xl);
 }

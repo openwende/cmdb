@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button, Tree } from 'antd';
-import { InboxOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import CreateNodeModal from '../CreateNodeModal';
 import { getBusinessTopologyChildModels } from '@/pages/Business/BusinessTopology/modelRules';
@@ -22,6 +21,16 @@ const isIdlePoolNode = (node: TreeData): boolean =>
   node.type === TopoTreeNodeType.Idle ||
   String(node.title ?? '').includes('空闲机池');
 
+const getNodeHostCount = (node: TreeData): number => {
+  const ownHostCount = Number(node.extra?.host_count ?? 0);
+  const childHostCount = (node.children || []).reduce(
+    (total, child) => total + getNodeHostCount(child),
+    0,
+  );
+
+  return Math.max(0, ownHostCount) + childHostCount;
+};
+
 interface Props {
   treeData: TreeData[];
   tailEleType?: TailEleType;
@@ -29,6 +38,7 @@ interface Props {
   onlyLeafSelectable?: boolean;
   selectedKeys?: string[];
   expandedKeys?: string[];
+  onExpandedKeysChange?: (keys: string[]) => void;
   onTopologyChanged?: () => void;
   onNodeSelect: (selectedNode: TreeData, parentNodes: TreeData[]) => void;
   customTitlePrefix?: (node: TreeData, isSelected: boolean) => React.ReactNode;
@@ -41,6 +51,7 @@ const TopologyTree: React.FC<Props> = ({
   onlyLeafSelectable = false,
   selectedKeys: controlledSelectedKeys,
   expandedKeys: controlledExpandedKeys,
+  onExpandedKeysChange,
   onTopologyChanged,
   onNodeSelect,
   customTitlePrefix,
@@ -55,8 +66,7 @@ const TopologyTree: React.FC<Props> = ({
   const canWrite = useAuthStore((state) => state.canWrite());
 
   useEffect(() => {
-    // Handle expanded keys logic
-    if (controlledExpandedKeys && controlledExpandedKeys.length > 0) {
+    if (Array.isArray(controlledExpandedKeys)) {
       setExpandedKeys(controlledExpandedKeys);
     } else if (searchValue && treeData.length > 0) {
       // Auto expand all nodes when searching
@@ -70,6 +80,21 @@ const TopologyTree: React.FC<Props> = ({
       setSelectedKeys(controlledSelectedKeys);
     }
   }, [controlledSelectedKeys]);
+
+  const commitExpandedKeys = (keys: string[]) => {
+    const nextKeys = Array.from(new Set(keys));
+    setExpandedKeys(nextKeys);
+    onExpandedKeysChange?.(nextKeys);
+  };
+
+  const toggleExpand = (key: string) => {
+    const idx = expandedKeys.indexOf(key);
+    if (idx > -1) {
+      commitExpandedKeys(expandedKeys.filter((k) => k !== key));
+      return;
+    }
+    commitExpandedKeys([...expandedKeys, key]);
+  };
 
   const handleNodeSelect = (node: TreeData) => {
     const key = node.key;
@@ -98,8 +123,7 @@ const TopologyTree: React.FC<Props> = ({
       // Select first
       setSelectedKeys([key]);
       onNodeSelect(node, parents);
-      // Expand on the next tick to ensure the DOM has rendered the selection changes
-      setTimeout(() => toggleExpand(key), 0);
+      commitExpandedKeys([...expandedKeys, key]);
       return;
     } else if (isSelected) {
       toggleExpand(key);
@@ -108,17 +132,6 @@ const TopologyTree: React.FC<Props> = ({
 
     setSelectedKeys([key]);
     onNodeSelect(node, parents);
-  };
-
-  const toggleExpand = (key: string) => {
-    const idx = expandedKeys.indexOf(key);
-    let newExpanded;
-    if (idx > -1) {
-      newExpanded = expandedKeys.filter((k) => k !== key);
-    } else {
-      newExpanded = [...expandedKeys, key];
-    }
-    setExpandedKeys(newExpanded);
   };
 
   const handleNodeTitleClick = (e: React.MouseEvent, node: TreeData) => {
@@ -153,20 +166,13 @@ const TopologyTree: React.FC<Props> = ({
   };
 
   const renderTailElement = (node: TreeData, hoveredKey: string, isSelected: boolean) => {
-    const showHostCount = node.type === TopoTreeNodeType.Module;
-    const hostCount = Number(node.extra?.host_count ?? 0);
-    const childCount = Number(node.extra?.child_count ?? node.children?.length ?? 0);
-    const nodeCount = showHostCount ? Math.max(hostCount, childCount) : 0;
+    const nodeCount = getNodeHostCount(node);
+    const countElement = (
+      <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>{nodeCount}</span>
+    );
 
     if (tailEleType === TailEleType.Count) {
-      if (!showHostCount) {
-        return null;
-      }
-      return (
-        <span className="right-wrapper">
-          <span className={`suffix-count ${isSelected ? ' selected' : ''}`}>{nodeCount}</span>
-        </span>
-      );
+      return <span className="right-wrapper">{countElement}</span>;
     }
 
     if (tailEleType === TailEleType.All) {
@@ -183,9 +189,9 @@ const TopologyTree: React.FC<Props> = ({
             >
               {t('resource.business.actions.create')}
             </Button>
-          ) : showHostCount ? (
-            <span className={`suffix-count ${isSelected ? 'selected' : ''}`}>{nodeCount}</span>
-          ) : null}
+          ) : (
+            countElement
+          )}
         </span>
       );
     }
@@ -230,25 +236,7 @@ const TopologyTree: React.FC<Props> = ({
       isFaultIdleNode;
 
     if (isIdleVisualNode) {
-      const IdleIcon = isFaultIdleNode ? WarningOutlined : InboxOutlined;
-      const selectedIconStyle: React.CSSProperties | undefined = isSelected
-        ? {
-            backgroundColor: '#eff6ff',
-            color: '#2563eb',
-            borderColor: '#bfdbfe',
-            boxShadow: '0 0 0 3px #eff6ff',
-          }
-        : undefined;
-      return (
-        <span
-          className={`node-badge node-badge--icon badge-idle${
-            isFaultIdleNode ? ' badge-idle-fault' : ''
-          }${isSelected ? ' selected' : ''}`}
-          style={selectedIconStyle}
-        >
-          <IdleIcon />
-        </span>
-      );
+      return null;
     }
 
     let label = '业';
@@ -265,8 +253,6 @@ const TopologyTree: React.FC<Props> = ({
       ? {
           backgroundColor: '#2563eb',
           color: '#ffffff',
-          borderColor: '#bfdbfe',
-          boxShadow: '0 0 0 3px #eff6ff',
         }
       : undefined;
 
@@ -296,7 +282,7 @@ const TopologyTree: React.FC<Props> = ({
         titleRender={renderTitle}
         selectedKeys={selectedKeys}
         expandedKeys={expandedKeys}
-        onExpand={(keys) => setExpandedKeys(keys as string[])}
+        onExpand={(keys) => commitExpandedKeys(keys.map(String))}
         className="topology-tree"
       />
       {/* Modal for creating set and module*/}

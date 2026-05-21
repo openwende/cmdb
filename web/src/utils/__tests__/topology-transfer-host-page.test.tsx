@@ -7,12 +7,16 @@ const {
   transferTopologyHosts,
   transferTopologyHostsToPool,
   mockNavigate,
+  mockLocationState,
   mockSetTransferHostData,
   storeState,
 } = vi.hoisted(() => ({
   transferTopologyHosts: vi.fn(async () => ({ code: 0 })),
   transferTopologyHostsToPool: vi.fn(async () => ({ code: 0 })),
   mockNavigate: vi.fn(),
+  mockLocationState: {
+    search: '?node=module-3&tab=hostList',
+  },
   mockSetTransferHostData: vi.fn(),
   storeState: {
     selectedHosts: [{ id: 'host-1', ip: '10.1.1.10' }] as Array<{
@@ -43,6 +47,7 @@ vi.mock('react-i18next', () => ({
 
 vi.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
+  useLocation: () => mockLocationState,
 }));
 
 vi.mock('@/utils/routes', () => ({
@@ -134,6 +139,7 @@ describe('topology transfer host page', () => {
     ];
     storeState.transferHostType = 'businessModule';
     storeState.sourceModuleId = undefined;
+    mockLocationState.search = '?node=module-3&tab=hostList';
   });
 
   it('calls the real transfer api when confirming module transfers', async () => {
@@ -146,6 +152,19 @@ describe('topology transfer host page', () => {
         host_ids: ['host-1'],
         target_module_id: 4,
       });
+    });
+  });
+
+  it('returns to topology with the selected node and tab query after transfer succeeds', async () => {
+    render(<TransferHost />);
+
+    fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        '/business/biz-1/topology?node=module-3&tab=hostList',
+        { replace: true },
+      );
     });
   });
 

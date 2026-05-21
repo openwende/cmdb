@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Result, Skeleton, Spin } from 'antd';
+import { Button, Result } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
@@ -10,14 +10,8 @@ const EntryRedirect: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [error, setError] = useState(false);
-  const {
-    currentBusiness,
-    businessList,
-    businessSetList,
-    initialized,
-    loading,
-    loadBusinessData,
-  } = useBusinessStore();
+  const { currentBusiness, businessList, businessSetList, initialized, loading, loadBusinessData } =
+    useBusinessStore();
 
   useEffect(() => {
     if (currentBusiness) {
@@ -67,7 +61,14 @@ const EntryRedirect: React.FC = () => {
         title={t('business.entryRedirect.errorTitle')}
         subTitle={t('business.entryRedirect.errorSubTitle')}
         extra={[
-          <Button type="primary" key="retry" onClick={() => { setError(false); loadBusinessData().catch(() => setError(true)); }}>
+          <Button
+            type="primary"
+            key="retry"
+            onClick={() => {
+              setError(false);
+              loadBusinessData().catch(() => setError(true));
+            }}
+          >
             {t('business.entryRedirect.retry')}
           </Button>,
           <Button key="create" onClick={() => navigate('/resource/business')}>
@@ -79,14 +80,10 @@ const EntryRedirect: React.FC = () => {
   }
 
   if (loading && !initialized) {
-    return (
-      <div style={{ maxWidth: 600, margin: '48px auto', padding: '0 24px' }}>
-        <Skeleton active paragraph={{ rows: 4 }} />
-      </div>
-    );
+    return null;
   }
 
-  return <Spin style={{ margin: '48px auto', display: 'block' }} />;
+  return null;
 };
 
 export default EntryRedirect;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import {
   Modal,
   Tabs,
@@ -17,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { CloseOutlined, MoreOutlined } from '@ant-design/icons';
 import Pagination from '@/components/common/Pagination';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
+import TableEmpty from '@/components/common/TableEmpty';
 import DragHandle from '@/components/common/DragHandle';
 import TopologyTree from '../TopologyTree';
 import { filterTree, collectAllKeys } from '@/pages/Business/utils';
@@ -26,8 +27,14 @@ import {
   TransferHostType,
   TreeData,
   RemoveMenuItemKey,
+  TopoTreeNodeType,
 } from '@/pages/Business/Types';
-import { getHostList, getTopologyTree } from '@/api/services/business';
+import {
+  getHostList,
+  getTopologyNodeHosts,
+  getTopologyTree,
+  TopologyNodeHostItem,
+} from '@/api/services/business';
 import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import { getBusinessIdFromUrl } from '@/utils/routes';
 import './style.css';
@@ -110,16 +117,39 @@ const AddHostModal: React.FC<Props> = ({
     new Map(),
   );
   const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
-  const [staticHosts, setStaticHosts] = useState<HostData[]>([]);
+  const [lookupHosts, setLookupHosts] = useState<HostData[]>([]);
+  const [selectedModuleNode, setSelectedModuleNode] = useState<TreeData | null>(null);
+  const [moduleHosts, setModuleHosts] = useState<HostData[]>([]);
+  const [moduleHostsTotal, setModuleHostsTotal] = useState(0);
+  const [moduleHostsLoading, setModuleHostsLoading] = useState(false);
   // Ref for tree wrapper to control popover container
   const [treeKey, setTreeKey] = useState(0);
   const [shouldInitializeKeys, setShouldInitializeKeys] = useState(true);
+  const moduleHostRequestSeqRef = useRef(0);
+
+  const adaptTopologyHost = useCallback((item: TopologyNodeHostItem): HostData => {
+    return {
+      bk_host_id: item.host_id,
+      bk_host_innerip: item.inner_ipv4 || '',
+      bk_host_innerip_v6: item.inner_ipv6 || '',
+      bk_cloud_id: item.cloud_area
+        ? [
+            {
+              bk_inst_id: item.cloud_area.id,
+              bk_inst_name: item.cloud_area.name,
+            },
+          ]
+        : [],
+    };
+  }, []);
 
   const loadTopologyAndHosts = useCallback(async () => {
     const businessId = getBusinessIdFromUrl();
     if (!businessId) {
       setFullTreeData([]);
-      setStaticHosts([]);
+      setLookupHosts([]);
+      setModuleHosts([]);
+      setModuleHostsTotal(0);
       return;
     }
 
@@ -156,8 +186,67 @@ const AddHostModal: React.FC<Props> = ({
           ]
         : [],
     }));
-    setStaticHosts(hosts);
+    setLookupHosts(hosts);
   }, []);
+
+  const loadSelectedModuleHosts = useCallback(async () => {
+    const requestSeq = moduleHostRequestSeqRef.current + 1;
+    moduleHostRequestSeqRef.current = requestSeq;
+
+    if (
+      !visible ||
+      activeTab !== TabItemKey.StaticTopo ||
+      !selectedModuleNode ||
+      selectedModuleNode.type !== TopoTreeNodeType.Module ||
+      selectedModuleNode.extra?.isSyntheticIdleModule
+    ) {
+      setModuleHosts([]);
+      setModuleHostsTotal(0);
+      setModuleHostsLoading(false);
+      return;
+    }
+
+    setModuleHostsLoading(true);
+    try {
+      const response = await getTopologyNodeHosts(selectedModuleNode.key, {
+        page,
+        page_size: pageSize,
+        keyword: hostSearchValue.trim() || undefined,
+      });
+
+      if (requestSeq !== moduleHostRequestSeqRef.current) {
+        return;
+      }
+
+      const items = response?.data?.items || [];
+      const pagination = response?.data?.pagination;
+
+      setModuleHosts(items.map(adaptTopologyHost));
+      setModuleHostsTotal(pagination?.total ?? items.length);
+    } catch (error) {
+      if (requestSeq !== moduleHostRequestSeqRef.current) {
+        return;
+      }
+      console.error('Failed to fetch selected module hosts:', error);
+      setModuleHosts([]);
+      setModuleHostsTotal(0);
+      message.error(t('resource.host.messages.loadFailed'));
+    } finally {
+      if (requestSeq === moduleHostRequestSeqRef.current) {
+        setModuleHostsLoading(false);
+      }
+    }
+  }, [
+    activeTab,
+    adaptTopologyHost,
+    hostSearchValue,
+    message,
+    page,
+    pageSize,
+    selectedModuleNode,
+    t,
+    visible,
+  ]);
 
   const filteredTreeData = useMemo(() => {
     // Filter tree data based on search value
@@ -187,6 +276,10 @@ const AddHostModal: React.FC<Props> = ({
 
     void loadTopologyAndHosts();
   }, [loadTopologyAndHosts, visible]);
+
+  useEffect(() => {
+    void loadSelectedModuleHosts();
+  }, [loadSelectedModuleHosts]);
 
   useEffect(() => {
     if (visible) {
@@ -253,7 +346,7 @@ const AddHostModal: React.FC<Props> = ({
     let hosts: any[] = [];
 
     if (activeTab === TabItemKey.StaticTopo) {
-      hosts = staticHosts.map((item) => ({
+      hosts = moduleHosts.map((item) => ({
         ...item,
         key: item.bk_host_id,
       }));
@@ -265,7 +358,7 @@ const AddHostModal: React.FC<Props> = ({
     }
 
     // Apply search filter
-    if (hostSearchValue && hostSearchValue.trim()) {
+    if (activeTab === TabItemKey.CustomInput && hostSearchValue && hostSearchValue.trim()) {
       const searchTerm = hostSearchValue.trim().toLowerCase();
       hosts = hosts.filter(
         (host) =>
@@ -294,7 +387,7 @@ const AddHostModal: React.FC<Props> = ({
 
     ips.forEach((ip) => {
       const trimmedIp = ip.trim();
-      const matchedHost = staticHosts.find(
+      const matchedHost = lookupHosts.find(
         (host) =>
           host.bk_host_innerip === trimmedIp || host.bk_host_innerip_v6 === trimmedIp,
       );
@@ -322,12 +415,8 @@ const AddHostModal: React.FC<Props> = ({
   };
 
   const handleCopyIPs = async () => {
-    const currentHosts = getCurrentHosts();
     const selectedIPs = resultPreviewItems
-      .map((resItem) => {
-        const host = currentHosts.find((h) => h.key === resItem.id);
-        return host?.bk_host_innerip;
-      })
+      .map((resItem) => resItem.ip)
       .filter(Boolean)
       .join('\n');
 
@@ -344,15 +433,21 @@ const AddHostModal: React.FC<Props> = ({
     setResultPreviewItems([]);
   };
 
-  const handleNodeSelect = () => {
-    // do nothing
+  const handleNodeSelect = (selectedNode: TreeData) => {
+    setSelectedModuleNode(selectedNode);
+    setModuleHosts([]);
+    setModuleHostsTotal(0);
+    setHostSearchValue('');
+    setPage(1);
   };
 
   const handleNextStep = () => {
     let output = resultPreviewItems;
     if (transferHostType === RemoveMenuItemKey.CurrentModule) {
       output = resultPreviewItems.map((item) => {
-        const hostInfo = staticHosts.find((h) => h.bk_host_id === item.id);
+        const hostInfo = [...moduleHosts, ...customHosts, ...lookupHosts].find(
+          (h) => h.bk_host_id === item.id,
+        );
         const cloud = hostInfo?.bk_cloud_id?.[0];
         const region = cloud ? `${cloud.bk_inst_name}[${cloud.bk_inst_id}]` : '';
         return { ...item, cloudInfo: region } as TransferHostItem;
@@ -368,6 +463,10 @@ const AddHostModal: React.FC<Props> = ({
     setCustomInput('');
     setCustomHosts([]);
     setHoveredHostId(null);
+    setSelectedModuleNode(null);
+    setModuleHosts([]);
+    setModuleHostsTotal(0);
+    setModuleHostsLoading(false);
     setTreeSearchValue('');
     setHostSearchValue('');
     setResultPreviewItems([]);
@@ -387,8 +486,8 @@ const AddHostModal: React.FC<Props> = ({
 
   const renderHostList = () => {
     const hosts = getCurrentHosts();
-    const total = hosts.length;
-    const isEmptySearchResult = hostSearchValue && hosts.length === 0;
+    const total = activeTab === TabItemKey.StaticTopo ? moduleHostsTotal : hosts.length;
+    const isStaticHostLoading = activeTab === TabItemKey.StaticTopo && moduleHostsLoading;
 
     return (
       <div className="table-wrapper">
@@ -397,38 +496,42 @@ const AddHostModal: React.FC<Props> = ({
           className="search-input"
           allowClear
           value={hostSearchValue}
-          onChange={(e) => setHostSearchValue(e.target.value.trim())}
-          onClear={() => setHostSearchValue('')}
+          onChange={(e) => {
+            setHostSearchValue(e.target.value.trim());
+            setPage(1);
+          }}
+          onClear={() => {
+            setHostSearchValue('');
+            setPage(1);
+          }}
         />
-        {isEmptySearchResult ? (
-          <EmptySearchResult onClearFilter={() => setHostSearchValue('')} />
-        ) : (
-          <>
-            <Table
-              rowSelection={{
-                selectedRowKeys: selectedHosts,
-                onChange: handleHostSelectionChange,
-              }}
-              columns={columns}
-              dataSource={hosts}
-              rowKey={(item) => item.bk_host_id}
-              pagination={false}
-              size="small"
-              className="table-list"
-            />
-            {total > 0 && (
-              <Pagination
-                total={total}
-                pageSize={pageSize}
-                current={page}
-                onChange={setPage}
-                onSizeChange={(_, size) => {
-                  setPage(1);
-                  setPageSize(size);
-                }}
-              />
-            )}
-          </>
+        <Table
+          rowSelection={{
+            selectedRowKeys: selectedHosts,
+            onChange: handleHostSelectionChange,
+            preserveSelectedRowKeys: true,
+          }}
+          columns={columns}
+          dataSource={hosts}
+          rowKey={(item) => item.bk_host_id}
+          pagination={false}
+          size="small"
+          loading={isStaticHostLoading}
+          className="table-list"
+          locale={{ emptyText: <TableEmpty /> }}
+        />
+        {total > 0 && (
+          <Pagination
+            total={total}
+            pageSize={pageSize}
+            current={page}
+            onChange={setPage}
+            onSizeChange={(_, size) => {
+              setPage(1);
+              setPageSize(size);
+            }}
+            size="small"
+          />
         )}
       </div>
     );

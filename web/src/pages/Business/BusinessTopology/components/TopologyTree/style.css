@@ -74,31 +74,13 @@
     box-shadow 0.18s ease;
 }
 
-.topology-tree .node-badge--icon {
-  background: transparent;
-  color: var(--color-text-quaternary);
-  border-color: transparent;
-  font-size: 14px;
-}
-
 .topology-tree .node-badge.selected,
 .topology-tree .ant-tree-node-selected .node-badge,
 .topology-tree .title-wrapper.active .node-badge {
   background: #2563eb !important;
   color: #ffffff !important;
-  border-color: #bfdbfe !important;
-  box-shadow: 0 0 0 3px #eff6ff !important;
-}
-
-.topology-tree .node-badge--icon.selected,
-.topology-tree .ant-tree-node-selected .node-badge--icon,
-.topology-tree .title-wrapper.active .node-badge--icon {
-  background: #eff6ff !important;
-  color: #2563eb !important;
-}
-
-.topology-tree .badge-idle-fault {
-  color: var(--color-warning);
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* When the node content is selected, make title bold and primary colored */
@@ -133,10 +115,28 @@
 }
 
 .topology-tree .suffix-count {
-  color: var(--color-text-tertiary);
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: var(--radius-sm);
+  background: #f5f7fa;
+  color: #9aa3b2;
   font-variant-numeric: tabular-nums;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.topology-tree .suffix-count.selected,
+.topology-tree .ant-tree-node-selected .suffix-count,
+.topology-tree .title-wrapper.active .suffix-count {
+  background: #93b1f5;
+  background: color-mix(in srgb, var(--color-primary) 50%, #ffffff);
+  color: #ffffff;
 }
 
 .topology-tree .topology-tree-create-button.ant-btn-sm {

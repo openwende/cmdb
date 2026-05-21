@@ -1,13 +1,18 @@
 .directory-wrapper {
+  box-sizing: border-box;
   background: var(--color-bg-container);
   border-right: 1px solid var(--color-border);
   position: relative;
   height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   user-select: none;
   padding: 8px;
 
   .directory-header {
     display: flex;
+    flex-shrink: 0;
     margin-bottom: 15px;
 
     .directory-add {
@@ -48,6 +53,13 @@
   .ant-tree-switcher:hover {
     height: 36px !important;
     line-height: 36px;
+  }
+
+  .directory-tree {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    padding-bottom: 16px;
   }
 
   .title-wrapper {
@@ -132,4 +144,10 @@
       }
     }
   }
+}
+
+.directory-wrapper--collapsed {
+  padding: 0;
+  background: transparent;
+  overflow: visible;
 }

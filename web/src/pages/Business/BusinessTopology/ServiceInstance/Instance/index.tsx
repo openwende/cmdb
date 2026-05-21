@@ -16,6 +16,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { PlusOutlined, EditOutlined, MinusOutlined } from '@ant-design/icons';
 import Pagination from '@/components/common/Pagination';
+import TableEmpty from '@/components/common/TableEmpty';
 import { useInstanceSceneStore } from '@/store/InstanceSceneStore';
 import {
   deleteProcess,
@@ -469,7 +470,7 @@ const Instance: React.FC<Props> = ({
             dataSource={activeProcess?.bind_info || []}
             pagination={false}
             size="small"
-            locale={{ emptyText: t('business.topology.serviceInstance.process.table.noData') }}
+            locale={{ emptyText: <TableEmpty /> }}
           />
 
           <div style={{ marginTop: 16 }}>

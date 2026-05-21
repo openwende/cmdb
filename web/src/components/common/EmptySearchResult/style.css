@@ -24,13 +24,14 @@
   line-height: var(--line-height-normal);
 }
 
-.clear-filter-btn {
+.clear-filter-btn.ant-btn-link {
   padding: 0;
   height: auto;
   font-size: var(--font-size-base);
-  color: var(--color-primary);
+  color: var(--color-primary) !important;
 }
 
-.clear-filter-btn:hover {
-  color: var(--color-primary-hover);
+.clear-filter-btn.ant-btn-link:hover,
+.clear-filter-btn.ant-btn-link:focus-visible {
+  color: var(--color-primary-hover) !important;
 }

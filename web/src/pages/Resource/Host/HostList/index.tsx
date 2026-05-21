@@ -1,12 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Dropdown, Modal, Tooltip, Checkbox } from 'antd';
+import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty } from 'antd';
 import { useAppMessage } from '@/utils/message';
 import {
   DownOutlined,
   ExclamationCircleFilled,
   HistoryOutlined,
-  CloseOutlined,
-  InboxOutlined,
 } from '@ant-design/icons';
 import {
   resourceAssignMenuItems,
@@ -45,8 +43,6 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   const directories = useDirectoryStore((state) => state.directories);
   const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
   const removePoolHosts = usePoolHostStore((state) => state.removeHosts);
-  const activeDir = directories.find((d) => d.bk_module_id === selectedId);
-  const dirDisplayName = activeDir?.bk_module_name ?? t('host.directory.hostPool');
 
   // Pool hosts
   const poolHosts = usePoolHostStore((state) => state.hosts);
@@ -157,24 +153,63 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   };
 
   const emptyNode = (
-    <div className="host-list-empty">
-      <InboxOutlined className="host-list-empty__icon" />
-      <p className="host-list-empty__hint">{t('resource.host.empty.poolHint', '此目录暂无主机')}</p>
-      {canWrite && (
-        <Button type="primary" onClick={() => setImportModalVisible(true)}>
-          {t('resource.host.actions.importHost')}
-        </Button>
-      )}
-    </div>
+    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData', '暂无数据')} />
   );
 
   return (
     <div className="host-list-wrapper">
       {/* Toolbar */}
       <div className="host-list-toolbar">
-        <div className="host-list-toolbar__dir">
-          <span className="host-list-toolbar__dir-name">{dirDisplayName}</span>
-          <span className="host-list-toolbar__dir-count">{poolHostTotal}</span>
+        <div className="host-list-toolbar__bulk-actions">
+          <Dropdown
+            menu={{
+              items: resourceAssignMenuItems.map((item) => ({
+                ...item,
+                label: t(item.label),
+              })),
+              onClick: (e) => setAssignType(e.key as AssignType),
+            }}
+            trigger={['click']}
+          >
+            <Button disabled={!hasSelection || !canWrite}>
+              {t('resource.host.actions.assign', { defaultValue: '分配' })} <DownOutlined />
+            </Button>
+          </Dropdown>
+          <Dropdown
+            menu={{
+              items: resourceCopyMenuItems.map((item: any) => ({
+                ...item,
+                label: t(item.label),
+                children: item.children?.map((child: any) => ({
+                  ...child,
+                  label: t(child.label),
+                })),
+              })),
+              onClick: ({ key }) => handleCopyMenuClick(key as ResourceCopyKey),
+            }}
+            trigger={['click']}
+            overlayStyle={{ width: 190 }}
+          >
+            <Button disabled={!hasSelection}>
+              {t('resource.host.actions.copy')} <DownOutlined />
+            </Button>
+          </Dropdown>
+          {canWrite && (
+            <Dropdown
+              menu={{
+                items: resourceMoreMenuItems.map((item) => ({
+                  ...item,
+                  label: t(item.label),
+                })),
+                onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey),
+              }}
+              trigger={['click']}
+            >
+              <Button disabled={!hasSelection}>
+                {t('resource.host.actions.more')} <DownOutlined />
+              </Button>
+            </Dropdown>
+          )}
         </div>
         <div className="host-list-toolbar__actions">
           {canWrite && (
@@ -205,7 +240,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             selectedRowKeys,
             onChange: (rowKeys) => setSelectedRowKeys(rowKeys),
           }}
-          locale={{ emptyText: emptyNode }}
+          locale={{ emptyText: poolHostLoading ? null : emptyNode }}
         />
       </div>
 
@@ -213,7 +248,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       <div className="host-mobile-card-list" aria-live="polite">
         {poolHostLoading ? (
           <div className="host-mobile-loading">
-            <div className="host-mobile-loading__spinner" aria-label="加载中" />
+            <div className="host-mobile-loading__spinner" />
           </div>
         ) : poolHosts.length > 0 ? (
           poolHosts.map((record: any) => {
@@ -267,74 +302,6 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
         }
         onSizeChange={(_, size) => setPoolHostQuery({ page: 1, pageSize: size })}
       />
-
-      {/* Floating Action Bar — appears when rows are selected */}
-      <div
-        className={`host-fab${hasSelection ? ' host-fab--visible' : ''}`}
-        aria-hidden={!hasSelection}
-      >
-        <span className="host-fab__count">
-          已选 <strong>{selectedRowKeys.length}</strong> 台
-        </span>
-        <div className="host-fab__actions">
-          <Dropdown
-            menu={{
-              items: resourceAssignMenuItems.map((item) => ({
-                ...item,
-                label: t(item.label),
-              })),
-              onClick: (e) => setAssignType(e.key as AssignType),
-            }}
-            trigger={['click']}
-          >
-            <Button type="primary" disabled={!canWrite}>
-              {t('resource.host.actions.assignTo')} <DownOutlined />
-            </Button>
-          </Dropdown>
-          <Dropdown
-            menu={{
-              items: resourceCopyMenuItems.map((item: any) => ({
-                ...item,
-                label: t(item.label),
-                children: item.children?.map((child: any) => ({
-                  ...child,
-                  label: t(child.label),
-                })),
-              })),
-              onClick: ({ key }) => handleCopyMenuClick(key as ResourceCopyKey),
-            }}
-            trigger={['click']}
-            overlayStyle={{ width: 190 }}
-          >
-            <Button>
-              {t('resource.host.actions.copy')} <DownOutlined />
-            </Button>
-          </Dropdown>
-          {canWrite && (
-            <Dropdown
-              menu={{
-                items: resourceMoreMenuItems.map((item) => ({
-                  ...item,
-                  label: t(item.label),
-                })),
-                onClick: ({ key }) => handleMoreMenuClick(key as ResourceMoreKey),
-              }}
-              trigger={['click']}
-            >
-              <Button>
-                {t('resource.host.actions.more')} <DownOutlined />
-              </Button>
-            </Dropdown>
-          )}
-        </div>
-        <Button
-          type="text"
-          icon={<CloseOutlined />}
-          onClick={() => setSelectedRowKeys([])}
-          className="host-fab__close"
-          aria-label="取消选择"
-        />
-      </div>
 
       {/* Modals */}
       <AssignModal

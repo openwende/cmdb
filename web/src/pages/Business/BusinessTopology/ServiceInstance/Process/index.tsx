@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Table, Button, Space, Drawer, Form, Input, message, Popconfirm, Empty } from 'antd';
+import { Table, Button, Space, Drawer, Form, Input, message, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
+import TableEmpty from '@/components/common/TableEmpty';
 import {
   deleteProcess,
   getProcess,
@@ -293,14 +294,7 @@ const Process: React.FC<Props> = ({
             dataSource={activeProcess?.bind_info || []}
             pagination={false}
             size="small"
-            locale={{
-              emptyText: (
-                <Empty
-                  image={Empty.PRESENTED_IMAGE_SIMPLE}
-                  description={t('business.topology.serviceInstance.process.table.noData')}
-                />
-              ),
-            }}
+            locale={{ emptyText: <TableEmpty /> }}
           />
 
           <div style={{ marginTop: 16 }}>
@@ -411,14 +405,7 @@ const Process: React.FC<Props> = ({
         }}
         pagination={false}
         bordered
-        locale={{
-          emptyText: (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={t('business.topology.serviceInstance.process.table.noData')}
-            />
-          ),
-        }}
+        locale={{ emptyText: <TableEmpty /> }}
       />
 
       {/* Pagination */}

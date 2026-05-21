@@ -7,7 +7,7 @@ import TopologyTree from '../components/TopologyTree';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import DragHandle from '@/components/common/DragHandle';
 import { TreeData } from '../../Types';
-import { filterTree, findNodeAndParents, collectAllKeys } from '../../utils';
+import { filterTree, collectAllKeys, findNodeAndParents } from '../../utils';
 import { getTopologyTree } from '@/api/services/business';
 import { adaptTopologyTree } from '@/api/adapters/topologyAdapter';
 import { useBusinessStore } from '@/store/BusinessStore';
@@ -31,6 +31,12 @@ const findIdleSetNode = (nodes: TreeData[]): TreeData | null => {
   return null;
 };
 
+const getExpandedKeysForSelection = (node: TreeData, parents: TreeData[]) => {
+  const parentKeys = parents.map((parent) => parent.key);
+  const shouldExpandSelectedNode = !!(node.children && node.children.length > 0);
+  return Array.from(new Set([...parentKeys, ...(shouldExpandSelectedNode ? [node.key] : [])]));
+};
+
 interface Props {
   selectedNode: TreeData | null;
   initialSelectedKey?: string | null;
@@ -40,7 +46,6 @@ interface Props {
 }
 
 const BusinessTree: React.FC<Props> = ({
-  selectedNode,
   initialSelectedKey,
   topologyVersion,
   onTopologyChanged,
@@ -59,6 +64,7 @@ const BusinessTree: React.FC<Props> = ({
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fullTreeData, setFullTreeData] = useState<TreeData[]>([]);
+  const selectedKeysRef = useRef<string[]>([]);
   const requestSequenceRef = useRef(0);
 
   // Auto-collapse on mobile/narrow viewport
@@ -139,35 +145,55 @@ const BusinessTree: React.FC<Props> = ({
     return collectAllKeys(filteredTreeData);
   }, [searchValue, filteredTreeData]);
 
+  const mergeExpandedKeys = React.useCallback((keys: string[]) => {
+    if (keys.length === 0) {
+      return;
+    }
+
+    setExpandedKeys((currentKeys) => Array.from(new Set([...currentKeys, ...keys])));
+  }, []);
+
   useEffect(() => {
     if (loading || fullTreeData.length === 0) {
       return;
     }
 
     if (searchExpandedKeys.length > 0) {
-      setExpandedKeys(searchExpandedKeys);
+      mergeExpandedKeys(searchExpandedKeys);
       return;
     }
 
-    if (initialSelectedKey) {
+    if (initialSelectedKey && selectedKeysRef.current[0] !== initialSelectedKey) {
       const { node, parents } = findNodeAndParents(fullTreeData, initialSelectedKey);
       if (node) {
-        const parentKeys = parents.map((p) => p.key);
-        setSelectedKeys([initialSelectedKey]);
-        setExpandedKeys([...parentKeys, initialSelectedKey]);
+        selectedKeysRef.current = [node.key];
+        setSelectedKeys([node.key]);
+        setExpandedKeys(getExpandedKeysForSelection(node, parents));
         onNodeSelect(node, parents);
+        return;
       }
-    } else if (!selectedNode) {
+    }
+
+    if (selectedKeysRef.current.length === 0) {
       const firstNode = fullTreeData[0];
       if (firstNode) {
+        selectedKeysRef.current = [firstNode.key];
         setSelectedKeys([firstNode.key]);
-        setExpandedKeys([firstNode.key]);
+        setExpandedKeys(getExpandedKeysForSelection(firstNode, []));
         onNodeSelect(firstNode, []);
       }
     }
-  }, [initialSelectedKey, searchExpandedKeys, fullTreeData, loading]);
+  }, [
+    initialSelectedKey,
+    searchExpandedKeys,
+    fullTreeData,
+    loading,
+    mergeExpandedKeys,
+    onNodeSelect,
+  ]);
 
   const handleNodeSelect = (selectedNode: TreeData, parentNodes: TreeData[]) => {
+    selectedKeysRef.current = [selectedNode.key];
     setSelectedKeys([selectedNode.key]);
     onNodeSelect(selectedNode, parentNodes);
   };
@@ -177,7 +203,6 @@ const BusinessTree: React.FC<Props> = ({
   };
 
   const isEmptySearchResult = filteredTreeData.length === 0 && searchValue;
-  const isEmptyTree = fullTreeData.length === 0 && !loading;
 
   return (
     <div
@@ -204,25 +229,21 @@ const BusinessTree: React.FC<Props> = ({
               style={{ padding: 0 }}
             />
           </div>
-          
+
           <div className="topo-tree-container">
             {loading ? (
-              <div style={{ textAlign: 'center', padding: '50px 0' }}>
+              <div className="topo-tree-loading">
                 <Spin />
-                <div style={{ marginTop: 8, color: 'var(--color-text-tertiary)', fontSize: 13 }}>{t('common.loading')}</div>
-              </div>
-            ) : isEmptyTree ? (
-              <div style={{ textAlign: 'center', padding: '50px 20px', color: 'var(--color-text-tertiary)' }}>
-                {t('business.topology.tree.noData')}
               </div>
             ) : isEmptySearchResult ? (
               <EmptySearchResult onClearFilter={handleClearSearch} />
-            ) : (
+            ) : filteredTreeData.length === 0 ? null : (
               <div className="topo-tree">
                 <TopologyTree
                   treeData={filteredTreeData}
                   selectedKeys={selectedKeys}
                   expandedKeys={expandedKeys}
+                  onExpandedKeysChange={setExpandedKeys}
                   searchValue={searchValue}
                   onTopologyChanged={onTopologyChanged}
                   onNodeSelect={handleNodeSelect}
@@ -240,7 +261,7 @@ const BusinessTree: React.FC<Props> = ({
           />
         </Fragment>
       )}
-      
+
       <button
         type="button"
         className="collapsed-button"

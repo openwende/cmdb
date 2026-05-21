@@ -117,8 +117,14 @@ body,
   font-weight: var(--font-weight-medium);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  white-space: nowrap;
   background: var(--color-bg-spotlight) !important;
   border-bottom: 1px solid var(--color-border);
+}
+
+.ant-table-wrapper .ant-table-thead > tr > th .ant-table-column-title,
+.ant-table-wrapper .ant-table-thead > tr > th .ant-table-column-sorters {
+  white-space: nowrap;
 }
 
 .ant-table-wrapper .ant-table-tbody > tr > td {
@@ -193,11 +199,28 @@ body,
 }
 
 .ant-btn:focus-visible,
-.ant-input:focus-visible,
-.ant-select-selector:focus-visible,
 .ant-menu-item:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+.ant-input:focus-visible,
+.ant-input-affix-wrapper:focus-visible,
+.ant-select-selector:focus-visible,
+.ant-input-number:focus-visible,
+.ant-picker:focus-visible {
+  outline: none;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper:focus,
+.ant-input-affix-wrapper-focused,
+.ant-input-number:focus,
+.ant-input-number-focused,
+.ant-picker-focused,
+.ant-select-focused .ant-select-selector {
+  box-shadow: none !important;
 }
 
 /* ===== Reduced Motion ===== */

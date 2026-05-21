@@ -1,5 +1,5 @@
 .statistics-container {
-  padding: var(--space-lg) var(--space-xl);
+  padding: 0 0 var(--space-lg);
   background-color: var(--color-bg-layout);
 
   .ant-divider-horizontal {

@@ -1,6 +1,13 @@
 .host-wrapper {
-  margin: 0 20px 4px;
-  height: calc(100% - 4px);
+  --resource-host-content-offset: 42px;
+  --resource-host-bottom-gap: 16px;
+
+  margin: 0 0 var(--resource-host-bottom-gap);
+  height: calc(
+    100vh - var(--header-height) - var(--resource-host-content-offset) -
+      var(--resource-host-bottom-gap)
+  );
+  min-height: 0;
 }
 
 .host-layout {

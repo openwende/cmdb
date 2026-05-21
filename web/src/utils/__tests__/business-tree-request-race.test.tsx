@@ -11,8 +11,8 @@ const {
   loadTopologySettings,
   onNodeSelect,
   searchProps,
-} =
-  vi.hoisted(() => ({
+  topologyTreeProps,
+} = vi.hoisted(() => ({
   t: (key: string) => key,
   currentBusiness: {
     id: 'biz-1',
@@ -67,6 +67,7 @@ const {
   loadTopologySettings: vi.fn(async () => undefined),
   onNodeSelect: vi.fn(),
   searchProps: [] as Record<string, unknown>[],
+  topologyTreeProps: [] as Record<string, unknown>[],
 }));
 
 vi.mock('react-i18next', () => ({
@@ -80,18 +81,18 @@ vi.mock('antd', () => ({
     Search: ({ value, onChange, onClear, ...props }: any) => {
       searchProps.push(props);
       return (
-      <div>
-        <input
-          aria-label="topology-search"
-          value={value}
-          onChange={onChange}
-          name={props.name}
-          id={props.id}
-        />
-        <button type="button" onClick={onClear}>
-          clear-search
-        </button>
-      </div>
+        <div>
+          <input
+            aria-label="topology-search"
+            value={value}
+            onChange={onChange}
+            name={props.name}
+            id={props.id}
+          />
+          <button type="button" onClick={onClear}>
+            clear-search
+          </button>
+        </div>
       );
     },
   },
@@ -128,19 +129,23 @@ vi.mock('@/components/common/DragHandle', () => ({
 }));
 
 vi.mock('@/pages/Business/BusinessTopology/components/TopologyTree', () => ({
-  default: ({ treeData }: any) => (
-    <div>
-      {treeData.map((node: any) => (
-        <div key={node.key}>{node.title}</div>
-      ))}
-    </div>
-  ),
+  default: ({ treeData, ...props }: any) => {
+    topologyTreeProps.push(props);
+    return (
+      <div>
+        {treeData.map((node: any) => (
+          <div key={node.key}>{node.title}</div>
+        ))}
+      </div>
+    );
+  },
 }));
 
 describe('BusinessTree projection loading', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     searchProps.length = 0;
+    topologyTreeProps.length = 0;
   });
 
   it('renders topology data without requiring legacy mainline model metadata', async () => {
@@ -183,5 +188,47 @@ describe('BusinessTree projection loading', () => {
       id: 'business-topology-search',
       name: 'business_topology_search',
     });
+  });
+
+  it('expands only the current business direct children on initialization', async () => {
+    render(
+      <BusinessTree
+        selectedNode={null}
+        topologyVersion={1}
+        onTopologyChanged={() => undefined}
+        onNodeSelect={onNodeSelect}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(topologyTreeProps.length).toBeGreaterThan(0);
+    });
+
+    const lastProps = topologyTreeProps.at(-1);
+    expect(lastProps?.selectedKeys).toEqual(['business-biz-1']);
+    expect(lastProps?.expandedKeys).toEqual(['business-biz-1']);
+  });
+
+  it('restores URL-selected deep nodes and opens their parent nodes', async () => {
+    render(
+      <BusinessTree
+        selectedNode={null}
+        initialSelectedKey="module-3"
+        topologyVersion={1}
+        onTopologyChanged={() => undefined}
+        onNodeSelect={onNodeSelect}
+      />,
+    );
+
+    await waitFor(() => {
+      const lastProps = topologyTreeProps.at(-1);
+      expect(lastProps?.selectedKeys).toEqual(['module-3']);
+      expect(lastProps?.expandedKeys).toEqual(['business-biz-1', 'set-4']);
+    });
+
+    expect(onNodeSelect).toHaveBeenLastCalledWith(expect.objectContaining({ key: 'module-3' }), [
+      expect.objectContaining({ key: 'business-biz-1' }),
+      expect.objectContaining({ key: 'set-4' }),
+    ]);
   });
 });

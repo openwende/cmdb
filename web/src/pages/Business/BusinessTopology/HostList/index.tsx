@@ -15,7 +15,6 @@ import {
   TransferHostItem,
   AppendMenuItemKey,
   DropdownMenuType,
-  MoreMenuItemKey,
   RemoveMenuItemKey,
   TopoTreeNodeType,
   TransferMenuItemType,
@@ -102,7 +101,8 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const fetchNodeHosts = useCallback(async () => {
     const nodeType = selectedNode.backendType || selectedNode.type;
     const nodeId = selectedNode.nodeId;
-    const canContainHosts = selectedNode.type === TopoTreeNodeType.Module;
+    const canContainHosts =
+      selectedNode.type === TopoTreeNodeType.Module && !selectedNode.extra?.isSyntheticIdleModule;
     const requestSeq = requestSeqRef.current + 1;
     requestSeqRef.current = requestSeq;
 
@@ -382,7 +382,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     {
       title: 'ID',
       dataIndex: ['host', 'bk_host_id'],
-      render: (id: number) => <a>{id}</a>,
+      render: (id: number) => <span>{id}</span>,
     },
     {
       title: t('resource.host.columns.innerIpv4'),
@@ -486,22 +486,6 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
         }
       });
       items.push(...translatedCopyItems);
-    } else if (type === DropdownMenuType.More) {
-      items.push(
-        {
-          key: MoreMenuItemKey.ExportSelected,
-          label: t('business.topology.hostList.menus.exportSelected'),
-          disabled: selectedRowKeys.length === 0,
-        },
-        {
-          key: MoreMenuItemKey.ExportAll,
-          label: t('business.topology.hostList.menus.exportAll'),
-        },
-        {
-          key: MoreMenuItemKey.ImportExcel,
-          label: t('business.topology.hostList.menus.importExcel'),
-        },
-      );
     }
 
     return { items };
@@ -663,20 +647,6 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                     {t('business.topology.hostList.buttons.copy')} <DownOutlined />
                   </Button>
                 </Dropdown>
-
-                {canWrite ? (
-                  <Dropdown
-                    menu={{
-                      ...getDropdownMenu(DropdownMenuType.More),
-                      onClick: ({ key }) => handleMenuClick(key),
-                    }}
-                    trigger={['click']}
-                  >
-                    <Button>
-                      {t('business.topology.hostList.buttons.more')} <DownOutlined />
-                    </Button>
-                  </Dropdown>
-                ) : null}
               </div>
 
               <div className="search-bar">
@@ -698,26 +668,20 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 }}
                 columns={columns}
                 dataSource={hostsList}
-                loading={loading}
+                loading={{ spinning: loading }}
+                size="small"
                 rowKey={(record) => record.host.bk_host_id}
                 pagination={false}
                 scroll={{ x: 900 }}
                 locale={{
-                  emptyText:
-                    searchValue && hostsList.length === 0 ? (
-                      <EmptySearchResult onClearFilter={handleClearSearch} />
-                    ) : !loading && hostsList.length === 0 ? (
-                      <Empty
-                        image={Empty.PRESENTED_IMAGE_SIMPLE}
-                        description={emptyHostDescription}
-                      >
-                        {selectedNodeStatus.isModule && canWrite ? (
-                          <Button type="primary" size="small" onClick={handleAddHosts}>
-                            {t('business.topology.hostList.buttons.add')}
-                          </Button>
-                        ) : null}
-                      </Empty>
-                    ) : undefined,
+                  emptyText: loading ? null : searchValue && hostsList.length === 0 ? (
+                    <EmptySearchResult onClearFilter={handleClearSearch} />
+                  ) : !loading && hostsList.length === 0 ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={emptyHostDescription}
+                    />
+                  ) : undefined,
                 }}
               />
             </div>
@@ -771,13 +735,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                   );
                 })
               ) : (
-                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyHostDescription}>
-                  {selectedNodeStatus.isModule && canWrite ? (
-                    <Button type="primary" size="small" onClick={handleAddHosts}>
-                      {t('business.topology.hostList.buttons.add')}
-                    </Button>
-                  ) : null}
-                </Empty>
+                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyHostDescription} />
               )}
             </div>
 
@@ -799,6 +757,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                     setPageSize(size);
                     setCurrentPage(1);
                   }}
+                  size="small"
                 />
               </div>
             )}

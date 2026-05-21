@@ -68,11 +68,7 @@ vi.mock('@/store/BusinessStore', () => ({
 }));
 
 vi.mock('@/pages/Business/BusinessTopology/BusinessTree', () => ({
-  default: ({
-    initialSelectedKey,
-  }: {
-    initialSelectedKey?: string | null;
-  }) => (
+  default: ({ initialSelectedKey }: { initialSelectedKey?: string | null }) => (
     <div>
       <div data-testid="initial-selected-key">{initialSelectedKey ?? 'null'}</div>
     </div>
@@ -166,8 +162,23 @@ describe('topology view deeplink sync', () => {
     render(<TopologyView />);
 
     expect(screen.getByText('business.topology.tabs.hostList')).toBeInTheDocument();
+    expect(screen.queryByText('business.topology.tabs.serviceInstance')).not.toBeInTheDocument();
     expect(screen.queryByText('business.topology.workspace.currentNode')).not.toBeInTheDocument();
     expect(screen.queryByText('Smoke Module')).not.toBeInTheDocument();
+  });
+
+  it('restores the right tab from the tab query param', () => {
+    mockSearch = 'node=module-3&tab=nodeInfo';
+    mockSelectedNode = {
+      key: 'module-3',
+      nodeId: '3',
+      title: 'Smoke Module',
+      type: TopoTreeNodeType.Module,
+    };
+
+    render(<TopologyView />);
+
+    expect(screen.getByText('node-info')).toBeInTheDocument();
   });
 
   it('keeps the topology tree free of the legacy business switcher and breadcrumb hints', () => {

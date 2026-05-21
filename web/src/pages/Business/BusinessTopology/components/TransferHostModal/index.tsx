@@ -281,7 +281,36 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
     onClose();
   };
 
-  const renderCustomTitlePrefix = (node: TreeData) => {
+  const renderNodeBadge = (
+    node: TreeData,
+    isSelected = false,
+    extraClassName = '',
+  ) => {
+    let label = '业';
+    switch (node.type) {
+      case TopoTreeNodeType.Module:
+        label = '模';
+        break;
+      case TopoTreeNodeType.Set:
+        label = '集';
+        break;
+    }
+
+    const typeStr = node.type?.toLowerCase() || 'biz';
+    const className = [
+      'node-badge',
+      'node-badge--circle',
+      `badge-${typeStr}`,
+      isSelected ? 'selected' : '',
+      extraClassName,
+    ]
+      .filter(Boolean)
+      .join(' ');
+
+    return <span className={className}>{label}</span>;
+  };
+
+  const renderCustomTitlePrefix = (node: TreeData, isSelected: boolean) => {
     if (
       (transferStatus.isIdlePool || transferStatus.isOtherBusiness) &&
       node.type === TopoTreeNodeType.Module
@@ -306,8 +335,12 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
           style={{ marginRight: 10 }}
         />
       );
-    } else if (node.objName) {
-      return <span className="custom-title-prefix">{node.objName.charAt(0)}</span>;
+    } else if (
+      node.type === TopoTreeNodeType.Biz ||
+      node.type === TopoTreeNodeType.Set ||
+      node.type === TopoTreeNodeType.Module
+    ) {
+      return renderNodeBadge(node, isSelected, 'transfer-tree-prefix');
     }
     return null;
   };
@@ -459,7 +492,7 @@ const TransferHostModal: React.FC<TransferHostModalProps> = ({
               >
                 <div className="preview-item-wrapper">
                   <div className="preview-item-content">
-                    <span className="preview-prefix">{(item.objName || '').charAt(0)}</span>
+                    {renderNodeBadge(item, true, 'preview-prefix')}
                     <span className="preview-name">{item.title}</span>
                   </div>
                   <div className="preview-path">{(item.parentPath || []).join(' / ')}</div>
