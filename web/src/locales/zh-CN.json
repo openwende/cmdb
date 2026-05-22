@@ -1395,7 +1395,7 @@
       "messages": {
         "importInfo": "说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作",
         "noRelatedModels": "暂无关联资源类型，无需选择",
-        "importFailed": "导入失败，请确认后端主机导入接口已启用",
+        "importFailed": "导入失败，请确认导入文件信息是否正确",
         "templateDownloadFailed": "模板下载失败，请确认后端模板接口已启用"
       },
       "host": {
@@ -1701,7 +1701,7 @@
         "existName": "目录名称已存在",
         "addSuccess": "新建成功",
         "addFailed": "新建失败，请稍后重试",
-        "renameSuccess": "修改成功",
+        "renameSuccess": "重命名成功",
         "renameFailed": "修改失败，请稍后重试",
         "deleteSuccess": "删除成功",
         "deleteFailed": "删除失败，请稍后重试",

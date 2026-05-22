@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, InputRef } from 'antd';
+import { Input, Tooltip, Dropdown, Modal, Tree, MenuProps, InputRef, Spin } from 'antd';
 import {
   PlusOutlined,
   FolderOutlined,
@@ -16,7 +16,13 @@ import UnpinSvg from '@/assets/icons/unpin.svg?react';
 import './style.css';
 import { useDirectoryStore } from '@/store/DirectoryStore';
 import { useAppMessage } from '@/utils/message';
-import { createPoolDirectory, renamePoolDirectory, deletePoolDirectory } from '@/api/services/resource';
+import {
+  createPoolDirectory,
+  renamePoolDirectory,
+  deletePoolDirectory,
+} from '@/api/services/resource';
+import { filterDirectoriesByKeyword, normalizeDirectorySearchKeyword } from './search';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
 
 // The width of the directory tree sidebar
 const DEFAULT_WIDTH = 320;
@@ -36,6 +42,7 @@ const Directory: React.FC<{
   const message = useAppMessage();
   const { confirm } = Modal;
   const directories = useDirectoryStore((state) => state.directories);
+  const loading = useDirectoryStore((state) => state.loading);
   const fetchDirectories = useDirectoryStore((state) => state.fetchDirectories);
   const [dirs, setDirs] = useState<any[]>([]);
   // State for adding and editing directories
@@ -52,6 +59,11 @@ const Directory: React.FC<{
   // State for the collapsed
   const [collapsed, setCollapsed] = useState<boolean>(false);
   const [expandedKeys, setExpandedKeys] = useState<React.Key[]>([unmodifiableDirIds[0]]);
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+
+  const normalizedSearchKeyword = normalizeDirectorySearchKeyword(searchKeyword);
+  const visibleDirs = filterDirectoriesByKeyword(dirs, searchKeyword);
+  const isEmptySearchResult = normalizedSearchKeyword && visibleDirs.length === 0 && !newDir;
 
   useEffect(() => {
     void fetchDirectories();
@@ -61,6 +73,16 @@ const Directory: React.FC<{
     setDirs(directories);
     setPinnedDirs(directories);
   }, [directories]);
+
+  useEffect(() => {
+    if (!normalizedSearchKeyword) {
+      return;
+    }
+
+    setExpandedKeys((keys) =>
+      keys.includes(unmodifiableDirIds[0]) ? keys : [...keys, unmodifiableDirIds[0]],
+    );
+  }, [normalizedSearchKeyword]);
 
   // Directory to be created
   const handleAdd = () => {
@@ -305,29 +327,23 @@ const Directory: React.FC<{
   const getDirectoryData = (): DirectoryData[] => {
     const children: DirectoryData[] = [
       // Pinned directories
-      ...pinnedOrder.map((id) => {
-        const dir = dirs.find((d) => d.bk_module_id === id);
-        if (!dir) {
-          return null;
-        }
-        return {
-          key: dir.bk_module_id,
-          title: dir.bk_module_name,
-          count: dir.host_count,
-        };
-      }).filter(Boolean) as DirectoryData[],
+      ...(pinnedOrder
+        .map((id) => {
+          const dir = visibleDirs.find((d) => d.bk_module_id === id);
+          if (!dir) {
+            return null;
+          }
+          return {
+            key: dir.bk_module_id,
+            title: dir.bk_module_name,
+            count: dir.host_count,
+          };
+        })
+        .filter(Boolean) as DirectoryData[]),
     ];
 
-    // New directory
-    if (newDir) {
-      children.push({
-        key: newDirId,
-        title: '',
-      });
-    }
-
     // The rest of the directory
-    dirs
+    visibleDirs
       .filter((dir) => !pinnedOrder.includes(dir.bk_module_id))
       .forEach((dir) => {
         children.push({
@@ -336,6 +352,14 @@ const Directory: React.FC<{
           count: dir.host_count,
         });
       });
+
+    // New directory input is appended at the bottom of the tree
+    if (newDir) {
+      children.push({
+        key: newDirId,
+        title: '',
+      });
+    }
 
     return [
       {
@@ -347,6 +371,9 @@ const Directory: React.FC<{
   };
 
   const selectedKeys = selectedId !== undefined && selectedId !== null ? [selectedId] : [];
+  const handleClearSearch = () => {
+    setSearchKeyword('');
+  };
 
   return (
     <div
@@ -362,27 +389,44 @@ const Directory: React.FC<{
         <>
           {/* The search input and the add icon */}
           <div className="directory-header">
-            <Input.Search placeholder={t('host.directory.grouped')} size="middle" />
+            <Input.Search
+              allowClear
+              placeholder={t('host.directory.grouped')}
+              size="middle"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={(value) => setSearchKeyword(value)}
+            />
             <Tooltip title={t('host.directory.add')}>
               <PlusOutlined className="directory-add" onClick={handleAdd} />
             </Tooltip>
           </div>
           {/* The directory tree */}
-          <Tree
-            treeData={getDirectoryData()}
-            expandedKeys={expandedKeys}
-            onExpand={(keys) => setExpandedKeys(keys)}
-            showLine={true}
-            blockNode={true}
-            selectedKeys={selectedKeys}
-            onSelect={(keys) => {
-              if (keys.length) {
-                void onSelect(keys[0] as number);
-              }
-            }}
-            titleRender={renderTitle}
-            className="directory-tree"
-          />
+          <div className="directory-tree-content">
+            {loading ? (
+              <div className="directory-tree-loading">
+                <Spin />
+              </div>
+            ) : isEmptySearchResult ? (
+              <EmptySearchResult onClearFilter={handleClearSearch} />
+            ) : (
+              <Tree
+                treeData={getDirectoryData()}
+                expandedKeys={expandedKeys}
+                onExpand={(keys) => setExpandedKeys(keys)}
+                showLine={true}
+                blockNode={true}
+                selectedKeys={selectedKeys}
+                onSelect={(keys) => {
+                  if (keys.length) {
+                    void onSelect(keys[0] as number);
+                  }
+                }}
+                titleRender={renderTitle}
+                className="directory-tree"
+              />
+            )}
+          </div>
           {/* The dragger */}
           <DragHandle
             minWidth={MIN_WIDTH}

@@ -124,7 +124,22 @@ const Sidebar: React.FC<SidebarProps> = ({
           });
         }
 
-        return selectedItem ? selectedItem.key : '';
+        if (selectedItem && !selectedItem.hideInMenu) {
+          return selectedItem.key;
+        }
+
+        // The match resolved to a hidden dynamic route (e.g. the model detail
+        // route `/model/:name/*`) or nothing matched. If the path is still a
+        // sub-route of this section, keep the section active by highlighting
+        // the first visible item (e.g. model detail → 类型总览).
+        if (sidebarSection?.path && path.startsWith(`${sidebarSection.path}/`)) {
+          const firstVisible = sidebarItems.find(
+            (item: NavigationItem) => !item.hideInMenu && item.path,
+          );
+          if (firstVisible) return firstVisible.key;
+        }
+
+        return '';
       }
     }
 

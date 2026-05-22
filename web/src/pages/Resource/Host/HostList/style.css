@@ -29,6 +29,10 @@
   gap: 8px;
 }
 
+.host-list-toolbar__search {
+  width: 240px;
+}
+
 /* ── Table shell ─────────────────────────────────────────── */
 .host-list-table-shell {
   overflow-x: auto;
@@ -72,6 +76,11 @@
 
   .host-list-toolbar__actions {
     justify-content: flex-end;
+  }
+
+  .host-list-toolbar__search {
+    flex: 1;
+    width: auto;
   }
 
   .host-list-table-shell {

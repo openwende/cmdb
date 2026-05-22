@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty } from 'antd';
+import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty, Input } from 'antd';
 import { useAppMessage } from '@/utils/message';
 import {
   DownOutlined,
@@ -161,6 +161,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       {/* Toolbar */}
       <div className="host-list-toolbar">
         <div className="host-list-toolbar__bulk-actions">
+          {canWrite && (
+            <Button type="primary" onClick={() => setImportModalVisible(true)}>
+              {t('resource.host.actions.importHost')}
+            </Button>
+          )}
           <Dropdown
             menu={{
               items: resourceAssignMenuItems.map((item) => ({
@@ -212,11 +217,12 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
           )}
         </div>
         <div className="host-list-toolbar__actions">
-          {canWrite && (
-            <Button type="primary" onClick={() => setImportModalVisible(true)}>
-              {t('resource.host.actions.importHost')}
-            </Button>
-          )}
+          <Input.Search
+            className="host-list-toolbar__search"
+            allowClear
+            size="middle"
+            placeholder={t('resource.host.search.placeholder')}
+          />
           <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
             <Button
               icon={<HistoryOutlined />}

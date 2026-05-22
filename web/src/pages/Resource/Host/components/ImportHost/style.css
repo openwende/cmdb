@@ -42,6 +42,15 @@
     }
   }
 
+  .import-text-action.ant-typography {
+    color: var(--color-primary);
+
+    &:hover,
+    &:focus {
+      color: var(--color-primary-hover);
+    }
+  }
+
   .upload-item {
     display: flex;
     justify-content: space-between;

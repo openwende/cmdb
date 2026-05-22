@@ -1,10 +1,10 @@
 .audit-filters {
-  padding: 20px 20px 4px;
+  padding: 20px 20px 16px;
   background: var(--color-bg-container);
   margin-bottom: 16px;
 
   .ant-form-item {
-    margin-bottom: 16px;
+    margin-bottom: 12px;
   }
 
   .ant-row {

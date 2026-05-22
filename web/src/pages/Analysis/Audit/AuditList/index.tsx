@@ -171,7 +171,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
             emptyText: (
               <Empty
                 image={Empty.PRESENTED_IMAGE_SIMPLE}
-                description={t('analysis.audit.empty.noRecords', '暂无审计记录')}
+                description={t('analysis.audit.empty.noRecords', '暂无数据')}
               >
                 {(searchKeyword || actionType || timeRange) && (
                   <Button
@@ -233,7 +233,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={t('analysis.audit.empty.noRecords', '暂无审计记录')}
+            description={t('analysis.audit.empty.noRecords', '暂无数据')}
           />
         )}
       </div>

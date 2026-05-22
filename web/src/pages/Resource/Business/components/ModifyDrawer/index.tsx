@@ -242,22 +242,24 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
               label: t('resource.business.modify.sections.basic'),
               children: (
                 <div className="form-grid">
-                  <FormFieldItem
-                    fieldName="name"
-                    label={t('resource.business.modify.fields.name')}
-                    required={true}
-                    type={type}
-                    handleFieldChange={handleFieldChange}
-                    selectedFields={selectedFields}
-                  >
-                    <Input
-                      placeholder={t('resource.business.modify.placeholders.name')}
-                      disabled={isFieldDisabled('name')}
-                      className="select-input"
-                      maxLength={100}
-                      showCount
-                    />
-                  </FormFieldItem>
+                  {isCreateMode(type) && (
+                    <FormFieldItem
+                      fieldName="name"
+                      label={t('resource.business.modify.fields.name')}
+                      required={true}
+                      type={type}
+                      handleFieldChange={handleFieldChange}
+                      selectedFields={selectedFields}
+                    >
+                      <Input
+                        placeholder={t('resource.business.modify.placeholders.name')}
+                        disabled={isFieldDisabled('name')}
+                        className="select-input"
+                        maxLength={100}
+                        showCount
+                      />
+                    </FormFieldItem>
+                  )}
                   <FormFieldItem
                     fieldName="lifecycle"
                     label={t('resource.business.modify.fields.lifecycle')}

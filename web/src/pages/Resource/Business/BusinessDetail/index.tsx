@@ -14,16 +14,6 @@ const BusinessDetail: React.FC = () => {
       label: '属性',
       children: id && <Properties businessId={id} />,
     },
-    {
-      key: 'associations',
-      label: '关联',
-      children: <div className="tab-placeholder">关联功能开发中...</div>,
-    },
-    {
-      key: 'changelog',
-      label: '变更记录',
-      children: <div className="tab-placeholder">变更记录功能开发中...</div>,
-    },
   ];
 
   return (

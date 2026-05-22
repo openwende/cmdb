@@ -134,7 +134,7 @@ const FieldDesignerPage: React.FC = () => {
       </div>
 
       {schemaFields.length === 0 ? (
-        <Empty description={t('resource.model.empty.noAttributes')} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
       ) : (
         <Table
           rowKey="name"

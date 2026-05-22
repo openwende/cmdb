@@ -288,7 +288,7 @@ const RelationDetailPage: React.FC = () => {
           description={t('resource.model.unsupported.relations')}
         />
       ) : associations.length === 0 ? (
-        <Empty description={t('resource.model.empty.noRelations')} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
       ) : (
         <Table
           rowKey="id"

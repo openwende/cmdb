@@ -50,7 +50,7 @@ const BusinessList: React.FC = () => {
   const [searchDateRange, setSearchDateRange] = useState<
     [dayjs.Dayjs | null, dayjs.Dayjs | null] | null
   >(null);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Find current field option
@@ -106,9 +106,6 @@ const BusinessList: React.FC = () => {
       width: 160,
       render: (_: string, record: BusinessDetail) => (
         <Space size="small">
-          <Button type="link" size="small" onClick={() => handleDetail(record.id)}>
-            {t('resource.business.actions.viewDetail')}
-          </Button>
           {canWrite && (
             <Button type="link" size="small" danger onClick={() => handleArchive(record)}>
               {t('resource.business.actions.archive')}
@@ -246,9 +243,10 @@ const BusinessList: React.FC = () => {
           <Button type="primary" onClick={handleCreate} disabled={!canWrite}>
             {t('resource.business.actions.create')}
           </Button>
-          <Button disabled={!canWrite || selectedRowKeys.length === 0} onClick={handleEdit}>
+          {/* 批量编辑功能暂未开放，先隐藏入口 */}
+          {/* <Button disabled={!canWrite || selectedRowKeys.length === 0} onClick={handleEdit}>
             {t('resource.business.actions.batchEdit')}
-          </Button>
+          </Button> */}
         </div>
         <div className="list-search">
           <Space.Compact>
@@ -319,19 +317,7 @@ const BusinessList: React.FC = () => {
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={t('common.noData')}
-            >
-              {canWrite && (
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    setDrawerType('create');
-                    setDrawerVisible(true);
-                  }}
-                >
-                  {t('resource.business.actions.create')}
-                </Button>
-              )}
-            </Empty>
+            />
           ),
         }}
       />

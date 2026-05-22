@@ -30,6 +30,9 @@ export const designTokens = {
 export const antdTheme: ThemeConfig = {
   token: {
     colorPrimary: designTokens.colorPrimary,
+    colorLink: designTokens.colorPrimary,
+    colorLinkHover: designTokens.colorPrimaryHover,
+    colorLinkActive: designTokens.colorPrimaryActive,
     colorSuccess: designTokens.colorSuccess,
     colorWarning: designTokens.colorWarning,
     colorError: designTokens.colorError,

@@ -1395,7 +1395,7 @@
       "messages": {
         "importInfo": "Note: Import editing requires exporting instances to be modified first, then completing editing before import editing operation",
         "noRelatedModels": "No related resource types, no need to select",
-        "importFailed": "Import failed. Check that the backend host import API is enabled.",
+        "importFailed": "Import failed. Check whether the import file information is correct.",
         "templateDownloadFailed": "Template download failed. Check that the backend template API is enabled."
       },
       "host": {
@@ -1697,7 +1697,7 @@
         "existName": "Directory name already exists",
         "addSuccess": "Created successfully",
         "addFailed": "Failed to create, please try again",
-        "renameSuccess": "Modified successfully",
+        "renameSuccess": "Renamed successfully",
         "renameFailed": "Failed to rename, please try again",
         "deleteSuccess": "Deleted successfully",
         "deleteFailed": "Failed to delete, please try again",

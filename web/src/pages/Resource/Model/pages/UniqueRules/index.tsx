@@ -278,9 +278,9 @@ const UniqueRulesPage: React.FC = () => {
           description={t('resource.model.unsupported.uniqueRules')}
         />
       ) : attributeOptions.length === 0 ? (
-        <Empty description={t('resource.model.empty.noAttributes')} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
       ) : rules.length === 0 ? (
-        <Empty description={t('resource.model.empty.noUniqueRules')} />
+        <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
       ) : (
         <Table<ModelUniqueRule>
           rowKey="id"

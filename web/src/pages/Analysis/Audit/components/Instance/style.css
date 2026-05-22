@@ -15,10 +15,11 @@
   }
 
   .instance-checkbox {
-    width: 52px;
+    flex: none;
+    white-space: nowrap;
 
-    .ant-checkbox-label {
-      padding-right: 0;
+    & > span:last-child {
+      padding-inline-end: 0;
     }
   }
 }

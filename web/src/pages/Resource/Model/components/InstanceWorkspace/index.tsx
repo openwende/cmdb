@@ -574,7 +574,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
           expandedRowRender: (record) => renderJSONPreview(record.properties || {}),
         }}
         locale={{
-          emptyText: <Empty description={t('resource.model.empty.noInstances')} />,
+          emptyText: (
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
+          ),
         }}
       />
 

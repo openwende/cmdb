@@ -30,7 +30,7 @@ import {
   addHostsToPoolDirectory,
   type BatchCreateHostItem,
 } from '@/api/services/resource';
-import { useAppMessage } from '@/utils/message';
+import { formatBatchImportErrors, getImportResponseErrors } from './errors';
 import './style.css';
 
 const { Dragger } = Upload;
@@ -47,15 +47,6 @@ interface RelatedModelRow {
   key: React.Key;
   name: string;
   unique: string;
-}
-
-interface ImportErrorResponse {
-  response?: {
-    data?: {
-      error?: string | string[];
-      message?: string;
-    };
-  };
 }
 
 enum Step {
@@ -76,7 +67,6 @@ const ImportHost: React.FC<ImportHostProps> = ({
   onImportSuccess,
 }) => {
   const { t } = useTranslation();
-  const message = useAppMessage();
   const [drawerOpen, setDrawerOpen] = useState(visible);
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   // Step2 states
@@ -100,20 +90,6 @@ const ImportHost: React.FC<ImportHostProps> = ({
       setModelList(modelListMock);
     }
   }, [modelList.length, step]);
-
-  const getResponseErrors = (error: unknown) => {
-    const data = (error as ImportErrorResponse)?.response?.data;
-    if (Array.isArray(data?.error)) {
-      return data.error;
-    }
-    if (typeof data?.error === 'string') {
-      return [data.error];
-    }
-    if (typeof data?.message === 'string') {
-      return [data.message];
-    }
-    return undefined;
-  };
 
   useEffect(() => {
     setDrawerOpen(visible);
@@ -149,6 +125,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
     setResultErrors([]);
 
     try {
+      const fallbackMessage = t('resource.import.messages.importFailed');
       // Step 1: parse xlsx client-side
       const buffer = await file.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
@@ -187,26 +164,24 @@ const ImportHost: React.FC<ImportHostProps> = ({
         await addHostsToPoolDirectory(selectedDirId, createdIds);
       }
 
-      const errors: string[] = (batchResult.errors ?? []).map(
-        (e) => `行 ${e.index + 2} (${e.host_name}): ${e.error}`,
-      );
+      const errors = formatBatchImportErrors(batchResult.errors);
 
       if (batchResult.successful > 0) {
         onImportSuccess();
         setImportStatus(ImportStatus.Success);
       } else {
         setImportStatus(ImportStatus.Fail);
-        setResultErrors(errors.length ? errors : [t('resource.import.messages.importFailed')]);
+        setResultErrors(errors.length > 0 ? errors : [fallbackMessage]);
       }
 
-      if (errors.length > 0) {
+      if (batchResult.successful > 0 && errors.length > 0) {
         setResultErrors(errors);
       }
     } catch (error: unknown) {
       console.error(error);
       setImportStatus(ImportStatus.Fail);
-      setResultErrors(getResponseErrors(error) ?? [t('resource.import.messages.importFailed')]);
-      message.error(t('resource.import.messages.importFailed'));
+      const backendErrors = getImportResponseErrors(error);
+      setResultErrors(backendErrors ?? [t('resource.import.messages.importFailed')]);
     } finally {
       setSubmitting(false);
       setStep(Step.Result);
@@ -274,7 +249,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
             </p>
             <p className="ant-upload-text">
               {t('resource.import.upload.dragText')}
-              <Link>{t('resource.import.upload.clickText')}</Link>
+              <Link className="import-text-action">{t('resource.import.upload.clickText')}</Link>
             </p>
           </Dragger>
         ) : (
@@ -289,7 +264,7 @@ const ImportHost: React.FC<ImportHostProps> = ({
         {/* hint & download */}
         <div className="bottom-hint">
           <Text>{t('resource.import.upload.fileHint')} </Text>
-          <Link onClick={handleDownloadTemplate}>
+          <Link className="import-text-action" onClick={handleDownloadTemplate}>
             <VerticalAlignBottomOutlined />
             {t('resource.import.upload.downloadTemplate')}
           </Link>
