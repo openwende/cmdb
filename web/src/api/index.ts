@@ -58,6 +58,13 @@ export {
 
 export { getBusinessFormSchema } from './services/businessCustomField';
 
+export { listAuditLogs } from './services/audit';
+export type {
+  AuditQueryParams as AuditApiParams,
+  AuditLogRaw,
+  AuditListResponse,
+} from './services/audit';
+
 export {
   listAggregateInstances,
   getModelInstanceDetail,

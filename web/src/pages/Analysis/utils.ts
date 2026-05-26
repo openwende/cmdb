@@ -1,4 +1,3 @@
-import { bizInfo } from '@/mock/business';
 import { ACTION_LABELS } from '@/pages/Analysis/constants';
 import { AuditTabKey, OperationDetail } from '@/pages/Analysis/Types';
 import dayjs from 'dayjs';
@@ -36,7 +35,9 @@ export const getDefaultAuditFilters = (): AuditQueryFilters => {
 
 const includesIgnoreCase = (source: unknown, keyword?: string) => {
   if (!keyword) return true;
-  return String(source || '').toLowerCase().includes(keyword.trim().toLowerCase());
+  return String(source || '')
+    .toLowerCase()
+    .includes(keyword.trim().toLowerCase());
 };
 
 const normalizeActionFilter = (action?: string[] | string) => {
@@ -76,7 +77,11 @@ export const filterOperationDetails = (
       const operationTime = dayjs(detailItem.operation_time);
       const startTime = dayjs(filters.timeRange[0]).startOf('day');
       const endTime = dayjs(filters.timeRange[1]).endOf('day');
-      if (!operationTime.isValid() || operationTime.isBefore(startTime) || operationTime.isAfter(endTime)) {
+      if (
+        !operationTime.isValid() ||
+        operationTime.isBefore(startTime) ||
+        operationTime.isAfter(endTime)
+      ) {
         return false;
       }
     }
@@ -127,7 +132,7 @@ export const filterOperationDetails = (
 export const processDetailList = (detailList: any[]): OperationDetail[] => {
   return detailList.map((detailItem, index) => {
     const {
-      bk_biz_id,
+      biz_name,
       resource_type,
       operation_detail,
       user,
@@ -140,7 +145,7 @@ export const processDetailList = (detailList: any[]): OperationDetail[] => {
 
     return {
       id: detailItem.id || index + 1,
-      business: bizInfo.info.find((biz) => biz.bk_biz_id === bk_biz_id)?.bk_biz_name || '--',
+      business: biz_name || '--',
       object: resource_type,
       action: actionName,
       modelType: operation_detail?.bk_obj_id || resource_type,

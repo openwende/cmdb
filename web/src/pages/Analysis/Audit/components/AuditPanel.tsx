@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Form } from 'antd';
 import { useTranslation } from 'react-i18next';
 import BusinessSelector from '@/components/common/BusinessSelector';
@@ -11,14 +11,13 @@ import AccountFilter from './Account';
 import HostFilter from './Host';
 import InstanceFilter from './Instance';
 import { AUDIT_TAB_KEYS } from '@/pages/Analysis/constants';
-import { AuditTabKey } from '@/pages/Analysis/Types';
+import { AuditTabKey, OperationDetail } from '@/pages/Analysis/Types';
 import {
   AuditQueryFilters,
-  filterOperationDetails,
   getDefaultAuditFilters,
   processDetailList,
 } from '@/pages/Analysis/utils';
-import { mockOperationDetails } from '@/mock/Analysis';
+import { listAuditLogs } from '@/api/services/audit';
 
 interface AuditPanelProps {
   tab: AuditTabKey;
@@ -31,16 +30,56 @@ const AuditPanel: React.FC<AuditPanelProps> = ({ tab }) => {
   const [filters, setFilters] = useState<AuditQueryFilters>(() => getDefaultAuditFilters());
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
+  const [auditList, setAuditList] = useState<OperationDetail[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const auditList = useMemo(() => {
-    const filteredDetails = filterOperationDetails(mockOperationDetails, tab, filters);
-    return processDetailList(filteredDetails);
-  }, [filters, tab]);
+  const fetchAuditLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const actions = filters.action
+        ? (Array.isArray(filters.action) ? filters.action : [filters.action]).join(',')
+        : undefined;
 
-  const pagedAuditList = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return auditList.slice(start, start + pageSize);
-  }, [auditList, page, pageSize]);
+      const params = {
+        audit_type: tab,
+        bk_biz_id: filters.business || undefined,
+        resource_type: filters.operationTarget || undefined,
+        action: actions || undefined,
+        start_time: filters.timeRange?.[0] || undefined,
+        end_time: filters.timeRange?.[1] || undefined,
+        account: filters.account?.value || undefined,
+        account_match: (filters.account?.type as 'include' | 'exclude') || 'include',
+        host: tab === AUDIT_TAB_KEYS.HOST ? filters.host?.value || undefined : undefined,
+        host_type:
+          tab === AUDIT_TAB_KEYS.HOST
+            ? (filters.host?.type as 'ip' | 'hostname') || 'ip'
+            : undefined,
+        instance: tab !== AUDIT_TAB_KEYS.HOST ? filters.instance?.value || undefined : undefined,
+        instance_type:
+          tab !== AUDIT_TAB_KEYS.HOST
+            ? (filters.instance?.type as 'name' | 'id') || 'name'
+            : undefined,
+        page,
+        page_size: pageSize,
+      };
+
+      const res = await listAuditLogs(params);
+      if (res?.data) {
+        setTotal(res.data.count);
+        setAuditList(processDetailList(res.data.info));
+      }
+    } catch {
+      setAuditList([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [tab, filters, page, pageSize]);
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
 
   const handleSearch = (nextFilters: AuditQueryFilters) => {
     setFilters(nextFilters || {});
@@ -67,17 +106,17 @@ const AuditPanel: React.FC<AuditPanelProps> = ({ tab }) => {
 
   return (
     <div>
-      <AuditFilters onSearch={handleSearch} loading={false}>
+      <AuditFilters onSearch={handleSearch} loading={loading}>
         {filterItems}
       </AuditFilters>
       <AuditTable
-        data={pagedAuditList}
-        loading={false}
+        data={auditList}
+        loading={loading}
         showFilters={false}
         pagination={{
           page,
           pageSize,
-          total: auditList.length,
+          total,
           onChange: (nextPage) => setPage(nextPage),
           onSizeChange: (_current, size) => {
             setPage(1);
