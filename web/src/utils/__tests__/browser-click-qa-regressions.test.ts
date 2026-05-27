@@ -28,7 +28,14 @@ const findRoute = (path: string, items: any[] = routes): any | undefined => {
 
 describe('browser click QA regressions', () => {
   it('keeps parent navigation routes wired to default child pages', () => {
+    expect(findRoute('/business/:businessId')?.children?.some((child: any) => child.index)).toBe(
+      true,
+    );
+    expect(
+      findRoute('/business-set/:businessSetId')?.children?.some((child: any) => child.index),
+    ).toBe(true);
     expect(findRoute('/model')?.children?.some((child: any) => child.index)).toBe(true);
+    expect(findRoute('/resource')?.children?.some((child: any) => child.index)).toBe(true);
     expect(findRoute('/analysis')?.children?.some((child: any) => child.index)).toBe(true);
     expect(findRoute('/admin')?.children?.some((child: any) => child.index)).toBe(true);
   });
@@ -42,8 +49,12 @@ describe('browser click QA regressions', () => {
   });
 
   it('does not leak host audit rows into business or resource tabs', () => {
-    expect(filterOperationDetails(mockOperationDetails, AUDIT_TAB_KEYS.BUSINESS, {})).toHaveLength(0);
-    expect(filterOperationDetails(mockOperationDetails, AUDIT_TAB_KEYS.RESOURCE, {})).toHaveLength(0);
+    expect(filterOperationDetails(mockOperationDetails, AUDIT_TAB_KEYS.BUSINESS, {})).toHaveLength(
+      0,
+    );
+    expect(filterOperationDetails(mockOperationDetails, AUDIT_TAB_KEYS.RESOURCE, {})).toHaveLength(
+      0,
+    );
   });
 
   it('submits host import files through the API instead of random mock results', async () => {
@@ -60,7 +71,7 @@ describe('browser click QA regressions', () => {
     });
 
     expect(axios.post).toHaveBeenCalledWith(
-      '/v1/hosts/import',
+      '/v1/resource-pool/hosts/import',
       expect.any(FormData),
       expect.objectContaining({
         headers: {

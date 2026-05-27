@@ -22,10 +22,10 @@ const DynamicGroup: React.FC = () => {
   const [pageSize, setPageSize] = useState(PAGE_SIZE);
   const [groupCount, setGroupCount] = useState(0);
   const [groupList, setGroupList] = useState<DynamicGroupItem[]>([]);
-  const [allGroups, setAllGroups] = useState<DynamicGroupItem[]>([]);
   const [searchField, setSearchField] = useState<string>('id');
   const [searchText, setSearchText] = useState<string>('');
-  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [submittedSearchText, setSubmittedSearchText] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(true);
   const [alertVisible, setAlertVisible] = useState(true);
   const [editingGroup, setEditingGroup] = useState<DynamicGroupItem | null>(null);
   const [drawerVisible, setDrawerVisible] = useState<boolean>(false);
@@ -43,6 +43,7 @@ const DynamicGroup: React.FC = () => {
 
   // Find current field option
   const currentFieldOption = searchFieldOptions.find((option) => option.value === searchField);
+  const hasSubmittedSearchText = submittedSearchText.trim().length > 0;
 
   const columns = [
     {
@@ -61,8 +62,7 @@ const DynamicGroup: React.FC = () => {
       dataIndex: 'bk_obj_id',
       sorter: true,
       width: 150,
-      render: (val: string) =>
-        val === 'host' ? t('business.dynamicGroup.objectTypes.host') : val,
+      render: (val: string) => t(`business.dynamicGroup.objectTypes.${val}`, { defaultValue: val }),
     },
     {
       title: t('business.dynamicGroup.columns.createUser'),
@@ -112,56 +112,43 @@ const DynamicGroup: React.FC = () => {
 
   useEffect(() => {
     void handleGroupData();
-  }, [currentBusiness?.id]);
-
-  useEffect(() => {
-    applyFiltersAndPagination();
-  }, [allGroups, searchField, searchText, page, pageSize]);
-
-  const applyFiltersAndPagination = () => {
-    const keyword = searchText.trim().toLowerCase();
-    const filteredData = allGroups.filter((item) => {
-      if (!keyword) {
-        return true;
-      }
-      if (searchField === 'id') {
-        return item.id.toLowerCase().includes(keyword);
-      }
-      if (searchField === 'name') {
-        return item.name.toLowerCase().includes(keyword);
-      }
-      if (searchField === 'bk_obj_id') {
-        return item.bk_obj_id.toLowerCase().includes(keyword);
-      }
-      if (searchField === 'modify_user') {
-        return (item.modify_user || '').toLowerCase().includes(keyword);
-      }
-      return true;
-    });
-
-    setGroupCount(filteredData.length);
-    setGroupList(filteredData.slice((page - 1) * pageSize, page * pageSize));
-  };
+  }, [currentBusiness?.id, page, pageSize, searchField, submittedSearchText]);
 
   const handleGroupData = async () => {
+    setIsSearching(true);
+
     if (!currentBusiness?.id) {
-      setAllGroups([]);
       setGroupList([]);
       setGroupCount(0);
+      setIsSearching(false);
       return;
     }
 
     try {
-      setIsSearching(true);
+      const keyword = submittedSearchText.trim();
+      const params: {
+        limit: number;
+        offset: number;
+        target?: string;
+        keyword?: string;
+        search_field?: string;
+      } = {
+        limit: pageSize,
+        offset: (page - 1) * pageSize,
+      };
+
+      if (keyword) {
+        params.keyword = keyword;
+        params.search_field = searchField;
+      }
+
       const response = await listDynamicGroups(currentBusiness.id, {
-        limit: 200,
-        offset: 0,
-        target: 'host',
+        ...params,
       });
-      setAllGroups(response.data.items || []);
+      setGroupList(response.data.items || []);
+      setGroupCount(response.data.total || 0);
     } catch (error) {
       console.error(error);
-      setAllGroups([]);
       setGroupList([]);
       setGroupCount(0);
       message.error(t('business.dynamicGroup.messages.loadFailed'));
@@ -229,17 +216,20 @@ const DynamicGroup: React.FC = () => {
 
   const handleTextSearch = (value: string) => {
     setSearchText(value);
+    setSubmittedSearchText(value);
     setPage(1);
   };
 
   const handleFieldChange = (value: string) => {
     setSearchField(value);
     setSearchText('');
+    setSubmittedSearchText('');
     setPage(1);
   };
 
   const clearSearch = () => {
     setSearchText('');
+    setSubmittedSearchText('');
     setPage(1);
   };
 
@@ -260,14 +250,7 @@ const DynamicGroup: React.FC = () => {
       {/* Alert notification */}
       {alertVisible && (
         <Alert
-          message={
-            <span>
-              {t('business.dynamicGroup.alert.message')}
-              <a href="#" style={{ marginLeft: 8 }}>
-                {t('business.dynamicGroup.alert.linkText')} &gt;
-              </a>
-            </span>
-          }
+          message={t('business.dynamicGroup.alert.message')}
           type="info"
           showIcon
           closable
@@ -299,7 +282,13 @@ const DynamicGroup: React.FC = () => {
               })}
               allowClear
               value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
+              onChange={(e) => {
+                setSearchText(e.target.value);
+                if (!e.target.value) {
+                  setSubmittedSearchText('');
+                  setPage(1);
+                }
+              }}
               onSearch={handleTextSearch}
             />
           </Space.Compact>
@@ -313,12 +302,12 @@ const DynamicGroup: React.FC = () => {
         showSorterTooltip={false}
         rowKey="id"
         bordered={true}
+        loading={isSearching}
         pagination={false}
         locale={{
-          emptyText:
-            isSearching && groupList.length === 0 ? (
-              <EmptySearchResult onClearFilter={clearSearch} />
-            ) : undefined,
+          emptyText: isSearching ? null : hasSubmittedSearchText ? (
+            <EmptySearchResult onClearFilter={clearSearch} />
+          ) : undefined,
         }}
       />
 

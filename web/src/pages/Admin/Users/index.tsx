@@ -28,7 +28,9 @@ const UserDrawer: React.FC<{
   mode: 'create' | 'edit';
   initialUser?: AuthManagedUser | null;
   onClose: () => void;
-  onSubmit: (payload: CreateAuthUserPayload | { display_name: string; status: string; role: string }) => Promise<void>;
+  onSubmit: (
+    payload: CreateAuthUserPayload | { display_name: string; status: string; role: string },
+  ) => Promise<void>;
 }> = ({ open, loading, mode, initialUser, onClose, onSubmit }) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
@@ -77,7 +79,11 @@ const UserDrawer: React.FC<{
 
   return (
     <Drawer
-      title={mode === 'create' ? t('auth.userManagement.actions.create') : t('auth.userManagement.actions.edit')}
+      title={
+        mode === 'create'
+          ? t('auth.userManagement.actions.create')
+          : t('auth.userManagement.actions.edit')
+      }
       width={480}
       open={open}
       onClose={onClose}
@@ -98,7 +104,10 @@ const UserDrawer: React.FC<{
           name="username"
           rules={[{ required: true, message: t('common.form.rulesMessage') }]}
         >
-          <Input disabled={mode === 'edit'} placeholder={t('auth.userManagement.placeholders.username')} />
+          <Input
+            disabled={mode === 'edit'}
+            placeholder={t('auth.userManagement.placeholders.username')}
+          />
         </Form.Item>
         <Form.Item
           label={t('auth.userManagement.fields.displayName')}
@@ -207,7 +216,7 @@ const PasswordDrawer: React.FC<{
 const UserManagementPage: React.FC = () => {
   const { t } = useTranslation();
   const [users, setUsers] = useState<AuthManagedUser[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [passwordSubmitting, setPasswordSubmitting] = useState(false);
   const [drawerMode, setDrawerMode] = useState<'create' | 'edit'>('create');
@@ -268,7 +277,9 @@ const UserManagementPage: React.FC = () => {
       message.error(
         getUserManagementErrorMessage(
           error,
-          drawerMode === 'create' ? t('common.message.createFailed') : t('common.message.updateFailed'),
+          drawerMode === 'create'
+            ? t('common.message.createFailed')
+            : t('common.message.updateFailed'),
           t,
         ),
       );
@@ -324,7 +335,8 @@ const UserManagementPage: React.FC = () => {
       title: t('auth.userManagement.columns.lastLoginAt'),
       dataIndex: 'last_login_at',
       width: 180,
-      render: (value?: string | null) => (value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '--'),
+      render: (value?: string | null) =>
+        value ? dayjs(value).format('YYYY-MM-DD HH:mm:ss') : '--',
     },
     {
       title: t('auth.userManagement.columns.updatedAt'),
@@ -374,6 +386,7 @@ const UserManagementPage: React.FC = () => {
         columns={columns}
         dataSource={users}
         pagination={false}
+        locale={{ emptyText: loading ? null : undefined }}
       />
 
       <UserDrawer

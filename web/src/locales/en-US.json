@@ -848,6 +848,10 @@
         "set": {
           "name": "Cluster",
           "desc": "Target is cluster list"
+        },
+        "object": {
+          "name": "Object",
+          "desc": "Target is object list"
         }
       },
       "conditionPicker": {
@@ -957,7 +961,8 @@
         "linkText": "View details"
       },
       "objectTypes": {
-        "host": "Host"
+        "host": "Host",
+        "set": "Object"
       }
     },
     "entryRedirect": {

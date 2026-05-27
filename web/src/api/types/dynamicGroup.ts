@@ -113,6 +113,7 @@ export interface PreviewDynamicGroupResponse {
 export interface UpsertDynamicGroupPayload {
   name: string;
   bk_obj_id: string;
+  target_model_uid?: string;
   condition: DynamicGroupConditionGroup[];
   variable_condition: DynamicGroupConditionGroup[];
   description?: string;
@@ -120,6 +121,7 @@ export interface UpsertDynamicGroupPayload {
 
 export interface PreviewDynamicGroupPayload {
   bk_obj_id: string;
+  target_model_uid?: string;
   condition: DynamicGroupConditionGroup[];
   variable_condition: DynamicGroupConditionGroup[];
   limit?: number;

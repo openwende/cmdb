@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
@@ -85,6 +85,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
   // Preview result state
   const [previewData, setPreviewData] = useState<any[]>([]);
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  const initialPreviewDoneRef = useRef(false);
   const disabled = mode === FormMode.PREVIEW;
 
   const conditionTypes = [
@@ -116,17 +117,23 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
   useEffect(() => {
     if (
+      !initialPreviewDoneRef.current &&
       (mode === FormMode.EDIT || mode === FormMode.PREVIEW) &&
       Object.keys(conditions).length > 0
     ) {
-      // Use setTimeout to avoid calling during render
+      initialPreviewDoneRef.current = true;
       const timeoutId = setTimeout(() => {
         handlePreview();
       }, 100);
-
       return () => clearTimeout(timeoutId);
     }
   }, [conditions, mode]);
+
+  useEffect(() => {
+    if (!visible) {
+      initialPreviewDoneRef.current = false;
+    }
+  }, [visible]);
 
   const loadMeta = async () => {
     if (!currentBusiness?.id) {
@@ -320,6 +327,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
       const formData: DynamicGroupFormData = {
         name: values.groupName,
         bk_obj_id: values.groupObject,
+        target_model_uid: values.groupObject,
         condition,
         variable_condition,
       };
@@ -366,6 +374,7 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
       const previewPayload = {
         bk_obj_id: form.getFieldValue('groupObject') || groupObject,
+        target_model_uid: form.getFieldValue('groupObject') || groupObject,
         condition,
         variable_condition,
         limit: 100,

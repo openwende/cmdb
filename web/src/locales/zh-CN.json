@@ -848,6 +848,10 @@
         "set": {
           "name": "集群",
           "desc": "目标为集群列表"
+        },
+        "object": {
+          "name": "对象",
+          "desc": "目标为对象列表"
         }
       },
       "conditionPicker": {
@@ -957,7 +961,8 @@
         "linkText": "查看详情"
       },
       "objectTypes": {
-        "host": "主机"
+        "host": "主机",
+        "set": "对象"
       }
     },
     "entryRedirect": {

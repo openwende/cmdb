@@ -110,6 +110,12 @@ export const routes: NavigationItem[] = [
     hideInMenu: true,
     children: [
       {
+        key: 'businessEntityIndex',
+        element: <Navigate to="topology" replace />,
+        index: true,
+        hideInMenu: true,
+      },
+      {
         name: 'routes.businessTopology',
         key: BusinessNavKey.Topology,
         path: 'topology',
@@ -147,6 +153,12 @@ export const routes: NavigationItem[] = [
     element: withSuspense(BusinessPage),
     hideInMenu: true,
     children: [
+      {
+        key: 'businessSetEntityIndex',
+        element: <Navigate to="topology" replace />,
+        index: true,
+        hideInMenu: true,
+      },
       {
         name: 'routes.businessSetTopology',
         key: BusinessSetNavKey.Topology,
@@ -261,6 +273,12 @@ export const routes: NavigationItem[] = [
     path: '/resource',
     element: withSuspense(ResourcePage),
     children: [
+      {
+        key: 'resourceIndex',
+        element: <Navigate to="business" replace />,
+        index: true,
+        hideInMenu: true,
+      },
       {
         name: 'routes.resourceBusiness',
         key: ResourceKey.Business,

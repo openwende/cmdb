@@ -1,16 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Table,
-  Button,
-  Input,
-  Select,
-  Tooltip,
-  Space,
-  DatePicker,
-  Spin,
-  Empty,
-} from 'antd';
+import { Table, Button, Input, Select, Tooltip, Space, DatePicker, Spin, Empty } from 'antd';
 import { useAppMessage } from '@/utils/message';
 import { HistoryOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -158,12 +148,6 @@ const BusinessList: React.FC = () => {
     setDrawerVisible(true);
   };
 
-  const handleEdit = () => {
-    if (!canWrite) return;
-    setDrawerType('edit');
-    setDrawerVisible(true);
-  };
-
   const handleDetail = (id: number) => {
     navigate(`${businessDetailPath}/${id}`);
   };
@@ -238,7 +222,7 @@ const BusinessList: React.FC = () => {
 
   return (
     <div className="business-list">
-        <div className="list-header">
+      <div className="list-header">
         <div className="list-operation">
           <Button type="primary" onClick={handleCreate} disabled={!canWrite}>
             {t('resource.business.actions.create')}
@@ -309,15 +293,9 @@ const BusinessList: React.FC = () => {
           emptyText: loading ? (
             <Spin className="table-spin" />
           ) : fetchError ? (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={fetchError}
-            />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={fetchError} />
           ) : (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={t('common.noData')}
-            />
+            <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
           ),
         }}
       />

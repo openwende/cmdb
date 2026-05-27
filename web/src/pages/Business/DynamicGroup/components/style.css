@@ -306,14 +306,25 @@
         .item-toggle,
         .item-remove {
           padding: 4px;
-          color: var(--color-text-tertiary);
           cursor: pointer;
           border-radius: 4px;
           transition: all 0.2s;
+        }
 
-          &:hover {
-            color: var(--color-error);
-          }
+        .item-toggle {
+          color: var(--color-text-tertiary);
+        }
+
+        .item-toggle:hover {
+          color: var(--color-primary);
+        }
+
+        .item-remove {
+          color: var(--color-text-tertiary);
+        }
+
+        .item-remove:hover {
+          color: var(--color-error);
         }
       }
     }

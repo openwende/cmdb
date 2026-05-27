@@ -1,6 +1,22 @@
 import { useMemo } from 'react';
 import { Property } from '../Types';
 
+const normalizeOptions = (options: Property['option']) => {
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  if (typeof options !== 'string') return options;
+
+  try {
+    const parsed = JSON.parse(options);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return options
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+};
+
 // The hook is used to derive various needed information from the property object
 export const usePropertyInfo = (property: Property) => {
   return useMemo(() => {
@@ -18,7 +34,7 @@ export const usePropertyInfo = (property: Property) => {
       objId,
       propertyId,
       propertyType,
-      options,
+      options: normalizeOptions(options),
       isSetName,
       isModuleName,
     };

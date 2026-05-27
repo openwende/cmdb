@@ -10,7 +10,13 @@ import {
 
 export const listDynamicGroups = async (
   businessID: number,
-  params?: { limit?: number; offset?: number; target?: string; keyword?: string },
+  params?: {
+    limit?: number;
+    offset?: number;
+    target?: string;
+    keyword?: string;
+    search_field?: string;
+  },
 ): Promise<ListDynamicGroupsResponse> => {
   return axios.get(`/v1/businesses/${businessID}/dynamic-groups`, { params });
 };

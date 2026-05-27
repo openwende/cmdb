@@ -24,7 +24,7 @@ const ModelList: React.FC = () => {
   const canWrite = useAuthStore((state) => state.canWrite());
   const [models, setModels] = useState<ModelDefinition[]>([]);
   const [groups, setGroups] = useState<ModelGroup[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [page, setPage] = useState(1);
@@ -65,7 +65,9 @@ const ModelList: React.FC = () => {
         model.name.toLowerCase().includes(keyword) ||
         model.display_name.toLowerCase().includes(keyword) ||
         model.classification.toLowerCase().includes(keyword) ||
-        String(model.group_display_name || '').toLowerCase().includes(keyword)
+        String(model.group_display_name || '')
+          .toLowerCase()
+          .includes(keyword)
       );
     });
   }, [models, activeGroup, searchValue]);
@@ -101,7 +103,11 @@ const ModelList: React.FC = () => {
       dataIndex: 'display_name',
       width: 220,
       render: (_value, record) => (
-        <Button type="link" className="table-link-button" onClick={() => navigate(buildModelDetailPath(record.name, 'basic'))}>
+        <Button
+          type="link"
+          className="table-link-button"
+          onClick={() => navigate(buildModelDetailPath(record.name, 'basic'))}
+        >
           {record.display_name}
         </Button>
       ),
@@ -142,13 +148,14 @@ const ModelList: React.FC = () => {
       title: t('resource.model.columns.scope'),
       dataIndex: 'mainline_scope',
       width: 120,
-      render: (value: string) => (value ? t(`resource.model.options.scope.${value}`, { defaultValue: value }) : '--'),
+      render: (value: string) =>
+        value ? t(`resource.model.options.scope.${value}`, { defaultValue: value }) : '--',
     },
     {
       title: t('resource.model.columns.level'),
       dataIndex: 'mainline_level',
       width: 100,
-      render: (value?: number | null) => (value ?? '--'),
+      render: (value?: number | null) => value ?? '--',
     },
     {
       title: t('resource.model.columns.updatedAt'),
@@ -161,7 +168,11 @@ const ModelList: React.FC = () => {
       key: 'actions',
       width: 120,
       render: (_value, record) => (
-        <Button type="link" className="table-link-button" onClick={() => navigate(buildModelDetailPath(record.name, 'basic'))}>
+        <Button
+          type="link"
+          className="table-link-button"
+          onClick={() => navigate(buildModelDetailPath(record.name, 'basic'))}
+        >
           {t('resource.model.actions.viewDetail')}
         </Button>
       ),
@@ -281,9 +292,7 @@ const ModelList: React.FC = () => {
                       )}
                     </span>
                     <span className="model-card__time">
-                      {model.updated_at
-                        ? dayjs(model.updated_at).format('MM-DD HH:mm')
-                        : ''}
+                      {model.updated_at ? dayjs(model.updated_at).format('MM-DD HH:mm') : ''}
                     </span>
                   </span>
                 </button>
@@ -294,7 +303,9 @@ const ModelList: React.FC = () => {
                 <ApartmentOutlined className="model-card-empty__icon" />
                 <div className="model-card-empty__text">
                   {searchValue || activeGroup !== ALL_GROUP_KEY
-                    ? t('resource.model.empty.noSearchResult', { defaultValue: '没有找到匹配的模型' })
+                    ? t('resource.model.empty.noSearchResult', {
+                        defaultValue: '没有找到匹配的模型',
+                      })
                     : t('resource.model.empty.noModels', { defaultValue: '暂无模型，请先创建' })}
                 </div>
               </div>

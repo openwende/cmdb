@@ -89,10 +89,12 @@ const PropertyList: React.FC<ListProps> = ({
     const newCondition: Record<string, Condition> = {};
 
     properties.forEach((property) => {
-      if (storageConditions && storageConditions[property.id]) {
-        // If the property already exists in storageConditions, use it
-        storageConditions[property.id].property.conditionType = property.conditionType;
-        newCondition[property.id] = storageConditions[property.id];
+      const stored = storageConditions?.[property.id];
+      if (stored) {
+        newCondition[property.id] = {
+          ...stored,
+          property: { ...stored.property, conditionType: property.conditionType },
+        };
       } else {
         newCondition[property.id] = {
           property,
@@ -152,7 +154,7 @@ const PropertyList: React.FC<ListProps> = ({
   const getPropertyLabel = (property: Property) => {
     const modelId = property.bk_obj_id;
     const propertyName = property.bk_property_name;
-    const modelName = modelMap[modelId].bk_obj_name;
+    const modelName = modelMap[modelId]?.bk_obj_name || modelId;
     return `${modelName} - ${propertyName}`;
   };
 

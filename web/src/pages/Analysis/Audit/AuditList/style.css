@@ -1,7 +1,7 @@
 .audit-list {
   padding: var(--space-xl);
   background: var(--color-bg-container);
-  border-radius: var(--radius-lg);
+  border-radius: 0;
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
 

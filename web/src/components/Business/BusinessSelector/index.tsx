@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { Select, Spin, Divider, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -26,16 +26,20 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   const location = useLocation();
   const { t } = useTranslation();
 
-  const {
-    currentBusiness,
-    businessList,
-    businessSetList,
-    loading,
-    initialized,
-    loadBusinessData,
-    getBusinessById,
-    setCurrentBusiness,
-  } = useBusinessStore();
+  // Subscribe to each slice individually so unrelated store updates
+  // (e.g. ``loading`` toggling) don't force a Select-popup remount.
+  const currentBusiness = useBusinessStore((s) => s.currentBusiness);
+  const businessList = useBusinessStore((s) => s.businessList);
+  const businessSetList = useBusinessStore((s) => s.businessSetList);
+  const loading = useBusinessStore((s) => s.loading);
+  const initialized = useBusinessStore((s) => s.initialized);
+  const loadBusinessData = useBusinessStore((s) => s.loadBusinessData);
+  const getBusinessById = useBusinessStore((s) => s.getBusinessById);
+  const setCurrentBusiness = useBusinessStore((s) => s.setCurrentBusiness);
+
+  // Stable popup container so the antd Select dropdown's portal doesn't churn
+  // its internal innerContainer state during the navigation cascade.
+  const getPopupContainer = useCallback(() => document.body, []);
 
   useEffect(() => {
     // 只在未初始化时加载数据
@@ -47,23 +51,14 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   // Update current business when URL changes
   useEffect(() => {
     const businessInfo = parseBusinessInfoFromUrl(location.pathname);
-
-    if (businessInfo) {
-      const { id, type } = businessInfo;
-      const business = getBusinessById(id, type);
-
-      if (business && currentBusiness?.id !== business.id) {
-        setCurrentBusiness(business);
-      }
+    if (!businessInfo) return;
+    const business = getBusinessById(businessInfo.id, businessInfo.type);
+    if (business && currentBusiness?.id !== business.id) {
+      setCurrentBusiness(business);
     }
-  }, [
-    businessList,
-    businessSetList,
-    currentBusiness?.id,
-    getBusinessById,
-    location.pathname,
-    setCurrentBusiness,
-  ]);
+    // getBusinessById/setCurrentBusiness are zustand action refs (stable);
+    // depending on the lists' identities would re-fire on every store update.
+  }, [location.pathname, currentBusiness?.id, businessList.length, businessSetList.length]);
 
   // Generate select value from current business
   const getSelectValue = (): string => {
@@ -71,50 +66,53 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     return `${currentBusiness.type}:${currentBusiness.id}`;
   };
 
-  // Handle business selection change
+  // Handle business selection change. We intentionally only navigate here —
+  // ``setCurrentBusiness`` is driven by the URL-watching effect below. Doing
+  // both in the same handler causes overlapping re-renders during the popup
+  // close animation, which triggered a setState loop inside antd's portal.
   const handleChange = (value: string) => {
     const [type, idStr] = value.split(':');
 
     if (type === BusinessType.Business) {
       const business = getBusinessById(Number(idStr), BusinessType.Business);
       if (business) {
-        setCurrentBusiness(business);
-        // Always use replace to ensure page state refresh
         navigate(getBusinessTopologyPath(business.id), { replace: true });
       }
     } else if (type === BusinessType.BusinessSet) {
       const businessSet = getBusinessById(Number(idStr), BusinessType.BusinessSet);
       if (businessSet) {
-        setCurrentBusiness(businessSet);
-
-        // Always use replace to ensure page state refresh
         navigate(getBusinessSetTopologyPath(businessSet.id), { replace: true });
       }
     }
   };
 
   // Handle create business click
-  const handleCreateBusiness = () => {
+  const handleCreateBusiness = useCallback(() => {
     navigate(`/resource/business?create=${CREATE_TYPES.BUSINESS}`);
-  };
+  }, [navigate]);
 
-  // Custom popup render with create business option at bottom
-  const renderPopup = (menu: React.ReactElement) => (
-    <>
-      {menu}
-      <Divider className="create-business-divider" />
-      <div className="create-business-container">
-        <Button
-          color="primary"
-          variant="text"
-          icon={<PlusOutlined />}
-          onClick={handleCreateBusiness}
-          className="create-business-button"
-        >
-          {t('common.components.businessSelector.createBusiness')}
-        </Button>
-      </div>
-    </>
+  // Custom popup render with create business option at bottom.
+  // Memoized — antd Select treats popupRender identity as a dep; an unstable
+  // function makes the popup remount on every parent render.
+  const renderPopup = useCallback(
+    (menu: React.ReactElement) => (
+      <>
+        {menu}
+        <Divider className="create-business-divider" />
+        <div className="create-business-container">
+          <Button
+            color="primary"
+            variant="text"
+            icon={<PlusOutlined />}
+            onClick={handleCreateBusiness}
+            className="create-business-button"
+          >
+            {t('common.components.businessSelector.createBusiness')}
+          </Button>
+        </div>
+      </>
+    ),
+    [t, handleCreateBusiness],
   );
 
   // Show selector in business or business set pages
@@ -136,7 +134,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
         loading={loading}
         notFoundContent={loading ? <Spin size="small" /> : null}
         placeholder={t('common.components.businessSelector.placeholder')}
-        getPopupContainer={() => document.body}
+        getPopupContainer={getPopupContainer}
         styles={{ root: { width: collapsed ? SELECTOR_COLLAPSED_WIDTH : undefined } }}
       >
         {businessList.length > 0 && (
@@ -147,8 +145,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                 value={`${BusinessType.Business}:${business.id}`}
                 label={`${business.name} (${business.id})`}
               >
-                {business.name}{' '}
-                <span className="option-id">({business.id})</span>
+                {business.name} <span className="option-id">({business.id})</span>
               </Option>
             ))}
           </OptGroup>
@@ -162,8 +159,7 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
                 value={`${BusinessType.BusinessSet}:${businessSet.id}`}
                 label={`${businessSet.name} (${businessSet.id})`}
               >
-                {businessSet.name}{' '}
-                <span className="option-id">({businessSet.id})</span>
+                {businessSet.name} <span className="option-id">({businessSet.id})</span>
               </Option>
             ))}
           </OptGroup>

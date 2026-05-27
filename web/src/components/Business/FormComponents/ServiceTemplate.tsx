@@ -32,20 +32,10 @@ const ServiceTemplate: React.FC<FormComponentProps> = ({
     }
   };
 
-  const getValue = () => {
-    if (Array.isArray(value)) {
-      return value.map((id) => {
-        const template = templates.find((t) => t.id === id);
-        return template ? template.name : '';
-      });
-    }
-    return [];
-  };
-
   return (
     <Select
       mode="multiple"
-      value={getValue()}
+      value={Array.isArray(value) ? value : []}
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}

@@ -156,6 +156,7 @@ export interface DynamicGroupConditionGroup {
 export interface DynamicGroupFormData {
   name: string;
   bk_obj_id: string;
+  target_model_uid?: string;
   bk_biz_id?: number;
   condition: DynamicGroupConditionGroup[];
   variable_condition: DynamicGroupConditionGroup[];

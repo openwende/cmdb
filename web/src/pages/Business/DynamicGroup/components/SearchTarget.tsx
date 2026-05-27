@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { BUILTIN_MODELS } from '../../constants';
 
 interface TargetItem {
-  id: string;
+  id: BUILTIN_MODELS;
   name: string;
   desc: string;
 }
@@ -33,16 +33,21 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
       name: t('business.dynamicGroupForm.searchTarget.host.name'),
       desc: t('business.dynamicGroupForm.searchTarget.host.desc'),
     },
+    {
+      id: BUILTIN_MODELS.SET,
+      name: t('business.dynamicGroupForm.searchTarget.object.name'),
+      desc: t('business.dynamicGroupForm.searchTarget.object.desc'),
+    },
   ];
   const handleChange = (e: RadioChangeEvent) => {
-    const newValue = e.target.value;
+    const newValue = e.target.value as BUILTIN_MODELS;
     const oldValue = value;
 
     if (disabled) return;
 
     if (showModal) {
       const item = list.find((item) => item.id === newValue);
-      if (item?.id) onShowModal?.(item.id as BUILTIN_MODELS);
+      if (item?.id) onShowModal?.(item.id);
       return;
     }
 
