@@ -35,59 +35,59 @@ const BasicInfo: React.FC<BasicInfoProps> = ({
     () =>
       LANGUAGE_OPTIONS.map((option) => ({
         id: option.value,
-        name: option.label,
+        name: t(option.label),
       })),
-    [],
+    [t],
   );
 
   // Field configuration for basic info
   const basicInfoFields: FieldConfig[] = [
     {
-      label: '业务名',
+      label: t('resource.business.modify.fields.name'),
       field: 'name',
       type: 'singlechar',
       editable: true,
       required: true,
     },
     {
-      label: '创建时间',
+      label: t('resource.business.modify.fields.createdAt'),
       field: 'created_at',
       type: 'time',
       editable: false,
     },
     {
-      label: '创建人',
+      label: t('resource.business.modify.fields.createdBy'),
       field: 'created_by',
       type: 'objuser',
       editable: false,
     },
     {
-      label: '更新时间',
+      label: t('resource.business.modify.fields.updatedAt'),
       field: 'updated_at',
       type: 'time',
       editable: false,
     },
     {
-      label: '更新人',
+      label: t('resource.business.modify.fields.updatedBy'),
       field: 'updated_by',
       type: 'objuser',
       editable: false,
     },
     {
-      label: '生命周期',
+      label: t('resource.business.modify.fields.lifecycle'),
       field: 'lifecycle',
       type: 'enum',
       editable: true,
       options: lifecycleOptions,
     },
     {
-      label: '时区',
+      label: t('resource.business.modify.fields.timezone'),
       field: 'timezone',
       type: 'enum',
       editable: false,
     },
     {
-      label: '语言',
+      label: t('resource.business.modify.fields.language'),
       field: 'language',
       type: 'enum',
       editable: true,

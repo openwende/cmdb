@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Row, Col, message, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusSquareOutlined } from '@ant-design/icons';
@@ -18,6 +18,23 @@ import './style.css';
 
 // Built-in chart IDs for instance statistics
 const BUILTIN_CHART_IDS = [7, 8];
+const INSTANCE_CHART_NAME_KEYS: Record<number, string> = {
+  7: 'analysis.statistics.chartNames.instance.instanceCount',
+  8: 'analysis.statistics.chartNames.instance.instanceChange',
+};
+const INSTANCE_SAMPLE_CATEGORY_KEYS: Record<string, string> = {
+  业务集: 'analysis.statistics.sampleData.instanceCategory.businessSet',
+  交换机: 'analysis.statistics.sampleData.instanceCategory.switch',
+  负载均衡: 'analysis.statistics.sampleData.instanceCategory.loadBalance',
+  路由器: 'analysis.statistics.sampleData.instanceCategory.router',
+  防火墙: 'analysis.statistics.sampleData.instanceCategory.firewall',
+  项目: 'analysis.statistics.sampleData.instanceCategory.project',
+};
+const INSTANCE_SAMPLE_TYPE_KEYS: Record<string, string> = {
+  新增: 'analysis.statistics.sampleData.changeType.create',
+  更新: 'analysis.statistics.sampleData.changeType.update',
+  删除: 'analysis.statistics.sampleData.changeType.delete',
+};
 
 const InstanceStatistics: React.FC = () => {
   const { t } = useTranslation();
@@ -53,18 +70,41 @@ const InstanceStatistics: React.FC = () => {
     setChartDatas(mockChartDetailData);
   }, [charts]);
 
+  const getChartDisplayName = useCallback(
+    (chart: Pick<ChartItem, 'configId' | 'name'>) => {
+      const nameKey = INSTANCE_CHART_NAME_KEYS[chart.configId];
+      return nameKey ? t(nameKey) : chart.name;
+    },
+    [t],
+  );
+
+  const translateChartData = useCallback(
+    (data: any[] = []) =>
+      data.map((item) => {
+        const categoryKey = INSTANCE_SAMPLE_CATEGORY_KEYS[item.category];
+        const typeKey = INSTANCE_SAMPLE_TYPE_KEYS[item.type];
+
+        return {
+          ...item,
+          category: categoryKey ? t(categoryKey) : item.category,
+          type: typeKey ? t(typeKey) : item.type,
+        };
+      }),
+    [t],
+  );
+
   // Instance statistics object options Built-in options
   const builtInOptions = useMemo(() => {
     return charts
       .filter((chart) => BUILTIN_CHART_IDS.includes(chart.configId))
       .map((chart) => ({
         value: chart.configId,
-        label: chart.name,
+        label: getChartDisplayName(chart),
         // Check if already exists
         disabled: charts.some((c) => c.configId === chart.configId),
         chartData: chart,
       }));
-  }, [charts]);
+  }, [charts, getChartDisplayName]);
 
   // Instance statistics object options
   const statObjOptions = useMemo((): SelectOption[] => {
@@ -197,7 +237,7 @@ const InstanceStatistics: React.FC = () => {
   };
 
   const renderChart = (chart: ChartItem) => {
-    const data = chartDatas[chart.configId];
+    const data = translateChartData(chartDatas[chart.configId] || []);
 
     switch (chart.type) {
       case ChartType.Pie:
@@ -205,7 +245,7 @@ const InstanceStatistics: React.FC = () => {
       case ChartType.Bar:
         return <BarChart data={data} stacked={chart.stacked} />;
       default:
-        return <div>Unknown chart type</div>;
+        return <div>{t('analysis.statistics.chart.unknownType')}</div>;
     }
   };
 
@@ -219,8 +259,8 @@ const InstanceStatistics: React.FC = () => {
       </div>
 
       <div className="sample-data-notice">
-        <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge', '示例数据')}</span>
-        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip', '图表当前展示示例数据，尚未接入真实统计源')}</span>
+        <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge')}</span>
+        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip')}</span>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -228,7 +268,7 @@ const InstanceStatistics: React.FC = () => {
           <Col key={chart.id} xs={24} xl={chart.width === 50 ? 12 : 24}>
             <ChartContainer
               id={chart.id}
-              title={chart.name}
+              title={getChartDisplayName(chart)}
               canMoveUp={index > 0}
               canMoveDown={index < charts.length - 1}
               onMoveUp={() => handleChartMove(chart.id, ChartMoveDirection.Up)}
@@ -246,7 +286,14 @@ const InstanceStatistics: React.FC = () => {
         visible={modalVisible}
         mode={modalMode}
         type="instance"
-        editData={editingChart}
+        editData={
+          editingChart
+            ? {
+                ...editingChart,
+                name: getChartDisplayName(editingChart),
+              }
+            : undefined
+        }
         builtInOptions={builtInOptions}
         statObjOptions={statObjOptions}
         statDimsOptions={statDimsOptions}

@@ -1316,10 +1316,14 @@
       },
       "actions": {
         "importHost": "导入主机",
+        "assign": "分配",
         "assignTo": "分配到",
         "transferTo": "转移到",
         "copy": "复制",
         "more": "更多"
+      },
+      "aria": {
+        "selectHost": "选择主机 {{id}}"
       },
       "search": {
         "placeholder": "请输入IP或固资编号"
@@ -1465,6 +1469,10 @@
         },
         "fields": {
           "name": "业务名",
+          "createdAt": "创建时间",
+          "createdBy": "创建人",
+          "updatedAt": "更新时间",
+          "updatedBy": "更新人",
           "lifecycle": "生命周期",
           "timezone": "时区",
           "language": "语言",
@@ -1493,6 +1501,17 @@
         "confirmLeave": {
           "title": "确认离开当前页？",
           "description": "离开将会导致未保存信息丢失"
+        }
+      },
+      "detail": {
+        "tabs": {
+          "attributes": "属性"
+        },
+        "property": {
+          "uniqueId": "唯一标识",
+          "fieldName": "字段名称",
+          "fieldType": "字段类型",
+          "placeholder": "请输入{{label}}"
         }
       },
       "archived": {
@@ -1850,6 +1869,35 @@
       "instance": {
         "title": "实例统计"
       },
+      "sampleDataBadge": "示例数据",
+      "sampleDataTip": "图表当前展示示例数据，尚未接入真实统计源",
+      "sampleData": {
+        "hostBusiness": {
+          "blueking": "蓝鲸",
+          "financeSystem": "财务系统",
+          "officialSiteBusiness": "官网业务",
+          "hrBusiness": "人力资源业务",
+          "miniProgramBusiness": "小程序业务",
+          "ecommerceChannelSystem": "电商渠道系统",
+          "hrSystem": "人力资源系统"
+        },
+        "cloudArea": {
+          "unassigned": "未分配"
+        },
+        "instanceCategory": {
+          "businessSet": "业务集",
+          "switch": "交换机",
+          "loadBalance": "负载均衡",
+          "router": "路由器",
+          "firewall": "防火墙",
+          "project": "项目"
+        },
+        "changeType": {
+          "create": "新增",
+          "update": "更新",
+          "delete": "删除"
+        }
+      },
       "chart": {
         "source": {
           "custom": "自定义",
@@ -1867,7 +1915,20 @@
         "loading": "",
         "noData": "暂无数据",
         "startDate": "开始日期",
-        "endDate": "结束日期"
+        "endDate": "结束日期",
+        "unknownType": "未知图表类型"
+      },
+      "chartNames": {
+        "host": {
+          "osType": "按操作系统类型统计",
+          "business": "按业务统计",
+          "cloudArea": "按管控区域统计",
+          "hostCountTrend": "主机数量变化趋势"
+        },
+        "instance": {
+          "instanceCount": "实例数量统计",
+          "instanceChange": "实例变更统计"
+        }
       },
       "modal": {
         "addHostChart": "新增主机统计图表",

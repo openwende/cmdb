@@ -56,9 +56,9 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
     () =>
       LANGUAGE_OPTIONS.map((option) => ({
         ...option,
-        label: option.label,
+        label: t(option.label),
       })),
-    [],
+    [t],
   );
 
   // Utility function to determine if a field should be disabled
@@ -87,9 +87,9 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
 
     const filtered = keyword
       ? userListMock.filter((u) => {
-        const name = isChineseLang ? u.chinese_name : u.english_name;
-        return name.toLowerCase().includes(keyword.toLowerCase());
-      })
+          const name = isChineseLang ? u.chinese_name : u.english_name;
+          return name.toLowerCase().includes(keyword.toLowerCase());
+        })
       : userListMock;
 
     return filtered.map((u) => {

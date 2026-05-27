@@ -1,11 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Table, Button, Dropdown, Modal, Tooltip, Checkbox, Empty, Input } from 'antd';
 import { useAppMessage } from '@/utils/message';
-import {
-  DownOutlined,
-  ExclamationCircleFilled,
-  HistoryOutlined,
-} from '@ant-design/icons';
+import { DownOutlined, ExclamationCircleFilled, HistoryOutlined } from '@ant-design/icons';
 import {
   resourceAssignMenuItems,
   resourceCopyMenuItems,
@@ -152,9 +148,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
     );
   };
 
-  const emptyNode = (
-    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData', '暂无数据')} />
-  );
+  const emptyNode = <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />;
 
   return (
     <div className="host-list-wrapper">
@@ -177,7 +171,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             trigger={['click']}
           >
             <Button disabled={!hasSelection || !canWrite}>
-              {t('resource.host.actions.assign', { defaultValue: '分配' })} <DownOutlined />
+              {t('resource.host.actions.assign')} <DownOutlined />
             </Button>
           </Dropdown>
           <Dropdown
@@ -268,7 +262,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                   <Checkbox
                     checked={selected}
                     onChange={(e) => toggleSelectedHost(hostId, e.target.checked)}
-                    aria-label={`选择主机 ${hostDisplayId}`}
+                    aria-label={t('resource.host.aria.selectHost', { id: hostDisplayId })}
                   />
                   <div>
                     <div className="host-mobile-card__title">

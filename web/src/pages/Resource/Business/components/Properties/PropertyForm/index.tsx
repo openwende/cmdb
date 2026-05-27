@@ -72,9 +72,15 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
   const getPopoverContent = () => {
     return (
       <Descriptions size="small" column={1} style={{ width: 180 }}>
-        <Descriptions.Item label="唯一标识">{field}</Descriptions.Item>
-        <Descriptions.Item label="字段名称">{label}</Descriptions.Item>
-        <Descriptions.Item label="字段类型">{type}</Descriptions.Item>
+        <Descriptions.Item label={t('resource.business.detail.property.uniqueId')}>
+          {field}
+        </Descriptions.Item>
+        <Descriptions.Item label={t('resource.business.detail.property.fieldName')}>
+          {label}
+        </Descriptions.Item>
+        <Descriptions.Item label={t('resource.business.detail.property.fieldType')}>
+          {type}
+        </Descriptions.Item>
       </Descriptions>
     );
   };
@@ -100,7 +106,7 @@ const PropertyItem: React.FC<PropertyItemProps> = ({
                 componentType={type}
                 value={editValue}
                 onChange={onValueChange}
-                placeholder={`请输入${label}`}
+                placeholder={t('resource.business.detail.property.placeholder', { label })}
                 mode={type === PROPERTY_TYPES.ENUM ? 'single' : undefined}
                 options={options}
                 disabled={!editable}

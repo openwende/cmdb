@@ -149,6 +149,10 @@
       border-right: 1px solid var(--color-border);
       user-select: none;
 
+      .tree-search-input {
+        width: calc(100% - var(--space-sm));
+      }
+
       .ant-tree-list-holder-inner {
         max-height: 496px;
         overflow-x: hidden;

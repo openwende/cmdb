@@ -48,7 +48,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
     return {
       ...businessData,
       lifecycle: lifecycleOption?.label ? t(lifecycleOption.label) : businessData.lifecycle,
-      language: languageOption?.label || businessData.language,
+      language: languageOption?.label ? t(languageOption.label) : businessData.language,
       created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
       updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
       sres: businessData.sres ? businessData.sres.join(', ') : '',
@@ -154,7 +154,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
   const items = [
     {
       key: 'basic',
-      label: '基础信息',
+      label: t('resource.business.modify.sections.basic'),
       children: (
         <BasicInfo
           data={enhancedBizData as unknown as BusinessDetail}
@@ -167,7 +167,7 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
     },
     {
       key: 'roles',
-      label: '角色',
+      label: t('resource.business.modify.sections.roles'),
       children: (
         <RoleInfo
           data={enhancedBizData as unknown as BusinessDetail}
@@ -194,14 +194,14 @@ const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
         <div className="actions-content">
           {!isEditing ? (
             <Button type="primary" onClick={handleEdit}>
-              编辑
+              {t('common.edit')}
             </Button>
           ) : (
             <div className="editing-actions">
               <Button type="primary" onClick={handleSave}>
-                保存
+                {t('common.save')}
               </Button>
-              <Button onClick={handleCancel}>取消</Button>
+              <Button onClick={handleCancel}>{t('common.cancel')}</Button>
             </div>
           )}
         </div>

@@ -1316,10 +1316,14 @@
       },
       "actions": {
         "importHost": "Import host",
+        "assign": "Assign",
         "assignTo": "Assign to",
         "transferTo": "Transfer to",
         "copy": "Copy",
         "more": "More"
+      },
+      "aria": {
+        "selectHost": "Select host {{id}}"
       },
       "search": {
         "placeholder": "Please enter IP or asset number"
@@ -1465,6 +1469,10 @@
         },
         "fields": {
           "name": "Business name",
+          "createdAt": "Created at",
+          "createdBy": "Created by",
+          "updatedAt": "Updated at",
+          "updatedBy": "Updated by",
           "lifecycle": "Lifecycle",
           "timezone": "Timezone",
           "language": "Language",
@@ -1484,11 +1492,26 @@
             "testing": "Testing",
             "online": "Online",
             "offline": "Offline"
+          },
+          "language": {
+            "chinese": "Chinese",
+            "english": "English"
           }
         },
         "confirmLeave": {
           "title": "Confirm to leave current page?",
           "description": "Unsaved changes will be lost"
+        }
+      },
+      "detail": {
+        "tabs": {
+          "attributes": "Attributes"
+        },
+        "property": {
+          "uniqueId": "Unique ID",
+          "fieldName": "Field name",
+          "fieldType": "Field type",
+          "placeholder": "Please enter {{label}}"
         }
       },
       "archived": {
@@ -1846,6 +1869,35 @@
       "instance": {
         "title": "Instance Statistics"
       },
+      "sampleDataBadge": "Sample data",
+      "sampleDataTip": "Charts currently show sample data and are not connected to live statistics yet.",
+      "sampleData": {
+        "hostBusiness": {
+          "blueking": "BlueKing",
+          "financeSystem": "Finance System",
+          "officialSiteBusiness": "Official Website",
+          "hrBusiness": "HR Business",
+          "miniProgramBusiness": "Mini Program",
+          "ecommerceChannelSystem": "E-commerce Channel",
+          "hrSystem": "HR System"
+        },
+        "cloudArea": {
+          "unassigned": "Unassigned"
+        },
+        "instanceCategory": {
+          "businessSet": "Business Set",
+          "switch": "Switch",
+          "loadBalance": "Load Balancer",
+          "router": "Router",
+          "firewall": "Firewall",
+          "project": "Project"
+        },
+        "changeType": {
+          "create": "Create",
+          "update": "Update",
+          "delete": "Delete"
+        }
+      },
       "chart": {
         "source": {
           "custom": "Custom",
@@ -1863,7 +1915,20 @@
         "loading": "",
         "noData": "No data",
         "startDate": "Start Date",
-        "endDate": "End Date"
+        "endDate": "End Date",
+        "unknownType": "Unknown chart type"
+      },
+      "chartNames": {
+        "host": {
+          "osType": "By OS Type",
+          "business": "By Business",
+          "cloudArea": "By Cloud Area",
+          "hostCountTrend": "Host Count Trend"
+        },
+        "instance": {
+          "instanceCount": "Instance Count",
+          "instanceChange": "Instance Change"
+        }
       },
       "modal": {
         "addHostChart": "Add Host Statistics Chart",

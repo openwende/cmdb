@@ -388,8 +388,7 @@ const AddHostModal: React.FC<Props> = ({
     ips.forEach((ip) => {
       const trimmedIp = ip.trim();
       const matchedHost = lookupHosts.find(
-        (host) =>
-          host.bk_host_innerip === trimmedIp || host.bk_host_innerip_v6 === trimmedIp,
+        (host) => host.bk_host_innerip === trimmedIp || host.bk_host_innerip_v6 === trimmedIp,
       );
       if (trimmedIp && matchedHost && !existingIps.has(trimmedIp)) {
         newHosts.push(matchedHost);
@@ -552,7 +551,7 @@ const AddHostModal: React.FC<Props> = ({
         >
           <Input.Search
             placeholder={t('business.topology.addHostModal.placeholders.searchTopologyNode')}
-            className="search-input"
+            className="search-input tree-search-input"
             allowClear
             value={treeSearchValue}
             onChange={(e) => setTreeSearchValue(e.target.value.trim())}

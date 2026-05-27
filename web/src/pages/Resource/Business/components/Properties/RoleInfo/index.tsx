@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import PropertyForm from '../PropertyForm';
 import type { BusinessDetail } from '@/api/types/resource';
 import { FieldConfig } from '../PropertyForm';
@@ -18,29 +19,31 @@ const RoleInfo: React.FC<RoleInfoProps> = ({
   onValueChange,
   errorFields = [],
 }) => {
+  const { t } = useTranslation();
+
   // Field configuration for role info
   const roleInfoFields: FieldConfig[] = [
     {
-      label: '运维人员',
+      label: t('resource.business.modify.fields.sres'),
       field: 'sres',
       type: 'objuser',
       editable: true,
       required: true,
     },
     {
-      label: '产品人员',
+      label: t('resource.business.modify.fields.bizops'),
       field: 'bizops',
       type: 'objuser',
       editable: true,
     },
     {
-      label: '测试人员',
+      label: t('resource.business.modify.fields.testers'),
       field: 'testers',
       type: 'objuser',
       editable: true,
     },
     {
-      label: '开发人员',
+      label: t('resource.business.modify.fields.developers'),
       field: 'developers',
       type: 'objuser',
       editable: true,

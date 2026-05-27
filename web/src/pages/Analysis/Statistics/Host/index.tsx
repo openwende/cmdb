@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Row, Col, message, Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { PlusSquareOutlined } from '@ant-design/icons';
@@ -16,6 +16,26 @@ import './style.css';
 
 // Built-in chart IDs for host statistics
 const BUILTIN_CHART_IDS = [3, 4, 5, 6];
+const HOST_CHART_NAME_KEYS: Record<number, string> = {
+  3: 'analysis.statistics.chartNames.host.osType',
+  4: 'analysis.statistics.chartNames.host.business',
+  5: 'analysis.statistics.chartNames.host.cloudArea',
+  6: 'analysis.statistics.chartNames.host.hostCountTrend',
+};
+const HOST_SAMPLE_CATEGORY_KEYS: Record<number, Record<string, string>> = {
+  4: {
+    蓝鲸: 'analysis.statistics.sampleData.hostBusiness.blueking',
+    财务系统: 'analysis.statistics.sampleData.hostBusiness.financeSystem',
+    官网业务: 'analysis.statistics.sampleData.hostBusiness.officialSiteBusiness',
+    人力资源业务: 'analysis.statistics.sampleData.hostBusiness.hrBusiness',
+    小程序业务: 'analysis.statistics.sampleData.hostBusiness.miniProgramBusiness',
+    电商渠道系统: 'analysis.statistics.sampleData.hostBusiness.ecommerceChannelSystem',
+    人力资源系统: 'analysis.statistics.sampleData.hostBusiness.hrSystem',
+  },
+  5: {
+    未分配: 'analysis.statistics.sampleData.cloudArea.unassigned',
+  },
+};
 // Excluded dimension IDs for host statistics
 const EXCLUDED_DIMENSION_IDS = [13, 14, 23, 40];
 
@@ -58,18 +78,39 @@ const HostStatistics: React.FC = () => {
     setChartDatas(mockChartDetailData);
   }, [charts]);
 
+  const getChartDisplayName = useCallback(
+    (chart: Pick<ChartItem, 'configId' | 'name'>) => {
+      const nameKey = HOST_CHART_NAME_KEYS[chart.configId];
+      return nameKey ? t(nameKey) : chart.name;
+    },
+    [t],
+  );
+
+  const translateChartData = useCallback(
+    (configId: number, data: any[] = []) =>
+      data.map((item) => {
+        const categoryKey = HOST_SAMPLE_CATEGORY_KEYS[configId]?.[item.category];
+
+        return {
+          ...item,
+          category: categoryKey ? t(categoryKey) : item.category,
+        };
+      }),
+    [t],
+  );
+
   // Host statistics object options Built-in options
   const builtInOptions = useMemo(() => {
     return charts
       .filter((chart) => BUILTIN_CHART_IDS.includes(chart.configId))
       .map((chart) => ({
         value: chart.configId,
-        label: chart.name,
+        label: getChartDisplayName(chart),
         // Check if already exists
         disabled: charts.some((c) => c.configId === chart.configId),
         chartData: chart,
       }));
-  }, [charts]);
+  }, [charts, getChartDisplayName]);
 
   // Host statistics dimension options
   const statDimsOptions = useMemo((): SelectOption[] => {
@@ -204,7 +245,7 @@ const HostStatistics: React.FC = () => {
   };
 
   const renderChart = (chart: ChartItem) => {
-    const data = chartDatas[chart.configId];
+    const data = translateChartData(chart.configId, chartDatas[chart.configId] || []);
 
     switch (chart.type) {
       case ChartType.Pie:
@@ -214,7 +255,7 @@ const HostStatistics: React.FC = () => {
       case ChartType.Line:
         return <LineChart data={data} />;
       default:
-        return <div>Unknown chart type</div>;
+        return <div>{t('analysis.statistics.chart.unknownType')}</div>;
     }
   };
 
@@ -228,8 +269,8 @@ const HostStatistics: React.FC = () => {
       </div>
 
       <div className="sample-data-notice">
-        <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge', '示例数据')}</span>
-        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip', '图表当前展示示例数据，尚未接入真实统计源')}</span>
+        <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge')}</span>
+        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip')}</span>
       </div>
 
       <Row gutter={[24, 24]}>
@@ -237,7 +278,7 @@ const HostStatistics: React.FC = () => {
           <Col key={chart.id} xs={24} xl={chart.width === 50 ? 12 : 24}>
             <ChartContainer
               id={chart.id}
-              title={chart.name}
+              title={getChartDisplayName(chart)}
               canMoveUp={index > 0}
               canMoveDown={index < charts.length - 1}
               onMoveUp={() => handleChartMove(chart.id, ChartMoveDirection.Up)}
@@ -265,7 +306,14 @@ const HostStatistics: React.FC = () => {
         visible={modalVisible}
         mode={modalMode}
         type="host"
-        editData={editingChart}
+        editData={
+          editingChart
+            ? {
+                ...editingChart,
+                name: getChartDisplayName(editingChart),
+              }
+            : undefined
+        }
         builtInOptions={builtInOptions}
         statDimsOptions={statDimsOptions}
         maxXAxisCount={maxXAxisCount}
