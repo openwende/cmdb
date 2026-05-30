@@ -69,19 +69,8 @@ func MigrateRuntimeSupportTables(db *gorm.DB) error {
 		return fmt.Errorf("升级审计日志冗余列失败: %w", err)
 	}
 
-	if err := seedBuiltinData(db); err != nil {
-		return fmt.Errorf("初始化关联类型失败: %w", err)
-	}
-	if err := seedBuiltinDynamicModelsFromStaticModels(db); err != nil {
-		return fmt.Errorf("同步内置模型失败: %w", err)
-	}
-	if err := seedBuiltinStaticModelAttributesFromBuiltinModels(db); err != nil {
-		return fmt.Errorf("同步内置静态属性失败: %w", err)
-	}
-	if err := seedRuntimeDynamicAttributesFromStaticModels(db); err != nil {
-		return fmt.Errorf("同步内置属性失败: %w", err)
-	}
-
+	// seed(关联类型 + A→B 套同步)已收敛到 storage.SeedBuiltins / SeedDynamicFromStatic,
+	// 由 main.go 在 canonical 建表 + mainline 内置模型之后无条件、按正确顺序调用。
 	return nil
 }
 

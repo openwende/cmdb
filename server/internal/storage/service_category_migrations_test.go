@@ -30,6 +30,7 @@ func TestMigrateRuntimeServiceCategorySupportTablesCreatesDefaults(t *testing.T)
 	`).Error)
 
 	require.NoError(t, MigrateRuntimeServiceCategorySupportTables(db))
+	require.NoError(t, seedBuiltinServiceCategories(db))
 
 	type categoryRow struct {
 		ID        uint64  `gorm:"column:id"`

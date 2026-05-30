@@ -110,6 +110,9 @@ func TestMigrateRuntimeSupportTablesCreatesRequiredTables(t *testing.T) {
 	if err := MigrateRuntimeSupportTables(db); err != nil {
 		t.Fatalf("migrate runtime support tables: %v", err)
 	}
+	if err := seedBuiltinData(db); err != nil {
+		t.Fatalf("seed builtin data: %v", err)
+	}
 
 	for _, table := range []string{"dynamic_models", "dynamic_attributes", "association_types", "model_associations", "relations"} {
 		if !db.Migrator().HasTable(table) {
@@ -181,6 +184,9 @@ func TestMigrateRuntimeSupportTablesSeedsBuiltinStaticModelAttributesWhenMissing
 
 	if err := MigrateRuntimeSupportTables(db); err != nil {
 		t.Fatalf("migrate runtime support tables: %v", err)
+	}
+	if err := SeedDynamicFromStatic(db); err != nil {
+		t.Fatalf("seed dynamic from static: %v", err)
 	}
 
 	type staticAttribute struct {
@@ -265,6 +271,9 @@ func TestMigrateRuntimeSupportTablesSeedsDynamicAttributesFromStaticModelAttribu
 	if err := MigrateRuntimeSupportTables(db); err != nil {
 		t.Fatalf("migrate runtime support tables: %v", err)
 	}
+	if err := SeedDynamicFromStatic(db); err != nil {
+		t.Fatalf("seed dynamic from static: %v", err)
+	}
 
 	type seededAttribute struct {
 		ModelUID    string
@@ -306,6 +315,9 @@ func TestMigrateRuntimeResourceSupportTablesCreatesDefaultDirectory(t *testing.T
 
 	if err := MigrateRuntimeResourceSupportTables(db); err != nil {
 		t.Fatalf("migrate runtime resource support tables: %v", err)
+	}
+	if err := createDefaultResourceDirectory(db); err != nil {
+		t.Fatalf("seed default resource directory: %v", err)
 	}
 
 	for _, table := range []string{"resource_directories", "resource_pool_hosts"} {

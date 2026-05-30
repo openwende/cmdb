@@ -40,6 +40,8 @@ func main() {
 	}
 	defer func() { _ = db.Close() }()
 
+	// 表结构由 canonical 迁移(golang-migrate)创建。以下仅为开发态兼容:
+	// runtime DDL 在 canonical 已建表时幂等跳过(CREATE IF NOT EXISTS);v2 资源图表当前只在此建。
 	if os.Getenv("ENABLE_COMPAT_AUTOMIGRATE") == "true" {
 		if err := storage.MigrateRuntimeAuthSupportTables(db.DB()); err != nil {
 			log.Fatalf("Failed to run runtime auth migrations: %v", err)
@@ -59,6 +61,23 @@ func main() {
 		if err := storage.MigrateResourceGraphTables(db.DB()); err != nil {
 			log.Fatalf("Failed to run resource graph migrations: %v", err)
 		}
+	}
+
+	// 统一 seed:canonical 建表后无条件、按正确顺序配齐内置数据(单一入口,幂等)。
+	// 顺序硬约束:内置模型(A 套)→ B 套同步,修掉收敛前 automigrate 早于 lazy 导致的空跑。
+	mainlineService := mainline.NewService(db.DB())
+	seedCtx := context.Background()
+	if err := storage.SeedBuiltins(db.DB()); err != nil {
+		log.Fatalf("Failed to seed builtin data: %v", err)
+	}
+	if err := mainlineService.EnsureBuiltinModels(seedCtx); err != nil {
+		log.Fatalf("Failed to seed builtin mainline models: %v", err)
+	}
+	if err := mainlineService.EnsureTopologySettings(seedCtx); err != nil {
+		log.Fatalf("Failed to seed topology settings: %v", err)
+	}
+	if err := storage.SeedDynamicFromStatic(db.DB()); err != nil {
+		log.Fatalf("Failed to seed dynamic-from-static data: %v", err)
 	}
 
 	// 3. Initialize Repositories & Services
@@ -92,7 +111,6 @@ func main() {
 	// Initialize Dynamic Engine Repositories
 	modelRepo := storage.NewModelRepository(db.DB())
 	instanceRepo := storage.NewInstanceRepository(db.DB())
-	mainlineService := mainline.NewService(db.DB())
 
 	// Initialize Dynamic Engine Services
 	modelService := model.NewService(modelRepo)

@@ -16,7 +16,8 @@ func MigrateRuntimeAuthSupportTables(db *gorm.DB) error {
 		}
 	}
 
-	return seedDefaultAuthUsers(db)
+	// seed 已收敛到 storage.SeedBuiltins(canonical 建表后由 main.go 无条件调用)
+	return nil
 }
 
 func runtimeAuthDDL(dialect string) []string {

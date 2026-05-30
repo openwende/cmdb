@@ -29,6 +29,7 @@ func setupAuthHandlerTestDB(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, err)
 	require.NoError(t, storage.MigrateRuntimeAuthSupportTables(db))
+	require.NoError(t, storage.SeedAuthUsers(db))
 	return db
 }
 

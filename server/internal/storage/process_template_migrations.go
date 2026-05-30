@@ -243,7 +243,8 @@ func MigrateRuntimeResourceSupportTables(db *gorm.DB) error {
 		}
 	}
 
-	return createDefaultResourceDirectory(db)
+	// seed 已收敛到 storage.SeedBuiltins(canonical 建表后由 main.go 无条件调用)
+	return nil
 }
 
 func runtimeResourceSupportDDL(dialect string) []string {

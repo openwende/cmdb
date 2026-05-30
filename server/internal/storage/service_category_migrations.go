@@ -21,7 +21,8 @@ func MigrateRuntimeServiceCategorySupportTables(db *gorm.DB) error {
 		}
 	}
 
-	return seedBuiltinServiceCategories(db)
+	// seed 已收敛到 storage.SeedBuiltins(canonical 建表后由 main.go 无条件调用)
+	return nil
 }
 
 func runtimeServiceCategoryDDL(dialect string) []string {

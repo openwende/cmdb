@@ -24,6 +24,7 @@ func TestMigrateRuntimeAuthSupportTablesCreatesDefaults(t *testing.T) {
 	db := setupAuthMigrationTestDB(t)
 
 	require.NoError(t, MigrateRuntimeAuthSupportTables(db))
+	require.NoError(t, seedDefaultAuthUsers(db))
 	require.True(t, db.Migrator().HasTable(&types.AuthUser{}))
 	require.True(t, db.Migrator().HasTable(&types.AuthUserRole{}))
 
