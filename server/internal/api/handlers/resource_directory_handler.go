@@ -13,11 +13,11 @@ import (
 
 // ResourceDirectoryHandler 资源目录 HTTP Handler
 type ResourceDirectoryHandler struct {
-	service *resource_directory.Service
+	service resource_directory.Service
 }
 
 // NewResourceDirectoryHandler 创建 Handler
-func NewResourceDirectoryHandler(service *resource_directory.Service) *ResourceDirectoryHandler {
+func NewResourceDirectoryHandler(service resource_directory.Service) *ResourceDirectoryHandler {
 	return &ResourceDirectoryHandler{service: service}
 }
 

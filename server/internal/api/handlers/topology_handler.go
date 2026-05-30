@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -16,22 +18,9 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-type topologyNodeHostQueryRow struct {
-	HostID        string  `gorm:"column:host_id"`
-	InnerIPv4     string  `gorm:"column:inner_ipv4"`
-	InnerIPv6     string  `gorm:"column:inner_ipv6"`
-	CloudAreaID   *string `gorm:"column:cloud_area_id"`
-	CloudAreaName *string `gorm:"column:cloud_area_name"`
-	ModuleID      *uint64 `gorm:"column:module_id"`
-	ModuleName    *string `gorm:"column:module_name"`
-	SetID         *uint64 `gorm:"column:set_id"`
-	SetName       *string `gorm:"column:set_name"`
-	Status        string  `gorm:"column:status"`
-}
-
 // TopologyHandler 业务拓扑处理器
 type TopologyHandler struct {
-	service    *topology.Service
+	service    topology.Service
 	aggregate  *topology.AggregateService
 	projection *projection.BusinessTopologyService
 	commands   *projection.BusinessTopologyCommandService
@@ -39,14 +28,11 @@ type TopologyHandler struct {
 
 // NewTopologyHandler 创建处理器
 func NewTopologyHandler(
-	service *topology.Service,
+	service topology.Service,
 	aggregate *topology.AggregateService,
 	projectionSvc *projection.BusinessTopologyService,
 	commandSvc *projection.BusinessTopologyCommandService,
 ) *TopologyHandler {
-	if aggregate == nil && service != nil {
-		aggregate = topology.NewAggregateService(service.DB(), service, nil)
-	}
 	return &TopologyHandler{
 		service:    service,
 		aggregate:  aggregate,
@@ -64,7 +50,7 @@ func (h *TopologyHandler) GetTopologyTree(c *gin.Context) {
 
 	// 解析参数
 	if bizIDStr := c.Query("business_id"); bizIDStr != "" {
-		bizID, err := uuid.Parse(bizIDStr)
+		bizID, err := strconv.ParseUint(bizIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 			return
@@ -78,7 +64,7 @@ func (h *TopologyHandler) GetTopologyTree(c *gin.Context) {
 
 	var businessRef string
 	if req.BusinessID != nil {
-		businessRef = req.BusinessID.String()
+		businessRef = strconv.FormatUint(*req.BusinessID, 10)
 	}
 
 	if h.projection != nil {
@@ -91,6 +77,11 @@ func (h *TopologyHandler) GetTopologyTree(c *gin.Context) {
 		)
 		switch {
 		case err == nil && len(tree) > 0:
+			if projectionTreeNeedsLegacyDefault(tree) {
+				if legacyTree, legacyErr := h.service.GetTopologyTree(c.Request.Context(), &req); legacyErr == nil {
+					tree = mergeLegacyDefaultTopology(tree, legacyTree)
+				}
+			}
 			c.JSON(http.StatusOK, gin.H{"code": 0, "data": tree})
 			return
 		case err != nil && !shouldFallbackProjection(err):
@@ -122,7 +113,7 @@ func (h *TopologyHandler) GetNodeChildren(c *gin.Context) {
 
 	switch nodeType {
 	case types.NodeTypeBusiness:
-		nodeID, err = uuid.Parse(idStr)
+		nodeID, err = strconv.ParseUint(idStr, 10, 64)
 	case types.NodeTypeSet, types.NodeTypeModule:
 		nodeID, err = strconv.ParseUint(idStr, 10, 64)
 	default:
@@ -197,7 +188,130 @@ func shouldFallbackProjection(err error) bool {
 	}
 
 	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "no such table") || strings.Contains(message, "does not exist")
+	return strings.Contains(message, "no such table") ||
+		strings.Contains(message, "does not exist") ||
+		strings.Contains(message, "record not found") ||
+		strings.Contains(message, "目标模块不存在")
+}
+
+func projectionTreeNeedsLegacyDefault(tree []types.TopologyTreeNode) bool {
+	for _, root := range tree {
+		if root.NodeType != types.NodeTypeBusiness {
+			continue
+		}
+		if !containsDefaultSetNode(root.Children) {
+			return true
+		}
+	}
+	return false
+}
+
+func containsDefaultSetNode(children []types.TopologyTreeNode) bool {
+	for _, child := range children {
+		if child.NodeType == types.NodeTypeSet && child.IsDefault {
+			return true
+		}
+	}
+	return false
+}
+
+func mergeLegacyDefaultTopology(
+	projected []types.TopologyTreeNode,
+	legacy []types.TopologyTreeNode,
+) []types.TopologyTreeNode {
+	if len(projected) == 0 || len(legacy) == 0 {
+		return projected
+	}
+
+	legacyDefaultsByBusiness := make(map[string][]types.TopologyTreeNode, len(legacy))
+	for _, root := range legacy {
+		if root.NodeType != types.NodeTypeBusiness {
+			continue
+		}
+		defaults := make([]types.TopologyTreeNode, 0, 1)
+		for _, child := range root.Children {
+			if child.NodeType == types.NodeTypeSet && child.IsDefault {
+				defaults = append(defaults, child)
+			}
+		}
+		if len(defaults) > 0 {
+			legacyDefaultsByBusiness[topologyTreeNodeRef(root)] = defaults
+		}
+	}
+
+	merged := append([]types.TopologyTreeNode(nil), projected...)
+	for index := range merged {
+		root := &merged[index]
+		if root.NodeType != types.NodeTypeBusiness || containsDefaultSetNode(root.Children) {
+			continue
+		}
+
+		legacyDefaults := legacyDefaultsByBusiness[topologyTreeNodeRef(*root)]
+		if len(legacyDefaults) == 0 {
+			continue
+		}
+
+		existingChildren := make(map[string]struct{}, len(root.Children))
+		for _, child := range root.Children {
+			existingChildren[topologyTreeNodeIdentity(child)] = struct{}{}
+		}
+
+		injected := make([]types.TopologyTreeNode, 0, len(legacyDefaults))
+		for _, child := range legacyDefaults {
+			if _, exists := existingChildren[topologyTreeNodeIdentity(child)]; exists {
+				continue
+			}
+			injected = append(injected, child)
+		}
+		if len(injected) == 0 {
+			continue
+		}
+
+		root.Children = append(injected, root.Children...)
+		root.ChildCount = len(root.Children)
+		root.IsLeaf = false
+		root.Expandable = true
+	}
+
+	return merged
+}
+
+func topologyTreeNodeRef(node types.TopologyTreeNode) string {
+	switch value := node.NodeID.(type) {
+	case string:
+		return strings.TrimSpace(value)
+	case fmt.Stringer:
+		return strings.TrimSpace(value.String())
+	default:
+		return strings.TrimSpace(fmt.Sprint(value))
+	}
+}
+
+func topologyTreeNodeIdentity(node types.TopologyTreeNode) string {
+	return string(node.NodeType) + ":" + topologyTreeNodeRef(node)
+}
+
+func shouldFallbackProjectionBatch(result *types.BatchOperationResult) bool {
+	if result == nil || result.Successful > 0 || len(result.Errors) == 0 {
+		return false
+	}
+
+	for _, item := range result.Errors {
+		message := strings.ToLower(item)
+		if strings.Contains(message, "record not found") ||
+			strings.Contains(message, "does not exist") ||
+			strings.Contains(message, "无法确定主机所属业务") {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *TopologyHandler) hasProjectionTopology(ctx context.Context) bool {
+	if h.service == nil {
+		return false
+	}
+	return h.service.HasProjectionTopology(ctx)
 }
 
 // GetNodeHosts 获取聚合节点下的主机列表
@@ -235,31 +349,9 @@ func (h *TopologyHandler) GetNodeHosts(c *gin.Context) {
 		}
 	}
 
-	countQuery, err := h.buildTopologyNodeHostsQuery(c, nodeType, refID, keyword)
+	rows, total, err := h.service.GetNodeHosts(c.Request.Context(), nodeType, refID, keyword, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var total int64
-	if err := countQuery.Distinct("hosts.id").Count(&total).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	rowsQuery, err := h.buildTopologyNodeHostsQuery(c, nodeType, refID, keyword)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	var rows []topologyNodeHostQueryRow
-	if err := rowsQuery.
-		Order("hosts.created_at DESC").
-		Limit(pageSize).
-		Offset((page - 1) * pageSize).
-		Scan(&rows).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -285,10 +377,10 @@ func (h *TopologyHandler) GetNodeHosts(c *gin.Context) {
 // GetStatistics 获取拓扑统计信息
 // GET /api/v1/topology/statistics
 func (h *TopologyHandler) GetStatistics(c *gin.Context) {
-	var businessID *uuid.UUID
+	var businessID *uint64
 
 	if bizIDStr := c.Query("business_id"); bizIDStr != "" {
-		bizID, err := uuid.Parse(bizIDStr)
+		bizID, err := strconv.ParseUint(bizIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 			return
@@ -385,8 +477,8 @@ func (h *TopologyHandler) ListSets(c *gin.Context) {
 		return
 	}
 
-	businessID, err := uuid.Parse(businessIDStr)
-	if err != nil {
+	businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 		return
 	}
@@ -494,7 +586,7 @@ func (h *TopologyHandler) MoveSet(c *gin.Context) {
 	}
 
 	var req struct {
-		TargetBusinessID uuid.UUID `json:"target_business_id" binding:"required"`
+		TargetBusinessID uint64 `json:"target_business_id" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -629,8 +721,8 @@ func (h *TopologyHandler) ListModules(c *gin.Context) {
 	}
 
 	if businessIDStr != "" {
-		businessID, err := uuid.Parse(businessIDStr)
-		if err != nil {
+		businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+		if err != nil || businessID == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 			return
 		}
@@ -781,13 +873,13 @@ func (h *TopologyHandler) TransferHosts(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
+	if h.commands != nil && h.hasProjectionTopology(c.Request.Context()) {
 		result, err := h.commands.TransferHosts(c.Request.Context(), &req)
 		switch {
-		case err == nil:
+		case err == nil && !shouldFallbackProjectionBatch(result):
 			c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
 			return
-		case !shouldFallbackProjection(err):
+		case err != nil && !shouldFallbackProjection(err):
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -816,13 +908,13 @@ func (h *TopologyHandler) TransferHostsToPool(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
+	if h.commands != nil && h.hasProjectionTopology(c.Request.Context()) {
 		result, err := h.commands.TransferHostsToPool(c.Request.Context(), req.HostIDs)
 		switch {
-		case err == nil:
+		case err == nil && !shouldFallbackProjectionBatch(result):
 			c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
 			return
-		case !shouldFallbackProjection(err):
+		case err != nil && !shouldFallbackProjection(err):
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -849,21 +941,17 @@ func (h *TopologyHandler) GetModuleHosts(c *gin.Context) {
 		return
 	}
 
-	// 分页
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
 
-	var hosts []types.Host
-	var total int64
-
-	query := h.service.DB().
-		Model(&types.Host{}).
-		Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", id)
-	query.Count(&total)
-
-	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Find(&hosts).Error; err != nil {
+	hosts, total, err := h.service.GetModuleHosts(c.Request.Context(), id, page, pageSize)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -899,102 +987,7 @@ func parseTopologyHostNodeID(raw string) (string, string, error) {
 	return raw[:idx], raw[idx+1:], nil
 }
 
-func (h *TopologyHandler) buildTopologyNodeHostsQuery(
-	c *gin.Context,
-	nodeType string,
-	refID string,
-	keyword string,
-) (*gorm.DB, error) {
-	db := h.service.DB().WithContext(c.Request.Context())
-	tenantID := defaultTenantUUID
-
-	baseSelect := `
-		hosts.id AS host_id,
-		hosts.primary_ip AS inner_ipv4,
-		'' AS inner_ipv6,
-		cloud_areas.id AS cloud_area_id,
-		cloud_areas.name AS cloud_area_name,
-		modules.id AS module_id,
-		modules.name AS module_name,
-		sets.id AS set_id,
-		sets.name AS set_name,
-		hosts.status AS status`
-
-	var query *gorm.DB
-
-	switch nodeType {
-	case "business":
-		if _, err := uuid.Parse(refID); err != nil {
-			return nil, errors.New("无效的业务ID")
-		}
-		query = db.Table("hosts").
-			Select(baseSelect).
-			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
-			Joins("LEFT JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
-			Joins("LEFT JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("LEFT JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
-			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
-			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
-			Where("hosts.deleted_at IS NULL").
-			Where("rph.host_id IS NULL").
-			Where("hbr.business_id = ?", refID)
-	case "set":
-		setID, err := strconv.ParseUint(refID, 10, 64)
-		if err != nil {
-			return nil, errors.New("无效的集群ID")
-		}
-		query = db.Table("hosts").
-			Select(baseSelect).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
-			Joins("JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
-			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
-			Where("hosts.deleted_at IS NULL").
-			Where("sets.id = ?", setID)
-	case "module":
-		moduleID, err := strconv.ParseUint(refID, 10, 64)
-		if err != nil {
-			return nil, errors.New("无效的模块ID")
-		}
-		query = db.Table("hosts").
-			Select(baseSelect).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
-			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
-			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
-			Where("hosts.deleted_at IS NULL").
-			Where("modules.id = ?", moduleID)
-	case "idle_set", "idle_module", "idle":
-		query = db.Table("hosts").
-			Select(`
-				hosts.id AS host_id,
-				hosts.primary_ip AS inner_ipv4,
-				'' AS inner_ipv6,
-				cloud_areas.id AS cloud_area_id,
-				cloud_areas.name AS cloud_area_name,
-				NULL AS module_id,
-				NULL AS module_name,
-				NULL AS set_id,
-				NULL AS set_name,
-				hosts.status AS status`).
-			Joins("JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
-			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
-			Where("hosts.deleted_at IS NULL")
-	default:
-		return nil, errors.New("无效的节点类型")
-	}
-
-	if keyword != "" {
-		likeKeyword := "%" + keyword + "%"
-		query = query.Where("(hosts.host_name LIKE ? OR hosts.primary_ip LIKE ?)", likeKeyword, likeKeyword)
-	}
-
-	query = query.Where("hosts.tenant_id = ?", tenantID)
-
-	return query, nil
-}
-
-func collapseTopologyHostRows(rows []topologyNodeHostQueryRow) []types.AggregateTopologyHostItem {
+func collapseTopologyHostRows(rows []topology.TopologyHostRow) []types.AggregateTopologyHostItem {
 	items := make([]types.AggregateTopologyHostItem, 0, len(rows))
 	seen := make(map[string]int, len(rows))
 
@@ -1051,8 +1044,8 @@ func collapseTopologyHostRows(rows []topologyNodeHostQueryRow) []types.Aggregate
 // POST /api/v1/topology/businesses/:id/initialize
 func (h *TopologyHandler) InitializeBusinessTopology(c *gin.Context) {
 	businessIDStr := c.Param("id")
-	businessID, err := uuid.Parse(businessIDStr)
-	if err != nil {
+	businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 		return
 	}

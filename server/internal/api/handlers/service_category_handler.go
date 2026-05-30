@@ -2,24 +2,24 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"github.com/wend/cmdb-backend/internal/core/service_category"
 )
 
 type ServiceCategoryHandler struct {
-	service *service_category.Service
+	service service_category.Service
 }
 
-func NewServiceCategoryHandler(service *service_category.Service) *ServiceCategoryHandler {
+func NewServiceCategoryHandler(service service_category.Service) *ServiceCategoryHandler {
 	return &ServiceCategoryHandler{service: service}
 }
 
 func (h *ServiceCategoryHandler) ListCategories(c *gin.Context) {
-	businessID, err := uuid.Parse(c.Query("business_id"))
-	if err != nil {
+	businessID, err := strconv.ParseUint(c.Query("business_id"), 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 		return
 	}

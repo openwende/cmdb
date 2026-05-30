@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/core/business_custom_field"
@@ -13,10 +12,10 @@ import (
 )
 
 type BusinessCustomFieldHandler struct {
-	service *business_custom_field.Service
+	service business_custom_field.Service
 }
 
-func NewBusinessCustomFieldHandler(service *business_custom_field.Service) *BusinessCustomFieldHandler {
+func NewBusinessCustomFieldHandler(service business_custom_field.Service) *BusinessCustomFieldHandler {
 	return &BusinessCustomFieldHandler{service: service}
 }
 
@@ -171,11 +170,11 @@ func (h *BusinessCustomFieldHandler) GetFormSchema(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": schema})
 }
 
-func parseBusinessUUID(c *gin.Context) (uuid.UUID, bool) {
-	businessID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
+func parseBusinessUUID(c *gin.Context) (uint64, bool) {
+	businessID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid business id"})
-		return uuid.Nil, false
+		return 0, false
 	}
 	return businessID, true
 }

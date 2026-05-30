@@ -12,24 +12,42 @@ import (
 )
 
 // Service 进程管理服务
-type Service struct {
+type Service interface {
+	CreateProcessTemplate(ctx context.Context, req *types.CreateProcessTemplateRequest) (*types.ProcessTemplate, error)
+	GetProcessTemplate(ctx context.Context, id uint64) (*types.ProcessTemplate, error)
+	ListProcessTemplates(ctx context.Context, businessID uint64, serviceTemplateID *uint64) ([]types.ProcessTemplate, error)
+	UpdateProcessTemplate(ctx context.Context, id uint64, req *types.UpdateProcessTemplateRequest) (*types.ProcessTemplate, error)
+	DeleteProcessTemplate(ctx context.Context, id uint64) error
+	CreateProcess(ctx context.Context, req *types.CreateProcessRequest) (*types.Process, error)
+	GetProcess(ctx context.Context, id uint64) (*types.Process, error)
+	ListProcesses(ctx context.Context, params *ProcessQueryParams) ([]types.Process, int64, error)
+	UpdateProcess(ctx context.Context, id uint64, req *types.UpdateProcessRequest) (*types.Process, error)
+	DeleteProcess(ctx context.Context, id uint64) error
+	BatchCreateProcesses(ctx context.Context, req *types.BatchCreateProcessRequest) (*types.BatchOperationResult, error)
+	UpdateProcessStatus(ctx context.Context, status *types.ProcessStatus) error
+	GetProcessStatus(ctx context.Context, processID uint64) (*types.ProcessStatus, error)
+	ListProcessesWithStatus(ctx context.Context, hostID uuid.UUID) ([]types.ProcessWithStatus, error)
+	GetModuleProcessSummary(ctx context.Context, moduleID uint64) (map[string]int, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
 // NewService 创建服务实例
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
 // DB 返回数据库连接
-func (s *Service) DB() *gorm.DB {
+func (s *service) DB() *gorm.DB {
 	return s.db
 }
 
 // ========== 进程模板管理 ==========
 
 // CreateProcessTemplate 创建进程模板
-func (s *Service) CreateProcessTemplate(ctx context.Context, req *types.CreateProcessTemplateRequest) (*types.ProcessTemplate, error) {
+func (s *service) CreateProcessTemplate(ctx context.Context, req *types.CreateProcessTemplateRequest) (*types.ProcessTemplate, error) {
 	// 验证业务是否存在
 	var business types.Business
 	if err := s.db.Where("id = ?", req.BusinessID).First(&business).Error; err != nil {
@@ -86,7 +104,7 @@ func (s *Service) CreateProcessTemplate(ctx context.Context, req *types.CreatePr
 }
 
 // GetProcessTemplate 获取进程模板
-func (s *Service) GetProcessTemplate(ctx context.Context, id uint64) (*types.ProcessTemplate, error) {
+func (s *service) GetProcessTemplate(ctx context.Context, id uint64) (*types.ProcessTemplate, error) {
 	var template types.ProcessTemplate
 	if err := s.db.First(&template, id).Error; err != nil {
 		return nil, err
@@ -95,7 +113,7 @@ func (s *Service) GetProcessTemplate(ctx context.Context, id uint64) (*types.Pro
 }
 
 // ListProcessTemplates 获取进程模板列表
-func (s *Service) ListProcessTemplates(ctx context.Context, businessID uuid.UUID, serviceTemplateID *uint64) ([]types.ProcessTemplate, error) {
+func (s *service) ListProcessTemplates(ctx context.Context, businessID uint64, serviceTemplateID *uint64) ([]types.ProcessTemplate, error) {
 	var templates []types.ProcessTemplate
 	query := s.db.Where("business_id = ?", businessID)
 
@@ -110,7 +128,7 @@ func (s *Service) ListProcessTemplates(ctx context.Context, businessID uuid.UUID
 }
 
 // UpdateProcessTemplate 更新进程模板
-func (s *Service) UpdateProcessTemplate(ctx context.Context, id uint64, req *types.UpdateProcessTemplateRequest) (*types.ProcessTemplate, error) {
+func (s *service) UpdateProcessTemplate(ctx context.Context, id uint64, req *types.UpdateProcessTemplateRequest) (*types.ProcessTemplate, error) {
 	updates := make(map[string]interface{})
 
 	if req.Name != nil {
@@ -168,7 +186,7 @@ func (s *Service) UpdateProcessTemplate(ctx context.Context, id uint64, req *typ
 }
 
 // DeleteProcessTemplate 删除进程模板
-func (s *Service) DeleteProcessTemplate(ctx context.Context, id uint64) error {
+func (s *service) DeleteProcessTemplate(ctx context.Context, id uint64) error {
 	// 检查是否有进程实例使用此模板
 	var count int64
 	s.db.Model(&types.Process{}).Where("process_template_id = ?", id).Count(&count)
@@ -182,7 +200,7 @@ func (s *Service) DeleteProcessTemplate(ctx context.Context, id uint64) error {
 // ========== 进程实例管理 ==========
 
 // CreateProcess 创建进程实例
-func (s *Service) CreateProcess(ctx context.Context, req *types.CreateProcessRequest) (*types.Process, error) {
+func (s *service) CreateProcess(ctx context.Context, req *types.CreateProcessRequest) (*types.Process, error) {
 	// 获取进程模板
 	template, err := s.GetProcessTemplate(ctx, req.ProcessTemplateID)
 	if err != nil {
@@ -235,7 +253,7 @@ func (s *Service) CreateProcess(ctx context.Context, req *types.CreateProcessReq
 }
 
 // GetProcess 获取进程实例
-func (s *Service) GetProcess(ctx context.Context, id uint64) (*types.Process, error) {
+func (s *service) GetProcess(ctx context.Context, id uint64) (*types.Process, error) {
 	var process types.Process
 	if err := s.db.Preload("ProcessTemplate").Preload("Host").First(&process, id).Error; err != nil {
 		return nil, err
@@ -244,7 +262,7 @@ func (s *Service) GetProcess(ctx context.Context, id uint64) (*types.Process, er
 }
 
 // ListProcesses 获取进程列表
-func (s *Service) ListProcesses(ctx context.Context, params *ProcessQueryParams) ([]types.Process, int64, error) {
+func (s *service) ListProcesses(ctx context.Context, params *ProcessQueryParams) ([]types.Process, int64, error) {
 	var processes []types.Process
 	var total int64
 
@@ -280,7 +298,7 @@ func (s *Service) ListProcesses(ctx context.Context, params *ProcessQueryParams)
 
 // ProcessQueryParams 进程查询参数
 type ProcessQueryParams struct {
-	BusinessID        *uuid.UUID
+	BusinessID        *uint64
 	ModuleID          *uint64
 	HostID            *uuid.UUID
 	ProcessTemplateID *uint64
@@ -289,7 +307,7 @@ type ProcessQueryParams struct {
 }
 
 // UpdateProcess 更新进程实例
-func (s *Service) UpdateProcess(ctx context.Context, id uint64, req *types.UpdateProcessRequest) (*types.Process, error) {
+func (s *service) UpdateProcess(ctx context.Context, id uint64, req *types.UpdateProcessRequest) (*types.Process, error) {
 	updates := make(map[string]interface{})
 
 	if req.ProcessName != nil {
@@ -326,7 +344,7 @@ func (s *Service) UpdateProcess(ctx context.Context, id uint64, req *types.Updat
 }
 
 // DeleteProcess 删除进程实例
-func (s *Service) DeleteProcess(ctx context.Context, id uint64) error {
+func (s *service) DeleteProcess(ctx context.Context, id uint64) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 删除进程状态
 		tx.Where("process_id = ?", id).Delete(&types.ProcessStatus{})
@@ -336,7 +354,7 @@ func (s *Service) DeleteProcess(ctx context.Context, id uint64) error {
 }
 
 // BatchCreateProcesses 批量创建进程（为多台主机创建相同进程）
-func (s *Service) BatchCreateProcesses(ctx context.Context, req *types.BatchCreateProcessRequest) (*types.BatchOperationResult, error) {
+func (s *service) BatchCreateProcesses(ctx context.Context, req *types.BatchCreateProcessRequest) (*types.BatchOperationResult, error) {
 	result := &types.BatchOperationResult{
 		Total:  len(req.HostIDs),
 		Errors: make([]string, 0),
@@ -364,12 +382,12 @@ func (s *Service) BatchCreateProcesses(ctx context.Context, req *types.BatchCrea
 // ========== 进程状态管理 ==========
 
 // UpdateProcessStatus 更新进程状态（Agent 上报）
-func (s *Service) UpdateProcessStatus(ctx context.Context, status *types.ProcessStatus) error {
+func (s *service) UpdateProcessStatus(ctx context.Context, status *types.ProcessStatus) error {
 	return s.db.Save(status).Error
 }
 
 // GetProcessStatus 获取进程状态
-func (s *Service) GetProcessStatus(ctx context.Context, processID uint64) (*types.ProcessStatus, error) {
+func (s *service) GetProcessStatus(ctx context.Context, processID uint64) (*types.ProcessStatus, error) {
 	var status types.ProcessStatus
 	if err := s.db.Where("process_id = ?", processID).First(&status).Error; err != nil {
 		return nil, err
@@ -378,7 +396,7 @@ func (s *Service) GetProcessStatus(ctx context.Context, processID uint64) (*type
 }
 
 // ListProcessesWithStatus 获取进程列表（含状态）
-func (s *Service) ListProcessesWithStatus(ctx context.Context, hostID uuid.UUID) ([]types.ProcessWithStatus, error) {
+func (s *service) ListProcessesWithStatus(ctx context.Context, hostID uuid.UUID) ([]types.ProcessWithStatus, error) {
 	var processes []types.Process
 	if err := s.db.Where("host_id = ?", hostID).
 		Preload("ProcessTemplate").
@@ -402,7 +420,7 @@ func (s *Service) ListProcessesWithStatus(ctx context.Context, hostID uuid.UUID)
 }
 
 // GetModuleProcessSummary 获取模块的进程统计摘要
-func (s *Service) GetModuleProcessSummary(ctx context.Context, moduleID uint64) (map[string]int, error) {
+func (s *service) GetModuleProcessSummary(ctx context.Context, moduleID uint64) (map[string]int, error) {
 	summary := map[string]int{
 		"total":   0,
 		"running": 0,

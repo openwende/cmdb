@@ -12,6 +12,11 @@ import (
 
 // RegisterTopologyRoutes 注册业务拓扑路由
 func RegisterTopologyRoutes(router *gin.Engine, db *gorm.DB) {
+	RegisterTopologyRoutesWithBusinessHandler(router, db, nil)
+}
+
+// RegisterTopologyRoutesWithBusinessHandler 注册业务拓扑路由，并将空闲机池初始化器注入 businessHandler
+func RegisterTopologyRoutesWithBusinessHandler(router *gin.Engine, db *gorm.DB, businessHandler *handlers.BusinessHandler) {
 	// 创建服务
 	mainlineService := mainline.NewService(db)
 	service := topology.NewService(db, mainlineService)
@@ -19,6 +24,11 @@ func RegisterTopologyRoutes(router *gin.Engine, db *gorm.DB) {
 	projectionService := projection.NewBusinessTopologyService(db)
 	commandService := projection.NewBusinessTopologyCommandService(db)
 	handler := handlers.NewTopologyHandler(service, aggregateService, projectionService, commandService)
+
+	// 将空闲机池初始化器注入到业务创建流程
+	if businessHandler != nil {
+		businessHandler.SetTopologyInitializer(service.InitializeBusinessTopology)
+	}
 
 	// API v1 路由组
 	v1 := router.Group("/api/v1/topology")

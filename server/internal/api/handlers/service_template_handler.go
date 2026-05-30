@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"github.com/wend/cmdb-backend/internal/core/service_template"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -13,11 +12,11 @@ import (
 
 // ServiceTemplateHandler 服务模板 HTTP Handler
 type ServiceTemplateHandler struct {
-	service *service_template.Service
+	service service_template.Service
 }
 
 // NewServiceTemplateHandler 创建 Handler
-func NewServiceTemplateHandler(service *service_template.Service) *ServiceTemplateHandler {
+func NewServiceTemplateHandler(service service_template.Service) *ServiceTemplateHandler {
 	return &ServiceTemplateHandler{service: service}
 }
 
@@ -73,8 +72,8 @@ func (h *ServiceTemplateHandler) ListServiceTemplates(c *gin.Context) {
 		return
 	}
 
-	businessID, err := uuid.Parse(businessIDStr)
-	if err != nil {
+	businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
 		return
 	}
@@ -280,8 +279,8 @@ func (h *ServiceTemplateHandler) ListSetTemplates(c *gin.Context) {
 		return
 	}
 
-	businessID, err := uuid.Parse(businessIDStr)
-	if err != nil {
+	businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
 		return
 	}

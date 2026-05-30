@@ -21,6 +21,7 @@ func setupHostTestDB(t *testing.T) *gorm.DB {
 	err = db.Exec(`
 		CREATE TABLE hosts (
 			id TEXT PRIMARY KEY,
+			display_id INTEGER,
 			created_at DATETIME,
 			updated_at DATETIME,
 			deleted_at DATETIME,
@@ -64,11 +65,10 @@ func setupHostTestDB(t *testing.T) *gorm.DB {
 	// 创建业务表（用于关联查询）
 	err = db.Exec(`
 		CREATE TABLE businesses (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			deleted_at DATETIME,
 			name TEXT NOT NULL,
-			identifier TEXT NOT NULL,
-			business_id INTEGER
+			identifier TEXT NOT NULL
 		)
 	`).Error
 	require.NoError(t, err)
@@ -76,7 +76,7 @@ func setupHostTestDB(t *testing.T) *gorm.DB {
 	err = db.Exec(`
 		CREATE TABLE host_business_relations (
 			host_id TEXT NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id INTEGER NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, business_id)
 		)
@@ -161,8 +161,7 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 
 	hostID := uuid.New()
 	tenantID := uuid.New()
-	businessID := int64(1000)
-	businessUUID := uuid.New()
+	businessID := uint64(1001)
 	cloudAreaID := uuid.New()
 
 	// 创建测试主机（在资源池中）
@@ -177,9 +176,6 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 	}
 	err := db.Create(host).Error
 	require.NoError(t, err)
-	err = db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
-		businessUUID.String(), "biz-1000", "biz-1000", businessID).Error
-	require.NoError(t, err)
 
 	t.Run("成功分配到业务", func(t *testing.T) {
 		err := repo.AssignToBusiness(ctx, hostID, businessID)
@@ -188,7 +184,7 @@ func TestHostRepository_AssignToBusiness(t *testing.T) {
 		// 验证关系表已建立
 		var cnt int64
 		err = db.Table("host_business_relations").
-			Where("host_id = ? AND business_id = ?", hostID, businessUUID).
+			Where("host_id = ? AND business_id = ?", hostID, businessID).
 			Count(&cnt).Error
 		assert.NoError(t, err)
 		assert.Equal(t, int64(1), cnt)
@@ -208,7 +204,6 @@ func TestHostRepository_ReclaimToPool(t *testing.T) {
 	hostID := uuid.New()
 	tenantID := uuid.New()
 	businessID := int64(1001)
-	businessUUID := uuid.New()
 	cloudAreaID := uuid.New()
 
 	// 创建已分配给业务的主机
@@ -223,11 +218,8 @@ func TestHostRepository_ReclaimToPool(t *testing.T) {
 	}
 	err := db.Create(host).Error
 	require.NoError(t, err)
-	err = db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
-		businessUUID.String(), "biz-1001", "biz-1001", businessID).Error
-	require.NoError(t, err)
 	err = db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?, ?)`,
-		hostID.String(), businessUUID.String()).Error
+		hostID.String(), businessID).Error
 	require.NoError(t, err)
 
 	t.Run("成功回收到资源池", func(t *testing.T) {
@@ -302,7 +294,6 @@ func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 
 	tenantID := uuid.New()
 	businessID := int64(1002)
-	businessUUID := uuid.New()
 	cloudAreaID := uuid.New()
 
 	// 创建资源池主机
@@ -328,10 +319,8 @@ func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 
 	db.Create(poolHost)
 	db.Create(businessHost)
-	db.Exec(`INSERT INTO businesses (id, name, identifier, business_id) VALUES (?, ?, ?, ?)`,
-		businessUUID.String(), "biz-1002", "biz-1002", businessID)
 	db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?, ?)`,
-		businessHost.ID.String(), businessUUID.String())
+		businessHost.ID.String(), businessID)
 
 	t.Run("查询资源池主机", func(t *testing.T) {
 		inPool := true

@@ -16,19 +16,51 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-type Service struct {
+type Service interface {
+	// WithDB returns a new Service bound to the given transaction. Used for cross-service transactions.
+	WithDB(db *gorm.DB) Service
+
+	// Sync operations (called by topology service inside transactions)
+	EnsureBuiltinModels(ctx context.Context) error
+	EnsureBusinessRoot(ctx context.Context, business *types.Business) (*types.MainlineInstance, error)
+	SyncSet(ctx context.Context, set *types.Set) (*types.MainlineInstance, error)
+	SyncModule(ctx context.Context, module *types.Module) (*types.MainlineInstance, error)
+	SyncBusinessLegacy(ctx context.Context, businessID uint64) error
+	SyncModelInstance(ctx context.Context, model *types.Model, instance *types.Instance, parentRefID *string) (*types.MainlineInstance, error)
+
+	// Node queries
+	GetNodeByRef(ctx context.Context, nodeType types.TopologyNodeType, refID string) (*types.MainlineInstance, error)
+	ListChildren(ctx context.Context, node *types.MainlineInstance) ([]types.MainlineInstance, error)
+	ListBusinessRoots(ctx context.Context, businessID *uint64) ([]types.MainlineInstance, error)
+	DeleteNodeByRef(ctx context.Context, modelName, refID string) error
+	GetModelByName(ctx context.Context, name string) (*types.Model, error)
+	GetModelByID(ctx context.Context, id uuid.UUID) (*types.Model, error)
+
+	// API methods (used by mainline handler)
+	EnsureTopologySettings(ctx context.Context) error
+	GetTopologySettings(ctx context.Context) (*types.TopologySettingsResponse, error)
+	ListMainlineModels(ctx context.Context) ([]types.Model, error)
+	CreateMainlineModel(ctx context.Context, req *types.CreateMainlineModelRequest) (*types.Model, error)
+	UpdateMainlineModel(ctx context.Context, uid string, req *types.UpdateMainlineModelRequest) (*types.Model, error)
+	CreateCustomNode(ctx context.Context, req *types.CreateMainlineNodeRequest) (*types.MainlineInstance, error)
+	UpdateCustomNode(ctx context.Context, modelUID, refID string, req *types.UpdateMainlineNodeRequest) (*types.MainlineInstance, error)
+	DeleteCustomNode(ctx context.Context, modelUID, refID string) error
+	MoveCustomNode(ctx context.Context, modelUID, refID string, req *types.MoveMainlineNodeRequest) (*types.MainlineInstance, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
-func (s *Service) WithDB(db *gorm.DB) *Service {
-	return &Service{db: db}
+func (s *service) WithDB(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
-func (s *Service) EnsureBuiltinModels(ctx context.Context) error {
+func (s *service) EnsureBuiltinModels(ctx context.Context) error {
 	type builtinModel struct {
 		name              string
 		displayName       string
@@ -156,11 +188,11 @@ func (s *Service) EnsureBuiltinModels(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) EnsureBusinessRoot(ctx context.Context, business *types.Business) (*types.MainlineInstance, error) {
-	root, err := s.GetNodeByRef(ctx, types.NodeTypeBusiness, business.ID.String())
+func (s *service) EnsureBusinessRoot(ctx context.Context, business *types.Business) (*types.MainlineInstance, error) {
+	root, err := s.GetNodeByRef(ctx, types.NodeTypeBusiness, strconv.FormatUint(business.ID, 10))
 	switch {
 	case err == nil:
-		path := pathSegment(string(types.NodeTypeBusiness), business.ID.String())
+		path := pathSegment(string(types.NodeTypeBusiness), strconv.FormatUint(business.ID, 10))
 		updates := map[string]interface{}{
 			"name":        business.Name,
 			"business_id": business.ID,
@@ -182,12 +214,13 @@ func (s *Service) EnsureBusinessRoot(ctx context.Context, business *types.Busine
 		return nil, err
 	}
 
+	idStr := strconv.FormatUint(business.ID, 10)
 	root = &types.MainlineInstance{
 		ModelName:  string(types.NodeTypeBusiness),
 		BusinessID: business.ID,
-		RefID:      business.ID.String(),
+		RefID:      idStr,
 		Name:       business.Name,
-		Path:       pathSegment(string(types.NodeTypeBusiness), business.ID.String()),
+		Path:       pathSegment(string(types.NodeTypeBusiness), idStr),
 		Level:      0,
 		SortOrder:  0,
 		Extra:      mustJSON(map[string]interface{}{"description": valueOrEmpty(business.Description), "lifecycle": business.Lifecycle}),
@@ -198,7 +231,7 @@ func (s *Service) EnsureBusinessRoot(ctx context.Context, business *types.Busine
 	return root, nil
 }
 
-func (s *Service) SyncSet(ctx context.Context, set *types.Set) (*types.MainlineInstance, error) {
+func (s *service) SyncSet(ctx context.Context, set *types.Set) (*types.MainlineInstance, error) {
 	business, err := s.getBusiness(ctx, set.BusinessID)
 	if err != nil {
 		return nil, err
@@ -219,7 +252,7 @@ func (s *Service) SyncSet(ctx context.Context, set *types.Set) (*types.MainlineI
 	})
 }
 
-func (s *Service) SyncModule(ctx context.Context, module *types.Module) (*types.MainlineInstance, error) {
+func (s *service) SyncModule(ctx context.Context, module *types.Module) (*types.MainlineInstance, error) {
 	set, err := s.getSet(ctx, module.SetID)
 	if err != nil {
 		return nil, err
@@ -247,7 +280,7 @@ func (s *Service) SyncModule(ctx context.Context, module *types.Module) (*types.
 	})
 }
 
-func (s *Service) SyncBusinessLegacy(ctx context.Context, businessID uuid.UUID) error {
+func (s *service) SyncBusinessLegacy(ctx context.Context, businessID uint64) error {
 	business, err := s.getBusiness(ctx, businessID)
 	if err != nil {
 		return err
@@ -277,7 +310,7 @@ func (s *Service) SyncBusinessLegacy(ctx context.Context, businessID uuid.UUID) 
 	return nil
 }
 
-func (s *Service) DeleteNodeByRef(ctx context.Context, modelName, refID string) error {
+func (s *service) DeleteNodeByRef(ctx context.Context, modelName, refID string) error {
 	node, err := s.GetNodeByRef(ctx, types.TopologyNodeType(modelName), refID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -288,7 +321,7 @@ func (s *Service) DeleteNodeByRef(ctx context.Context, modelName, refID string) 
 	return s.db.WithContext(ctx).Where("id = ? OR path LIKE ?", node.ID, node.Path+".%").Delete(&types.MainlineInstance{}).Error
 }
 
-func (s *Service) GetNodeByRef(ctx context.Context, nodeType types.TopologyNodeType, refID string) (*types.MainlineInstance, error) {
+func (s *service) GetNodeByRef(ctx context.Context, nodeType types.TopologyNodeType, refID string) (*types.MainlineInstance, error) {
 	var node types.MainlineInstance
 	if err := s.db.WithContext(ctx).
 		Where("model_name = ? AND ref_id = ?", string(nodeType), refID).
@@ -298,7 +331,7 @@ func (s *Service) GetNodeByRef(ctx context.Context, nodeType types.TopologyNodeT
 	return &node, nil
 }
 
-func (s *Service) ListChildren(ctx context.Context, node *types.MainlineInstance) ([]types.MainlineInstance, error) {
+func (s *service) ListChildren(ctx context.Context, node *types.MainlineInstance) ([]types.MainlineInstance, error) {
 	var nodes []types.MainlineInstance
 	if err := s.db.WithContext(ctx).
 		Where("parent_id = ?", node.ID).
@@ -309,7 +342,7 @@ func (s *Service) ListChildren(ctx context.Context, node *types.MainlineInstance
 	return nodes, nil
 }
 
-func (s *Service) ListBusinessRoots(ctx context.Context, businessID *uuid.UUID) ([]types.MainlineInstance, error) {
+func (s *service) ListBusinessRoots(ctx context.Context, businessID *uint64) ([]types.MainlineInstance, error) {
 	query := s.db.WithContext(ctx).
 		Model(&types.MainlineInstance{}).
 		Where("model_name = ?", string(types.NodeTypeBusiness)).
@@ -324,7 +357,7 @@ func (s *Service) ListBusinessRoots(ctx context.Context, businessID *uuid.UUID) 
 	return nodes, nil
 }
 
-func (s *Service) GetModelByName(ctx context.Context, name string) (*types.Model, error) {
+func (s *service) GetModelByName(ctx context.Context, name string) (*types.Model, error) {
 	var model types.Model
 	if err := s.db.WithContext(ctx).Where("name = ?", name).First(&model).Error; err != nil {
 		return nil, err
@@ -332,7 +365,7 @@ func (s *Service) GetModelByName(ctx context.Context, name string) (*types.Model
 	return &model, nil
 }
 
-func (s *Service) GetModelByID(ctx context.Context, id uuid.UUID) (*types.Model, error) {
+func (s *service) GetModelByID(ctx context.Context, id uuid.UUID) (*types.Model, error) {
 	var model types.Model
 	if err := s.db.WithContext(ctx).Where("id = ?", id).First(&model).Error; err != nil {
 		return nil, err
@@ -340,7 +373,7 @@ func (s *Service) GetModelByID(ctx context.Context, id uuid.UUID) (*types.Model,
 	return &model, nil
 }
 
-func (s *Service) SyncModelInstance(ctx context.Context, model *types.Model, instance *types.Instance, parentRefID *string) (*types.MainlineInstance, error) {
+func (s *service) SyncModelInstance(ctx context.Context, model *types.Model, instance *types.Instance, parentRefID *string) (*types.MainlineInstance, error) {
 	if model == nil {
 		return nil, fmt.Errorf("model is required")
 	}
@@ -384,7 +417,7 @@ func (s *Service) SyncModelInstance(ctx context.Context, model *types.Model, ins
 	return s.upsertNode(ctx, parent, node)
 }
 
-func (s *Service) upsertNode(ctx context.Context, parent *types.MainlineInstance, desired *types.MainlineInstance) (*types.MainlineInstance, error) {
+func (s *service) upsertNode(ctx context.Context, parent *types.MainlineInstance, desired *types.MainlineInstance) (*types.MainlineInstance, error) {
 	path := pathSegment(desired.ModelName, desired.RefID)
 	if parent != nil {
 		desired.ParentID = &parent.ID
@@ -440,7 +473,7 @@ func (s *Service) upsertNode(ctx context.Context, parent *types.MainlineInstance
 	return desired, nil
 }
 
-func (s *Service) refreshDescendantPaths(ctx context.Context, node *types.MainlineInstance) error {
+func (s *service) refreshDescendantPaths(ctx context.Context, node *types.MainlineInstance) error {
 	children, err := s.ListChildren(ctx, node)
 	if err != nil {
 		return err
@@ -458,7 +491,7 @@ func (s *Service) refreshDescendantPaths(ctx context.Context, node *types.Mainli
 	return nil
 }
 
-func (s *Service) getBusiness(ctx context.Context, id uuid.UUID) (*types.Business, error) {
+func (s *service) getBusiness(ctx context.Context, id uint64) (*types.Business, error) {
 	var business types.Business
 	if err := s.db.WithContext(ctx).Where("id = ?", id).First(&business).Error; err != nil {
 		return nil, err
@@ -466,7 +499,7 @@ func (s *Service) getBusiness(ctx context.Context, id uuid.UUID) (*types.Busines
 	return &business, nil
 }
 
-func (s *Service) getSet(ctx context.Context, id uint64) (*types.Set, error) {
+func (s *service) getSet(ctx context.Context, id uint64) (*types.Set, error) {
 	var set types.Set
 	if err := s.db.WithContext(ctx).Where("id = ?", id).First(&set).Error; err != nil {
 		return nil, err
@@ -518,17 +551,17 @@ func mainlineSortOrder(props map[string]interface{}) int {
 	}
 }
 
-func (s *Service) resolveBusinessID(instance *types.Instance, parent *types.MainlineInstance) (uuid.UUID, error) {
+func (s *service) resolveBusinessID(instance *types.Instance, parent *types.MainlineInstance) (uint64, error) {
 	if instance.BusinessID != nil {
 		if parent != nil && *instance.BusinessID != parent.BusinessID {
-			return uuid.Nil, fmt.Errorf("instance business_id does not match parent business scope")
+			return 0, fmt.Errorf("instance business_id does not match parent business scope")
 		}
 		return *instance.BusinessID, nil
 	}
 	if parent != nil {
 		return parent.BusinessID, nil
 	}
-	return uuid.Nil, fmt.Errorf("mainline instance requires business_id or a parent node")
+	return 0, fmt.Errorf("mainline instance requires business_id or a parent node")
 }
 
 func valueOrEmpty(v *string) string {

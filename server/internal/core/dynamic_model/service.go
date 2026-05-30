@@ -15,16 +15,73 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-// Service 动态模型服务
-type Service struct {
+// Service 动态模型服务接口
+type Service interface {
+	// 模型 CRUD
+	CreateModel(ctx context.Context, model *types.DynamicModel) error
+	ListModels(ctx context.Context) ([]types.DynamicModel, error)
+	GetModel(ctx context.Context, uid string) (*types.DynamicModel, error)
+	UpdateModel(ctx context.Context, uid string, updates map[string]interface{}) error
+	DeleteModel(ctx context.Context, uid string) error
+
+	// 属性 CRUD
+	CreateAttribute(ctx context.Context, attr *types.DynamicAttribute) error
+	ListAttributes(ctx context.Context, modelUID string) ([]types.DynamicAttribute, error)
+	UpdateAttribute(ctx context.Context, modelUID, fieldUID string, updates map[string]interface{}) error
+	DeleteAttribute(ctx context.Context, modelUID, fieldUID string) error
+
+	// 实例操作
+	UpsertInstance(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}, auditCtx *AuditContext) (uint64, error)
+	GetInstance(ctx context.Context, resourceID uint64) (*types.Resource, error)
+	ListInstances(ctx context.Context, modelUID string, filters map[string]interface{}, page, pageSize int) ([]types.Resource, int64, error)
+	DeleteInstance(ctx context.Context, resourceID uint64, auditCtx *AuditContext) error
+	GetInstanceView(ctx context.Context, modelUID string, resourceID uint64) (*types.DynamicModelInstanceView, error)
+	GetResourceHistoryView(ctx context.Context, modelUID string, resourceID uint64, page, pageSize int) ([]types.ResourceHistoryView, int64, error)
+
+	// 关联操作
+	CreateRelation(ctx context.Context, sourceID, targetID uint64, associationUID string) error
+	DeleteRelation(ctx context.Context, relationID uint64) error
+	ListInstanceRelations(ctx context.Context, modelUID string, resourceID uint64, direction, associationUID string) ([]types.InstanceRelationView, error)
+	GetTopology(ctx context.Context, startID uint64, maxDepth int, associationUIDs []string, reverse bool) ([]types.TopologyNode, error)
+	GetTopologyGraph(ctx context.Context, modelUID string, startID uint64, maxDepth int, associationUIDs []string, reverse bool) (*types.InstanceTopologyGraph, error)
+
+	// 关联类型管理
+	ListAssociationTypes(ctx context.Context) ([]types.AssociationType, error)
+	GetAssociationType(ctx context.Context, uid string) (*types.AssociationType, error)
+	CreateAssociationType(ctx context.Context, item *types.AssociationType) error
+	UpdateAssociationType(ctx context.Context, uid string, updates map[string]interface{}) (*types.AssociationType, error)
+	DeleteAssociationType(ctx context.Context, uid string) error
+	ListModelAssociations(ctx context.Context, sourceModelUID string) ([]types.DynamicModelAssociation, error)
+	CreateModelAssociation(ctx context.Context, item *types.DynamicModelAssociation) error
+	UpdateModelAssociation(ctx context.Context, sourceModelUID string, id uint64, updates map[string]interface{}) (*types.DynamicModelAssociation, error)
+	DeleteModelAssociation(ctx context.Context, sourceModelUID string, id uint64) error
+	GetAvailableRelations(ctx context.Context, sourceModelUID string) (map[string]interface{}, error)
+
+	// 唯一规则
+	EnsureLegacyUniqueRules(ctx context.Context, modelUID string) error
+	ListUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error)
+	CreateUniqueRule(ctx context.Context, rule *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error)
+	UpdateUniqueRule(ctx context.Context, modelUID string, ruleID uint64, updates *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error)
+	DeleteUniqueRule(ctx context.Context, modelUID string, ruleID uint64) error
+	ValidateUnique(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}) ([]types.UniqueRuleViolation, error)
+
+	// 索引同步
+	SyncUniqueIndexes(ctx context.Context) error
+
+	// 底层 DB 访问（供适配器使用）
+	DB() *gorm.DB
+}
+
+// service 动态模型服务实现
+type service struct {
 	db         *gorm.DB
 	attrCache  *AttributeCache
 	modelCache *ModelCache
 }
 
 // NewService 创建服务实例
-func NewService(db *gorm.DB) *Service {
-	return &Service{
+func NewService(db *gorm.DB) Service {
+	return &service{
 		db:         db,
 		attrCache:  NewAttributeCache(db),
 		modelCache: NewModelCache(db),
@@ -32,7 +89,7 @@ func NewService(db *gorm.DB) *Service {
 }
 
 // DB 返回数据库连接（用于适配器等需要直接访问的场景）
-func (s *Service) DB() *gorm.DB {
+func (s *service) DB() *gorm.DB {
 	return s.db
 }
 
@@ -144,7 +201,7 @@ type AuditContext struct {
 
 // UpsertInstance 智能写入/更新资源实例
 // 自动分流配置数据和状态数据，支持审计日志
-func (s *Service) UpsertInstance(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}, auditCtx *AuditContext) (uint64, error) {
+func (s *service) UpsertInstance(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}, auditCtx *AuditContext) (uint64, error) {
 	// 1. 检查模型是否存在
 	model, err := s.modelCache.Get(modelUID)
 	if err != nil {
@@ -206,7 +263,7 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, resourceI
 			}
 			resource.ID = existingResource.ID
 			if auditCtx != nil {
-				if err := s.recordHistory(tx, existingResource.ID, modelUID, "update", existingResource.Configs, resource.Configs, auditCtx); err != nil {
+				if err := s.recordHistory(tx, existingResource.ID, modelUID, "update", resource.Name, existingResource.Configs, resource.Configs, auditCtx); err != nil {
 					return err
 				}
 			}
@@ -222,7 +279,7 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, resourceI
 				return ParseDBError(err, modelUID)
 			}
 			if auditCtx != nil {
-				if err := s.recordHistory(tx, resource.ID, modelUID, "create", nil, resource.Configs, auditCtx); err != nil {
+				if err := s.recordHistory(tx, resource.ID, modelUID, "create", resource.Name, nil, resource.Configs, auditCtx); err != nil {
 					return err
 				}
 			}
@@ -258,7 +315,7 @@ func (s *Service) UpsertInstance(ctx context.Context, modelUID string, resourceI
 }
 
 // findExistingResource 根据唯一键查找已存在的资源
-func (s *Service) findExistingResource(tx *gorm.DB, modelUID string, configData map[string]interface{}, model *types.DynamicModel) (*types.Resource, error) {
+func (s *service) findExistingResource(tx *gorm.DB, modelUID string, configData map[string]interface{}, model *types.DynamicModel) (*types.Resource, error) {
 	// 解析唯一键配置
 	var uniqueConfig types.UniqueFieldConfig
 	if model.UniqueFields != nil {
@@ -317,14 +374,24 @@ func getResourceName(configData map[string]interface{}) string {
 }
 
 // recordHistory 记录审计日志
-func (s *Service) recordHistory(tx *gorm.DB, resourceID uint64, modelUID, changeType string, beforeData, afterData datatypes.JSON, auditCtx *AuditContext) error {
+// resourceName 为变更当时的资源名称；业务名从变更快照中的 business_id 解析。
+// 两者作为冗余快照落库，使审计记录自包含，查询时无需 join 活表。
+func (s *service) recordHistory(tx *gorm.DB, resourceID uint64, modelUID, changeType, resourceName string, beforeData, afterData datatypes.JSON, auditCtx *AuditContext) error {
+	// 业务归属取变更快照：update/create 用 afterData，delete 用 beforeData。
+	snapshot := afterData
+	if len(snapshot) == 0 {
+		snapshot = beforeData
+	}
+
 	history := &types.ResourceHistory{
-		ResourceID: resourceID,
-		ModelUID:   modelUID,
-		ChangeType: changeType,
-		BeforeData: beforeData,
-		AfterData:  afterData,
-		ChangedAt:  time.Now(),
+		ResourceID:   resourceID,
+		ModelUID:     modelUID,
+		ChangeType:   changeType,
+		BeforeData:   beforeData,
+		AfterData:    afterData,
+		ChangedAt:    time.Now(),
+		ResourceName: resourceName,
+		BizName:      s.resolveBizName(tx, snapshot),
 	}
 
 	if auditCtx != nil {
@@ -336,8 +403,51 @@ func (s *Service) recordHistory(tx *gorm.DB, resourceID uint64, modelUID, change
 	return tx.Create(history).Error
 }
 
+// resolveBizName 从配置快照中解析 business_id，并查出业务名称。
+// 无 business_id 或业务不存在时返回空串（多数非主机资源即如此）。
+func (s *service) resolveBizName(tx *gorm.DB, configs datatypes.JSON) string {
+	if len(configs) == 0 {
+		return ""
+	}
+	var m map[string]interface{}
+	if err := json.Unmarshal(configs, &m); err != nil {
+		return ""
+	}
+	bizID := parseBusinessID(m["business_id"])
+	if bizID == 0 {
+		return ""
+	}
+	var name string
+	tx.Table("businesses").
+		Select("name").
+		Where("id = ? AND deleted_at IS NULL", bizID).
+		Limit(1).
+		Scan(&name)
+	return name
+}
+
+// parseBusinessID 兼容 JSONB 中 business_id 的多种类型（数字 / 字符串）。
+func parseBusinessID(v interface{}) uint64 {
+	switch bv := v.(type) {
+	case float64:
+		if bv > 0 {
+			return uint64(bv)
+		}
+	case json.Number:
+		if n, err := bv.Int64(); err == nil && n > 0 {
+			return uint64(n)
+		}
+	case string:
+		var n uint64
+		if _, err := fmt.Sscanf(bv, "%d", &n); err == nil {
+			return n
+		}
+	}
+	return 0
+}
+
 // GetInstance 获取资源实例（含状态数据）
-func (s *Service) GetInstance(ctx context.Context, resourceID uint64) (*types.Resource, error) {
+func (s *service) GetInstance(ctx context.Context, resourceID uint64) (*types.Resource, error) {
 	var resource types.Resource
 	if err := s.db.Preload("State").First(&resource, resourceID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -350,7 +460,7 @@ func (s *Service) GetInstance(ctx context.Context, resourceID uint64) (*types.Re
 }
 
 // ListInstances 查询资源实例列表
-func (s *Service) ListInstances(ctx context.Context, modelUID string, filters map[string]interface{}, page, pageSize int) ([]types.Resource, int64, error) {
+func (s *service) ListInstances(ctx context.Context, modelUID string, filters map[string]interface{}, page, pageSize int) ([]types.Resource, int64, error) {
 	query := s.db.Model(&types.Resource{}).Where("model_uid = ?", modelUID)
 
 	// 应用过滤条件（JSONB 查询）
@@ -379,7 +489,7 @@ func (s *Service) ListInstances(ctx context.Context, modelUID string, filters ma
 }
 
 // DeleteInstance 删除资源实例（软删除）
-func (s *Service) DeleteInstance(ctx context.Context, resourceID uint64, auditCtx *AuditContext) error {
+func (s *service) DeleteInstance(ctx context.Context, resourceID uint64, auditCtx *AuditContext) error {
 	var resource types.Resource
 	if err := s.db.First(&resource, resourceID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -391,7 +501,7 @@ func (s *Service) DeleteInstance(ctx context.Context, resourceID uint64, auditCt
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 记录审计日志
 		if auditCtx != nil {
-			if err := s.recordHistory(tx, resourceID, resource.ModelUID, "delete", resource.Configs, nil, auditCtx); err != nil {
+			if err := s.recordHistory(tx, resourceID, resource.ModelUID, "delete", resource.Name, resource.Configs, nil, auditCtx); err != nil {
 				return err
 			}
 		}
@@ -402,7 +512,7 @@ func (s *Service) DeleteInstance(ctx context.Context, resourceID uint64, auditCt
 }
 
 // CreateRelation 创建关联关系
-func (s *Service) CreateRelation(ctx context.Context, sourceID, targetID uint64, associationUID string) error {
+func (s *service) CreateRelation(ctx context.Context, sourceID, targetID uint64, associationUID string) error {
 	// 1. 查询源和目标资源
 	var source, target types.Resource
 	if err := s.db.First(&source, sourceID).Error; err != nil {
@@ -446,7 +556,7 @@ func (s *Service) CreateRelation(ctx context.Context, sourceID, targetID uint64,
 }
 
 // checkCardinality 检查关联基数约束
-func (s *Service) checkCardinality(sourceID, targetID uint64, associationUID, mapping string) error {
+func (s *service) checkCardinality(sourceID, targetID uint64, associationUID, mapping string) error {
 	switch mapping {
 	case "1:1":
 		// 检查源是否已有关联
@@ -479,7 +589,7 @@ func (s *Service) checkCardinality(sourceID, targetID uint64, associationUID, ma
 // maxDepth: 最大递归深度
 // associationUIDs: 关联类型过滤（nil 表示所有类型）
 // reverse: 是否反向查询（查找父节点）
-func (s *Service) GetTopology(ctx context.Context, startID uint64, maxDepth int, associationUIDs []string, reverse bool) ([]types.TopologyNode, error) {
+func (s *service) GetTopology(ctx context.Context, startID uint64, maxDepth int, associationUIDs []string, reverse bool) ([]types.TopologyNode, error) {
 	if maxDepth <= 0 || maxDepth > 10 {
 		maxDepth = 10 // 限制最大深度
 	}
@@ -496,7 +606,7 @@ func (s *Service) GetTopology(ctx context.Context, startID uint64, maxDepth int,
 }
 
 // buildTopologySQL 构建拓扑查询 SQL
-func (s *Service) buildTopologySQL(startID uint64, maxDepth int, associationUIDs []string, reverse bool) string {
+func (s *service) buildTopologySQL(startID uint64, maxDepth int, associationUIDs []string, reverse bool) string {
 	sourceCol, targetCol := "source_id", "target_id"
 	if reverse {
 		sourceCol, targetCol = targetCol, sourceCol
@@ -547,7 +657,7 @@ func (s *Service) buildTopologySQL(startID uint64, maxDepth int, associationUIDs
 }
 
 // SyncUniqueIndexes 同步唯一索引（启动时调用）
-func (s *Service) SyncUniqueIndexes(ctx context.Context) error {
+func (s *service) SyncUniqueIndexes(ctx context.Context) error {
 	var models []types.DynamicModel
 	if err := s.db.Find(&models).Error; err != nil {
 		return err
@@ -563,7 +673,7 @@ func (s *Service) SyncUniqueIndexes(ctx context.Context) error {
 }
 
 // syncModelUniqueIndex 同步单个模型的唯一索引
-func (s *Service) syncModelUniqueIndex(model types.DynamicModel) error {
+func (s *service) syncModelUniqueIndex(model types.DynamicModel) error {
 	// 解析唯一键配置
 	var uniqueConfig types.UniqueFieldConfig
 	if model.UniqueFields != nil {

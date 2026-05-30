@@ -2,10 +2,10 @@ package dynamic_model
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -98,7 +98,7 @@ func TestSchemaService_GetFormSchema_MergesBusinessOverrides(t *testing.T) {
 	db := setupSchemaServiceTestDB(t)
 	svc := NewSchemaService(db, NewService(db))
 	ctx := context.Background()
-	bizID := uuid.New()
+	var bizID uint64 = 1001
 	now := time.Now().UTC()
 
 	require.NoError(t, db.Exec(`
@@ -106,13 +106,13 @@ func TestSchemaService_GetFormSchema_MergesBusinessOverrides(t *testing.T) {
 			(business_id, object_type, name, collapsed_by_default, sort_order, created_by, updated_by, created_at, updated_at)
 		VALUES
 			(?, 'module', '扩展信息', FALSE, 10, 'tester', 'tester', ?, ?)
-	`, bizID.String(), now, now).Error)
+	`, fmt.Sprintf("%d", bizID), now, now).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO business_custom_fields
 			(business_id, object_type, group_id, field_uid, field_name, field_type, is_required, is_editable, is_unique, placeholder, sort_order, created_by, updated_by, created_at, updated_at)
 		VALUES
 			(?, 'module', 1, 'owner', '负责人', 'string', TRUE, TRUE, FALSE, '请输入负责人', 10, 'tester', 'tester', ?, ?)
-	`, bizID.String(), now, now).Error)
+	`, fmt.Sprintf("%d", bizID), now, now).Error)
 
 	schema, err := svc.GetFormSchema(ctx, "module", "topology_create", bizID)
 	require.NoError(t, err)

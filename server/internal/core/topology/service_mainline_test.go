@@ -29,7 +29,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 
 	sqls := []string{
 		`CREATE TABLE businesses (
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			created_at DATETIME,
 			updated_at DATETIME,
 			deleted_at DATETIME,
@@ -38,7 +38,6 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 			tenant_id TEXT NOT NULL,
 			name TEXT NOT NULL,
 			identifier TEXT NOT NULL,
-			business_id BIGINT,
 			description TEXT,
 			lifecycle TEXT NOT NULL DEFAULT 'online',
 			timezone TEXT NOT NULL DEFAULT 'UTC',
@@ -48,7 +47,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 		)`,
 		`CREATE TABLE sets (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			name TEXT NOT NULL,
 			description TEXT,
 			env_type TEXT,
@@ -61,7 +60,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 		`CREATE TABLE modules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			set_id INTEGER NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			service_template_id BIGINT,
 			service_category_id BIGINT,
 			name TEXT NOT NULL,
@@ -75,6 +74,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 		)`,
 		`CREATE TABLE hosts (
 			id TEXT PRIMARY KEY,
+			display_id INTEGER,
 			created_at DATETIME,
 			updated_at DATETIME,
 			deleted_at DATETIME,
@@ -103,7 +103,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 		)`,
 		`CREATE TABLE host_business_relations (
 			host_id TEXT NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, business_id)
 		)`,
@@ -112,6 +112,13 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 			module_id BIGINT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, module_id)
+		)`,
+		`CREATE TABLE resource_pool_hosts (
+			host_id TEXT PRIMARY KEY,
+			directory_id BIGINT NOT NULL,
+			imported_at DATETIME,
+			imported_by TEXT,
+			remark TEXT
 		)`,
 		`CREATE TABLE model_groups (
 			id TEXT PRIMARY KEY,
@@ -197,7 +204,7 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func newTestTopologyService(db *gorm.DB) *Service {
+func newTestTopologyService(db *gorm.DB) Service {
 	return NewService(db, mainline.NewService(db))
 }
 
@@ -228,13 +235,11 @@ func TestSetupTopologyTestDB_ModelSchemaSupportsModelGroups(t *testing.T) {
 	`).Error)
 }
 
-func seedBusiness(t *testing.T, db *gorm.DB, name string) uuid.UUID {
+func seedBusiness(t *testing.T, db *gorm.DB, name string) uint64 {
 	t.Helper()
 
-	bizID := uuid.New()
 	description := name + " description"
 	biz := types.Business{
-		ID:          bizID,
 		CreatedAt:   time.Now().UTC(),
 		UpdatedAt:   time.Now().UTC(),
 		TenantID:    uuid.New(),
@@ -246,7 +251,8 @@ func seedBusiness(t *testing.T, db *gorm.DB, name string) uuid.UUID {
 		Language:    "en",
 	}
 	require.NoError(t, db.Create(&biz).Error)
-	return bizID
+	require.NotZero(t, biz.ID)
+	return biz.ID
 }
 
 func TestInitializeBusinessTopologyBuildsMainlineTree(t *testing.T) {
@@ -272,6 +278,47 @@ func TestInitializeBusinessTopologyBuildsMainlineTree(t *testing.T) {
 	require.Equal(t, true, tree[0].Children[0].IsDefault)
 	require.Len(t, tree[0].Children[0].Children, 1)
 	require.Equal(t, true, tree[0].Children[0].Children[0].IsDefault)
+}
+
+func TestDefaultIdleModuleCountsResourcePoolHosts(t *testing.T) {
+	db := setupTopologyTestDB(t)
+	svc := newTestTopologyService(db)
+	ctx := context.Background()
+	bizID := seedBusiness(t, db, "idle-count-biz")
+
+	require.NoError(t, svc.InitializeBusinessTopology(ctx, bizID))
+
+	hostIDs := []string{uuid.NewString(), uuid.NewString()}
+	for index, hostID := range hostIDs {
+		require.NoError(t, db.Table("hosts").Create(map[string]interface{}{
+			"id":         hostID,
+			"host_name":  fmt.Sprintf("idle-host-%d", index+1),
+			"primary_ip": fmt.Sprintf("10.0.0.%d", index+1),
+			"status":     "running",
+		}).Error)
+		require.NoError(t, db.Exec(
+			`INSERT INTO resource_pool_hosts (host_id, directory_id, imported_at, imported_by, remark)
+			VALUES (?, 1, CURRENT_TIMESTAMP, 'tester', 'idle host')`,
+			hostID,
+		).Error)
+	}
+
+	tree, err := svc.GetTopologyTree(ctx, &types.GetTopologyTreeRequest{
+		BusinessID:   &bizID,
+		IncludeHosts: false,
+		MaxDepth:     3,
+		ExpandNodeID: "",
+	})
+	require.NoError(t, err)
+	require.Len(t, tree, 1)
+	require.Len(t, tree[0].Children, 1)
+	require.Len(t, tree[0].Children[0].Children, 1)
+
+	idleModule := tree[0].Children[0].Children[0]
+	require.Equal(t, types.NodeTypeModule, idleModule.NodeType)
+	require.True(t, idleModule.IsDefault)
+	require.Equal(t, 2, idleModule.Extra["host_count"])
+	require.Equal(t, 2, idleModule.ChildCount)
 }
 
 func TestCreateAndMoveModuleKeepsMainlineTreeInSync(t *testing.T) {
@@ -383,7 +430,7 @@ func TestCustomMainlineInstanceAppearsInTopologyTree(t *testing.T) {
 
 	parentRef := fmt.Sprintf("%d", setNode.ID)
 	_, err = instanceService.CreateInstance(ctx, uuid.New().String(), "rack", &types.CreateInstanceRequest{
-		BusinessID:          ptrString(bizID.String()),
+		BusinessID:          ptrString(fmt.Sprintf("%d", bizID)),
 		MainlineParentRefID: &parentRef,
 		Properties: map[string]interface{}{
 			"name":       "rack-a",
@@ -446,7 +493,7 @@ func TestUpdateModulePersistsServiceCategoryID(t *testing.T) {
 	require.NoError(t, db.Exec(`
 		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
 		VALUES (?, ?, ?, NULL, ?, FALSE, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, categoryID, bizID.String(), "Database", categoryID).Error)
+	`, categoryID, fmt.Sprintf("%d", bizID), "Database", categoryID).Error)
 
 	updated, err := svc.UpdateModule(ctx, module.ID, &types.UpdateModuleRequest{
 		ServiceCategoryID: &categoryID,

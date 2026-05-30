@@ -23,6 +23,7 @@ const (
 // Host 云主机
 type Host struct {
 	ID        uuid.UUID  `json:"id" db:"id" gorm:"primaryKey;type:uuid"`
+	DisplayID int64      `json:"display_id" db:"display_id" gorm:"autoIncrement;uniqueIndex"`
 	CreatedAt time.Time  `json:"created_at" db:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at" db:"updated_at"`
 	DeletedAt *time.Time `json:"-" db:"deleted_at"`
@@ -67,8 +68,8 @@ type Host struct {
 	CloudArea *CloudArea `json:"cloud_area,omitempty" gorm:"-"`
 	Business  *Business  `json:"business,omitempty" gorm:"-"`
 	// 多对多关联（transient，仅用于返回）
-	BusinessIDs []uuid.UUID `json:"business_ids,omitempty" gorm:"-"`
-	ModuleIDs   []uint64    `json:"module_ids,omitempty" gorm:"-"`
+	BusinessIDs []uint64 `json:"business_ids,omitempty" gorm:"-"`
+	ModuleIDs   []uint64 `json:"module_ids,omitempty" gorm:"-"`
 }
 
 // TableName specifies the table name for GORM
@@ -80,7 +81,7 @@ func (Host) TableName() string {
 type CreateHostRequest struct {
 	HostName    string     `json:"host_name" validate:"required"`
 	CloudAreaID *uuid.UUID `json:"cloud_area_id"` // 可选，不指定则使用默认云区域
-	BusinessID  *int64     `json:"business_id"`   // 可选，NULL表示在资源池
+	BusinessID  *uint64    `json:"business_id"`   // 可选，NULL表示在资源池
 	PrimaryIP   string     `json:"primary_ip" validate:"required,ip"`
 	IPAddresses []string   `json:"ip_addresses" validate:"omitempty,dive,ip"`
 
@@ -104,7 +105,7 @@ type CreateHostRequest struct {
 type UpdateHostRequest struct {
 	HostName    *string    `json:"host_name"`
 	CloudAreaID *uuid.UUID `json:"cloud_area_id"`
-	BusinessID  *int64     `json:"business_id"`
+	BusinessID  *uint64    `json:"business_id"`
 	PrimaryIP   *string    `json:"primary_ip" validate:"omitempty,ip"`
 	IPAddresses *[]string  `json:"ip_addresses" validate:"omitempty,dive,ip"`
 
@@ -125,7 +126,7 @@ type UpdateHostCustomFieldsRequest struct {
 
 // AssignHostToBusinessRequest 分配主机到业务请求
 type AssignHostToBusinessRequest struct {
-	BusinessID int64 `json:"business_id" validate:"required"`
+	BusinessID uint64 `json:"business_id" validate:"required"`
 }
 
 // BatchImportHostsRequest 批量导入主机请求
@@ -178,7 +179,7 @@ type HostListResponse struct {
 // HostBusinessRelation 主机-业务多对多关联
 type HostBusinessRelation struct {
 	HostID     uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
-	BusinessID uuid.UUID `gorm:"type:uuid;primaryKey;comment:业务ID" json:"business_id"`
+	BusinessID uint64    `gorm:"primaryKey;comment:业务ID" json:"business_id"`
 	CreatedAt  time.Time `json:"created_at"`
 }
 

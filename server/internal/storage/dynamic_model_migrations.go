@@ -65,6 +65,10 @@ func MigrateRuntimeSupportTables(db *gorm.DB) error {
 		}
 	}
 
+	if err := upgradeResourceHistoriesColumns(db); err != nil {
+		return fmt.Errorf("升级审计日志冗余列失败: %w", err)
+	}
+
 	if err := seedBuiltinData(db); err != nil {
 		return fmt.Errorf("初始化关联类型失败: %w", err)
 	}
@@ -76,6 +80,28 @@ func MigrateRuntimeSupportTables(db *gorm.DB) error {
 	}
 	if err := seedRuntimeDynamicAttributesFromStaticModels(db); err != nil {
 		return fmt.Errorf("同步内置属性失败: %w", err)
+	}
+
+	return nil
+}
+
+// upgradeResourceHistoriesColumns 为存量数据库幂等补齐审计日志冗余列。
+// resource_name / biz_name 写入时落库，使审计记录自包含。
+// 开发期不回填历史数据：老记录的两列保持空串，必要时直接清库即可。
+// 仅针对 PostgreSQL：SQLite 仅用于测试，建表语句已直接包含这两列。
+func upgradeResourceHistoriesColumns(db *gorm.DB) error {
+	if db.Dialector.Name() != "postgres" {
+		return nil
+	}
+
+	addColumns := []string{
+		`ALTER TABLE resource_histories ADD COLUMN IF NOT EXISTS resource_name VARCHAR(200) NOT NULL DEFAULT ''`,
+		`ALTER TABLE resource_histories ADD COLUMN IF NOT EXISTS biz_name VARCHAR(200) NOT NULL DEFAULT ''`,
+	}
+	for _, stmt := range addColumns {
+		if err := db.Exec(stmt).Error; err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -189,7 +215,9 @@ func runtimeSupportDDL(dialect string) []string {
 				changed_by TEXT,
 				changed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 				client_ip TEXT,
-				user_agent TEXT
+				user_agent TEXT,
+				resource_name TEXT NOT NULL DEFAULT '',
+				biz_name TEXT NOT NULL DEFAULT ''
 			)`,
 			`CREATE INDEX IF NOT EXISTS idx_resource_histories_resource_time
 				ON resource_histories (resource_id, changed_at DESC)`,
@@ -302,10 +330,21 @@ func runtimeSupportDDL(dialect string) []string {
 			changed_by VARCHAR(100),
 			changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 			client_ip VARCHAR(50),
-			user_agent VARCHAR(500)
+			user_agent VARCHAR(500),
+			resource_name VARCHAR(200) NOT NULL DEFAULT '',
+			biz_name VARCHAR(200) NOT NULL DEFAULT ''
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_resource_histories_resource_time
 			ON resource_histories (resource_id, changed_at DESC)`,
+		// 审计列表按 changed_at DESC 排序 + 时间范围过滤（resource 标签页排除 model 时主走此索引）
+		`CREATE INDEX IF NOT EXISTS idx_resource_histories_changed_at
+			ON resource_histories (changed_at DESC)`,
+		// host/business 标签页按 model_uid 过滤 + 时间排序
+		`CREATE INDEX IF NOT EXISTS idx_resource_histories_model_time
+			ON resource_histories (model_uid, changed_at DESC)`,
+		// 业务过滤：快照 configs->>'business_id' 等值匹配（表达式索引，需与查询表达式一致）
+		`CREATE INDEX IF NOT EXISTS idx_resource_histories_biz
+			ON resource_histories ((COALESCE(after_data, before_data) ->> 'business_id'))`,
 	}
 }
 

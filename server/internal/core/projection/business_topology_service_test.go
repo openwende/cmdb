@@ -23,7 +23,7 @@ func setupProjectionTestDB(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 	require.NoError(t, storage.MigrateResourceGraphTables(db))
 	require.NoError(t, db.Exec(`CREATE TABLE businesses (
-		id TEXT PRIMARY KEY,
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		created_at DATETIME,
 		updated_at DATETIME,
 		deleted_at DATETIME,
@@ -32,7 +32,6 @@ func setupProjectionTestDB(t *testing.T) *gorm.DB {
 		tenant_id TEXT NOT NULL,
 		name TEXT NOT NULL,
 		identifier TEXT NOT NULL,
-		business_id BIGINT,
 		description TEXT,
 		lifecycle TEXT NOT NULL DEFAULT 'online',
 		timezone TEXT NOT NULL DEFAULT 'UTC',
@@ -43,13 +42,14 @@ func setupProjectionTestDB(t *testing.T) *gorm.DB {
 	require.NoError(t, db.Exec(`CREATE TABLE business_personnel (
 		id TEXT PRIMARY KEY,
 		created_at DATETIME,
-		business_id TEXT NOT NULL,
+		business_id INTEGER NOT NULL,
 		user_id TEXT,
 		identity TEXT NOT NULL,
 		role TEXT NOT NULL
 	)`).Error)
 	require.NoError(t, db.Exec(`CREATE TABLE hosts (
 		id TEXT PRIMARY KEY,
+		display_id INTEGER,
 		created_at DATETIME,
 		updated_at DATETIME,
 		deleted_at DATETIME,
@@ -91,12 +91,36 @@ func setupProjectionTestDB(t *testing.T) *gorm.DB {
 		cidr_block TEXT,
 		region TEXT,
 		custom_fields TEXT
-	)`).Error)
+		)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE modules (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			is_default BOOLEAN NOT NULL DEFAULT FALSE,
+			deleted_at DATETIME
+		)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE host_business_relations (
+			host_id TEXT NOT NULL,
+			business_id INTEGER NOT NULL,
+			created_at DATETIME,
+			PRIMARY KEY (host_id, business_id)
+		)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE host_module_relations (
+			host_id TEXT NOT NULL,
+			module_id INTEGER NOT NULL,
+			created_at DATETIME,
+			PRIMARY KEY (host_id, module_id)
+		)`).Error)
+	require.NoError(t, db.Exec(`CREATE TABLE resource_pool_hosts (
+			host_id TEXT PRIMARY KEY,
+			directory_id INTEGER NOT NULL,
+			imported_at DATETIME,
+			imported_by TEXT,
+			remark TEXT
+		)`).Error)
 
 	return db
 }
 
-func registerProjectionType(t *testing.T, svc *resource_graph.Service, name, category string) {
+func registerProjectionType(t *testing.T, svc resource_graph.Service, name, category string) {
 	t.Helper()
 
 	_, err := svc.CreateType(context.Background(), resource_graph.CreateTypeInput{
@@ -243,6 +267,7 @@ func TestBusinessTopologyService_GetTopologyTree_RespectsIncludeHosts(t *testing
 	require.True(t, moduleWithoutHosts.IsLeaf)
 	require.False(t, moduleWithoutHosts.Expandable)
 	require.Equal(t, 1, moduleWithoutHosts.ChildCount)
+	require.Equal(t, 1, moduleWithoutHosts.Extra["host_count"])
 	require.Empty(t, moduleWithoutHosts.Children)
 
 	treeWithHosts, err := svc.GetTopologyTree(context.Background(), bizID, true, 4, "")
@@ -250,6 +275,7 @@ func TestBusinessTopologyService_GetTopologyTree_RespectsIncludeHosts(t *testing
 	moduleWithHosts := treeWithHosts[0].Children[0].Children[0]
 	require.False(t, moduleWithHosts.IsLeaf)
 	require.True(t, moduleWithHosts.Expandable)
+	require.Equal(t, 1, moduleWithHosts.Extra["host_count"])
 	require.Len(t, moduleWithHosts.Children, 1)
 	require.Equal(t, "host", string(moduleWithHosts.Children[0].NodeType))
 }

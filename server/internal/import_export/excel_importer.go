@@ -16,11 +16,11 @@ import (
 
 // ExcelImporter Excel 导入器
 type ExcelImporter struct {
-	dynamicService *dynamic_model.Service
+	dynamicService dynamic_model.Service
 }
 
 // NewExcelImporter 创建导入器
-func NewExcelImporter(dynamicService *dynamic_model.Service) *ExcelImporter {
+func NewExcelImporter(dynamicService dynamic_model.Service) *ExcelImporter {
 	return &ExcelImporter{
 		dynamicService: dynamicService,
 	}
@@ -402,8 +402,16 @@ func (imp *ExcelImporter) convertValue(cellValue string, attr *types.DynamicAttr
 		return cellValue, nil
 
 	case "date":
-		// TODO: 添加日期格式验证
-		return cellValue, nil
+		if strings.TrimSpace(cellValue) == "" {
+			return cellValue, nil
+		}
+		dateLayouts := []string{"2006-01-02", "2006-01-02 15:04:05", time.RFC3339}
+		for _, layout := range dateLayouts {
+			if _, err := time.Parse(layout, strings.TrimSpace(cellValue)); err == nil {
+				return cellValue, nil
+			}
+		}
+		return nil, fmt.Errorf("不是合法的日期格式: %s，需为 YYYY-MM-DD、YYYY-MM-DD HH:MM:SS 或 RFC3339", cellValue)
 
 	default:
 		return cellValue, nil

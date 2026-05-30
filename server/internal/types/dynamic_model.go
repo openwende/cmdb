@@ -31,22 +31,22 @@ type UniqueFieldConfig struct {
 // DynamicAttribute 属性定义表 - 定义模型字段的元数据
 // 通过 Category 字段实现冷热数据分离：config（低频）存主表，state（高频）存侧车表
 type DynamicAttribute struct {
-	ID          uint64         `gorm:"primaryKey" json:"id"`
-	ModelUID    string         `gorm:"index:idx_model_field;size:50;not null;comment:关联模型 UID" json:"model_uid"`
-	FieldUID    string         `gorm:"index:idx_model_field;size:50;not null;comment:字段英文名，如 cpu_usage" json:"field_uid"`
-	FieldName   string         `gorm:"size:100;not null;comment:字段显示名称" json:"field_name"`
-	FieldType   string         `gorm:"size:20;not null;comment:字段类型：string, int, float, bool, enum, date" json:"field_type"`
-	Category    string         `gorm:"size:20;not null;comment:字段分类：config(静态配置) 或 state(动态状态)" json:"category"`
-	IsRequired  bool           `gorm:"default:false;comment:是否必填" json:"is_required"`
-	IsUnique    bool           `gorm:"default:false;comment:是否单字段唯一" json:"is_unique"`
-	UniqueGroup string         `gorm:"size:50;comment:组合唯一分组，相同分组的字段组合唯一" json:"unique_group"`
-	IsReadOnly  bool           `gorm:"default:false;comment:是否只读" json:"is_read_only"`
-	DefaultValue string        `gorm:"size:500;comment:默认值" json:"default_value"`
-	Placeholder  string        `gorm:"size:200;comment:输入提示" json:"placeholder"`
-	Unit         string        `gorm:"size:20;comment:单位，如 GB, 核" json:"unit"`
-	Validators  datatypes.JSON `gorm:"type:jsonb;comment:校验规则（JSONB）" json:"validators"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
+	ID           uint64         `gorm:"primaryKey" json:"id"`
+	ModelUID     string         `gorm:"index:idx_model_field;size:50;not null;comment:关联模型 UID" json:"model_uid"`
+	FieldUID     string         `gorm:"index:idx_model_field;size:50;not null;comment:字段英文名，如 cpu_usage" json:"field_uid"`
+	FieldName    string         `gorm:"size:100;not null;comment:字段显示名称" json:"field_name"`
+	FieldType    string         `gorm:"size:20;not null;comment:字段类型：string, int, float, bool, enum, date" json:"field_type"`
+	Category     string         `gorm:"size:20;not null;comment:字段分类：config(静态配置) 或 state(动态状态)" json:"category"`
+	IsRequired   bool           `gorm:"default:false;comment:是否必填" json:"is_required"`
+	IsUnique     bool           `gorm:"default:false;comment:是否单字段唯一" json:"is_unique"`
+	UniqueGroup  string         `gorm:"size:50;comment:组合唯一分组，相同分组的字段组合唯一" json:"unique_group"`
+	IsReadOnly   bool           `gorm:"default:false;comment:是否只读" json:"is_read_only"`
+	DefaultValue string         `gorm:"size:500;comment:默认值" json:"default_value"`
+	Placeholder  string         `gorm:"size:200;comment:输入提示" json:"placeholder"`
+	Unit         string         `gorm:"size:20;comment:单位，如 GB, 核" json:"unit"`
+	Validators   datatypes.JSON `gorm:"type:jsonb;comment:校验规则（JSONB）" json:"validators"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 // FieldValidators 字段校验规则
@@ -80,8 +80,8 @@ type Resource struct {
 
 	// 生成列（Generated Columns）- 从 JSONB 中提取高频查询字段
 	// 注意：这些字段由数据库自动维护，应用层不应直接赋值
-	CloudID int64  `gorm:"type:bigint;comment:云区域 ID（生成列）" json:"cloud_id,omitempty"`
-	InnerIP string `gorm:"type:varchar(50);comment:内网 IP（生成列）" json:"inner_ip,omitempty"`
+	CloudID int64  `gorm:"->;type:bigint;comment:云区域 ID（生成列）" json:"cloud_id,omitempty"`
+	InnerIP string `gorm:"->;type:varchar(50);comment:内网 IP（生成列）" json:"inner_ip,omitempty"`
 
 	// 关联关系（仅用于查询，不在数据库中存储）
 	State *ResourceState `gorm:"foreignKey:ResourceID" json:"state,omitempty"`
@@ -128,12 +128,12 @@ func (AssociationType) TableName() string {
 
 // 预定义的关联类型常量
 const (
-	AssocRunsOn      = "runs_on"       // 运行于（如 虚拟机运行在物理机）
-	AssocDeployedOn  = "deployed_on"   // 部署于（如 应用部署在虚拟机）
-	AssocConnectsTo  = "connects_to"   // 连接到（如 主机连接到交换机）
-	AssocBelongsTo   = "belongs_to"    // 属于（如 网卡属于主机）
-	AssocDependsOn   = "depends_on"    // 依赖于（如 服务依赖另一个服务）
-	AssocComposedOf  = "composed_of"   // 组成（如 集群由节点组成）
+	AssocRunsOn     = "runs_on"     // 运行于（如 虚拟机运行在物理机）
+	AssocDeployedOn = "deployed_on" // 部署于（如 应用部署在虚拟机）
+	AssocConnectsTo = "connects_to" // 连接到（如 主机连接到交换机）
+	AssocBelongsTo  = "belongs_to"  // 属于（如 网卡属于主机）
+	AssocDependsOn  = "depends_on"  // 依赖于（如 服务依赖另一个服务）
+	AssocComposedOf = "composed_of" // 组成（如 集群由节点组成）
 )
 
 // BuiltinAssociationTypes 预定义的关联类型
@@ -191,15 +191,15 @@ var BuiltinAssociationTypes = []AssociationType{
 // DynamicModelAssociation 模型关联定义表
 // 定义哪两个模型之间可以使用哪种关联类型，以及约束规则
 type DynamicModelAssociation struct {
-	ID              uint64    `gorm:"primaryKey" json:"id"`
-	SourceModelUID  string    `gorm:"index:idx_model_assoc;size:50;not null;comment:源模型 UID" json:"source_model_uid"`
-	TargetModelUID  string    `gorm:"index:idx_model_assoc;size:50;not null;comment:目标模型 UID" json:"target_model_uid"`
-	AssociationUID  string    `gorm:"index:idx_model_assoc;size:50;not null;comment:关联类型 UID" json:"association_uid"`
-	Mapping         string    `gorm:"size:10;not null;comment:映射关系：1:1, 1:N, N:N" json:"mapping"`
-	OnDelete        string    `gorm:"size:20;default:restrict;comment:删除行为：cascade, restrict, set_null" json:"on_delete"`
-	Description     string    `gorm:"size:500;comment:关联描述" json:"description"`
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID             uint64    `gorm:"primaryKey" json:"id"`
+	SourceModelUID string    `gorm:"index:idx_model_assoc;size:50;not null;comment:源模型 UID" json:"source_model_uid"`
+	TargetModelUID string    `gorm:"index:idx_model_assoc;size:50;not null;comment:目标模型 UID" json:"target_model_uid"`
+	AssociationUID string    `gorm:"index:idx_model_assoc;size:50;not null;comment:关联类型 UID" json:"association_uid"`
+	Mapping        string    `gorm:"size:10;not null;comment:映射关系：1:1, 1:N, N:N" json:"mapping"`
+	OnDelete       string    `gorm:"size:20;default:restrict;comment:删除行为：cascade, restrict, set_null" json:"on_delete"`
+	Description    string    `gorm:"size:500;comment:关联描述" json:"description"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 // TableName 自定义表名
@@ -237,6 +237,11 @@ type ResourceHistory struct {
 	ChangedAt  time.Time      `gorm:"index:idx_resource_time;not null;comment:变更时间" json:"changed_at"`
 	ClientIP   string         `gorm:"size:50;comment:客户端 IP" json:"client_ip"`
 	UserAgent  string         `gorm:"size:500;comment:用户代理" json:"user_agent"`
+
+	// 冗余快照字段：写入时落库，使审计记录自包含、可读，且反映变更当时的状态。
+	// 查询时无需 join 活表 resources/businesses。
+	ResourceName string `gorm:"size:200;comment:资源名称（变更当时的快照）" json:"resource_name"`
+	BizName      string `gorm:"size:200;comment:业务名称（变更当时的快照）" json:"biz_name"`
 }
 
 // TableName 自定义表名
@@ -246,11 +251,11 @@ func (ResourceHistory) TableName() string {
 
 // TopologyNode 拓扑查询结果节点
 type TopologyNode struct {
-	ResourceID     uint64            `json:"resource_id"`
-	ModelUID       string            `json:"model_uid"`
-	Name           string            `json:"name"`
-	AssociationUID string            `json:"association_uid,omitempty"`
-	Depth          int               `json:"depth"`
-	Path           string            `json:"path"`           // 路径，如 "1.5.10"
+	ResourceID     uint64                 `json:"resource_id"`
+	ModelUID       string                 `json:"model_uid"`
+	Name           string                 `json:"name"`
+	AssociationUID string                 `json:"association_uid,omitempty"`
+	Depth          int                    `json:"depth"`
+	Path           string                 `json:"path"`                 // 路径，如 "1.5.10"
 	Properties     map[string]interface{} `json:"properties,omitempty"` // 关联属性
 }

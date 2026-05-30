@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"github.com/wend/cmdb-backend/internal/core/model"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -104,6 +105,10 @@ func (h *ModelHandler) CreateAttribute(c *gin.Context) {
 
 	attr, err := h.service.CreateAttribute(c.Request.Context(), model.ID.String(), &req)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			c.JSON(http.StatusConflict, gin.H{"error": "attribute name already exists"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

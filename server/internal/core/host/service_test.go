@@ -74,7 +74,7 @@ func (m *MockHostRepository) UpdateCustomFields(ctx context.Context, id uuid.UUI
 	return args.Get(0).(*types.Host), args.Error(1)
 }
 
-func (m *MockHostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
+func (m *MockHostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
 	args := m.Called(ctx, id, businessID)
 	return args.Error(0)
 }
@@ -152,6 +152,11 @@ func (m *MockCloudAreaRepository) UpdateCloudArea(ctx context.Context, id uuid.U
 func (m *MockCloudAreaRepository) DeleteCloudArea(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
+}
+
+func (m *MockCloudAreaRepository) CountHostsInCloudArea(ctx context.Context, id uuid.UUID) (int64, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(int64), args.Error(1)
 }
 
 // 测试创建主机时使用默认云区域
@@ -357,7 +362,7 @@ func TestAssignToBusiness(t *testing.T) {
 
 	ctx := context.Background()
 	hostID := uuid.New()
-	businessID := int64(1000)
+	businessID := uint64(1001)
 
 	existingHost := &types.Host{
 		ID:         hostID,
@@ -413,7 +418,7 @@ func TestAssignToBusiness_HostNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	hostID := uuid.New()
-	businessID := int64(1002)
+	businessID := uint64(9999)
 
 	// Mock 主机不存在
 	mockHostRepo.On("GetHost", ctx, hostID).Return(nil, errors.New("host not found"))

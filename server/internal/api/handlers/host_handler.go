@@ -8,11 +8,8 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/core/host"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
-
-const defaultTenantID = "00000000-0000-0000-0000-000000000001"
-
-var defaultTenantUUID = uuid.MustParse(defaultTenantID)
 
 // HostHandler 主机处理器
 type HostHandler struct {
@@ -41,13 +38,12 @@ func (h *HostHandler) CreateHost(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取租户ID和用户ID（需要认证中间件）
-	tenantID := defaultTenantUUID
-	var createdBy *uuid.UUID = nil
+	tenantID := systemTenantUUID
+	createdBy := currentUserID(c)
 
 	host, err := h.service.CreateHost(c.Request.Context(), tenantID, &req, createdBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -69,13 +65,12 @@ func (h *HostHandler) BatchImportHosts(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取租户ID和用户ID（需要认证中间件）
-	tenantID := defaultTenantUUID
-	var createdBy *uuid.UUID = nil
+	tenantID := systemTenantUUID
+	createdBy := currentUserID(c)
 
 	result, err := h.service.BatchImportHosts(c.Request.Context(), tenantID, &req, createdBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -143,12 +138,11 @@ func (h *HostHandler) ListHosts(c *gin.Context) {
 		params.PageSize = 20
 	}
 
-	// TODO: 从上下文获取租户ID
-	tenantID := defaultTenantUUID
+	tenantID := systemTenantUUID
 
 	hosts, total, err := h.service.ListHosts(c.Request.Context(), tenantID, &params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -183,12 +177,11 @@ func (h *HostHandler) UpdateHost(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取用户ID
-	var updatedBy *uuid.UUID = nil
+	updatedBy := currentUserID(c)
 
 	host, err := h.service.UpdateHost(c.Request.Context(), id, &req, updatedBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -218,12 +211,11 @@ func (h *HostHandler) UpdateHostCustomFields(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取用户ID
-	var updatedBy *uuid.UUID = nil
+	updatedBy := currentUserID(c)
 
 	host, err := h.service.UpdateCustomFields(c.Request.Context(), id, req.CustomFields, updatedBy)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -252,7 +244,7 @@ func (h *HostHandler) DeleteHost(c *gin.Context) {
 	}
 
 	if err := h.service.DeleteHost(c.Request.Context(), id, markDestroyed); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -283,7 +275,7 @@ func (h *HostHandler) AssignToBusiness(c *gin.Context) {
 	}
 
 	if err := h.service.AssignToBusiness(c.Request.Context(), id, req.BusinessID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 
@@ -306,7 +298,7 @@ func (h *HostHandler) ReclaimToPool(c *gin.Context) {
 	}
 
 	if err := h.service.ReclaimToPool(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 

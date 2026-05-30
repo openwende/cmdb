@@ -15,7 +15,7 @@ import (
 type ProcessTemplate struct {
 	ID                uint64         `gorm:"primaryKey" json:"id"`
 	Name              string         `gorm:"size:200;not null;comment:进程名称" json:"name"`
-	BusinessID        uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID" json:"business_id"`
+	BusinessID        uint64      `gorm:"index;not null;comment:所属业务ID" json:"business_id"`
 	ServiceTemplateID *uint64        `gorm:"index;comment:所属服务模板ID，NULL表示独立进程模板" json:"service_template_id,omitempty"`
 	StartCommand      string         `gorm:"size:500;comment:启动命令" json:"start_command"`
 	StopCommand       string         `gorm:"size:500;comment:停止命令" json:"stop_command"`
@@ -46,10 +46,10 @@ func (ProcessTemplate) TableName() string {
 
 // ProcessBindInfo 进程绑定信息
 type ProcessBindInfo struct {
-	IP       string        `json:"ip"`       // 绑定IP，如 127.0.0.1, 0.0.0.0, 或具体IP
-	Port     string        `json:"port"`     // 端口，可以是 "8080" 或范围 "8080-8090"
-	Protocol string        `json:"protocol"` // tcp 或 udp
-	Enable   bool          `json:"enable"`   // 是否启用
+	IP       string `json:"ip"`       // 绑定IP，如 127.0.0.1, 0.0.0.0, 或具体IP
+	Port     string `json:"port"`     // 端口，可以是 "8080" 或范围 "8080-8090"
+	Protocol string `json:"protocol"` // tcp 或 udp
+	Enable   bool   `json:"enable"`   // 是否启用
 }
 
 // ========== 进程实例 ==========
@@ -61,7 +61,7 @@ type Process struct {
 	ProcessTemplateID uint64         `gorm:"index;not null;comment:关联进程模板ID" json:"process_template_id"`
 	HostID            uuid.UUID      `gorm:"type:uuid;index;not null;comment:关联主机ID" json:"host_id"`
 	ModuleID          uint64         `gorm:"index;not null;comment:关联模块ID" json:"module_id"`
-	BusinessID        uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID" json:"business_id"`
+	BusinessID        uint64      `gorm:"index;not null;comment:所属业务ID" json:"business_id"`
 	ProcessName       string         `gorm:"size:200;comment:进程名称（可覆盖模板）" json:"process_name"`
 	BindInfo          datatypes.JSON `gorm:"type:jsonb;comment:实际绑定信息（覆盖模板）" json:"bind_info"`
 	StartCommand      string         `gorm:"size:500;comment:启动命令（可覆盖模板）" json:"start_command,omitempty"`
@@ -114,22 +114,22 @@ const (
 
 // CreateProcessTemplateRequest 创建进程模板请求
 type CreateProcessTemplateRequest struct {
-	Name            string            `json:"name" binding:"required"`
-	BusinessID      uuid.UUID         `json:"business_id" binding:"required"`
-	StartCommand    string            `json:"start_command"`
-	StopCommand     string            `json:"stop_command"`
-	RestartCommand  string            `json:"restart_command"`
-	ReloadCommand   string            `json:"reload_command"`
-	WorkPath        string            `json:"work_path"`
-	PidFile         string            `json:"pid_file"`
-	User            string            `json:"user"`
-	ProcNum         int               `json:"proc_num"`
-	Priority        int               `json:"priority"`
-	Timeout         int               `json:"timeout"`
-	AutoStart       *bool             `json:"auto_start"`
-	AutoRecover     *bool             `json:"auto_recover"`
-	BindInfo        []ProcessBindInfo `json:"bind_info"`
-	Description     string            `json:"description"`
+	Name           string            `json:"name" binding:"required"`
+	BusinessID     uint64         `json:"business_id" binding:"required"`
+	StartCommand   string            `json:"start_command"`
+	StopCommand    string            `json:"stop_command"`
+	RestartCommand string            `json:"restart_command"`
+	ReloadCommand  string            `json:"reload_command"`
+	WorkPath       string            `json:"work_path"`
+	PidFile        string            `json:"pid_file"`
+	User           string            `json:"user"`
+	ProcNum        int               `json:"proc_num"`
+	Priority       int               `json:"priority"`
+	Timeout        int               `json:"timeout"`
+	AutoStart      *bool             `json:"auto_start"`
+	AutoRecover    *bool             `json:"auto_recover"`
+	BindInfo       []ProcessBindInfo `json:"bind_info"`
+	Description    string            `json:"description"`
 }
 
 // UpdateProcessTemplateRequest 更新进程模板请求

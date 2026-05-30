@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -28,7 +28,7 @@ func setupServiceCategoryHandlerTestDB(t *testing.T) *gorm.DB {
 	require.NoError(t, db.Exec(`
 		CREATE TABLE service_categories (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			business_id TEXT,
+			business_id BIGINT,
 			name TEXT NOT NULL,
 			parent_id BIGINT,
 			root_id BIGINT NOT NULL,
@@ -45,7 +45,7 @@ func setupServiceCategoryHandlerTestDB(t *testing.T) *gorm.DB {
 
 func TestListServiceCategories(t *testing.T) {
 	db := setupServiceCategoryHandlerTestDB(t)
-	bizID := uuid.MustParse("6d3a66e8-395d-40bd-8c5d-34d8e9e82001")
+	bizID := uint64(1001)
 
 	require.NoError(t, db.Exec(`
 		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
@@ -54,14 +54,14 @@ func TestListServiceCategories(t *testing.T) {
 			(2, NULL, 'Default', 1, 1, TRUE, 0, ?, ?),
 			(10, ?, 'Database', NULL, 10, FALSE, 10, ?, ?),
 			(11, ?, 'MySQL', 10, 10, FALSE, 20, ?, ?)
-	`, time.Now(), time.Now(), time.Now(), time.Now(), bizID.String(), time.Now(), time.Now(), bizID.String(), time.Now(), time.Now()).Error)
+	`, time.Now(), time.Now(), time.Now(), time.Now(), bizID, time.Now(), time.Now(), bizID, time.Now(), time.Now()).Error)
 
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
 	handler := NewServiceCategoryHandler(service_category.NewService(db))
 	router.GET("/api/v1/service-categories", handler.ListCategories)
 
-	req := httptest.NewRequest(http.MethodGet, "/api/v1/service-categories?business_id="+bizID.String(), nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/service-categories?business_id="+fmt.Sprintf("%d", bizID), nil)
 	recorder := httptest.NewRecorder()
 	router.ServeHTTP(recorder, req)
 

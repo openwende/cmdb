@@ -21,7 +21,7 @@ const (
 	defaultTopologyIdleMod  = "空闲模块"
 )
 
-func (s *Service) EnsureTopologySettings(ctx context.Context) error {
+func (s *service) EnsureTopologySettings(ctx context.Context) error {
 	defaults := []types.PlatformSetting{
 		{
 			Key:         settingTopologyMaxLevel,
@@ -48,7 +48,7 @@ func (s *Service) EnsureTopologySettings(ctx context.Context) error {
 	return nil
 }
 
-func (s *Service) GetTopologySettings(ctx context.Context) (*types.TopologySettingsResponse, error) {
+func (s *service) GetTopologySettings(ctx context.Context) (*types.TopologySettingsResponse, error) {
 	if err := s.EnsureTopologySettings(ctx); err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (s *Service) GetTopologySettings(ctx context.Context) (*types.TopologySetti
 	return resp, nil
 }
 
-func (s *Service) ListMainlineModels(ctx context.Context) ([]types.Model, error) {
+func (s *service) ListMainlineModels(ctx context.Context) ([]types.Model, error) {
 	if err := s.EnsureBuiltinModels(ctx); err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func (s *Service) ListMainlineModels(ctx context.Context) ([]types.Model, error)
 	return models, nil
 }
 
-func (s *Service) CreateMainlineModel(ctx context.Context, req *types.CreateMainlineModelRequest) (*types.Model, error) {
+func (s *service) CreateMainlineModel(ctx context.Context, req *types.CreateMainlineModelRequest) (*types.Model, error) {
 	uid := strings.TrimSpace(req.UID)
 	displayName := strings.TrimSpace(req.DisplayName)
 	if uid == "" || displayName == "" {
@@ -174,7 +174,7 @@ func (s *Service) CreateMainlineModel(ctx context.Context, req *types.CreateMain
 	return model, nil
 }
 
-func (s *Service) UpdateMainlineModel(ctx context.Context, uid string, req *types.UpdateMainlineModelRequest) (*types.Model, error) {
+func (s *service) UpdateMainlineModel(ctx context.Context, uid string, req *types.UpdateMainlineModelRequest) (*types.Model, error) {
 	model, err := s.GetModelByName(ctx, strings.TrimSpace(uid))
 	if err != nil {
 		return nil, err
@@ -233,12 +233,12 @@ func (s *Service) UpdateMainlineModel(ctx context.Context, uid string, req *type
 	return s.GetModelByName(ctx, model.Name)
 }
 
-func (s *Service) CreateCustomNode(ctx context.Context, req *types.CreateMainlineNodeRequest) (*types.MainlineInstance, error) {
+func (s *service) CreateCustomNode(ctx context.Context, req *types.CreateMainlineNodeRequest) (*types.MainlineInstance, error) {
 	model, parent, err := s.resolveNodeCreateContext(ctx, req.ModelUID, req.ParentModelUID, req.ParentRefID)
 	if err != nil {
 		return nil, err
 	}
-	if req.BusinessID == uuid.Nil {
+	if req.BusinessID == 0 {
 		return nil, fmt.Errorf("business_id is required")
 	}
 	if parent != nil && parent.BusinessID != req.BusinessID {
@@ -257,7 +257,7 @@ func (s *Service) CreateCustomNode(ctx context.Context, req *types.CreateMainlin
 	return s.upsertNode(ctx, parent, node)
 }
 
-func (s *Service) UpdateCustomNode(ctx context.Context, modelUID, refID string, req *types.UpdateMainlineNodeRequest) (*types.MainlineInstance, error) {
+func (s *service) UpdateCustomNode(ctx context.Context, modelUID, refID string, req *types.UpdateMainlineNodeRequest) (*types.MainlineInstance, error) {
 	node, model, err := s.getMutableNode(ctx, modelUID, refID)
 	if err != nil {
 		return nil, err
@@ -286,7 +286,7 @@ func (s *Service) UpdateCustomNode(ctx context.Context, modelUID, refID string, 
 	return node, nil
 }
 
-func (s *Service) DeleteCustomNode(ctx context.Context, modelUID, refID string) error {
+func (s *service) DeleteCustomNode(ctx context.Context, modelUID, refID string) error {
 	node, _, err := s.getMutableNode(ctx, modelUID, refID)
 	if err != nil {
 		return err
@@ -301,7 +301,7 @@ func (s *Service) DeleteCustomNode(ctx context.Context, modelUID, refID string) 
 	return s.db.WithContext(ctx).Delete(&types.MainlineInstance{}, node.ID).Error
 }
 
-func (s *Service) MoveCustomNode(ctx context.Context, modelUID, refID string, req *types.MoveMainlineNodeRequest) (*types.MainlineInstance, error) {
+func (s *service) MoveCustomNode(ctx context.Context, modelUID, refID string, req *types.MoveMainlineNodeRequest) (*types.MainlineInstance, error) {
 	node, model, err := s.getMutableNode(ctx, modelUID, refID)
 	if err != nil {
 		return nil, err
@@ -341,7 +341,7 @@ func (s *Service) MoveCustomNode(ctx context.Context, modelUID, refID string, re
 	return s.upsertNode(ctx, targetParent, desired)
 }
 
-func (s *Service) resolveNodeCreateContext(ctx context.Context, modelUID string, parentModelUID, parentRefID *string) (*types.Model, *types.MainlineInstance, error) {
+func (s *service) resolveNodeCreateContext(ctx context.Context, modelUID string, parentModelUID, parentRefID *string) (*types.Model, *types.MainlineInstance, error) {
 	model, err := s.GetModelByName(ctx, strings.TrimSpace(modelUID))
 	if err != nil {
 		return nil, nil, err
@@ -375,7 +375,7 @@ func (s *Service) resolveNodeCreateContext(ctx context.Context, modelUID string,
 	return model, parent, nil
 }
 
-func (s *Service) getMutableNode(ctx context.Context, modelUID, refID string) (*types.MainlineInstance, *types.Model, error) {
+func (s *service) getMutableNode(ctx context.Context, modelUID, refID string) (*types.MainlineInstance, *types.Model, error) {
 	model, err := s.GetModelByName(ctx, strings.TrimSpace(modelUID))
 	if err != nil {
 		return nil, nil, err

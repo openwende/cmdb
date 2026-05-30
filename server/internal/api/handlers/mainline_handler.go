@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 
 	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/core/projection"
@@ -15,14 +14,14 @@ import (
 )
 
 type MainlineHandler struct {
-	mainlineService *mainline.Service
-	topologyService *topology.Service
+	mainlineService mainline.Service
+	topologyService topology.Service
 	projection      *projection.BusinessTopologyService
 }
 
 func NewMainlineHandler(
-	mainlineService *mainline.Service,
-	topologyService *topology.Service,
+	mainlineService mainline.Service,
+	topologyService topology.Service,
 	projectionSvc *projection.BusinessTopologyService,
 ) *MainlineHandler {
 	return &MainlineHandler{
@@ -120,7 +119,7 @@ func (h *MainlineHandler) UpdateModel(c *gin.Context) {
 func (h *MainlineHandler) GetTree(c *gin.Context) {
 	var req types.GetTopologyTreeRequest
 	if bizIDStr := c.Query("business_id"); bizIDStr != "" {
-		bizID, err := uuid.Parse(bizIDStr)
+		bizID, err := strconv.ParseUint(bizIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid business_id"})
 			return
@@ -134,7 +133,7 @@ func (h *MainlineHandler) GetTree(c *gin.Context) {
 	if h.projection != nil {
 		var businessRef string
 		if req.BusinessID != nil {
-			businessRef = req.BusinessID.String()
+			businessRef = strconv.FormatUint(*req.BusinessID, 10)
 		}
 
 		tree, err := h.projection.GetTopologyTree(

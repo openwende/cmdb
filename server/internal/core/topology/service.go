@@ -3,6 +3,7 @@ package topology
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -13,29 +14,74 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
+// TopologyHostRow is the scan target for node-level host queries.
+type TopologyHostRow struct {
+	HostID        string  `gorm:"column:host_id"`
+	InnerIPv4     string  `gorm:"column:inner_ipv4"`
+	InnerIPv6     string  `gorm:"column:inner_ipv6"`
+	CloudAreaID   *string `gorm:"column:cloud_area_id"`
+	CloudAreaName *string `gorm:"column:cloud_area_name"`
+	ModuleID      *uint64 `gorm:"column:module_id"`
+	ModuleName    *string `gorm:"column:module_name"`
+	SetID         *uint64 `gorm:"column:set_id"`
+	SetName       *string `gorm:"column:set_name"`
+	Status        string  `gorm:"column:status"`
+}
+
 // Service 业务拓扑服务
-type Service struct {
+type Service interface {
+	CreateSet(ctx context.Context, req *types.CreateSetRequest) (*types.Set, error)
+	GetSet(ctx context.Context, id uint64) (*types.Set, error)
+	ListSets(ctx context.Context, businessID uint64) ([]types.Set, error)
+	UpdateSet(ctx context.Context, id uint64, req *types.UpdateSetRequest) (*types.Set, error)
+	DeleteSet(ctx context.Context, id uint64) error
+
+	CreateModule(ctx context.Context, req *types.CreateModuleRequest) (*types.Module, error)
+	GetModule(ctx context.Context, id uint64) (*types.Module, error)
+	ListModules(ctx context.Context, setID uint64) ([]types.Module, error)
+	ListModulesByBusiness(ctx context.Context, businessID uint64) ([]types.Module, error)
+	UpdateModule(ctx context.Context, id uint64, req *types.UpdateModuleRequest) (*types.Module, error)
+	DeleteModule(ctx context.Context, id uint64) error
+
+	TransferHosts(ctx context.Context, req *types.TransferHostsRequest) (*types.BatchOperationResult, error)
+	TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error)
+
+	MoveModule(ctx context.Context, moduleID, targetSetID uint64) error
+	MoveSet(ctx context.Context, setID uint64, targetBusinessID uint64) error
+
+	GetTopologyTree(ctx context.Context, req *types.GetTopologyTreeRequest) ([]types.TopologyTreeNode, error)
+	GetNodeChildren(ctx context.Context, nodeType types.TopologyNodeType, nodeID interface{}) ([]types.TopologyTreeNode, error)
+	GetStatistics(ctx context.Context, businessID *uint64) (*types.TopologyStatistics, error)
+
+	InitializeBusinessTopology(ctx context.Context, businessID uint64) error
+
+	// Methods used by handlers to avoid direct DB access.
+	HasProjectionTopology(ctx context.Context) bool
+	GetModuleHosts(ctx context.Context, moduleID uint64, page, pageSize int) ([]types.Host, int64, error)
+	GetNodeHosts(ctx context.Context, nodeType, refID, keyword string, page, pageSize int) ([]TopologyHostRow, int64, error)
+}
+
+type service struct {
 	db       *gorm.DB
-	mainline *mainline.Service
+	mainline mainline.Service
 }
 
 // NewService 创建服务实例
-func NewService(db *gorm.DB, mainlineSvc *mainline.Service) *Service {
+func NewService(db *gorm.DB, mainlineSvc mainline.Service) Service {
 	if mainlineSvc == nil {
 		mainlineSvc = mainline.NewService(db)
 	}
-	return &Service{db: db, mainline: mainlineSvc}
+	return &service{db: db, mainline: mainlineSvc}
 }
 
-// DB 返回数据库连接
-func (s *Service) DB() *gorm.DB {
+func (s *service) DB() *gorm.DB {
 	return s.db
 }
 
 // ========== 集群（Set）操作 ==========
 
 // CreateSet 创建集群
-func (s *Service) CreateSet(ctx context.Context, req *types.CreateSetRequest) (*types.Set, error) {
+func (s *service) CreateSet(ctx context.Context, req *types.CreateSetRequest) (*types.Set, error) {
 	// 验证业务是否存在
 	var business types.Business
 	if err := s.db.Where("id = ?", req.BusinessID).First(&business).Error; err != nil {
@@ -66,7 +112,7 @@ func (s *Service) CreateSet(ctx context.Context, req *types.CreateSetRequest) (*
 }
 
 // GetSet 获取集群详情
-func (s *Service) GetSet(ctx context.Context, id uint64) (*types.Set, error) {
+func (s *service) GetSet(ctx context.Context, id uint64) (*types.Set, error) {
 	var set types.Set
 	if err := s.db.Preload("Modules").First(&set, id).Error; err != nil {
 		return nil, err
@@ -75,7 +121,7 @@ func (s *Service) GetSet(ctx context.Context, id uint64) (*types.Set, error) {
 }
 
 // ListSets 获取业务下的集群列表
-func (s *Service) ListSets(ctx context.Context, businessID uuid.UUID) ([]types.Set, error) {
+func (s *service) ListSets(ctx context.Context, businessID uint64) ([]types.Set, error) {
 	var sets []types.Set
 	if err := s.db.Where("business_id = ?", businessID).
 		Order("sort_order ASC, id ASC").
@@ -86,7 +132,7 @@ func (s *Service) ListSets(ctx context.Context, businessID uuid.UUID) ([]types.S
 }
 
 // UpdateSet 更新集群
-func (s *Service) UpdateSet(ctx context.Context, id uint64, req *types.UpdateSetRequest) (*types.Set, error) {
+func (s *service) UpdateSet(ctx context.Context, id uint64, req *types.UpdateSetRequest) (*types.Set, error) {
 	updates := make(map[string]interface{})
 
 	if req.Name != nil {
@@ -120,7 +166,7 @@ func (s *Service) UpdateSet(ctx context.Context, id uint64, req *types.UpdateSet
 }
 
 // DeleteSet 删除集群
-func (s *Service) DeleteSet(ctx context.Context, id uint64) error {
+func (s *service) DeleteSet(ctx context.Context, id uint64) error {
 	// 检查是否有模块
 	var moduleCount int64
 	s.db.Model(&types.Module{}).Where("set_id = ?", id).Count(&moduleCount)
@@ -139,7 +185,7 @@ func (s *Service) DeleteSet(ctx context.Context, id uint64) error {
 // ========== 模块（Module）操作 ==========
 
 // CreateModule 创建模块
-func (s *Service) CreateModule(ctx context.Context, req *types.CreateModuleRequest) (*types.Module, error) {
+func (s *service) CreateModule(ctx context.Context, req *types.CreateModuleRequest) (*types.Module, error) {
 	// 验证集群是否存在
 	var set types.Set
 	if err := s.db.First(&set, req.SetID).Error; err != nil {
@@ -168,7 +214,7 @@ func (s *Service) CreateModule(ctx context.Context, req *types.CreateModuleReque
 }
 
 // GetModule 获取模块详情
-func (s *Service) GetModule(ctx context.Context, id uint64) (*types.Module, error) {
+func (s *service) GetModule(ctx context.Context, id uint64) (*types.Module, error) {
 	var module types.Module
 	if err := s.db.Preload("Set").First(&module, id).Error; err != nil {
 		return nil, err
@@ -183,7 +229,7 @@ func (s *Service) GetModule(ctx context.Context, id uint64) (*types.Module, erro
 }
 
 // ListModules 获取集群下的模块列表
-func (s *Service) ListModules(ctx context.Context, setID uint64) ([]types.Module, error) {
+func (s *service) ListModules(ctx context.Context, setID uint64) ([]types.Module, error) {
 	var modules []types.Module
 	if err := s.db.Where("set_id = ?", setID).
 		Order("sort_order ASC, id ASC").
@@ -202,7 +248,7 @@ func (s *Service) ListModules(ctx context.Context, setID uint64) ([]types.Module
 }
 
 // ListModulesByBusiness 获取业务下的所有模块
-func (s *Service) ListModulesByBusiness(ctx context.Context, businessID uuid.UUID) ([]types.Module, error) {
+func (s *service) ListModulesByBusiness(ctx context.Context, businessID uint64) ([]types.Module, error) {
 	var modules []types.Module
 	if err := s.db.Where("business_id = ?", businessID).
 		Preload("Set").
@@ -214,7 +260,7 @@ func (s *Service) ListModulesByBusiness(ctx context.Context, businessID uuid.UUI
 }
 
 // UpdateModule 更新模块
-func (s *Service) UpdateModule(ctx context.Context, id uint64, req *types.UpdateModuleRequest) (*types.Module, error) {
+func (s *service) UpdateModule(ctx context.Context, id uint64, req *types.UpdateModuleRequest) (*types.Module, error) {
 	updates := make(map[string]interface{})
 
 	var current types.Module
@@ -258,7 +304,7 @@ func (s *Service) UpdateModule(ctx context.Context, id uint64, req *types.Update
 	return s.GetModule(ctx, id)
 }
 
-func (s *Service) validateServiceCategory(ctx context.Context, businessID uuid.UUID, categoryID uint64) error {
+func (s *service) validateServiceCategory(ctx context.Context, businessID uint64, categoryID uint64) error {
 	var category types.ServiceCategory
 	if err := s.db.WithContext(ctx).First(&category, categoryID).Error; err != nil {
 		return fmt.Errorf("服务分类不存在: %w", err)
@@ -270,7 +316,7 @@ func (s *Service) validateServiceCategory(ctx context.Context, businessID uuid.U
 }
 
 // DeleteModule 删除模块
-func (s *Service) DeleteModule(ctx context.Context, id uint64) error {
+func (s *service) DeleteModule(ctx context.Context, id uint64) error {
 	// 检查是否有主机
 	var hostCount int64
 	s.db.Table("host_module_relations").Where("module_id = ?", id).Distinct("host_id").Count(&hostCount)
@@ -289,7 +335,7 @@ func (s *Service) DeleteModule(ctx context.Context, id uint64) error {
 // ========== 主机转移 ==========
 
 // TransferHosts 转移主机到目标模块
-func (s *Service) TransferHosts(ctx context.Context, req *types.TransferHostsRequest) (*types.BatchOperationResult, error) {
+func (s *service) TransferHosts(ctx context.Context, req *types.TransferHostsRequest) (*types.BatchOperationResult, error) {
 	result := &types.BatchOperationResult{
 		Total:  len(req.HostIDs),
 		Errors: make([]string, 0),
@@ -312,6 +358,20 @@ func (s *Service) TransferHosts(ctx context.Context, req *types.TransferHostsReq
 			}
 			if hostCount == 0 {
 				return fmt.Errorf("主机不存在")
+			}
+
+			if req.SourceModuleID != nil && *req.SourceModuleID != req.TargetModuleID {
+				if err := tx.Where("host_id = ? AND module_id = ?", hostID, *req.SourceModuleID).
+					Delete(&types.HostModuleRelation{}).Error; err != nil {
+					return err
+				}
+			} else if err := s.removeIdleModuleRelation(tx, hostID, req.TargetModuleID); err != nil {
+				return err
+			}
+
+			// 主机转入业务模块后，从资源池中移除（如果存在）
+			if err := tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error; err != nil {
+				return err
 			}
 
 			moduleRel := &types.HostModuleRelation{
@@ -340,8 +400,24 @@ func (s *Service) TransferHosts(ctx context.Context, req *types.TransferHostsReq
 	return result, nil
 }
 
+func (s *service) removeIdleModuleRelation(tx *gorm.DB, hostID uuid.UUID, targetModuleID uint64) error {
+	var idleModuleIDs []uint64
+	if err := tx.Table("host_module_relations AS hmr").
+		Select("hmr.module_id").
+		Joins("JOIN modules m ON m.id = hmr.module_id").
+		Where("hmr.host_id = ? AND hmr.module_id <> ? AND m.is_default = ?", hostID, targetModuleID, true).
+		Pluck("hmr.module_id", &idleModuleIDs).Error; err != nil {
+		return err
+	}
+	if len(idleModuleIDs) == 0 {
+		return nil
+	}
+	return tx.Where("host_id = ? AND module_id IN ?", hostID, idleModuleIDs).
+		Delete(&types.HostModuleRelation{}).Error
+}
+
 // TransferHostsToPool 将主机转移到资源池（空闲机池）
-func (s *Service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error) {
+func (s *service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error) {
 	result := &types.BatchOperationResult{
 		Total:  len(hostIDs),
 		Errors: make([]string, 0),
@@ -379,7 +455,7 @@ func (s *Service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) 
 // ========== 节点移动 ==========
 
 // MoveModule 移动模块到另一个集群
-func (s *Service) MoveModule(ctx context.Context, moduleID, targetSetID uint64) error {
+func (s *service) MoveModule(ctx context.Context, moduleID, targetSetID uint64) error {
 	// 验证目标集群
 	var targetSet types.Set
 	if err := s.db.First(&targetSet, targetSetID).Error; err != nil {
@@ -406,7 +482,7 @@ func (s *Service) MoveModule(ctx context.Context, moduleID, targetSetID uint64) 
 }
 
 // MoveSet 移动集群到另一个业务
-func (s *Service) MoveSet(ctx context.Context, setID uint64, targetBusinessID uuid.UUID) error {
+func (s *service) MoveSet(ctx context.Context, setID uint64, targetBusinessID uint64) error {
 	// 验证目标业务
 	var targetBusiness types.Business
 	if err := s.db.Where("id = ?", targetBusinessID).First(&targetBusiness).Error; err != nil {
@@ -472,7 +548,7 @@ func (s *Service) MoveSet(ctx context.Context, setID uint64, targetBusinessID uu
 // ========== 拓扑树查询 ==========
 
 // GetTopologyTree 获取完整拓扑树
-func (s *Service) GetTopologyTree(ctx context.Context, req *types.GetTopologyTreeRequest) ([]types.TopologyTreeNode, error) {
+func (s *service) GetTopologyTree(ctx context.Context, req *types.GetTopologyTreeRequest) ([]types.TopologyTreeNode, error) {
 	var businesses []types.Business
 
 	query := s.db.Where("deleted_at IS NULL")
@@ -494,7 +570,11 @@ func (s *Service) GetTopologyTree(ctx context.Context, req *types.GetTopologyTre
 		if err := s.mainline.SyncBusinessLegacy(ctx, biz.ID); err != nil {
 			return nil, err
 		}
-		root, err := s.mainline.GetNodeByRef(ctx, types.NodeTypeBusiness, biz.ID.String())
+		// 确保业务有空闲机池（补偿旧数据）
+		if err := s.InitializeBusinessTopology(ctx, biz.ID); err != nil {
+			return nil, err
+		}
+		root, err := s.mainline.GetNodeByRef(ctx, types.NodeTypeBusiness, fmt.Sprintf("%d", biz.ID))
 		if err != nil {
 			return nil, err
 		}
@@ -508,7 +588,7 @@ func (s *Service) GetTopologyTree(ctx context.Context, req *types.GetTopologyTre
 	return nodes, nil
 }
 
-func (s *Service) buildMainlineNode(ctx context.Context, node *types.MainlineInstance, req *types.GetTopologyTreeRequest, parentAPIID string) (types.TopologyTreeNode, error) {
+func (s *service) buildMainlineNode(ctx context.Context, node *types.MainlineInstance, req *types.GetTopologyTreeRequest, parentAPIID string) (types.TopologyTreeNode, error) {
 	extra := decodeExtra(node.Extra)
 	nodeID := apiNodeID(node)
 	childNodes, err := s.mainline.ListChildren(ctx, node)
@@ -578,7 +658,7 @@ func (s *Service) buildMainlineNode(ctx context.Context, node *types.MainlineIns
 	return treeNode, nil
 }
 
-func (s *Service) buildModuleHostNodes(ctx context.Context, node *types.MainlineInstance) ([]types.TopologyTreeNode, error) {
+func (s *service) buildModuleHostNodes(ctx context.Context, node *types.MainlineInstance) ([]types.TopologyTreeNode, error) {
 	moduleID, err := mainline.ParseRefUint(node.RefID)
 	if err != nil {
 		return nil, err
@@ -612,26 +692,50 @@ func (s *Service) buildModuleHostNodes(ctx context.Context, node *types.Mainline
 	return children, nil
 }
 
-func (s *Service) countModuleHosts(ctx context.Context, refID string) (int, error) {
+func (s *service) countModuleHosts(ctx context.Context, refID string) (int, error) {
 	moduleID, err := mainline.ParseRefUint(refID)
 	if err != nil {
 		return 0, err
 	}
+
+	var module types.Module
+	err = s.db.WithContext(ctx).
+		Select("id", "is_default").
+		Where("id = ? AND deleted_at IS NULL", moduleID).
+		First(&module).
+		Error
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return 0, err
+	}
+
 	var hostCount int64
-	if err := s.db.WithContext(ctx).Table("host_module_relations").Where("module_id = ?", moduleID).Distinct("host_id").Count(&hostCount).Error; err != nil {
+	query := s.db.WithContext(ctx)
+	if module.IsDefault {
+		query = query.Table("resource_pool_hosts rph").
+			Joins("JOIN hosts ON hosts.id = rph.host_id").
+			Where("hosts.deleted_at IS NULL").
+			Distinct("rph.host_id")
+	} else {
+		query = query.Table("host_module_relations hmr").
+			Joins("JOIN hosts ON hosts.id = hmr.host_id").
+			Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID).
+			Distinct("hmr.host_id")
+	}
+
+	if err := query.Count(&hostCount).Error; err != nil {
 		return 0, err
 	}
 	return int(hostCount), nil
 }
 
 // buildBusinessNode 构建业务节点
-func (s *Service) buildBusinessNode(ctx context.Context, business *types.Business, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
+func (s *service) buildBusinessNode(ctx context.Context, business *types.Business, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
 	// 统计子节点数量
 	var setCount int64
 	s.db.Model(&types.Set{}).Where("business_id = ?", business.ID).Count(&setCount)
 
 	node := types.TopologyTreeNode{
-		ID:         fmt.Sprintf("business_%s", business.ID),
+		ID:         fmt.Sprintf("business_%d", business.ID),
 		NodeID:     business.ID,
 		Name:       business.Name,
 		NodeType:   types.NodeTypeBusiness,
@@ -661,7 +765,7 @@ func (s *Service) buildBusinessNode(ctx context.Context, business *types.Busines
 }
 
 // buildSetNode 构建集群节点
-func (s *Service) buildSetNode(ctx context.Context, set *types.Set, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
+func (s *service) buildSetNode(ctx context.Context, set *types.Set, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
 	var moduleCount int64
 	s.db.Model(&types.Module{}).Where("set_id = ?", set.ID).Count(&moduleCount)
 
@@ -670,7 +774,7 @@ func (s *Service) buildSetNode(ctx context.Context, set *types.Set, req *types.G
 		NodeID:     set.ID,
 		Name:       set.Name,
 		NodeType:   types.NodeTypeSet,
-		ParentID:   fmt.Sprintf("business_%s", set.BusinessID),
+		ParentID:   fmt.Sprintf("business_%d", set.BusinessID),
 		Icon:       "cluster",
 		IsLeaf:     false,
 		IsDefault:  set.IsDefault,
@@ -697,7 +801,7 @@ func (s *Service) buildSetNode(ctx context.Context, set *types.Set, req *types.G
 }
 
 // buildModuleNode 构建模块节点
-func (s *Service) buildModuleNode(ctx context.Context, module *types.Module, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
+func (s *service) buildModuleNode(ctx context.Context, module *types.Module, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
 	var hostCount int64
 	s.db.Table("host_module_relations").Where("module_id = ?", module.ID).Distinct("host_id").Count(&hostCount)
 
@@ -753,14 +857,14 @@ func (s *Service) buildModuleNode(ctx context.Context, module *types.Module, req
 }
 
 // GetNodeChildren 获取节点的子节点（懒加载）
-func (s *Service) GetNodeChildren(ctx context.Context, nodeType types.TopologyNodeType, nodeID interface{}) ([]types.TopologyTreeNode, error) {
+func (s *service) GetNodeChildren(ctx context.Context, nodeType types.TopologyNodeType, nodeID interface{}) ([]types.TopologyTreeNode, error) {
 	refID, err := mainline.RefString(nodeID)
 	if err != nil {
 		return nil, err
 	}
 
 	if nodeType == types.NodeTypeBusiness {
-		businessID, err := mainline.ParseRefUUID(refID)
+		businessID, err := mainline.ParseRefUint(refID)
 		if err != nil {
 			return nil, err
 		}
@@ -797,7 +901,7 @@ func (s *Service) GetNodeChildren(ctx context.Context, nodeType types.TopologyNo
 // ========== 统计信息 ==========
 
 // GetStatistics 获取拓扑统计信息
-func (s *Service) GetStatistics(ctx context.Context, businessID *uuid.UUID) (*types.TopologyStatistics, error) {
+func (s *service) GetStatistics(ctx context.Context, businessID *uint64) (*types.TopologyStatistics, error) {
 	stats := &types.TopologyStatistics{
 		ByEnvType:     make(map[string]int),
 		ByServiceType: make(map[string]int),
@@ -872,8 +976,8 @@ func (s *Service) GetStatistics(ctx context.Context, businessID *uuid.UUID) (*ty
 
 // ========== 初始化默认拓扑 ==========
 
-// InitializeBusinessTopology 为业务初始化默认拓扑结构
-func (s *Service) InitializeBusinessTopology(ctx context.Context, businessID uuid.UUID) error {
+// InitializeBusinessTopology 为业务初始化默认拓扑结构（幂等）
+func (s *service) InitializeBusinessTopology(ctx context.Context, businessID uint64) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		txMainline := s.mainline.WithDB(tx)
 		if err := txMainline.EnsureBuiltinModels(ctx); err != nil {
@@ -885,6 +989,17 @@ func (s *Service) InitializeBusinessTopology(ctx context.Context, businessID uui
 		}
 		if _, err := txMainline.EnsureBusinessRoot(ctx, &business); err != nil {
 			return err
+		}
+
+		// 已有空闲机池则跳过
+		var existCount int64
+		if err := tx.Model(&types.Set{}).
+			Where("business_id = ? AND is_default = true AND deleted_at IS NULL", businessID).
+			Count(&existCount).Error; err != nil {
+			return err
+		}
+		if existCount > 0 {
+			return nil
 		}
 
 		// 创建默认集群（空闲机池）
@@ -928,7 +1043,12 @@ func apiNodeID(node *types.MainlineInstance) string {
 
 func apiNodeRef(node *types.MainlineInstance) interface{} {
 	switch node.ModelName {
-	case string(types.NodeTypeBusiness), string(types.NodeTypeHost):
+	case string(types.NodeTypeBusiness):
+		if id, err := mainline.ParseRefUint(node.RefID); err == nil {
+			return id
+		}
+		return node.RefID
+	case string(types.NodeTypeHost):
 		id, err := uuid.Parse(node.RefID)
 		if err == nil {
 			return id
@@ -942,7 +1062,7 @@ func apiNodeRef(node *types.MainlineInstance) interface{} {
 	return node.RefID
 }
 
-func (s *Service) apiNodeIcon(ctx context.Context, node *types.MainlineInstance) string {
+func (s *service) apiNodeIcon(ctx context.Context, node *types.MainlineInstance) string {
 	switch node.ModelName {
 	case string(types.NodeTypeBusiness):
 		return "business"
@@ -958,6 +1078,222 @@ func (s *Service) apiNodeIcon(ctx context.Context, node *types.MainlineInstance)
 			return model.Icon
 		}
 		return node.ModelName
+	}
+}
+
+func (s *service) HasProjectionTopology(ctx context.Context) bool {
+	var count int64
+	err := s.db.WithContext(ctx).
+		Model(&types.ResourceV2{}).
+		Where("type_name IN ?", []string{
+			string(types.NodeTypeBusiness),
+			string(types.NodeTypeSet),
+			string(types.NodeTypeModule),
+		}).
+		Limit(1).
+		Count(&count).Error
+	return err == nil && count > 0
+}
+
+func (s *service) GetModuleHosts(ctx context.Context, moduleID uint64, page, pageSize int) ([]types.Host, int64, error) {
+	var hosts []types.Host
+	var total int64
+
+	query := s.db.WithContext(ctx).
+		Model(&types.Host{}).
+		Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID)
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	offset := (page - 1) * pageSize
+	if err := query.Offset(offset).Limit(pageSize).Find(&hosts).Error; err != nil {
+		return nil, 0, err
+	}
+	return hosts, total, nil
+}
+
+func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword string, page, pageSize int) ([]TopologyHostRow, int64, error) {
+	db := s.db.WithContext(ctx)
+	idleBinding := s.resolveIdleNodeBinding(ctx, nodeType, refID)
+
+	baseSelect := `
+		hosts.id AS host_id,
+		hosts.primary_ip AS inner_ipv4,
+		'' AS inner_ipv6,
+		cloud_areas.id AS cloud_area_id,
+		cloud_areas.name AS cloud_area_name,
+		modules.id AS module_id,
+		modules.name AS module_name,
+		sets.id AS set_id,
+		sets.name AS set_name,
+		hosts.status AS status`
+
+	var query *gorm.DB
+
+	switch nodeType {
+	case "business":
+		bizID, err := mainline.ParseRefUint(refID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("无效的业务ID")
+		}
+		query = db.Table("hosts").
+			Select(baseSelect).
+			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
+			Joins("LEFT JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
+			Joins("LEFT JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+			Joins("LEFT JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
+			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
+			Where("hosts.deleted_at IS NULL").
+			Where("rph.host_id IS NULL").
+			Where("hbr.business_id = ?", bizID)
+	case "set":
+		setID, err := mainline.ParseRefUint(refID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("无效的集群ID")
+		}
+		query = db.Table("hosts").
+			Select(baseSelect).
+			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
+			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
+			Where("hosts.deleted_at IS NULL").
+			Where("sets.id = ?", setID)
+	case "module":
+		moduleID, err := mainline.ParseRefUint(refID)
+		if err != nil {
+			return nil, 0, fmt.Errorf("无效的模块ID")
+		}
+		query = db.Table("hosts").
+			Select(baseSelect).
+			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
+			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
+			Where("hosts.deleted_at IS NULL").
+			Where("modules.id = ?", moduleID)
+	case "idle_set", "idle_module", "idle":
+		query = db.Table("hosts").
+			Select(`
+				hosts.id AS host_id,
+				hosts.primary_ip AS inner_ipv4,
+				'' AS inner_ipv6,
+				cloud_areas.id AS cloud_area_id,
+				cloud_areas.name AS cloud_area_name,
+				NULL AS module_id,
+				NULL AS module_name,
+				NULL AS set_id,
+				NULL AS set_name,
+				hosts.status AS status`).
+			Joins("JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
+			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
+			Where("hosts.deleted_at IS NULL")
+	default:
+		return nil, 0, fmt.Errorf("无效的节点类型")
+	}
+
+	if keyword != "" {
+		likeKeyword := "%" + keyword + "%"
+		query = query.Where("(hosts.host_name LIKE ? OR hosts.primary_ip LIKE ?)", likeKeyword, likeKeyword)
+	}
+
+	var total int64
+	if err := query.Session(&gorm.Session{}).Distinct("hosts.id").Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	var rows []TopologyHostRow
+	if err := query.Order("hosts.created_at DESC").Limit(pageSize).Offset((page - 1) * pageSize).Scan(&rows).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if idleBinding != nil {
+		for i := range rows {
+			if idleBinding.setID > 0 {
+				setID := idleBinding.setID
+				setName := idleBinding.setName
+				rows[i].SetID = &setID
+				rows[i].SetName = &setName
+			}
+			if idleBinding.moduleID > 0 {
+				moduleID := idleBinding.moduleID
+				moduleName := idleBinding.moduleName
+				rows[i].ModuleID = &moduleID
+				rows[i].ModuleName = &moduleName
+			}
+		}
+	}
+
+	return rows, total, nil
+}
+
+type idleNodeBinding struct {
+	setID      uint64
+	setName    string
+	moduleID   uint64
+	moduleName string
+}
+
+func (s *service) resolveIdleNodeBinding(ctx context.Context, nodeType, refID string) *idleNodeBinding {
+	switch nodeType {
+	case "idle_set":
+		setID, err := mainline.ParseRefUint(refID)
+		if err != nil {
+			return nil
+		}
+
+		var set types.Set
+		if err := s.db.WithContext(ctx).
+			Where("id = ? AND is_default = ? AND deleted_at IS NULL", setID, true).
+			First(&set).Error; err != nil {
+			return nil
+		}
+
+		binding := &idleNodeBinding{
+			setID:   set.ID,
+			setName: set.Name,
+		}
+
+		var module types.Module
+		if err := s.db.WithContext(ctx).
+			Where("set_id = ? AND is_default = ? AND deleted_at IS NULL", set.ID, true).
+			First(&module).Error; err == nil {
+			binding.moduleID = module.ID
+			binding.moduleName = module.Name
+		}
+
+		return binding
+	case "idle_module":
+		moduleID, err := mainline.ParseRefUint(refID)
+		if err != nil {
+			return nil
+		}
+
+		var module types.Module
+		if err := s.db.WithContext(ctx).
+			Where("id = ? AND is_default = ? AND deleted_at IS NULL", moduleID, true).
+			First(&module).Error; err != nil {
+			return nil
+		}
+
+		binding := &idleNodeBinding{
+			moduleID:   module.ID,
+			moduleName: module.Name,
+		}
+
+		var set types.Set
+		if err := s.db.WithContext(ctx).
+			Where("id = ? AND deleted_at IS NULL", module.SetID).
+			First(&set).Error; err == nil {
+			binding.setID = set.ID
+			binding.setName = set.Name
+		}
+
+		return binding
+	default:
+		return nil
 	}
 }
 

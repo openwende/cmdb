@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	businesscustomfield "github.com/wend/cmdb-backend/internal/core/business_custom_field"
@@ -14,16 +13,13 @@ import (
 
 type SchemaService struct {
 	db            *gorm.DB
-	dynamic       *Service
-	businessField *businesscustomfield.Service
+	dynamic       Service
+	businessField businesscustomfield.Service
 }
 
-func NewSchemaService(db *gorm.DB, dynamicService *Service) *SchemaService {
+func NewSchemaService(db *gorm.DB, dynamicService Service) *SchemaService {
 	if dynamicService == nil && db != nil {
 		dynamicService = NewService(db)
-	}
-	if db == nil && dynamicService != nil {
-		db = dynamicService.DB()
 	}
 
 	return &SchemaService{
@@ -36,7 +32,7 @@ func NewSchemaService(db *gorm.DB, dynamicService *Service) *SchemaService {
 func (s *SchemaService) GetSchema(ctx context.Context, modelUID string) (*types.AggregateSchemaContract, error) {
 	modelUID = strings.TrimSpace(modelUID)
 	if isBusinessSchemaModel(modelUID) {
-		return s.GetFormSchema(ctx, modelUID, "schema", uuid.Nil)
+		return s.GetFormSchema(ctx, modelUID, "schema", 0)
 	}
 
 	if _, err := s.dynamic.GetModel(ctx, modelUID); err != nil {
@@ -62,7 +58,7 @@ func (s *SchemaService) GetSchema(ctx context.Context, modelUID string) (*types.
 	}, nil
 }
 
-func (s *SchemaService) GetFormSchema(ctx context.Context, modelUID, scene string, businessID uuid.UUID) (*types.AggregateSchemaContract, error) {
+func (s *SchemaService) GetFormSchema(ctx context.Context, modelUID, scene string, businessID uint64) (*types.AggregateSchemaContract, error) {
 	modelUID = strings.TrimSpace(modelUID)
 	scene = strings.TrimSpace(scene)
 	if scene == "" {
@@ -153,7 +149,7 @@ func businessFieldToSchemaField(groupName string, field types.BusinessFormSchema
 	}
 }
 
-func (s *SchemaService) MustGetFormSchema(ctx context.Context, modelUID, scene string, businessID uuid.UUID) (*types.AggregateSchemaContract, error) {
+func (s *SchemaService) MustGetFormSchema(ctx context.Context, modelUID, scene string, businessID uint64) (*types.AggregateSchemaContract, error) {
 	schema, err := s.GetFormSchema(ctx, modelUID, scene, businessID)
 	if err != nil {
 		return nil, fmt.Errorf("get form schema: %w", err)

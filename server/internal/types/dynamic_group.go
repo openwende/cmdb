@@ -9,19 +9,18 @@ import (
 )
 
 type DynamicGroup struct {
-	ID                uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	BusinessID        uuid.UUID      `gorm:"type:uuid;index;not null" json:"business_id"`
-	Name              string         `gorm:"size:100;not null" json:"name"`
-	TargetModelUID    string         `gorm:"size:50;not null" json:"target_model_uid"`
-	Condition         datatypes.JSON `gorm:"type:jsonb;not null" json:"condition"`
-	VariableCondition datatypes.JSON `gorm:"type:jsonb;not null" json:"variable_condition"`
-	LastPreviewCount  int            `gorm:"default:0" json:"last_preview_count"`
-	Description       string         `gorm:"size:500" json:"description"`
-	CreatedBy         string         `gorm:"size:100" json:"created_by"`
-	UpdatedBy         string         `gorm:"size:100" json:"updated_by"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
-	DeletedAt         gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID               uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	BusinessID       uint64         `gorm:"index;not null" json:"business_id"`
+	Name             string         `gorm:"size:100;not null" json:"name"`
+	TargetModelUID   string         `gorm:"size:50;not null" json:"target_model_uid"`
+	Condition        datatypes.JSON `gorm:"type:jsonb;not null" json:"condition"`
+	LastPreviewCount int            `gorm:"default:0" json:"last_preview_count"`
+	Description      string         `gorm:"size:500" json:"description"`
+	CreatedBy        string         `gorm:"size:100" json:"created_by"`
+	UpdatedBy        string         `gorm:"size:100" json:"updated_by"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	DeletedAt        gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 }
 
 func (DynamicGroup) TableName() string {
@@ -53,7 +52,7 @@ type DynamicGroupTimeFilterRule struct {
 
 type DynamicGroupDetail struct {
 	ID               uuid.UUID           `json:"id"`
-	BusinessID       uuid.UUID           `json:"business_id"`
+	BusinessID       uint64              `json:"business_id"`
 	BKObjID          string              `json:"bk_obj_id"`
 	TargetModelUID   string              `json:"target_model_uid"`
 	Name             string              `json:"name"`
@@ -67,8 +66,7 @@ type DynamicGroupDetail struct {
 }
 
 type DynamicGroupRuleSet struct {
-	Condition         []DynamicGroupConditionGroup `json:"condition"`
-	VariableCondition []DynamicGroupConditionGroup `json:"variable_condition"`
+	Condition []DynamicGroupConditionGroup `json:"condition"`
 }
 
 type DynamicGroupProperty struct {

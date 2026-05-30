@@ -8,6 +8,7 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/core/cloud_area"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // CloudAreaHandler 云区域处理器
@@ -37,8 +38,7 @@ func (h *CloudAreaHandler) CreateCloudArea(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从上下文获取租户ID（需要认证中间件）
-	tenantID := uuid.New() // 临时占位符
+	tenantID := systemTenantUUID
 
 	cloudArea, err := h.service.CreateCloudArea(c.Request.Context(), tenantID, &req)
 	if err != nil {
@@ -115,8 +115,7 @@ func (h *CloudAreaHandler) ListCloudAreas(c *gin.Context) {
 		params.PageSize = 20
 	}
 
-	// TODO: 从上下文获取租户ID
-	tenantID := uuid.New() // 临时占位符
+	tenantID := systemTenantUUID
 
 	cloudAreas, total, err := h.service.ListCloudAreas(c.Request.Context(), tenantID, &params)
 	if err != nil {
@@ -179,7 +178,7 @@ func (h *CloudAreaHandler) DeleteCloudArea(c *gin.Context) {
 	}
 
 	if err := h.service.DeleteCloudArea(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
 		return
 	}
 

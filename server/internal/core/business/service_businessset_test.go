@@ -57,12 +57,12 @@ func (m *MockBusinessSetRepository) DeleteBusinessSet(ctx context.Context, tenan
 	return args.Error(0)
 }
 
-func (m *MockBusinessSetRepository) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error) {
+func (m *MockBusinessSetRepository) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uint64, error) {
 	args := m.Called(ctx, businessSetID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]uuid.UUID), args.Error(1)
+	return args.Get(0).([]uint64), args.Error(1)
 }
 
 func (m *MockBusinessSetRepository) AddBusinessToSet(ctx context.Context, member *types.BusinessSetMember) error {
@@ -70,7 +70,7 @@ func (m *MockBusinessSetRepository) AddBusinessToSet(ctx context.Context, member
 	return args.Error(0)
 }
 
-func (m *MockBusinessSetRepository) RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error {
+func (m *MockBusinessSetRepository) RemoveBusinessFromSet(ctx context.Context, businessSetID uuid.UUID, businessID uint64) error {
 	args := m.Called(ctx, businessSetID, businessID)
 	return args.Error(0)
 }
@@ -92,7 +92,7 @@ func TestCreateBusinessSet_Success(t *testing.T) {
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1001)
 
 	req := &types.CreateBusinessSetRequest{
 		Name:        "Test Business Set",
@@ -106,7 +106,7 @@ func TestCreateBusinessSet_Success(t *testing.T) {
 		Name: "Existing Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(existingBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(existingBusiness, nil)
 	mockBusinessSetRepo.On("CreateBusinessSetWithMember", ctx, mock.AnythingOfType("*types.BusinessSet"), mock.AnythingOfType("*types.BusinessSetMember")).Return(nil)
 
 	// Act
@@ -132,7 +132,7 @@ func TestCreateBusinessSet_AutoGenerateIdentifier(t *testing.T) {
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1002)
 
 	req := &types.CreateBusinessSetRequest{
 		Name:       "My Test Set",
@@ -145,7 +145,7 @@ func TestCreateBusinessSet_AutoGenerateIdentifier(t *testing.T) {
 		Name: "Existing Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(existingBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(existingBusiness, nil)
 	mockBusinessSetRepo.On("CreateBusinessSetWithMember", ctx, mock.MatchedBy(func(bs *types.BusinessSet) bool {
 		// Verify identifier was auto-generated from name
 		return bs.Identifier != "" && bs.Identifier[:12] == "my-test-set-"
@@ -172,7 +172,7 @@ func TestCreateBusinessSet_BusinessNotFound(t *testing.T) {
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(9999)
 
 	req := &types.CreateBusinessSetRequest{
 		Name:       "Test Business Set",
@@ -180,7 +180,7 @@ func TestCreateBusinessSet_BusinessNotFound(t *testing.T) {
 		BusinessID: businessID,
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(nil, fmt.Errorf("business not found"))
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(nil, fmt.Errorf("business not found"))
 
 	// Act
 	result, err := service.CreateBusinessSet(ctx, req)
@@ -188,7 +188,7 @@ func TestCreateBusinessSet_BusinessNotFound(t *testing.T) {
 	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "related business not found")
+	assert.Contains(t, err.Error(), "business not found")
 
 	mockBusinessRepo.AssertExpectations(t)
 	mockBusinessSetRepo.AssertNotCalled(t, "CreateBusinessSetWithMember")
@@ -202,7 +202,7 @@ func TestCreateBusinessSet_RepositoryError(t *testing.T) {
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1003)
 
 	req := &types.CreateBusinessSetRequest{
 		Name:       "Test Business Set",
@@ -215,7 +215,7 @@ func TestCreateBusinessSet_RepositoryError(t *testing.T) {
 		Name: "Existing Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(existingBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(existingBusiness, nil)
 	mockBusinessSetRepo.On("CreateBusinessSetWithMember", ctx, mock.AnythingOfType("*types.BusinessSet"), mock.AnythingOfType("*types.BusinessSetMember")).Return(fmt.Errorf("database error"))
 
 	// Act
@@ -554,7 +554,7 @@ func TestAddBusinessToSet_Success(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 	businessSetID := uuid.New()
-	businessID := uuid.New()
+	businessID := uint64(1001)
 
 	req := &types.AddBusinessToSetRequest{
 		BusinessID: businessID,
@@ -565,7 +565,7 @@ func TestAddBusinessToSet_Success(t *testing.T) {
 		Name: "Existing Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(existingBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(existingBusiness, nil)
 	mockBusinessSetRepo.On("AddBusinessToSet", ctx, mock.MatchedBy(func(member *types.BusinessSetMember) bool {
 		return member.BusinessSetID == businessSetID && member.BusinessID == businessID
 	})).Return(nil)
@@ -589,13 +589,13 @@ func TestAddBusinessToSet_BusinessNotFound(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 	businessSetID := uuid.New()
-	businessID := uuid.New()
+	businessID := uint64(9999)
 
 	req := &types.AddBusinessToSetRequest{
 		BusinessID: businessID,
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(nil, fmt.Errorf("business not found"))
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(nil, fmt.Errorf("business not found"))
 
 	// Act
 	err := service.AddBusinessToSet(ctx, businessSetID, req)
@@ -617,7 +617,7 @@ func TestAddBusinessToSet_DuplicateMember(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 	businessSetID := uuid.New()
-	businessID := uuid.New()
+	businessID := uint64(1002)
 
 	req := &types.AddBusinessToSetRequest{
 		BusinessID: businessID,
@@ -628,7 +628,7 @@ func TestAddBusinessToSet_DuplicateMember(t *testing.T) {
 		Name: "Existing Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(existingBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(existingBusiness, nil)
 	mockBusinessSetRepo.On("AddBusinessToSet", ctx, mock.AnythingOfType("*types.BusinessSetMember")).Return(fmt.Errorf("business is already a member of this business set"))
 
 	// Act
@@ -653,7 +653,7 @@ func TestRemoveBusinessFromSet_Success(t *testing.T) {
 
 	ctx := context.Background()
 	businessSetID := uuid.New()
-	businessID := uuid.New()
+	businessID := uint64(1001)
 
 	mockBusinessSetRepo.On("RemoveBusinessFromSet", ctx, businessSetID, businessID).Return(nil)
 
@@ -673,7 +673,7 @@ func TestRemoveBusinessFromSet_NonExistentMember(t *testing.T) {
 
 	ctx := context.Background()
 	businessSetID := uuid.New()
-	businessID := uuid.New()
+	businessID := uint64(9999)
 
 	mockBusinessSetRepo.On("RemoveBusinessFromSet", ctx, businessSetID, businessID).Return(fmt.Errorf("business is not a member of this business set"))
 
@@ -699,11 +699,7 @@ func TestListBusinessSetMembers_Multiple(t *testing.T) {
 	ctx := context.Background()
 	businessSetID := uuid.New()
 
-	memberIDs := []uuid.UUID{
-		uuid.New(),
-		uuid.New(),
-		uuid.New(),
-	}
+	memberIDs := []uint64{1001, 1002, 1003}
 
 	mockBusinessSetRepo.On("ListBusinessSetMembers", ctx, businessSetID).Return(memberIDs, nil)
 
@@ -726,7 +722,7 @@ func TestListBusinessSetMembers_Empty(t *testing.T) {
 	ctx := context.Background()
 	businessSetID := uuid.New()
 
-	mockBusinessSetRepo.On("ListBusinessSetMembers", ctx, businessSetID).Return([]uuid.UUID{}, nil)
+	mockBusinessSetRepo.On("ListBusinessSetMembers", ctx, businessSetID).Return([]uint64{}, nil)
 
 	// Act
 	result, err := service.ListBusinessSetMembers(ctx, businessSetID)

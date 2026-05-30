@@ -26,7 +26,7 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 		`CREATE TABLE mainline_instances (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			model_name TEXT NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			parent_id INTEGER,
 			ref_id TEXT NOT NULL,
 			name TEXT NOT NULL,
@@ -90,7 +90,7 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 		)`,
 		`CREATE TABLE host_business_relations (
 			host_id TEXT NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			created_at DATETIME,
 			PRIMARY KEY (host_id, business_id)
 		)`,
@@ -102,6 +102,7 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 		)`,
 		`CREATE TABLE hosts (
 			id TEXT PRIMARY KEY,
+			display_id INTEGER,
 			created_at DATETIME,
 			updated_at DATETIME,
 			deleted_at DATETIME,
@@ -131,7 +132,7 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 		`CREATE TABLE modules (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			set_id INTEGER NOT NULL,
-			business_id TEXT NOT NULL,
+			business_id BIGINT NOT NULL,
 			service_template_id BIGINT,
 			service_category_id BIGINT,
 			name TEXT NOT NULL,
@@ -160,7 +161,7 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 
 	hostID := uuid.New()
 	tenantID := uuid.New()
-	businessID := uuid.New()
+	var businessID uint64 = 1001
 
 	require.NoError(t, db.Exec(`
 		INSERT INTO resources (id, model_uid, name, configs, created_at, updated_at)
@@ -173,7 +174,7 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 	require.NoError(t, db.Exec(`
 		INSERT INTO modules (id, set_id, business_id, name, service_type, created_at, updated_at)
 		VALUES (1, 1, ?, 'module-a', 'web', ?, ?)
-	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	`, businessID, time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO hosts (id, tenant_id, business_id, host_name, primary_ip, status, is_destroyed, created_at, updated_at)
 		VALUES (?, ?, 1000, 'host-1', '10.0.0.1', 'running', FALSE, ?, ?)
@@ -181,7 +182,7 @@ func TestAggregateInstance_GetInstance_ReturnsBindingContext(t *testing.T) {
 	require.NoError(t, db.Exec(`
 		INSERT INTO host_business_relations (host_id, business_id, created_at)
 		VALUES (?, ?, ?)
-	`, hostID.String(), businessID.String(), time.Now().UTC()).Error)
+	`, hostID.String(), businessID, time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO host_module_relations (host_id, module_id, created_at)
 		VALUES (?, 1, ?)
@@ -200,16 +201,16 @@ func TestAggregateInstance_ListAggregateInstances_ReturnsMainlineNodes(t *testin
 	svc := NewAggregateService(db, dynamicService)
 	ctx := context.Background()
 
-	businessID := uuid.New()
+	var businessID uint64 = 1001
 
 	require.NoError(t, db.Exec(`
 		INSERT INTO mainline_instances (id, model_name, business_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
-		VALUES (1, 'business', ?, ?, 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
-	`, businessID.String(), businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+		VALUES (1, 'business', ?, '1001', 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
+	`, businessID, time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO mainline_instances (id, model_name, business_id, parent_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
 		VALUES (2, 'set', ?, 1, '2', 'SmokeSet3', 'business_1000.set_2', 1, 0, FALSE, '{"description":"topology smoke set"}', ?, ?)
-	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	`, businessID, time.Now().UTC(), time.Now().UTC()).Error)
 
 	items, total, err := svc.ListAggregateInstances(ctx, "set", 1, 20)
 	require.NoError(t, err)
@@ -251,16 +252,16 @@ func TestAggregateInstance_GetInstance_ReturnsMainlineBindingContext(t *testing.
 	svc := NewAggregateService(db, dynamicService)
 	ctx := context.Background()
 
-	businessID := uuid.New()
+	var businessID uint64 = 1002
 
 	require.NoError(t, db.Exec(`
 		INSERT INTO mainline_instances (id, model_name, business_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
-		VALUES (1, 'business', ?, ?, 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
-	`, businessID.String(), businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+		VALUES (1, 'business', ?, '1002', 'SmokeBiz3', 'business_1000', 0, 0, FALSE, '{}', ?, ?)
+	`, businessID, time.Now().UTC(), time.Now().UTC()).Error)
 	require.NoError(t, db.Exec(`
 		INSERT INTO mainline_instances (id, model_name, business_id, parent_id, ref_id, name, path, level, sort_order, is_default, extra, created_at, updated_at)
 		VALUES (2, 'set', ?, 1, '2', 'SmokeSet3', 'business_1000.set_2', 1, 0, FALSE, '{"description":"topology smoke set"}', ?, ?)
-	`, businessID.String(), time.Now().UTC(), time.Now().UTC()).Error)
+	`, businessID, time.Now().UTC(), time.Now().UTC()).Error)
 
 	view, err := svc.GetAggregateInstance(ctx, "set:2")
 	require.NoError(t, err)

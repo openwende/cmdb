@@ -20,6 +20,8 @@ type CloudAreaRepository interface {
 	ListCloudAreas(ctx context.Context, tenantID uuid.UUID, params *types.CloudAreaQueryParams) ([]types.CloudArea, int64, error)
 	UpdateCloudArea(ctx context.Context, id uuid.UUID, req *types.UpdateCloudAreaRequest) (*types.CloudArea, error)
 	DeleteCloudArea(ctx context.Context, id uuid.UUID) error
+	// CountHostsInCloudArea 统计仍关联到该云区域且未被删除的主机数量。
+	CountHostsInCloudArea(ctx context.Context, id uuid.UUID) (int64, error)
 }
 
 type cloudAreaRepository struct {
@@ -40,19 +42,19 @@ func (r *cloudAreaRepository) CreateCloudArea(ctx context.Context, tenantID uuid
 	}
 
 	cloudArea := &types.CloudArea{
-		ID:            uuid.New(),
-		TenantID:      tenantID,
-		Name:          req.Name,
-		Identifier:    req.Identifier,
-		Type:          areaType,
-		Description:   req.Description,
-		CloudVendor:   req.CloudVendor,
-		VPCID:         req.VPCID,
-		CIDRBlock:     req.CIDRBlock,
-		Region:        req.Region,
-		CustomFields:  req.CustomFields,
-		CreatedAt:     time.Now(),
-		UpdatedAt:     time.Now(),
+		ID:           uuid.New(),
+		TenantID:     tenantID,
+		Name:         req.Name,
+		Identifier:   req.Identifier,
+		Type:         areaType,
+		Description:  req.Description,
+		CloudVendor:  req.CloudVendor,
+		VPCID:        req.VPCID,
+		CIDRBlock:    req.CIDRBlock,
+		Region:       req.Region,
+		CustomFields: req.CustomFields,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if err := r.db.WithContext(ctx).Create(cloudArea).Error; err != nil {
@@ -115,8 +117,9 @@ func (r *cloudAreaRepository) GetDefaultCloudArea(ctx context.Context) (*types.C
 
 // ListCloudAreas 获取云区域列表
 func (r *cloudAreaRepository) ListCloudAreas(ctx context.Context, tenantID uuid.UUID, params *types.CloudAreaQueryParams) ([]types.CloudArea, int64, error) {
+	zeroUUID := uuid.Nil
 	query := r.db.WithContext(ctx).
-		Where("tenant_id = ? AND deleted_at IS NULL", tenantID)
+		Where("(tenant_id = ? OR tenant_id = ?) AND deleted_at IS NULL", tenantID, zeroUUID)
 
 	// 应用过滤条件
 	if params.CloudVendor != nil {
@@ -218,4 +221,17 @@ func (r *cloudAreaRepository) DeleteCloudArea(ctx context.Context, id uuid.UUID)
 	}
 
 	return nil
+}
+
+// CountHostsInCloudArea 统计仍关联到该云区域且未被删除的主机数量。
+func (r *cloudAreaRepository) CountHostsInCloudArea(ctx context.Context, id uuid.UUID) (int64, error) {
+	var count int64
+	err := r.db.WithContext(ctx).
+		Model(&types.Host{}).
+		Where("cloud_area_id = ? AND deleted_at IS NULL", id).
+		Count(&count).Error
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
 }

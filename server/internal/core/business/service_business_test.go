@@ -20,7 +20,7 @@ func (m *MockBusinessPersonnelRepository) Add(ctx context.Context, personnel *ty
 	return args.Error(0)
 }
 
-func (m *MockBusinessPersonnelRepository) ListByBusiness(ctx context.Context, businessID uuid.UUID) ([]types.BusinessPersonnel, error) {
+func (m *MockBusinessPersonnelRepository) ListByBusiness(ctx context.Context, businessID uint64) ([]types.BusinessPersonnel, error) {
 	args := m.Called(ctx, businessID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -28,7 +28,7 @@ func (m *MockBusinessPersonnelRepository) ListByBusiness(ctx context.Context, bu
 	return args.Get(0).([]types.BusinessPersonnel), args.Error(1)
 }
 
-func (m *MockBusinessPersonnelRepository) ListByBusinessIDs(ctx context.Context, businessIDs []uuid.UUID) ([]types.BusinessPersonnel, error) {
+func (m *MockBusinessPersonnelRepository) ListByBusinessIDs(ctx context.Context, businessIDs []uint64) ([]types.BusinessPersonnel, error) {
 	args := m.Called(ctx, businessIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -36,7 +36,7 @@ func (m *MockBusinessPersonnelRepository) ListByBusinessIDs(ctx context.Context,
 	return args.Get(0).([]types.BusinessPersonnel), args.Error(1)
 }
 
-func (m *MockBusinessPersonnelRepository) ListByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) ([]types.BusinessPersonnel, error) {
+func (m *MockBusinessPersonnelRepository) ListByBusinessAndRole(ctx context.Context, businessID uint64, role string) ([]types.BusinessPersonnel, error) {
 	args := m.Called(ctx, businessID, role)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -49,7 +49,7 @@ func (m *MockBusinessPersonnelRepository) Remove(ctx context.Context, id uuid.UU
 	return args.Error(0)
 }
 
-func (m *MockBusinessPersonnelRepository) RemoveByBusinessAndRole(ctx context.Context, businessID uuid.UUID, role string) error {
+func (m *MockBusinessPersonnelRepository) RemoveByBusinessAndRole(ctx context.Context, businessID uint64, role string) error {
 	args := m.Called(ctx, businessID, role)
 	return args.Error(0)
 }
@@ -59,14 +59,13 @@ func (m *MockBusinessPersonnelRepository) RemoveByBusinessAndRole(ctx context.Co
 // ========================================
 
 func TestGetBusiness_Success_WithPersonnel(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1001)
 
 	expectedBusiness := &types.Business{
 		ID:   businessID,
@@ -80,13 +79,11 @@ func TestGetBusiness_Success_WithPersonnel(t *testing.T) {
 		{BusinessID: businessID, Identity: "diana@example.com", Role: "bizops"},
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(expectedBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(expectedBusiness, nil)
 	mockPersonnelRepo.On("ListByBusiness", ctx, businessID).Return(expectedPersonnel, nil)
 
-	// Act
-	result, err := service.GetBusiness(ctx, tenantID, businessID.String())
+	result, err := service.GetBusiness(ctx, tenantID, businessID)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "Test Business", result.Name)
@@ -104,25 +101,22 @@ func TestGetBusiness_Success_WithPersonnel(t *testing.T) {
 }
 
 func TestGetBusiness_Success_WithoutPersonnelRepo(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
-	service := NewService(mockBusinessRepo, nil, nil) // No personnel repo
+	service := NewService(mockBusinessRepo, nil, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1002)
 
 	expectedBusiness := &types.Business{
 		ID:   businessID,
 		Name: "Test Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(expectedBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(expectedBusiness, nil)
 
-	// Act
-	result, err := service.GetBusiness(ctx, tenantID, businessID.String())
+	result, err := service.GetBusiness(ctx, tenantID, businessID)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "Test Business", result.Name)
@@ -135,21 +129,18 @@ func TestGetBusiness_Success_WithoutPersonnelRepo(t *testing.T) {
 }
 
 func TestGetBusiness_NotFound(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(9999)
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(nil, assert.AnError)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(nil, assert.AnError)
 
-	// Act
-	result, err := service.GetBusiness(ctx, tenantID, businessID.String())
+	result, err := service.GetBusiness(ctx, tenantID, businessID)
 
-	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, result)
 
@@ -157,30 +148,27 @@ func TestGetBusiness_NotFound(t *testing.T) {
 }
 
 func TestGetBusiness_PersonnelError(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
-	businessID := uuid.New()
+	businessID := uint64(1003)
 
 	expectedBusiness := &types.Business{
 		ID:   businessID,
 		Name: "Test Business",
 	}
 
-	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID.String()).Return(expectedBusiness, nil)
+	mockBusinessRepo.On("GetBusinessByID", ctx, tenantID, businessID).Return(expectedBusiness, nil)
 	mockPersonnelRepo.On("ListByBusiness", ctx, businessID).Return(nil, assert.AnError)
 
-	// Act
-	result, err := service.GetBusiness(ctx, tenantID, businessID.String())
+	result, err := service.GetBusiness(ctx, tenantID, businessID)
 
-	// Assert
 	assert.Error(t, err)
 	assert.Nil(t, result)
-	assert.Contains(t, err.Error(), "failed to populate personnel")
+	assert.Contains(t, err.Error(), "populate personnel")
 
 	mockBusinessRepo.AssertExpectations(t)
 	mockPersonnelRepo.AssertExpectations(t)
@@ -191,7 +179,6 @@ func TestGetBusiness_PersonnelError(t *testing.T) {
 // ========================================
 
 func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
@@ -199,8 +186,8 @@ func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 
-	businessID1 := uuid.New()
-	businessID2 := uuid.New()
+	businessID1 := uint64(1001)
+	businessID2 := uint64(1002)
 
 	businesses := []types.Business{
 		{ID: businessID1, Name: "Business 1"},
@@ -214,23 +201,19 @@ func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
 	}
 
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 10, 0).Return(businesses, 2, nil)
-	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uuid.UUID{businessID1, businessID2}).Return(allPersonnel, nil)
+	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uint64{businessID1, businessID2}).Return(allPersonnel, nil)
 
-	// Act
 	result, total, err := service.ListBusinesses(ctx, tenantID, 10, 0)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, result, 2)
 	assert.Equal(t, 2, total)
 
-	// Verify business 1 personnel
 	assert.Len(t, result[0].Sres, 1)
 	assert.Equal(t, "alice@example.com", result[0].Sres[0])
 	assert.Len(t, result[0].Developers, 1)
 	assert.Equal(t, "bob@example.com", result[0].Developers[0])
 
-	// Verify business 2 personnel
 	assert.Len(t, result[1].Testers, 1)
 	assert.Equal(t, "charlie@example.com", result[1].Testers[0])
 
@@ -239,7 +222,6 @@ func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
 }
 
 func TestListBusinesses_EmptyResult(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
@@ -249,21 +231,17 @@ func TestListBusinesses_EmptyResult(t *testing.T) {
 
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 10, 0).Return([]types.Business{}, 0, nil)
 
-	// Act
 	result, total, err := service.ListBusinesses(ctx, tenantID, 10, 0)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, result, 0)
 	assert.Equal(t, 0, total)
 
 	mockBusinessRepo.AssertExpectations(t)
-	// Personnel repo should NOT be called for empty results
 	mockPersonnelRepo.AssertNotCalled(t, "ListByBusinessIDs")
 }
 
 func TestListBusinesses_Pagination(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
@@ -271,28 +249,25 @@ func TestListBusinesses_Pagination(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 
-	businessID := uuid.New()
+	businessID := uint64(1005)
 	businesses := []types.Business{
 		{ID: businessID, Name: "Business Page 2"},
 	}
 
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 5, 5).Return(businesses, 10, nil)
-	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uuid.UUID{businessID}).Return([]types.BusinessPersonnel{}, nil)
+	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uint64{businessID}).Return([]types.BusinessPersonnel{}, nil)
 
-	// Act
 	result, total, err := service.ListBusinesses(ctx, tenantID, 5, 5)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
-	assert.Equal(t, 10, total) // Total count across all pages
+	assert.Equal(t, 10, total)
 
 	mockBusinessRepo.AssertExpectations(t)
 	mockPersonnelRepo.AssertExpectations(t)
 }
 
 func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
-	// Arrange - This test verifies the N+1 query optimization
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
@@ -300,10 +275,9 @@ func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 
-	// Create 3 businesses
-	businessID1 := uuid.New()
-	businessID2 := uuid.New()
-	businessID3 := uuid.New()
+	businessID1 := uint64(1001)
+	businessID2 := uint64(1002)
+	businessID3 := uint64(1003)
 
 	businesses := []types.Business{
 		{ID: businessID1, Name: "Business 1"},
@@ -320,12 +294,10 @@ func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 10, 0).Return(businesses, 3, nil)
 
 	// CRITICAL: ListByBusinessIDs should be called ONCE with all business IDs
-	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uuid.UUID{businessID1, businessID2, businessID3}).Return(allPersonnel, nil).Once()
+	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uint64{businessID1, businessID2, businessID3}).Return(allPersonnel, nil).Once()
 
-	// Act
 	result, total, err := service.ListBusinesses(ctx, tenantID, 10, 0)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, result, 3)
 	assert.Equal(t, 3, total)
@@ -338,7 +310,6 @@ func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
 }
 
 func TestListBusinesses_PersonnelError(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
 	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
@@ -346,19 +317,18 @@ func TestListBusinesses_PersonnelError(t *testing.T) {
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 
-	businessID := uuid.New()
+	businessID := uint64(1001)
 	businesses := []types.Business{
 		{ID: businessID, Name: "Business 1"},
 	}
 
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 10, 0).Return(businesses, 1, nil)
-	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uuid.UUID{businessID}).Return(nil, assert.AnError)
+	mockPersonnelRepo.On("ListByBusinessIDs", ctx, []uint64{businessID}).Return(nil, assert.AnError)
 
-	// Act - Should succeed even if personnel loading fails (error is logged, not returned)
+	// Should succeed even if personnel loading fails (error is logged, not returned)
 	result, total, err := service.ListBusinesses(ctx, tenantID, 10, 0)
 
-	// Assert
-	assert.NoError(t, err) // Service handles personnel errors gracefully
+	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, 1, total)
 
@@ -367,24 +337,21 @@ func TestListBusinesses_PersonnelError(t *testing.T) {
 }
 
 func TestListBusinesses_WithoutPersonnelRepo(t *testing.T) {
-	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
-	service := NewService(mockBusinessRepo, nil, nil) // No personnel repo
+	service := NewService(mockBusinessRepo, nil, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
 
-	businessID := uuid.New()
+	businessID := uint64(1001)
 	businesses := []types.Business{
 		{ID: businessID, Name: "Business 1"},
 	}
 
 	mockBusinessRepo.On("ListBusinesses", ctx, tenantID, 10, 0).Return(businesses, 1, nil)
 
-	// Act
 	result, total, err := service.ListBusinesses(ctx, tenantID, 10, 0)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, result, 1)
 	assert.Equal(t, 1, total)
@@ -399,12 +366,11 @@ func TestListBusinesses_WithoutPersonnelRepo(t *testing.T) {
 // ========================================
 
 func TestPopulatePersonnel_AllRoles(t *testing.T) {
-	// Arrange
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := &service{personnelRepo: mockPersonnelRepo}
+	svc := &service{personnelRepo: mockPersonnelRepo}
 
 	ctx := context.Background()
-	businessID := uuid.New()
+	businessID := uint64(1001)
 	business := &types.Business{
 		ID:   businessID,
 		Name: "Test Business",
@@ -420,10 +386,8 @@ func TestPopulatePersonnel_AllRoles(t *testing.T) {
 
 	mockPersonnelRepo.On("ListByBusiness", ctx, businessID).Return(personnel, nil)
 
-	// Act
-	err := service.populatePersonnel(ctx, business)
+	err := svc.populatePersonnel(ctx, business)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, business.Sres, 2)
 	assert.Contains(t, business.Sres, "sre1@example.com")
@@ -439,12 +403,11 @@ func TestPopulatePersonnel_AllRoles(t *testing.T) {
 }
 
 func TestPopulatePersonnel_EmptyPersonnel(t *testing.T) {
-	// Arrange
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := &service{personnelRepo: mockPersonnelRepo}
+	svc := &service{personnelRepo: mockPersonnelRepo}
 
 	ctx := context.Background()
-	businessID := uuid.New()
+	businessID := uint64(1002)
 	business := &types.Business{
 		ID:   businessID,
 		Name: "Test Business",
@@ -452,10 +415,8 @@ func TestPopulatePersonnel_EmptyPersonnel(t *testing.T) {
 
 	mockPersonnelRepo.On("ListByBusiness", ctx, businessID).Return([]types.BusinessPersonnel{}, nil)
 
-	// Act
-	err := service.populatePersonnel(ctx, business)
+	err := svc.populatePersonnel(ctx, business)
 
-	// Assert
 	assert.NoError(t, err)
 	assert.Len(t, business.Sres, 0)
 	assert.Len(t, business.Developers, 0)
@@ -466,20 +427,17 @@ func TestPopulatePersonnel_EmptyPersonnel(t *testing.T) {
 }
 
 func TestPopulatePersonnel_NilRepo(t *testing.T) {
-	// Arrange
-	service := &service{personnelRepo: nil}
+	svc := &service{personnelRepo: nil}
 
 	ctx := context.Background()
 	business := &types.Business{
-		ID:   uuid.New(),
+		ID:   uint64(1003),
 		Name: "Test Business",
 	}
 
-	// Act
-	err := service.populatePersonnel(ctx, business)
+	err := svc.populatePersonnel(ctx, business)
 
-	// Assert
-	assert.NoError(t, err) // Should return nil when repo is nil
+	assert.NoError(t, err)
 	assert.Len(t, business.Sres, 0)
 }
 
@@ -488,12 +446,11 @@ func TestPopulatePersonnel_NilRepo(t *testing.T) {
 // ========================================
 
 func TestPopulatePersonnelBatch_MultipleBusinesses(t *testing.T) {
-	// Arrange
-	service := &service{}
+	svc := &service{}
 
-	businessID1 := uuid.New()
-	businessID2 := uuid.New()
-	businessID3 := uuid.New()
+	businessID1 := uint64(1001)
+	businessID2 := uint64(1002)
+	businessID3 := uint64(1003)
 
 	businesses := []types.Business{
 		{ID: businessID1, Name: "Business 1"},
@@ -509,40 +466,32 @@ func TestPopulatePersonnelBatch_MultipleBusinesses(t *testing.T) {
 		{BusinessID: businessID3, Identity: "bizops3@example.com", Role: "bizops"},
 	}
 
-	// Act
-	service.populatePersonnelBatch(businesses, allPersonnel)
+	svc.populatePersonnelBatch(businesses, allPersonnel)
 
-	// Assert
-	// Business 1
 	assert.Len(t, businesses[0].Sres, 1)
 	assert.Equal(t, "sre1@example.com", businesses[0].Sres[0])
 	assert.Len(t, businesses[0].Developers, 1)
 	assert.Equal(t, "dev1@example.com", businesses[0].Developers[0])
 
-	// Business 2
 	assert.Len(t, businesses[1].Sres, 1)
 	assert.Equal(t, "sre2@example.com", businesses[1].Sres[0])
 	assert.Len(t, businesses[1].Testers, 1)
 	assert.Equal(t, "tester2@example.com", businesses[1].Testers[0])
 
-	// Business 3
 	assert.Len(t, businesses[2].Bizops, 1)
 	assert.Equal(t, "bizops3@example.com", businesses[2].Bizops[0])
 }
 
 func TestPopulatePersonnelBatch_EmptyPersonnel(t *testing.T) {
-	// Arrange
-	service := &service{}
+	svc := &service{}
 
-	businessID := uuid.New()
+	businessID := uint64(1001)
 	businesses := []types.Business{
 		{ID: businessID, Name: "Business 1"},
 	}
 
-	// Act
-	service.populatePersonnelBatch(businesses, []types.BusinessPersonnel{})
+	svc.populatePersonnelBatch(businesses, []types.BusinessPersonnel{})
 
-	// Assert
 	assert.Len(t, businesses[0].Sres, 0)
 	assert.Len(t, businesses[0].Developers, 0)
 	assert.Len(t, businesses[0].Testers, 0)

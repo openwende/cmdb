@@ -7,19 +7,20 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
-
-	"github.com/google/uuid"
 )
 
 type Service interface {
 	CreateBusiness(ctx context.Context, req *types.CreateBusinessRequest) (*types.Business, error)
-	GetBusiness(ctx context.Context, tenantID, id string) (*types.Business, error)
-	UpdateBusiness(ctx context.Context, tenantID, id string, req *types.UpdateBusinessRequest) (*types.Business, error)
-	DeleteBusiness(ctx context.Context, tenantID, id string) error
+	GetBusiness(ctx context.Context, tenantID string, id uint64) (*types.Business, error)
+	UpdateBusiness(ctx context.Context, tenantID string, id uint64, req *types.UpdateBusinessRequest) (*types.Business, error)
+	DeleteBusiness(ctx context.Context, tenantID string, id uint64) error
 	ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error)
+
+	SetTopologyInitializer(fn TopologyInitializer)
 
 	// Business Set operations
 	CreateBusinessSet(ctx context.Context, req *types.CreateBusinessSetRequest) (*types.BusinessSet, error)
@@ -28,18 +29,28 @@ type Service interface {
 	UpdateBusinessSet(ctx context.Context, tenantID, id string, req *types.UpdateBusinessSetRequest) (*types.BusinessSet, error)
 	DeleteBusinessSet(ctx context.Context, tenantID, id string) error
 	AddBusinessToSet(ctx context.Context, businessSetID uuid.UUID, req *types.AddBusinessToSetRequest) error
-	RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error
-	ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error)
+	RemoveBusinessFromSet(ctx context.Context, businessSetID uuid.UUID, businessID uint64) error
+	ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uint64, error)
 }
+
+// TopologyInitializer is called after a business is created to set up its default topology.
+type TopologyInitializer func(ctx context.Context, businessID uint64) error
 
 type service struct {
 	businessRepo    storage.BusinessRepository
 	businessSetRepo storage.BusinessSetRepository
 	personnelRepo   storage.BusinessPersonnelRepository
+	initTopology    TopologyInitializer
 }
 
 func NewService(businessRepo storage.BusinessRepository, businessSetRepo storage.BusinessSetRepository, personnelRepo storage.BusinessPersonnelRepository) Service {
 	return &service{businessRepo: businessRepo, businessSetRepo: businessSetRepo, personnelRepo: personnelRepo}
+}
+
+// SetTopologyInitializer injects the topology initializer after construction to break the
+// circular dependency between the business and topology packages.
+func (s *service) SetTopologyInitializer(fn TopologyInitializer) {
+	s.initTopology = fn
 }
 
 func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessRequest) (*types.Business, error) {
@@ -58,14 +69,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		lifecycle = *req.Lifecycle
 	}
 
-	// Handle business_id - 从 1000 开始自动递增
-	tenantID := "00000000-0000-0000-0000-000000000001" // Default tenant
-	var businessID *int64
-	nextID, err := s.businessRepo.GetNextBusinessID(ctx, tenantID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate business_id: %w", err)
-	}
-	businessID = &nextID
+	tenantID := types.SystemTenantID // Default tenant
 
 	// Determine timezone and language with defaults
 	timezone := "UTC"
@@ -77,26 +81,30 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		language = *req.Language
 	}
 
-	// Create the business object with defaults for required fields
+	// Create the business object — ID is auto-assigned by the database
 	business := &types.Business{
-		ID:          uuid.New(),
 		CreatedAt:   now,
 		UpdatedAt:   now,
 		TenantID:    uuid.MustParse(tenantID),
 		Name:        req.Name,
 		Identifier:  identifier,
-		BusinessID:  businessID,
 		Description: req.Description,
 		Lifecycle:   lifecycle,
-		Timezone:    timezone, // Use from request or default
-		Language:    language, // Use from request or default
-		Maintainers: []uuid.UUID{}, // Default to an empty array
+		Timezone:    timezone,
+		Language:    language,
+		Maintainers: []uuid.UUID{},
 		IsBuiltIn:   false,
 	}
 
-	err = s.businessRepo.CreateBusiness(ctx, business)
+	err := s.businessRepo.CreateBusiness(ctx, business)
 	if err != nil {
 		return nil, err
+	}
+
+	if s.initTopology != nil {
+		if err := s.initTopology(ctx, business.ID); err != nil {
+			return nil, fmt.Errorf("初始化业务拓扑失败: %w", err)
+		}
 	}
 
 	// Insert initial personnel if provided (normalized table)
@@ -130,7 +138,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 	return business, nil
 }
 
-func (s *service) GetBusiness(ctx context.Context, tenantID, id string) (*types.Business, error) {
+func (s *service) GetBusiness(ctx context.Context, tenantID string, id uint64) (*types.Business, error) {
 	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
 	if err != nil {
 		return nil, err
@@ -141,7 +149,7 @@ func (s *service) GetBusiness(ctx context.Context, tenantID, id string) (*types.
 	return business, nil
 }
 
-func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *types.UpdateBusinessRequest) (*types.Business, error) {
+func (s *service) UpdateBusiness(ctx context.Context, tenantID string, id uint64, req *types.UpdateBusinessRequest) (*types.Business, error) {
 	// First, get the existing business
 	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
 	if err != nil {
@@ -185,7 +193,6 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 	if req.Maintainers != nil {
 		business.Maintainers = *req.Maintainers
 	}
-	// Personnel arrays are normalized to business_personnel table (not part of Business fields)
 
 	err = s.businessRepo.UpdateBusiness(ctx, business)
 	if err != nil {
@@ -195,7 +202,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID, id string, req *
 	return business, nil
 }
 
-func (s *service) DeleteBusiness(ctx context.Context, tenantID, id string) error {
+func (s *service) DeleteBusiness(ctx context.Context, tenantID string, id uint64) error {
 	// Get business to check lifecycle status
 	business, err := s.businessRepo.GetBusinessByID(ctx, tenantID, id)
 	if err != nil {
@@ -218,7 +225,7 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 
 	// Use batch query to solve N+1 problem: 1 query instead of N
 	if s.personnelRepo != nil && len(businesses) > 0 {
-		businessIDs := make([]uuid.UUID, len(businesses))
+		businessIDs := make([]uint64, len(businesses))
 		for i, b := range businesses {
 			businessIDs[i] = b.ID
 		}
@@ -236,7 +243,7 @@ func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, of
 // populatePersonnelBatch batch populates personnel information into business list
 func (s *service) populatePersonnelBatch(businesses []types.Business, allPersonnel []types.BusinessPersonnel) {
 	// Group personnel by businessID
-	personnelByBusiness := make(map[uuid.UUID][]types.BusinessPersonnel)
+	personnelByBusiness := make(map[uint64][]types.BusinessPersonnel)
 	for _, p := range allPersonnel {
 		personnelByBusiness[p.BusinessID] = append(personnelByBusiness[p.BusinessID], p)
 	}
@@ -259,7 +266,7 @@ func (s *service) populatePersonnelBatch(businesses []types.Business, allPersonn
 	}
 }
 
-// populatePersonnel populates personnel for a single business (used for GetBusiness and other single query scenarios)
+// populatePersonnel populates personnel for a single business
 func (s *service) populatePersonnel(ctx context.Context, b *types.Business) error {
 	if s.personnelRepo == nil {
 		return nil
@@ -304,18 +311,17 @@ func (s *service) CreateBusinessSet(ctx context.Context, req *types.CreateBusine
 		ID:          uuid.New(),
 		CreatedAt:   now,
 		UpdatedAt:   now,
-		TenantID:    uuid.MustParse("00000000-0000-0000-0000-000000000001"), // Default tenant
+		TenantID:    uuid.MustParse(types.SystemTenantID), // Default tenant
 		Name:        req.Name,
 		Identifier:  identifier,
 		Description: req.Description,
-		Scope:       &scope, // Default to an empty JSON object
+		Scope:       &scope,
 		Maintainers: []uuid.UUID{},
 	}
 
-	// Ensure the business exists (basic referential integrity check at service level)
-	// Using default tenant for MVP
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID.String()); err != nil {
+	// Ensure the business exists
+	tenantID := types.SystemTenantID
+	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID); err != nil {
 		return nil, err
 	}
 
@@ -390,8 +396,8 @@ func (s *service) DeleteBusinessSet(ctx context.Context, tenantID, id string) er
 
 func (s *service) AddBusinessToSet(ctx context.Context, businessSetID uuid.UUID, req *types.AddBusinessToSetRequest) error {
 	// Verify the business exists
-	tenantID := "00000000-0000-0000-0000-000000000001"
-	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID.String()); err != nil {
+	tenantID := types.SystemTenantID
+	if _, err := s.businessRepo.GetBusinessByID(ctx, tenantID, req.BusinessID); err != nil {
 		return err
 	}
 
@@ -405,10 +411,10 @@ func (s *service) AddBusinessToSet(ctx context.Context, businessSetID uuid.UUID,
 	return s.businessSetRepo.AddBusinessToSet(ctx, member)
 }
 
-func (s *service) RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error {
+func (s *service) RemoveBusinessFromSet(ctx context.Context, businessSetID uuid.UUID, businessID uint64) error {
 	return s.businessSetRepo.RemoveBusinessFromSet(ctx, businessSetID, businessID)
 }
 
-func (s *service) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error) {
+func (s *service) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uint64, error) {
 	return s.businessSetRepo.ListBusinessSetMembers(ctx, businessSetID)
 }

@@ -2,16 +2,17 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/core/instance"
 )
 
-func RegisterInstanceAggregateRoutes(router *gin.Engine, dynamicModelService *dynamic_model.Service) {
-	aggregateService := instance.NewAggregateService(dynamicModelService.DB(), dynamicModelService)
+func RegisterInstanceAggregateRoutes(router *gin.Engine, dynamicModelService dynamic_model.Service, db *gorm.DB) {
+	aggregateService := instance.NewAggregateService(db, dynamicModelService)
 	handler := handlers.NewInstanceAggregateHandler(aggregateService)
-	dynamicHandler := handlers.NewDynamicModelHandler(dynamicModelService)
+	dynamicHandler := handlers.NewDynamicModelHandler(dynamicModelService, db)
 
 	v1 := router.Group("/api/v1/instances")
 	{

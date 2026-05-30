@@ -12,7 +12,19 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-type Service struct {
+type Service interface {
+	CreateType(ctx context.Context, input CreateTypeInput) (*types.ResourceTypeV2, error)
+	ListTypes(ctx context.Context) ([]types.ResourceTypeV2, error)
+	GetType(ctx context.Context, name string) (*types.ResourceTypeV2, error)
+	CreateResource(ctx context.Context, input CreateResourceInput) (*types.ResourceV2, error)
+	BatchUpsertResources(ctx context.Context, input BatchUpsertInput) (*BatchUpsertResult, error)
+	SearchResources(ctx context.Context, input SearchResourcesInput) ([]types.ResourceV2, error)
+	CreateEdge(ctx context.Context, input CreateEdgeInput) (*types.EdgeV2, error)
+	ListResourceEdges(ctx context.Context, resourceID, relType string) ([]types.EdgeV2, error)
+	ListEvents(ctx context.Context, input ListEventsInput) ([]types.EventV2, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
@@ -66,11 +78,11 @@ type BatchUpsertResult struct {
 	Updated int `json:"updated"`
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
-func (s *Service) CreateType(ctx context.Context, input CreateTypeInput) (*types.ResourceTypeV2, error) {
+func (s *service) CreateType(ctx context.Context, input CreateTypeInput) (*types.ResourceTypeV2, error) {
 	if err := validateTypeInput(input); err != nil {
 		return nil, err
 	}
@@ -93,7 +105,7 @@ func (s *Service) CreateType(ctx context.Context, input CreateTypeInput) (*types
 	return item, nil
 }
 
-func (s *Service) ListTypes(ctx context.Context) ([]types.ResourceTypeV2, error) {
+func (s *service) ListTypes(ctx context.Context) ([]types.ResourceTypeV2, error) {
 	var items []types.ResourceTypeV2
 	if err := s.db.WithContext(ctx).Order("name ASC").Find(&items).Error; err != nil {
 		return nil, err
@@ -101,7 +113,7 @@ func (s *Service) ListTypes(ctx context.Context) ([]types.ResourceTypeV2, error)
 	return items, nil
 }
 
-func (s *Service) GetType(ctx context.Context, name string) (*types.ResourceTypeV2, error) {
+func (s *service) GetType(ctx context.Context, name string) (*types.ResourceTypeV2, error) {
 	var item types.ResourceTypeV2
 	if err := s.db.WithContext(ctx).Where("name = ?", strings.TrimSpace(name)).First(&item).Error; err != nil {
 		return nil, err
@@ -109,7 +121,7 @@ func (s *Service) GetType(ctx context.Context, name string) (*types.ResourceType
 	return &item, nil
 }
 
-func (s *Service) CreateResource(ctx context.Context, input CreateResourceInput) (*types.ResourceV2, error) {
+func (s *service) CreateResource(ctx context.Context, input CreateResourceInput) (*types.ResourceV2, error) {
 	resourceType, err := s.GetType(ctx, input.TypeName)
 	if err != nil {
 		return nil, err
@@ -132,7 +144,7 @@ func (s *Service) CreateResource(ctx context.Context, input CreateResourceInput)
 	return resource, nil
 }
 
-func (s *Service) BatchUpsertResources(ctx context.Context, input BatchUpsertInput) (*BatchUpsertResult, error) {
+func (s *service) BatchUpsertResources(ctx context.Context, input BatchUpsertInput) (*BatchUpsertResult, error) {
 	resourceType, err := s.GetType(ctx, input.TypeName)
 	if err != nil {
 		return nil, err
@@ -197,7 +209,7 @@ func (s *Service) BatchUpsertResources(ctx context.Context, input BatchUpsertInp
 	return result, nil
 }
 
-func (s *Service) SearchResources(ctx context.Context, input SearchResourcesInput) ([]types.ResourceV2, error) {
+func (s *service) SearchResources(ctx context.Context, input SearchResourcesInput) ([]types.ResourceV2, error) {
 	query := s.db.WithContext(ctx).Model(&types.ResourceV2{})
 	if strings.TrimSpace(input.TypeName) != "" {
 		query = query.Where("type_name = ?", strings.TrimSpace(input.TypeName))
@@ -225,7 +237,7 @@ func (s *Service) SearchResources(ctx context.Context, input SearchResourcesInpu
 	return filtered, nil
 }
 
-func (s *Service) CreateEdge(ctx context.Context, input CreateEdgeInput) (*types.EdgeV2, error) {
+func (s *service) CreateEdge(ctx context.Context, input CreateEdgeInput) (*types.EdgeV2, error) {
 	if strings.TrimSpace(input.FromID) == "" || strings.TrimSpace(input.ToID) == "" {
 		return nil, fmt.Errorf("from_id and to_id are required")
 	}
@@ -262,7 +274,7 @@ func (s *Service) CreateEdge(ctx context.Context, input CreateEdgeInput) (*types
 	return edge, nil
 }
 
-func (s *Service) ListResourceEdges(ctx context.Context, resourceID, relType string) ([]types.EdgeV2, error) {
+func (s *service) ListResourceEdges(ctx context.Context, resourceID, relType string) ([]types.EdgeV2, error) {
 	query := s.db.WithContext(ctx).Model(&types.EdgeV2{}).Where("from_id = ? OR to_id = ?", strings.TrimSpace(resourceID), strings.TrimSpace(resourceID))
 	if strings.TrimSpace(relType) != "" {
 		query = query.Where("rel_type = ?", strings.TrimSpace(relType))
@@ -276,7 +288,7 @@ func (s *Service) ListResourceEdges(ctx context.Context, resourceID, relType str
 	return items, nil
 }
 
-func (s *Service) ListEvents(ctx context.Context, input ListEventsInput) ([]types.EventV2, error) {
+func (s *service) ListEvents(ctx context.Context, input ListEventsInput) ([]types.EventV2, error) {
 	query := s.db.WithContext(ctx).Model(&types.EventV2{})
 	if strings.TrimSpace(input.ResourceID) != "" {
 		query = query.Where("resource_id = ?", strings.TrimSpace(input.ResourceID))
@@ -324,7 +336,7 @@ func findExistingResource(tx *gorm.DB, resource *types.ResourceV2) (*types.Resou
 	return nil, nil
 }
 
-func (s *Service) getResourceByID(ctx context.Context, id string) (*types.ResourceV2, error) {
+func (s *service) getResourceByID(ctx context.Context, id string) (*types.ResourceV2, error) {
 	var item types.ResourceV2
 	if err := s.db.WithContext(ctx).Where("id = ?", strings.TrimSpace(id)).First(&item).Error; err != nil {
 		return nil, err
@@ -332,7 +344,7 @@ func (s *Service) getResourceByID(ctx context.Context, id string) (*types.Resour
 	return &item, nil
 }
 
-func (s *Service) recordEvent(ctx context.Context, tx *gorm.DB, eventType string, resourceID *string, payload map[string]any) error {
+func (s *service) recordEvent(ctx context.Context, tx *gorm.DB, eventType string, resourceID *string, payload map[string]any) error {
 	event := &types.EventV2{
 		EventType:  strings.TrimSpace(eventType),
 		ResourceID: resourceID,

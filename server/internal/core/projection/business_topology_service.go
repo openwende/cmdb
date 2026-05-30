@@ -239,11 +239,17 @@ func (s *BusinessTopologyService) buildTreeNode(
 		Extra:      buildExtra(node.resource),
 	}
 
-	if node.resource.TypeName == string(types.NodeTypeModule) && !includeHosts {
+	if node.resource.TypeName == string(types.NodeTypeModule) {
 		hostCount := countChildrenByType(children, string(types.NodeTypeHost))
-		treeNode.ChildCount = len(filterVisibleChildren(children, false)) + hostCount
-		treeNode.IsLeaf = true
-		treeNode.Expandable = false
+		treeNode.Extra["host_count"] = hostCount
+		if !includeHosts {
+			treeNode.ChildCount = len(filterVisibleChildren(children, false)) + hostCount
+			treeNode.IsLeaf = true
+			treeNode.Expandable = false
+		} else {
+			treeNode.IsLeaf = len(visibleChildren) == 0
+			treeNode.Expandable = len(visibleChildren) > 0
+		}
 	} else {
 		treeNode.IsLeaf = len(visibleChildren) == 0
 		treeNode.Expandable = len(visibleChildren) > 0

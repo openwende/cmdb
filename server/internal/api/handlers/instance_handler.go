@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/wend/cmdb-backend/internal/core/instance"
@@ -21,12 +22,9 @@ func NewInstanceHandler(service instance.Service) *InstanceHandler {
 // CreateInstance - POST /api/v1/models/:name/instances
 func (h *InstanceHandler) CreateInstance(c *gin.Context) {
 	modelName := c.Param("name")
-	// TODO: Get Tenant ID from context/middleware
-	// For POC, we'll accept it in header or hardcode test tenant
 	tenantID := c.GetHeader("X-Tenant-ID")
 	if tenantID == "" {
-		// Fallback for easy testing
-		tenantID = "ce307a3d-a1a7-4838-ab0b-23182f9851c3"
+		tenantID = types.SystemTenantID
 	}
 
 	var req types.CreateInstanceRequest
@@ -49,7 +47,7 @@ func (h *InstanceHandler) BatchCreateInstances(c *gin.Context) {
 	modelName := c.Param("name")
 	tenantID := c.GetHeader("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "ce307a3d-a1a7-4838-ab0b-23182f9851c3"
+		tenantID = types.SystemTenantID
 	}
 
 	var req types.BatchCreateInstanceRequest
@@ -83,7 +81,7 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 	modelName := c.Param("name")
 	tenantID := c.GetHeader("X-Tenant-ID")
 	if tenantID == "" {
-		tenantID = "ce307a3d-a1a7-4838-ab0b-23182f9851c3"
+		tenantID = types.SystemTenantID
 	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -105,6 +103,10 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 
 	instances, total, err := h.service.ListInstances(c.Request.Context(), tenantID, modelName, params)
 	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

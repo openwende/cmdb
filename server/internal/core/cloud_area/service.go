@@ -8,6 +8,7 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // Service 云区域服务
@@ -66,9 +67,23 @@ func (s *Service) UpdateCloudArea(ctx context.Context, id uuid.UUID, req *types.
 }
 
 // DeleteCloudArea 删除云区域
+//
+// 硬阻断：若仍有主机关联到该云区域，则拒绝删除（云区域为软删除，DB 外键的
+// ON DELETE SET NULL 不会触发，直接删除会留下指向不存在云区域的悬空主机）。
 func (s *Service) DeleteCloudArea(ctx context.Context, id uuid.UUID) error {
-	// TODO: 检查是否有主机关联到此云区域
-	// 如果有，可以选择：1) 禁止删除 2) 级联删除 3) 转移到默认云区域
+	// 1. 校验云区域是否存在
+	if _, err := s.repo.GetCloudArea(ctx, id); err != nil {
+		return err
+	}
+
+	// 2. 检查是否有主机仍关联到此云区域
+	count, err := s.repo.CountHostsInCloudArea(ctx, id)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return apperrors.ConflictError("云区域", fmt.Sprintf("下仍有 %d 台主机，无法删除，请先迁移或删除这些主机", count))
+	}
 
 	return s.repo.DeleteCloudArea(ctx, id)
 }

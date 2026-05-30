@@ -9,6 +9,7 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // Service 主机服务
@@ -38,7 +39,7 @@ func (s *Service) CreateHost(ctx context.Context, tenantID uuid.UUID, req *types
 
 	// 2. 校验数据
 	if err := s.validateHostRequest(ctx, req, nil); err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(apperrors.ErrInvalidInput, "INVALID_INPUT", err.Error())
 	}
 
 	// 3. 检查云区域是否存在
@@ -196,7 +197,7 @@ func (s *Service) BatchImportHosts(ctx context.Context, tenantID uuid.UUID, req 
 			TenantID:        tenantID,
 			CreatedBy:       createdBy,
 			CloudAreaID:     hostReq.CloudAreaID,
-			BusinessID:      hostReq.BusinessID,
+			BusinessID:      nil, // business assignment is done via HostBusinessRelation
 			HostName:        hostReq.HostName,
 			PrimaryIP:       hostReq.PrimaryIP,
 			IPAddresses:     hostReq.IPAddresses,
@@ -244,7 +245,7 @@ func (s *Service) ListHosts(ctx context.Context, tenantID uuid.UUID, params *typ
 func (s *Service) UpdateHost(ctx context.Context, id uuid.UUID, req *types.UpdateHostRequest, updatedBy *uuid.UUID) (*types.Host, error) {
 	// 1. 校验数据
 	if err := s.validateUpdateHostRequest(ctx, id, req); err != nil {
-		return nil, err
+		return nil, apperrors.Wrap(apperrors.ErrInvalidInput, "INVALID_INPUT", err.Error())
 	}
 
 	// 2. 检查主机是否存在
@@ -435,7 +436,7 @@ func (s *Service) validateUpdateHostRequest(ctx context.Context, hostID uuid.UUI
 }
 
 // AssignToBusiness 分配主机到业务
-func (s *Service) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
+func (s *Service) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
 	// 检查主机是否存在
 	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
 		return err

@@ -19,9 +19,9 @@ type BusinessSetRepository interface {
 	ListBusinessSets(ctx context.Context, tenantID string, limit, offset int) ([]types.BusinessSet, int, error)
 	UpdateBusinessSet(ctx context.Context, businessSet *types.BusinessSet) error
 	DeleteBusinessSet(ctx context.Context, tenantID, id string) error
-	ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error)
+	ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uint64, error)
 	AddBusinessToSet(ctx context.Context, member *types.BusinessSetMember) error
-	RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error
+	RemoveBusinessFromSet(ctx context.Context, businessSetID uuid.UUID, businessID uint64) error
 	CheckIdentifierExists(ctx context.Context, tenantID, identifier string, excludeID string) (bool, error)
 }
 
@@ -174,9 +174,9 @@ func (r *businessSetRepository) DeleteBusinessSet(ctx context.Context, tenantID,
 	return nil
 }
 
-func (r *businessSetRepository) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uuid.UUID, error) {
+func (r *businessSetRepository) ListBusinessSetMembers(ctx context.Context, businessSetID uuid.UUID) ([]uint64, error) {
 	var members []struct {
-		BusinessID uuid.UUID `db:"business_id"`
+		BusinessID uint64 `db:"business_id"`
 	}
 
 	err := r.db.WithContext(ctx).Table("business_set_members").
@@ -188,7 +188,7 @@ func (r *businessSetRepository) ListBusinessSetMembers(ctx context.Context, busi
 		return nil, apperrors.InternalError("list business set members", err)
 	}
 
-	businessIDs := make([]uuid.UUID, len(members))
+	businessIDs := make([]uint64, len(members))
 	for i, m := range members {
 		businessIDs[i] = m.BusinessID
 	}
@@ -214,7 +214,7 @@ func (r *businessSetRepository) AddBusinessToSet(ctx context.Context, member *ty
 	return nil
 }
 
-func (r *businessSetRepository) RemoveBusinessFromSet(ctx context.Context, businessSetID, businessID uuid.UUID) error {
+func (r *businessSetRepository) RemoveBusinessFromSet(ctx context.Context, businessSetID uuid.UUID, businessID uint64) error {
 	result := r.db.WithContext(ctx).Table("business_set_members").
 		Where("business_set_id = ? AND business_id = ?", businessSetID, businessID).
 		Delete(nil)

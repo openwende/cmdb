@@ -30,7 +30,7 @@ func TestMainlineHandler_GetTree_UsesProjectionWhenGraphDataExists(t *testing.T)
 	biz, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
 		TypeName: "business",
 		Name:     "Mainline Projection Biz",
-		Spec:     map[string]any{"ref_id": "4c5f1a27-4b54-497d-a9f2-8922c0e4be55"},
+		Spec:     map[string]any{"ref_id": "2001"},
 	})
 	require.NoError(t, err)
 	setNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
@@ -49,7 +49,7 @@ func TestMainlineHandler_GetTree_UsesProjectionWhenGraphDataExists(t *testing.T)
 	router := gin.New()
 	router.GET("/api/v1/mainline/tree", handler.GetTree)
 
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/mainline/tree?business_id=4c5f1a27-4b54-497d-a9f2-8922c0e4be55", nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/v1/mainline/tree?business_id=2001", nil)
 	require.NoError(t, err)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)

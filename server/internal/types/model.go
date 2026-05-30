@@ -87,7 +87,7 @@ type Instance struct {
 	ID         uuid.UUID       `json:"id" db:"id" gorm:"primaryKey;type:uuid;default:gen_random_uuid()"`
 	ModelID    uuid.UUID       `json:"model_id" db:"model_id"`
 	TenantID   uuid.UUID       `json:"tenant_id" db:"tenant_id"`
-	BusinessID *uuid.UUID      `json:"business_id,omitempty" db:"business_id"`
+	BusinessID *uint64         `json:"business_id,omitempty" db:"business_id"`
 	Properties json.RawMessage `json:"properties" db:"properties" gorm:"type:jsonb"`
 	Path       string          `json:"path,omitempty" db:"path" gorm:"type:ltree"` // ltree stored as string
 	CreatedAt  time.Time       `json:"created_at" db:"created_at"`

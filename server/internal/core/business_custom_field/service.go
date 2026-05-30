@@ -6,21 +6,31 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-type Service struct {
+type Service interface {
+	ListGroups(ctx context.Context, businessID uint64, objectType string) ([]types.BusinessCustomFieldGroupDetail, error)
+	CreateGroup(ctx context.Context, businessID uint64, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error)
+	UpdateGroup(ctx context.Context, businessID uint64, groupID uint64, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error)
+	DeleteGroup(ctx context.Context, businessID uint64, groupID uint64) error
+	CreateField(ctx context.Context, businessID uint64, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error)
+	UpdateField(ctx context.Context, businessID uint64, fieldID uint64, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error)
+	DeleteField(ctx context.Context, businessID uint64, fieldID uint64) error
+	GetFormSchema(ctx context.Context, businessID uint64, objectType string) (map[string]interface{}, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
-func (s *Service) ListGroups(ctx context.Context, businessID uuid.UUID, objectType string) ([]types.BusinessCustomFieldGroupDetail, error) {
+func (s *service) ListGroups(ctx context.Context, businessID uint64, objectType string) ([]types.BusinessCustomFieldGroupDetail, error) {
 	if err := validateObjectType(objectType); err != nil {
 		return nil, err
 	}
@@ -62,7 +72,7 @@ func (s *Service) ListGroups(ctx context.Context, businessID uuid.UUID, objectTy
 	return result, nil
 }
 
-func (s *Service) CreateGroup(ctx context.Context, businessID uuid.UUID, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error) {
+func (s *service) CreateGroup(ctx context.Context, businessID uint64, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error) {
 	if err := validateObjectType(payload.ObjectType); err != nil {
 		return nil, err
 	}
@@ -84,7 +94,7 @@ func (s *Service) CreateGroup(ctx context.Context, businessID uuid.UUID, payload
 	return group, nil
 }
 
-func (s *Service) UpdateGroup(ctx context.Context, businessID uuid.UUID, groupID uint64, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error) {
+func (s *service) UpdateGroup(ctx context.Context, businessID uint64, groupID uint64, payload *types.BusinessCustomFieldGroupPayload, operator string) (*types.BusinessCustomFieldGroup, error) {
 	if err := validateObjectType(payload.ObjectType); err != nil {
 		return nil, err
 	}
@@ -115,7 +125,7 @@ func (s *Service) UpdateGroup(ctx context.Context, businessID uuid.UUID, groupID
 	return &group, nil
 }
 
-func (s *Service) DeleteGroup(ctx context.Context, businessID uuid.UUID, groupID uint64) error {
+func (s *service) DeleteGroup(ctx context.Context, businessID uint64, groupID uint64) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(&types.BusinessCustomField{}).
 			Where("business_id = ? AND group_id = ? AND deleted_at IS NULL", businessID, groupID).
@@ -127,7 +137,7 @@ func (s *Service) DeleteGroup(ctx context.Context, businessID uuid.UUID, groupID
 	})
 }
 
-func (s *Service) CreateField(ctx context.Context, businessID uuid.UUID, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error) {
+func (s *service) CreateField(ctx context.Context, businessID uint64, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error) {
 	if err := validateFieldPayload(payload); err != nil {
 		return nil, err
 	}
@@ -141,7 +151,7 @@ func (s *Service) CreateField(ctx context.Context, businessID uuid.UUID, payload
 	return field, nil
 }
 
-func (s *Service) UpdateField(ctx context.Context, businessID uuid.UUID, fieldID uint64, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error) {
+func (s *service) UpdateField(ctx context.Context, businessID uint64, fieldID uint64, payload *types.BusinessCustomFieldPayload, operator string) (*types.BusinessCustomField, error) {
 	if err := validateFieldPayload(payload); err != nil {
 		return nil, err
 	}
@@ -179,13 +189,13 @@ func (s *Service) UpdateField(ctx context.Context, businessID uuid.UUID, fieldID
 	return &field, nil
 }
 
-func (s *Service) DeleteField(ctx context.Context, businessID uuid.UUID, fieldID uint64) error {
+func (s *service) DeleteField(ctx context.Context, businessID uint64, fieldID uint64) error {
 	return s.db.WithContext(ctx).
 		Where("id = ? AND business_id = ? AND deleted_at IS NULL", fieldID, businessID).
 		Delete(&types.BusinessCustomField{}).Error
 }
 
-func (s *Service) GetFormSchema(ctx context.Context, businessID uuid.UUID, objectType string) (map[string]interface{}, error) {
+func (s *service) GetFormSchema(ctx context.Context, businessID uint64, objectType string) (map[string]interface{}, error) {
 	if err := validateObjectType(objectType); err != nil {
 		return nil, err
 	}
@@ -253,7 +263,7 @@ func validateFieldPayload(payload *types.BusinessCustomFieldPayload) error {
 	return nil
 }
 
-func buildFieldModel(businessID uuid.UUID, payload *types.BusinessCustomFieldPayload, operator string, create bool) (*types.BusinessCustomField, error) {
+func buildFieldModel(businessID uint64, payload *types.BusinessCustomFieldPayload, operator string, create bool) (*types.BusinessCustomField, error) {
 	validators, err := json.Marshal(payload.Validators)
 	if err != nil {
 		return nil, fmt.Errorf("marshal validators: %w", err)

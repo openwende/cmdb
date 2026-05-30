@@ -15,11 +15,11 @@ import (
 // HostMigration 主机迁移工具
 type HostMigration struct {
 	db             *gorm.DB
-	dynamicService *dynamic_model.Service
+	dynamicService dynamic_model.Service
 }
 
 // NewHostMigration 创建迁移工具
-func NewHostMigration(db *gorm.DB, dynamicService *dynamic_model.Service) *HostMigration {
+func NewHostMigration(db *gorm.DB, dynamicService dynamic_model.Service) *HostMigration {
 	return &HostMigration{
 		db:             db,
 		dynamicService: dynamicService,

@@ -3,25 +3,28 @@ package service_category
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-type Service struct {
+type Service interface {
+	ListCategories(ctx context.Context, businessID uint64) ([]types.ServiceCategory, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
-func (s *Service) DB() *gorm.DB {
+func (s *service) DB() *gorm.DB {
 	return s.db
 }
 
-func (s *Service) ListCategories(ctx context.Context, businessID uuid.UUID) ([]types.ServiceCategory, error) {
+func (s *service) ListCategories(ctx context.Context, businessID uint64) ([]types.ServiceCategory, error) {
 	var rows []types.ServiceCategory
 	if err := s.db.WithContext(ctx).
 		Where("business_id IS NULL OR business_id = ?", businessID).

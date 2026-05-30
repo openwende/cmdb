@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/gorm"
@@ -16,17 +15,17 @@ import (
 
 // DynamicModelHandler 动态模型 HTTP Handler
 type DynamicModelHandler struct {
-	service         *dynamic_model.Service
+	service         dynamic_model.Service
 	relationService *dynamic_model.RelationAggregateService
 	schemaService   *dynamic_model.SchemaService
 }
 
 // NewDynamicModelHandler 创建 Handler
-func NewDynamicModelHandler(service *dynamic_model.Service) *DynamicModelHandler {
+func NewDynamicModelHandler(service dynamic_model.Service, db *gorm.DB) *DynamicModelHandler {
 	return &DynamicModelHandler{
 		service:         service,
-		relationService: dynamic_model.NewRelationAggregateService(service.DB(), service),
-		schemaService:   dynamic_model.NewSchemaService(service.DB(), service),
+		relationService: dynamic_model.NewRelationAggregateService(db, service),
+		schemaService:   dynamic_model.NewSchemaService(db, service),
 	}
 }
 
@@ -737,9 +736,9 @@ func (h *DynamicModelHandler) GetSchema(c *gin.Context) {
 }
 
 func (h *DynamicModelHandler) GetFormSchema(c *gin.Context) {
-	var businessID uuid.UUID
+	var businessID uint64
 	if rawBusinessID := strings.TrimSpace(c.Query("business_id")); rawBusinessID != "" {
-		parsed, err := uuid.Parse(rawBusinessID)
+		parsed, err := strconv.ParseUint(rawBusinessID, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
 			return

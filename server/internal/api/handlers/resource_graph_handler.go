@@ -11,7 +11,7 @@ import (
 )
 
 type ResourceGraphHandler struct {
-	service *resource_graph.Service
+	service resource_graph.Service
 }
 
 type createTypeRequest struct {
@@ -53,7 +53,7 @@ type createEdgeRequest struct {
 	Data    map[string]any `json:"data"`
 }
 
-func NewResourceGraphHandler(service *resource_graph.Service) *ResourceGraphHandler {
+func NewResourceGraphHandler(service resource_graph.Service) *ResourceGraphHandler {
 	return &ResourceGraphHandler{service: service}
 }
 

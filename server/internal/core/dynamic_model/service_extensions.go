@@ -41,7 +41,7 @@ type topologyEdgeRow struct {
 // ========== 模型管理方法 ==========
 
 // CreateModel 创建模型
-func (s *Service) CreateModel(ctx context.Context, model *types.DynamicModel) error {
+func (s *service) CreateModel(ctx context.Context, model *types.DynamicModel) error {
 	if err := s.db.WithContext(ctx).Create(model).Error; err != nil {
 		return err
 	}
@@ -54,7 +54,7 @@ func (s *Service) CreateModel(ctx context.Context, model *types.DynamicModel) er
 }
 
 // ListModels 列出所有模型
-func (s *Service) ListModels(ctx context.Context) ([]types.DynamicModel, error) {
+func (s *service) ListModels(ctx context.Context) ([]types.DynamicModel, error) {
 	var models []types.DynamicModel
 	if err := s.db.WithContext(ctx).Order("created_at DESC").Find(&models).Error; err != nil {
 		return nil, err
@@ -63,12 +63,12 @@ func (s *Service) ListModels(ctx context.Context) ([]types.DynamicModel, error) 
 }
 
 // GetModel 获取模型
-func (s *Service) GetModel(ctx context.Context, uid string) (*types.DynamicModel, error) {
+func (s *service) GetModel(ctx context.Context, uid string) (*types.DynamicModel, error) {
 	return s.modelCache.Get(uid)
 }
 
 // UpdateModel 更新模型
-func (s *Service) UpdateModel(ctx context.Context, uid string, updates map[string]interface{}) error {
+func (s *service) UpdateModel(ctx context.Context, uid string, updates map[string]interface{}) error {
 	if err := s.db.WithContext(ctx).Model(&types.DynamicModel{}).Where("uid = ?", uid).Updates(updates).Error; err != nil {
 		return err
 	}
@@ -89,11 +89,19 @@ func (s *Service) UpdateModel(ctx context.Context, uid string, updates map[strin
 }
 
 // DeleteModel 删除模型
-func (s *Service) DeleteModel(ctx context.Context, uid string) error {
+func (s *service) DeleteModel(ctx context.Context, uid string) error {
 	var count int64
 	s.db.WithContext(ctx).Model(&types.Resource{}).Where("model_uid = ?", uid).Count(&count)
 	if count > 0 {
 		return fmt.Errorf("模型 %s 下还有 %d 个实例，无法删除", uid, count)
+	}
+
+	var assocCount int64
+	s.db.WithContext(ctx).Model(&types.DynamicModelAssociation{}).
+		Where("source_model_uid = ? OR target_model_uid = ?", uid, uid).
+		Count(&assocCount)
+	if assocCount > 0 {
+		return fmt.Errorf("模型 %s 仍被 %d 个模型关联引用，请先删除相关关联定义", uid, assocCount)
 	}
 
 	s.db.WithContext(ctx).Where("model_uid = ?", uid).Delete(&types.DynamicAttribute{})
@@ -111,7 +119,7 @@ func (s *Service) DeleteModel(ctx context.Context, uid string) error {
 // ========== 属性管理方法 ==========
 
 // CreateAttribute 创建属性
-func (s *Service) CreateAttribute(ctx context.Context, attr *types.DynamicAttribute) error {
+func (s *service) CreateAttribute(ctx context.Context, attr *types.DynamicAttribute) error {
 	if err := s.db.WithContext(ctx).Create(attr).Error; err != nil {
 		return err
 	}
@@ -132,12 +140,12 @@ func (s *Service) CreateAttribute(ctx context.Context, attr *types.DynamicAttrib
 }
 
 // ListAttributes 列出模型的所有属性
-func (s *Service) ListAttributes(ctx context.Context, modelUID string) ([]types.DynamicAttribute, error) {
+func (s *service) ListAttributes(ctx context.Context, modelUID string) ([]types.DynamicAttribute, error) {
 	return s.attrCache.Get(modelUID)
 }
 
 // UpdateAttribute 更新属性
-func (s *Service) UpdateAttribute(ctx context.Context, modelUID, fieldUID string, updates map[string]interface{}) error {
+func (s *service) UpdateAttribute(ctx context.Context, modelUID, fieldUID string, updates map[string]interface{}) error {
 	if err := s.db.WithContext(ctx).Model(&types.DynamicAttribute{}).
 		Where("model_uid = ? AND field_uid = ?", modelUID, fieldUID).
 		Updates(updates).Error; err != nil {
@@ -150,7 +158,7 @@ func (s *Service) UpdateAttribute(ctx context.Context, modelUID, fieldUID string
 }
 
 // DeleteAttribute 删除属性
-func (s *Service) DeleteAttribute(ctx context.Context, modelUID, fieldUID string) error {
+func (s *service) DeleteAttribute(ctx context.Context, modelUID, fieldUID string) error {
 	if err := s.db.WithContext(ctx).Where("model_uid = ? AND field_uid = ?", modelUID, fieldUID).
 		Delete(&types.DynamicAttribute{}).Error; err != nil {
 		return err
@@ -162,7 +170,7 @@ func (s *Service) DeleteAttribute(ctx context.Context, modelUID, fieldUID string
 }
 
 // GetInstanceView 获取实例详情视图
-func (s *Service) GetInstanceView(ctx context.Context, modelUID string, resourceID uint64) (*types.DynamicModelInstanceView, error) {
+func (s *service) GetInstanceView(ctx context.Context, modelUID string, resourceID uint64) (*types.DynamicModelInstanceView, error) {
 	resource, err := s.getResourceByModel(ctx, modelUID, resourceID, true)
 	if err != nil {
 		return nil, err
@@ -190,7 +198,7 @@ func (s *Service) GetInstanceView(ctx context.Context, modelUID string, resource
 }
 
 // ListInstanceRelations 查询实例关联关系视图
-func (s *Service) ListInstanceRelations(ctx context.Context, modelUID string, resourceID uint64, direction, associationUID string) ([]types.InstanceRelationView, error) {
+func (s *service) ListInstanceRelations(ctx context.Context, modelUID string, resourceID uint64, direction, associationUID string) ([]types.InstanceRelationView, error) {
 	if _, err := s.getResourceByModel(ctx, modelUID, resourceID, false); err != nil {
 		return nil, err
 	}
@@ -271,12 +279,12 @@ func (s *Service) ListInstanceRelations(ctx context.Context, modelUID string, re
 }
 
 // DeleteRelation 删除关联关系
-func (s *Service) DeleteRelation(ctx context.Context, relationID uint64) error {
+func (s *service) DeleteRelation(ctx context.Context, relationID uint64) error {
 	return s.db.WithContext(ctx).Delete(&types.Relation{}, relationID).Error
 }
 
 // GetTopologyGraph 获取实例拓扑图视图
-func (s *Service) GetTopologyGraph(ctx context.Context, modelUID string, startID uint64, maxDepth int, associationUIDs []string, reverse bool) (*types.InstanceTopologyGraph, error) {
+func (s *service) GetTopologyGraph(ctx context.Context, modelUID string, startID uint64, maxDepth int, associationUIDs []string, reverse bool) (*types.InstanceTopologyGraph, error) {
 	if _, err := s.getResourceByModel(ctx, modelUID, startID, false); err != nil {
 		return nil, err
 	}
@@ -375,7 +383,7 @@ func (s *Service) GetTopologyGraph(ctx context.Context, modelUID string, startID
 }
 
 // GetResourceHistoryView 获取资源变更历史视图
-func (s *Service) GetResourceHistoryView(ctx context.Context, modelUID string, resourceID uint64, page, pageSize int) ([]types.ResourceHistoryView, int64, error) {
+func (s *service) GetResourceHistoryView(ctx context.Context, modelUID string, resourceID uint64, page, pageSize int) ([]types.ResourceHistoryView, int64, error) {
 	if _, err := s.getResourceByModel(ctx, modelUID, resourceID, false); err != nil {
 		return nil, 0, err
 	}
@@ -415,7 +423,7 @@ func (s *Service) GetResourceHistoryView(ctx context.Context, modelUID string, r
 	return items, total, nil
 }
 
-func (s *Service) getResourceByModel(ctx context.Context, modelUID string, resourceID uint64, preloadState bool) (*types.Resource, error) {
+func (s *service) getResourceByModel(ctx context.Context, modelUID string, resourceID uint64, preloadState bool) (*types.Resource, error) {
 	query := s.db.WithContext(ctx)
 	if preloadState {
 		query = query.Preload("State")

@@ -18,10 +18,10 @@ var ErrInvalidInstanceKey = errors.New("invalid instance key")
 
 type AggregateService struct {
 	db           *gorm.DB
-	dynamicModel *dynamic_model.Service
+	dynamicModel dynamic_model.Service
 }
 
-func NewAggregateService(db *gorm.DB, dynamicModelService *dynamic_model.Service) *AggregateService {
+func NewAggregateService(db *gorm.DB, dynamicModelService dynamic_model.Service) *AggregateService {
 	if dynamicModelService == nil && db != nil {
 		dynamicModelService = dynamic_model.NewService(db)
 	}
@@ -156,7 +156,7 @@ func (s *AggregateService) getMainlineAggregateInstance(ctx context.Context, mod
 		BindingContext: map[string]any{
 			"source":         "mainline",
 			"topology_bound": true,
-			"business_id":    node.BusinessID.String(),
+			"business_id":    strconv.FormatUint(node.BusinessID, 10),
 			"ref_id":         node.RefID,
 			"path":           node.Path,
 			"level":          node.Level,
@@ -242,7 +242,7 @@ func (s *AggregateService) listMainlineAggregateInstances(ctx context.Context, m
 			BindingContext: map[string]any{
 				"source":         "mainline",
 				"topology_bound": true,
-				"business_id":    node.BusinessID.String(),
+				"business_id":    strconv.FormatUint(node.BusinessID, 10),
 				"ref_id":         node.RefID,
 				"path":           node.Path,
 				"level":          node.Level,

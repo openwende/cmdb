@@ -14,7 +14,7 @@ import (
 // 用于组织业务下的资源分组，如：登录集群、游戏集群、运维集群
 type Set struct {
 	ID          uint64         `gorm:"primaryKey" json:"id"`
-	BusinessID  uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID" json:"business_id"`
+	BusinessID  uint64         `gorm:"index;not null;comment:所属业务ID" json:"business_id"`
 	Name        string         `gorm:"size:200;not null;comment:集群名称" json:"name"`
 	Description string         `gorm:"size:500;comment:集群描述" json:"description"`
 	EnvType     string         `gorm:"size:50;comment:环境类型：prod/staging/dev/test" json:"env_type"`
@@ -38,7 +38,7 @@ func (Set) TableName() string {
 type Module struct {
 	ID                uint64         `gorm:"primaryKey" json:"id"`
 	SetID             uint64         `gorm:"index;not null;comment:所属集群ID" json:"set_id"`
-	BusinessID        uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID（冗余，便于查询）" json:"business_id"`
+	BusinessID        uint64         `gorm:"index;not null;comment:所属业务ID（冗余，便于查询）" json:"business_id"`
 	ServiceTemplateID *uint64        `gorm:"index;comment:关联服务模板ID" json:"service_template_id,omitempty"`
 	ServiceCategoryID *uint64        `gorm:"index;comment:服务分类ID" json:"service_category_id,omitempty"`
 	Name              string         `gorm:"size:200;not null;comment:模块名称" json:"name"`
@@ -94,7 +94,7 @@ type TopologyTreeNode struct {
 
 // CreateSetRequest 创建集群请求
 type CreateSetRequest struct {
-	BusinessID  uuid.UUID `json:"business_id" binding:"required"`
+	BusinessID  uint64 `json:"business_id" binding:"required"`
 	Name        string    `json:"name" binding:"required"`
 	Description string    `json:"description"`
 	EnvType     string    `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
@@ -131,6 +131,7 @@ type UpdateModuleRequest struct {
 type TransferHostsRequest struct {
 	HostIDs        []uuid.UUID `json:"host_ids" binding:"required,min=1"`
 	TargetModuleID uint64      `json:"target_module_id" binding:"required"`
+	SourceModuleID *uint64     `json:"source_module_id,omitempty"`
 }
 
 // MoveNodeRequest 移动节点请求
@@ -143,7 +144,7 @@ type MoveNodeRequest struct {
 
 // GetTopologyTreeRequest 获取拓扑树请求
 type GetTopologyTreeRequest struct {
-	BusinessID   *uuid.UUID `form:"business_id"`
+	BusinessID   *uint64 `form:"business_id"`
 	IncludeHosts bool       `form:"include_hosts"`  // 是否包含主机节点
 	MaxDepth     int        `form:"max_depth"`      // 最大深度（1=业务，2=集群，3=模块，4=主机）
 	ExpandNodeID string     `form:"expand_node_id"` // 展开指定节点

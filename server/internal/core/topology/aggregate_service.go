@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/google/uuid"
+	"strconv"
+
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/core/mainline"
@@ -14,11 +15,11 @@ import (
 
 type AggregateService struct {
 	db       *gorm.DB
-	topology *Service
-	mainline *mainline.Service
+	topology Service
+	mainline mainline.Service
 }
 
-func NewAggregateService(db *gorm.DB, topologySvc *Service, mainlineSvc *mainline.Service) *AggregateService {
+func NewAggregateService(db *gorm.DB, topologySvc Service, mainlineSvc mainline.Service) *AggregateService {
 	if mainlineSvc == nil {
 		mainlineSvc = mainline.NewService(db)
 	}
@@ -39,7 +40,7 @@ func (s *AggregateService) GetNodeDetail(ctx context.Context, nodeID string) (*t
 	}
 
 	if nodeType == types.NodeTypeBusiness {
-		businessID, parseErr := uuid.Parse(refID)
+		businessID, parseErr := strconv.ParseUint(refID, 10, 64)
 		if parseErr != nil {
 			return nil, fmt.Errorf("invalid business node id: %w", parseErr)
 		}

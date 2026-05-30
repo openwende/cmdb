@@ -3,7 +3,6 @@ package types
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -14,7 +13,7 @@ import (
 type ServiceTemplate struct {
 	ID          uint64         `gorm:"primaryKey" json:"id"`
 	Name        string         `gorm:"size:200;not null;comment:模板名称" json:"name"`
-	BusinessID  uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID" json:"business_id"`
+	BusinessID  uint64         `gorm:"index;not null;comment:所属业务ID" json:"business_id"`
 	ServiceType string         `gorm:"size:50;comment:服务类型：web/api/db/cache/mq/other" json:"service_type"`
 	Description string         `gorm:"size:500;comment:描述" json:"description"`
 	CreatedBy   string         `gorm:"size:100;comment:创建人" json:"created_by"`
@@ -24,9 +23,9 @@ type ServiceTemplate struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// 关联
-	Business         *Business          `gorm:"foreignKey:BusinessID" json:"business,omitempty"`
-	ProcessTemplates []ProcessTemplate  `gorm:"foreignKey:ServiceTemplateID" json:"process_templates,omitempty"`
-	Modules          []Module           `gorm:"foreignKey:ServiceTemplateID" json:"modules,omitempty"`
+	Business         *Business         `gorm:"foreignKey:BusinessID" json:"business,omitempty"`
+	ProcessTemplates []ProcessTemplate `gorm:"foreignKey:ServiceTemplateID" json:"process_templates,omitempty"`
+	Modules          []Module          `gorm:"foreignKey:ServiceTemplateID" json:"modules,omitempty"`
 }
 
 func (ServiceTemplate) TableName() string {
@@ -48,7 +47,7 @@ type ServiceTemplateWithStats struct {
 type SetTemplate struct {
 	ID          uint64         `gorm:"primaryKey" json:"id"`
 	Name        string         `gorm:"size:200;not null;comment:模板名称" json:"name"`
-	BusinessID  uuid.UUID      `gorm:"type:uuid;index;not null;comment:所属业务ID" json:"business_id"`
+	BusinessID  uint64         `gorm:"index;not null;comment:所属业务ID" json:"business_id"`
 	EnvType     string         `gorm:"size:50;comment:环境类型：prod/staging/dev/test" json:"env_type"`
 	Description string         `gorm:"size:500;comment:描述" json:"description"`
 	CreatedBy   string         `gorm:"size:100;comment:创建人" json:"created_by"`
@@ -58,8 +57,8 @@ type SetTemplate struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// 关联
-	Business          *Business                   `gorm:"foreignKey:BusinessID" json:"business,omitempty"`
-	ServiceBindings   []SetTemplateServiceBinding `gorm:"foreignKey:SetTemplateID" json:"service_bindings,omitempty"`
+	Business        *Business                   `gorm:"foreignKey:BusinessID" json:"business,omitempty"`
+	ServiceBindings []SetTemplateServiceBinding `gorm:"foreignKey:SetTemplateID" json:"service_bindings,omitempty"`
 }
 
 func (SetTemplate) TableName() string {
@@ -87,7 +86,7 @@ func (SetTemplateServiceBinding) TableName() string {
 // CreateServiceTemplateRequest 创建服务模板请求
 type CreateServiceTemplateRequest struct {
 	Name        string    `json:"name" binding:"required"`
-	BusinessID  uuid.UUID `json:"business_id" binding:"required"`
+	BusinessID  uint64    `json:"business_id" binding:"required"`
 	ServiceType string    `json:"service_type" binding:"omitempty,oneof=web api db cache mq other"`
 	Description string    `json:"description"`
 }
@@ -119,7 +118,7 @@ type SyncModulesRequest struct {
 // CreateSetTemplateRequest 创建集群模板请求
 type CreateSetTemplateRequest struct {
 	Name               string    `json:"name" binding:"required"`
-	BusinessID         uuid.UUID `json:"business_id" binding:"required"`
+	BusinessID         uint64    `json:"business_id" binding:"required"`
 	EnvType            string    `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
 	Description        string    `json:"description"`
 	ServiceTemplateIDs []uint64  `json:"service_template_ids"` // 关联的服务模板

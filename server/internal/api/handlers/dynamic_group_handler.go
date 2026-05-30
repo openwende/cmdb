@@ -8,33 +8,32 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	authn "github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_group"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
 type DynamicGroupHandler struct {
-	service *dynamic_group.Service
+	service dynamic_group.Service
 }
 
-func NewDynamicGroupHandler(service *dynamic_group.Service) *DynamicGroupHandler {
+func NewDynamicGroupHandler(service dynamic_group.Service) *DynamicGroupHandler {
 	return &DynamicGroupHandler{service: service}
 }
 
 type DynamicGroupUpsertRequest struct {
-	Name              string                             `json:"name" binding:"required"`
-	BKObjID           string                             `json:"bk_obj_id" binding:"required"`
-	TargetModelUID    string                             `json:"target_model_uid,omitempty"`
-	Condition         []types.DynamicGroupConditionGroup `json:"condition"`
-	VariableCondition []types.DynamicGroupConditionGroup `json:"variable_condition"`
-	Description       string                             `json:"description"`
+	Name           string                             `json:"name" binding:"required"`
+	BKObjID        string                             `json:"bk_obj_id" binding:"required"`
+	TargetModelUID string                             `json:"target_model_uid,omitempty"`
+	Condition      []types.DynamicGroupConditionGroup `json:"condition"`
+	Description    string                             `json:"description"`
 }
 
 type DynamicGroupPreviewRequest struct {
-	BKObjID           string                             `json:"bk_obj_id" binding:"required"`
-	TargetModelUID    string                             `json:"target_model_uid,omitempty"`
-	Condition         []types.DynamicGroupConditionGroup `json:"condition"`
-	VariableCondition []types.DynamicGroupConditionGroup `json:"variable_condition"`
-	Limit             int                                `json:"limit"`
+	BKObjID        string                             `json:"bk_obj_id" binding:"required"`
+	TargetModelUID string                             `json:"target_model_uid,omitempty"`
+	Condition      []types.DynamicGroupConditionGroup `json:"condition"`
+	Limit          int                                `json:"limit"`
 }
 
 func (h *DynamicGroupHandler) List(c *gin.Context) {
@@ -49,6 +48,7 @@ func (h *DynamicGroupHandler) List(c *gin.Context) {
 		c.Request.Context(),
 		businessID,
 		c.Query("target"),
+		c.Query("search_field"),
 		c.Query("keyword"),
 		limit,
 		offset,
@@ -101,12 +101,11 @@ func (h *DynamicGroupHandler) Create(c *gin.Context) {
 		return
 	}
 	item, err := h.service.Create(c.Request.Context(), businessID, &dynamic_group.CreateDynamicGroupInput{
-		Name:              req.Name,
-		TargetModelUID:    firstNonEmpty(req.TargetModelUID, req.BKObjID),
-		Condition:         req.Condition,
-		VariableCondition: req.VariableCondition,
-		Description:       req.Description,
-		CreatedBy:         c.GetHeader("X-User-ID"),
+		Name:           req.Name,
+		TargetModelUID: firstNonEmpty(req.TargetModelUID, req.BKObjID),
+		Condition:      req.Condition,
+		Description:    req.Description,
+		CreatedBy:      currentOperator(c),
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -131,12 +130,11 @@ func (h *DynamicGroupHandler) Update(c *gin.Context) {
 		return
 	}
 	item, err := h.service.Update(c.Request.Context(), businessID, groupID, &dynamic_group.UpdateDynamicGroupInput{
-		Name:              req.Name,
-		TargetModelUID:    firstNonEmpty(req.TargetModelUID, req.BKObjID),
-		Condition:         req.Condition,
-		VariableCondition: req.VariableCondition,
-		Description:       req.Description,
-		UpdatedBy:         c.GetHeader("X-User-ID"),
+		Name:           req.Name,
+		TargetModelUID: firstNonEmpty(req.TargetModelUID, req.BKObjID),
+		Condition:      req.Condition,
+		Description:    req.Description,
+		UpdatedBy:      currentOperator(c),
 	})
 	if err != nil {
 		status := http.StatusBadRequest
@@ -160,7 +158,11 @@ func (h *DynamicGroupHandler) Delete(c *gin.Context) {
 		return
 	}
 	if err := h.service.Delete(c.Request.Context(), businessID, groupID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		status := http.StatusInternalServerError
+		if err == gorm.ErrRecordNotFound {
+			status = http.StatusNotFound
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
@@ -193,7 +195,6 @@ func (h *DynamicGroupHandler) Preview(c *gin.Context) {
 		businessID,
 		firstNonEmpty(req.TargetModelUID, req.BKObjID),
 		req.Condition,
-		req.VariableCondition,
 		req.Limit,
 	)
 	if err != nil {
@@ -203,11 +204,11 @@ func (h *DynamicGroupHandler) Preview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"items": items, "total": total}})
 }
 
-func parseBusinessID(c *gin.Context) (uuid.UUID, bool) {
-	businessID, err := uuid.Parse(c.Param("id"))
-	if err != nil {
+func parseBusinessID(c *gin.Context) (uint64, bool) {
+	businessID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid business id"})
-		return uuid.Nil, false
+		return 0, false
 	}
 	return businessID, true
 }
@@ -219,4 +220,11 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
+}
+
+func currentOperator(c *gin.Context) string {
+	if user, ok := authn.GetCurrentUser(c); ok && user.Username != "" {
+		return user.Username
+	}
+	return c.GetHeader("X-User-ID")
 }

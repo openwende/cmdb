@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/core/resource_graph"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -20,7 +21,7 @@ const (
 
 type BusinessTopologyCommandService struct {
 	db    *gorm.DB
-	graph *resource_graph.Service
+	graph resource_graph.Service
 }
 
 func NewBusinessTopologyCommandService(db *gorm.DB) *BusinessTopologyCommandService {
@@ -30,7 +31,7 @@ func NewBusinessTopologyCommandService(db *gorm.DB) *BusinessTopologyCommandServ
 	}
 }
 
-func (s *BusinessTopologyCommandService) InitializeBusinessTopology(ctx context.Context, businessID uuid.UUID) error {
+func (s *BusinessTopologyCommandService) InitializeBusinessTopology(ctx context.Context, businessID uint64) error {
 	if err := s.ensureBuiltinTypes(ctx); err != nil {
 		return err
 	}
@@ -85,8 +86,8 @@ func (s *BusinessTopologyCommandService) GetSet(ctx context.Context, id uint64) 
 	return mapSetResource(resource), nil
 }
 
-func (s *BusinessTopologyCommandService) ListSets(ctx context.Context, businessID uuid.UUID) ([]types.Set, error) {
-	business, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), businessID.String())
+func (s *BusinessTopologyCommandService) ListSets(ctx context.Context, businessID uint64) ([]types.Set, error) {
+	business, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), strconv.FormatUint(businessID, 10))
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +149,7 @@ func (s *BusinessTopologyCommandService) DeleteSet(ctx context.Context, id uint6
 	return s.deleteResourceAndEdges(ctx, resource.ID)
 }
 
-func (s *BusinessTopologyCommandService) MoveSet(ctx context.Context, id uint64, targetBusinessID uuid.UUID) error {
+func (s *BusinessTopologyCommandService) MoveSet(ctx context.Context, id uint64, targetBusinessID uint64) error {
 	setNode, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeSet), strconv.FormatUint(id, 10))
 	if err != nil {
 		return err
@@ -245,8 +246,8 @@ func (s *BusinessTopologyCommandService) ListModules(ctx context.Context, setID 
 	return items, nil
 }
 
-func (s *BusinessTopologyCommandService) ListModulesByBusiness(ctx context.Context, businessID uuid.UUID) ([]types.Module, error) {
-	business, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), businessID.String())
+func (s *BusinessTopologyCommandService) ListModulesByBusiness(ctx context.Context, businessID uint64) ([]types.Module, error) {
+	business, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), strconv.FormatUint(businessID, 10))
 	if err != nil {
 		return nil, err
 	}
@@ -459,7 +460,7 @@ func (s *BusinessTopologyCommandService) ensureBuiltinTypes(ctx context.Context)
 	return nil
 }
 
-func (s *BusinessTopologyCommandService) ensureBusinessResource(ctx context.Context, businessID uuid.UUID) (*types.ResourceV2, error) {
+func (s *BusinessTopologyCommandService) ensureBusinessResource(ctx context.Context, businessID uint64) (*types.ResourceV2, error) {
 	var business types.Business
 	if err := s.db.WithContext(ctx).Where("id = ?", businessID).First(&business).Error; err != nil {
 		return nil, fmt.Errorf("业务不存在: %w", err)
@@ -470,7 +471,8 @@ func (s *BusinessTopologyCommandService) ensureBusinessResource(ctx context.Cont
 		return nil, err
 	}
 
-	if existing, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), businessID.String()); err == nil {
+	refID := strconv.FormatUint(businessID, 10)
+	if existing, err := s.findResourceByTypeAndRef(ctx, string(types.NodeTypeBusiness), refID); err == nil {
 		mergedSpec := cloneMap(existing.Spec)
 		for key, value := range spec {
 			mergedSpec[key] = value
@@ -496,13 +498,14 @@ func (s *BusinessTopologyCommandService) buildBusinessSpec(
 	ctx context.Context,
 	business types.Business,
 ) (map[string]any, error) {
+	bizIDStr := strconv.FormatUint(business.ID, 10)
 	spec := map[string]any{
-		"ref_id":      business.ID.String(),
+		"ref_id":      bizIDStr,
 		"description": strings.TrimSpace(valueOrEmpty(business.Description)),
 		"lifecycle":   business.Lifecycle,
 		"timezone":    business.Timezone,
 		"language":    business.Language,
-		"bk_biz_id":   business.ID.String(),
+		"bk_biz_id":   bizIDStr,
 	}
 
 	var personnel []types.BusinessPersonnel
@@ -603,7 +606,13 @@ func (s *BusinessTopologyCommandService) TransferHosts(ctx context.Context, req 
 	}
 
 	for _, hostID := range req.HostIDs {
-		if err := s.moveHostToModule(ctx, hostID, targetModule); err != nil {
+		var err error
+		if resourceIsDefault(*targetModule) {
+			err = s.moveHostToIdlePool(ctx, hostID)
+		} else {
+			err = s.moveHostToModule(ctx, hostID, targetModule, req.SourceModuleID)
+		}
+		if err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
 		} else {
@@ -849,23 +858,58 @@ func (s *BusinessTopologyCommandService) deleteResourceAndEdges(ctx context.Cont
 	})
 }
 
-func (s *BusinessTopologyCommandService) moveHostToModule(ctx context.Context, hostID uuid.UUID, targetModule *types.ResourceV2) error {
+func (s *BusinessTopologyCommandService) moveHostToModule(
+	ctx context.Context,
+	hostID uuid.UUID,
+	targetModule *types.ResourceV2,
+	sourceModuleID *uint64,
+) error {
 	hostResource, err := s.ensureHostResource(ctx, hostID)
 	if err != nil {
 		return err
 	}
 
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("to_id = ? AND rel_type = ?", hostResource.ID, containsRelType).Delete(&types.EdgeV2{}).Error; err != nil {
+	var sourceModule *types.ResourceV2
+	if sourceModuleID != nil && *sourceModuleID != 0 && *sourceModuleID != graphRefUint(targetModule) {
+		sourceModule, err = s.findResourceByTypeAndRef(ctx, string(types.NodeTypeModule), strconv.FormatUint(*sourceModuleID, 10))
+		if err != nil {
+			if err != gorm.ErrRecordNotFound || !s.isLegacyDefaultModule(ctx, *sourceModuleID) {
+				return fmt.Errorf("源模块不存在")
+			}
+			sourceModule = nil
+		}
+	}
+	if sourceModule == nil {
+		inferredSourceModule, err := s.findIdleModuleParent(ctx, hostResource.ID, targetModule.ID)
+		if err != nil {
 			return err
 		}
-		if err := tx.Create(&types.EdgeV2{
-			FromID:  targetModule.ID,
-			ToID:    hostResource.ID,
-			RelType: containsRelType,
-			Data:    map[string]any{},
-		}).Error; err != nil {
+		sourceModule = inferredSourceModule
+	}
+
+	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if sourceModule != nil {
+			if err := tx.Where("from_id = ? AND to_id = ? AND rel_type = ?", sourceModule.ID, hostResource.ID, containsRelType).
+				Delete(&types.EdgeV2{}).Error; err != nil {
+				return err
+			}
+		}
+
+		var existingCount int64
+		if err := tx.Model(&types.EdgeV2{}).
+			Where("from_id = ? AND to_id = ? AND rel_type = ?", targetModule.ID, hostResource.ID, containsRelType).
+			Count(&existingCount).Error; err != nil {
 			return err
+		}
+		if existingCount == 0 {
+			if err := tx.Create(&types.EdgeV2{
+				FromID:  targetModule.ID,
+				ToID:    hostResource.ID,
+				RelType: containsRelType,
+				Data:    map[string]any{},
+			}).Error; err != nil {
+				return err
+			}
 		}
 
 		updatedHost := *hostResource
@@ -874,8 +918,127 @@ func (s *BusinessTopologyCommandService) moveHostToModule(ctx context.Context, h
 		updatedHost.Spec["module_id"] = graphRefID(*targetModule)
 		updatedHost.Spec["set_id"] = stringValue(targetModule.Spec["set_id"])
 		updatedHost.Spec["in_idle_pool"] = false
-		return tx.Save(&updatedHost).Error
+		if err := tx.Save(&updatedHost).Error; err != nil {
+			return err
+		}
+
+		return s.syncLegacyAllocatedHost(tx, hostID, targetModule, sourceModule)
 	})
+}
+
+func (s *BusinessTopologyCommandService) findIdleModuleParent(
+	ctx context.Context,
+	hostResourceID string,
+	targetModuleResourceID string,
+) (*types.ResourceV2, error) {
+	var parents []types.ResourceV2
+	if err := s.db.WithContext(ctx).
+		Table("resources_v2 AS parent").
+		Select("parent.*").
+		Joins("JOIN edges_v2 AS edge ON edge.from_id = parent.id").
+		Where(
+			"edge.to_id = ? AND edge.rel_type = ? AND parent.deleted_at IS NULL AND parent.type_name = ? AND parent.id <> ?",
+			hostResourceID,
+			containsRelType,
+			string(types.NodeTypeModule),
+			targetModuleResourceID,
+		).
+		Find(&parents).Error; err != nil {
+		return nil, err
+	}
+
+	for i := range parents {
+		if resourceIsDefault(parents[i]) {
+			return &parents[i], nil
+		}
+	}
+
+	return nil, nil
+}
+
+func (s *BusinessTopologyCommandService) isLegacyDefaultModule(ctx context.Context, moduleID uint64) bool {
+	var module types.Module
+	if err := s.db.WithContext(ctx).
+		Where("id = ? AND is_default = ? AND deleted_at IS NULL", moduleID, true).
+		First(&module).Error; err != nil {
+		return false
+	}
+	return true
+}
+
+func (s *BusinessTopologyCommandService) syncLegacyAllocatedHost(
+	tx *gorm.DB,
+	hostID uuid.UUID,
+	targetModule *types.ResourceV2,
+	sourceModule *types.ResourceV2,
+) error {
+	targetModuleID := graphRefUint(targetModule)
+	if targetModuleID == 0 {
+		return fmt.Errorf("目标模块不存在")
+	}
+
+	if sourceModule != nil {
+		sourceModuleID := graphRefUint(sourceModule)
+		if sourceModuleID > 0 && sourceModuleID != targetModuleID {
+			if err := tx.Where("host_id = ? AND module_id = ?", hostID, sourceModuleID).
+				Delete(&types.HostModuleRelation{}).Error; err != nil {
+				return err
+			}
+		}
+	} else if err := s.removeLegacyIdleModuleRelations(tx, hostID, targetModuleID); err != nil {
+		return err
+	}
+
+	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&types.HostModuleRelation{
+		HostID:   hostID,
+		ModuleID: targetModuleID,
+	}).Error; err != nil {
+		return err
+	}
+
+	targetBusinessID := uintValue(targetModule.Spec["business_id"])
+	if targetBusinessID > 0 {
+		if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&types.HostBusinessRelation{
+			HostID:     hostID,
+			BusinessID: targetBusinessID,
+		}).Error; err != nil {
+			return err
+		}
+	}
+
+	return tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error
+}
+
+func (s *BusinessTopologyCommandService) removeLegacyIdleModuleRelations(
+	tx *gorm.DB,
+	hostID uuid.UUID,
+	targetModuleID uint64,
+) error {
+	var idleModuleIDs []uint64
+	if err := tx.Table("host_module_relations AS hmr").
+		Select("hmr.module_id").
+		Joins("JOIN modules m ON m.id = hmr.module_id").
+		Where("hmr.host_id = ? AND hmr.module_id <> ? AND m.is_default = ?", hostID, targetModuleID, true).
+		Pluck("hmr.module_id", &idleModuleIDs).Error; err != nil {
+		return err
+	}
+	if len(idleModuleIDs) == 0 {
+		return nil
+	}
+	return tx.Where("host_id = ? AND module_id IN ?", hostID, idleModuleIDs).
+		Delete(&types.HostModuleRelation{}).Error
+}
+
+func graphRefUint(resource *types.ResourceV2) uint64 {
+	if resource == nil {
+		return 0
+	}
+	ref := graphRefID(*resource)
+	value, err := strconv.ParseUint(ref, 10, 64)
+	if err != nil {
+		return 0
+	}
+	return value
 }
 
 func (s *BusinessTopologyCommandService) moveHostToIdlePool(ctx context.Context, hostID uuid.UUID) error {
@@ -895,12 +1058,12 @@ func (s *BusinessTopologyCommandService) moveHostToIdlePool(ctx context.Context,
 		return fmt.Errorf("无法确定主机所属业务")
 	}
 
-	bizUUID, err := uuid.Parse(businessID)
+	bizID, err := strconv.ParseUint(businessID, 10, 64)
 	if err != nil {
 		return fmt.Errorf("无法确定主机所属业务")
 	}
 
-	idleModule, idleSet, err := s.ensureIdleModuleForBusiness(ctx, bizUUID)
+	idleModule, idleSet, err := s.ensureIdleModuleForBusiness(ctx, bizID)
 	if err != nil {
 		return err
 	}
@@ -924,11 +1087,49 @@ func (s *BusinessTopologyCommandService) moveHostToIdlePool(ctx context.Context,
 		updatedHost.Spec["module_id"] = graphRefID(*idleModule)
 		updatedHost.Spec["set_id"] = graphRefID(*idleSet)
 		updatedHost.Spec["in_idle_pool"] = true
-		return tx.Save(&updatedHost).Error
+		if err := tx.Save(&updatedHost).Error; err != nil {
+			return err
+		}
+
+		return s.syncLegacyIdleHost(tx, hostID, idleModule)
 	})
 }
 
-func (s *BusinessTopologyCommandService) ensureIdleModuleForBusiness(ctx context.Context, businessID uuid.UUID) (*types.ResourceV2, *types.ResourceV2, error) {
+func (s *BusinessTopologyCommandService) syncLegacyIdleHost(
+	tx *gorm.DB,
+	hostID uuid.UUID,
+	idleModule *types.ResourceV2,
+) error {
+	idleModuleID := graphRefUint(idleModule)
+	if idleModuleID == 0 {
+		return fmt.Errorf("空闲模块不存在")
+	}
+
+	if err := tx.Where("host_id = ? AND module_id <> ?", hostID, idleModuleID).
+		Delete(&types.HostModuleRelation{}).Error; err != nil {
+		return err
+	}
+	if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&types.HostModuleRelation{
+		HostID:   hostID,
+		ModuleID: idleModuleID,
+	}).Error; err != nil {
+		return err
+	}
+
+	businessID := uintValue(idleModule.Spec["business_id"])
+	if businessID > 0 {
+		if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(&types.HostBusinessRelation{
+			HostID:     hostID,
+			BusinessID: businessID,
+		}).Error; err != nil {
+			return err
+		}
+	}
+
+	return tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error
+}
+
+func (s *BusinessTopologyCommandService) ensureIdleModuleForBusiness(ctx context.Context, businessID uint64) (*types.ResourceV2, *types.ResourceV2, error) {
 	business, err := s.ensureBusinessResource(ctx, businessID)
 	if err != nil {
 		return nil, nil, err
@@ -977,8 +1178,10 @@ func mapSetResource(resource *types.ResourceV2) *types.Set {
 		IsDefault:   resourceIsDefault(*resource),
 	}
 	item.ID = uintValue(resource.Spec["ref_id"])
-	if businessID, err := uuid.Parse(stringValue(resource.Spec["business_id"])); err == nil {
-		item.BusinessID = businessID
+	if bizIDStr := stringValue(resource.Spec["business_id"]); bizIDStr != "" {
+		if bizID, err := strconv.ParseUint(bizIDStr, 10, 64); err == nil {
+			item.BusinessID = bizID
+		}
 	}
 	return item
 }
@@ -996,8 +1199,10 @@ func mapModuleResource(resource *types.ResourceV2) *types.Module {
 	if categoryID, ok := uintPointerValue(resource.Spec["service_category_id"]); ok {
 		item.ServiceCategoryID = categoryID
 	}
-	if businessID, err := uuid.Parse(stringValue(resource.Spec["business_id"])); err == nil {
-		item.BusinessID = businessID
+	if bizIDStr := stringValue(resource.Spec["business_id"]); bizIDStr != "" {
+		if bizID, err := strconv.ParseUint(bizIDStr, 10, 64); err == nil {
+			item.BusinessID = bizID
+		}
 	}
 	return item
 }
@@ -1010,7 +1215,7 @@ func (s *BusinessTopologyCommandService) validateServiceCategory(ctx context.Con
 	if category.BusinessID == nil {
 		return nil
 	}
-	businessID, err := uuid.Parse(strings.TrimSpace(businessIDRaw))
+	businessID, err := strconv.ParseUint(strings.TrimSpace(businessIDRaw), 10, 64)
 	if err != nil {
 		return fmt.Errorf("无效的业务ID")
 	}

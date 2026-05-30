@@ -2,11 +2,13 @@ package resource_directory
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
@@ -14,24 +16,38 @@ import (
 )
 
 // Service 资源目录管理服务
-type Service struct {
+type Service interface {
+	CreateDirectory(ctx context.Context, req *types.CreateResourceDirectoryRequest, createdBy string) (*types.ResourceDirectory, error)
+	GetDirectory(ctx context.Context, id uint64) (*types.ResourceDirectory, error)
+	ListDirectories(ctx context.Context, parentID *uint64) ([]types.ResourceDirectory, error)
+	GetDirectoryTree(ctx context.Context) ([]types.ResourceDirectoryTree, error)
+	UpdateDirectory(ctx context.Context, id uint64, req *types.UpdateResourceDirectoryRequest, updatedBy string) (*types.ResourceDirectory, error)
+	DeleteDirectory(ctx context.Context, id uint64) error
+	MoveDirectory(ctx context.Context, id uint64, req *types.MoveResourceDirectoryRequest) error
+	ImportHostsToPool(ctx context.Context, req *types.ImportHostsToPoolRequest, importedBy string) (*types.BatchOperationResult, error)
+	MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoolRequest) (*types.BatchOperationResult, error)
+	AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error)
+	ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error)
+	GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error)
+	ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error)
+	GetStatistics(ctx context.Context) (*types.ResourcePoolStatistics, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
-// NewService 创建服务实例
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
-}
+const projectionContainsRelType = "contains"
 
-// DB 返回数据库连接
-func (s *Service) DB() *gorm.DB {
-	return s.db
+// NewService 创建服务实例
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
 // ========== 资源目录管理 ==========
 
 // CreateDirectory 创建资源目录
-func (s *Service) CreateDirectory(ctx context.Context, req *types.CreateResourceDirectoryRequest, createdBy string) (*types.ResourceDirectory, error) {
+func (s *service) CreateDirectory(ctx context.Context, req *types.CreateResourceDirectoryRequest, createdBy string) (*types.ResourceDirectory, error) {
 	var parentPath string
 	var parentLevel int
 
@@ -64,7 +80,7 @@ func (s *Service) CreateDirectory(ctx context.Context, req *types.CreateResource
 }
 
 // GetDirectory 获取资源目录
-func (s *Service) GetDirectory(ctx context.Context, id uint64) (*types.ResourceDirectory, error) {
+func (s *service) GetDirectory(ctx context.Context, id uint64) (*types.ResourceDirectory, error) {
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, id).Error; err != nil {
 		return nil, err
@@ -84,7 +100,7 @@ func (s *Service) GetDirectory(ctx context.Context, id uint64) (*types.ResourceD
 }
 
 // ListDirectories 获取资源目录列表
-func (s *Service) ListDirectories(ctx context.Context, parentID *uint64) ([]types.ResourceDirectory, error) {
+func (s *service) ListDirectories(ctx context.Context, parentID *uint64) ([]types.ResourceDirectory, error) {
 	var dirs []types.ResourceDirectory
 	query := s.db.Model(&types.ResourceDirectory{})
 
@@ -113,7 +129,7 @@ func (s *Service) ListDirectories(ctx context.Context, parentID *uint64) ([]type
 }
 
 // GetDirectoryTree 获取目录树
-func (s *Service) GetDirectoryTree(ctx context.Context) ([]types.ResourceDirectoryTree, error) {
+func (s *service) GetDirectoryTree(ctx context.Context) ([]types.ResourceDirectoryTree, error) {
 	var allDirs []types.ResourceDirectory
 	if err := s.db.Order("level ASC, sort_order ASC, id ASC").Find(&allDirs).Error; err != nil {
 		return nil, err
@@ -178,7 +194,7 @@ func (s *Service) GetDirectoryTree(ctx context.Context) ([]types.ResourceDirecto
 }
 
 // UpdateDirectory 更新资源目录
-func (s *Service) UpdateDirectory(ctx context.Context, id uint64, req *types.UpdateResourceDirectoryRequest, updatedBy string) (*types.ResourceDirectory, error) {
+func (s *service) UpdateDirectory(ctx context.Context, id uint64, req *types.UpdateResourceDirectoryRequest, updatedBy string) (*types.ResourceDirectory, error) {
 	// 检查是否为默认目录
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, id).Error; err != nil {
@@ -214,7 +230,7 @@ func (s *Service) UpdateDirectory(ctx context.Context, id uint64, req *types.Upd
 }
 
 // DeleteDirectory 删除资源目录
-func (s *Service) DeleteDirectory(ctx context.Context, id uint64) error {
+func (s *service) DeleteDirectory(ctx context.Context, id uint64) error {
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, id).Error; err != nil {
 		return err
@@ -242,7 +258,7 @@ func (s *Service) DeleteDirectory(ctx context.Context, id uint64) error {
 }
 
 // MoveDirectory 移动目录
-func (s *Service) MoveDirectory(ctx context.Context, id uint64, req *types.MoveResourceDirectoryRequest) error {
+func (s *service) MoveDirectory(ctx context.Context, id uint64, req *types.MoveResourceDirectoryRequest) error {
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, id).Error; err != nil {
 		return err
@@ -287,7 +303,7 @@ func (s *Service) MoveDirectory(ctx context.Context, id uint64, req *types.MoveR
 // ========== 资源池主机管理 ==========
 
 // ImportHostsToPool 导入主机到资源池
-func (s *Service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsToPoolRequest, importedBy string) (*types.BatchOperationResult, error) {
+func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsToPoolRequest, importedBy string) (*types.BatchOperationResult, error) {
 	// 验证目录存在
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, req.DirectoryID).Error; err != nil {
@@ -359,7 +375,7 @@ func (s *Service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 }
 
 // MoveHostsInPool 在资源池内移动主机
-func (s *Service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoolRequest) (*types.BatchOperationResult, error) {
+func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoolRequest) (*types.BatchOperationResult, error) {
 	// 验证目标目录存在
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, req.TargetDirectoryID).Error; err != nil {
@@ -386,7 +402,7 @@ func (s *Service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 }
 
 // AllocateHosts 分配主机到业务模块
-func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
+func (s *service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
 	// 验证目标模块存在
 	var module types.Module
 	if err := s.db.First(&module, req.TargetModuleID).Error; err != nil {
@@ -425,6 +441,10 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 				return err
 			}
 
+			if err := s.attachProjectionHostToModule(tx, hostID, module); err != nil {
+				return err
+			}
+
 			// 从资源池移除
 			return tx.Delete(&poolHost).Error
 		})
@@ -451,7 +471,7 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 			result.SucceededItems = append(result.SucceededItems, types.ResourcePoolLifecycleItem{
 				HostID:         hostID.String(),
 				ResourceStatus: types.ResourceStatusAllocated,
-				BusinessID:     module.BusinessID.String(),
+				BusinessID:     fmt.Sprintf("%d", module.BusinessID),
 				ModuleID:       req.TargetModuleID,
 			})
 		}
@@ -461,7 +481,7 @@ func (s *Service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 }
 
 // ReclaimHosts 回收主机到资源池
-func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
+func (s *service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
 	// 验证目录存在
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, req.DirectoryID).Error; err != nil {
@@ -483,6 +503,9 @@ func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsReque
 			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error; err != nil {
 				return err
 			}
+			if err := s.detachProjectionHostFromTopology(tx, hostID, req.DirectoryID); err != nil {
+				return err
+			}
 
 			// 添加到资源池
 			poolHost := &types.ResourcePoolHost{
@@ -493,7 +516,15 @@ func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsReque
 				Remark:      req.Remark,
 			}
 
-			return tx.Create(poolHost).Error
+			return tx.Clauses(clause.OnConflict{
+				Columns: []clause.Column{{Name: "host_id"}},
+				DoUpdates: clause.AssignmentColumns([]string{
+					"directory_id",
+					"imported_at",
+					"imported_by",
+					"remark",
+				}),
+			}).Create(poolHost).Error
 		})
 
 		if err != nil {
@@ -526,7 +557,197 @@ func (s *Service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsReque
 	return result, nil
 }
 
-func (s *Service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error) {
+func (s *service) attachProjectionHostToModule(tx *gorm.DB, hostID uuid.UUID, module types.Module) error {
+	moduleResource, err := s.findProjectionModuleByRef(tx, fmt.Sprintf("%d", module.ID))
+	if err != nil {
+		if isMissingProjectionTableError(err) {
+			return nil
+		}
+		return fmt.Errorf("目标模块投影不存在")
+	}
+
+	hostResource, err := s.ensureProjectionHostResource(tx, hostID)
+	if err != nil {
+		if isMissingProjectionTableError(err) {
+			return nil
+		}
+		return err
+	}
+
+	if err := tx.Where("to_id = ? AND rel_type = ?", hostResource.ID, projectionContainsRelType).
+		Delete(&types.EdgeV2{}).Error; err != nil {
+		if isMissingProjectionTableError(err) {
+			return nil
+		}
+		return err
+	}
+
+	if err := tx.Create(&types.EdgeV2{
+		FromID:  moduleResource.ID,
+		ToID:    hostResource.ID,
+		RelType: projectionContainsRelType,
+		Data:    map[string]any{},
+	}).Error; err != nil {
+		return err
+	}
+
+	spec := cloneProjectionSpec(hostResource.Spec)
+	spec["business_id"] = fmt.Sprintf("%d", module.BusinessID)
+	spec["module_id"] = fmt.Sprintf("%d", module.ID)
+	spec["set_id"] = fmt.Sprintf("%d", module.SetID)
+	spec["in_idle_pool"] = module.IsDefault
+	delete(spec, "in_resource_pool")
+	delete(spec, "directory_id")
+
+	encodedSpec, err := marshalProjectionSpec(spec)
+	if err != nil {
+		return err
+	}
+	return tx.Model(&types.ResourceV2{}).
+		Where("id = ?", hostResource.ID).
+		Update("spec", encodedSpec).Error
+}
+
+func (s *service) findProjectionModuleByRef(tx *gorm.DB, refID string) (*types.ResourceV2, error) {
+	var item types.ResourceV2
+	query := tx.Where("type_name = ?", string(types.NodeTypeModule)).
+		Where("deleted_at IS NULL")
+	if tx.Dialector.Name() == "sqlite" {
+		query = query.Where("json_extract(spec, '$.ref_id') = ?", refID)
+	} else {
+		query = query.Where("spec ->> 'ref_id' = ?", refID)
+	}
+	if err := query.First(&item).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func (s *service) ensureProjectionHostResource(tx *gorm.DB, hostID uuid.UUID) (*types.ResourceV2, error) {
+	hostResource, err := s.findProjectionHostByRef(tx, hostID.String())
+	if err == nil {
+		return hostResource, nil
+	}
+	if err != gorm.ErrRecordNotFound {
+		return nil, err
+	}
+
+	var host types.Host
+	if err := tx.Where("id = ?", hostID).First(&host).Error; err != nil {
+		return nil, fmt.Errorf("主机投影不存在且主机记录不存在")
+	}
+
+	spec := map[string]any{
+		"ref_id":       host.ID.String(),
+		"primary_ip":   host.PrimaryIP,
+		"status":       host.Status,
+		"hostname":     host.HostName,
+		"in_idle_pool": false,
+	}
+	if host.CloudAreaID != nil {
+		spec["cloud_area_id"] = host.CloudAreaID.String()
+		var cloudArea types.CloudArea
+		if err := tx.Where("id = ?", *host.CloudAreaID).First(&cloudArea).Error; err == nil {
+			spec["cloud_area_name"] = cloudArea.Name
+		}
+	}
+
+	item := &types.ResourceV2{
+		ID:       uuid.NewString(),
+		TypeName: string(types.NodeTypeHost),
+		Name:     host.HostName,
+		Spec:     spec,
+		Status:   map[string]any{},
+		Labels:   map[string]any{},
+	}
+	if err := tx.Create(item).Error; err != nil {
+		return nil, err
+	}
+	return item, nil
+}
+
+func (s *service) detachProjectionHostFromTopology(tx *gorm.DB, hostID uuid.UUID, directoryID uint64) error {
+	hostResource, err := s.findProjectionHostByRef(tx, hostID.String())
+	if err != nil {
+		if err == gorm.ErrRecordNotFound || isMissingProjectionTableError(err) {
+			return nil
+		}
+		return err
+	}
+
+	if err := tx.Where("to_id = ? AND rel_type = ?", hostResource.ID, projectionContainsRelType).
+		Delete(&types.EdgeV2{}).Error; err != nil {
+		if isMissingProjectionTableError(err) {
+			return nil
+		}
+		return err
+	}
+
+	spec := cloneProjectionSpec(hostResource.Spec)
+	for _, key := range []string{
+		"business_id",
+		"module_id",
+		"set_id",
+		"bk_biz_id",
+		"bk_module_id",
+		"bk_set_id",
+	} {
+		delete(spec, key)
+	}
+	spec["in_idle_pool"] = false
+	spec["in_resource_pool"] = true
+	spec["directory_id"] = directoryID
+
+	encodedSpec, err := marshalProjectionSpec(spec)
+	if err != nil {
+		return err
+	}
+	return tx.Model(&types.ResourceV2{}).
+		Where("id = ?", hostResource.ID).
+		Update("spec", encodedSpec).Error
+}
+
+func (s *service) findProjectionHostByRef(tx *gorm.DB, refID string) (*types.ResourceV2, error) {
+	var item types.ResourceV2
+	query := tx.Where("type_name = ?", string(types.NodeTypeHost)).
+		Where("deleted_at IS NULL")
+	if tx.Dialector.Name() == "sqlite" {
+		query = query.Where("json_extract(spec, '$.ref_id') = ?", refID)
+	} else {
+		query = query.Where("spec ->> 'ref_id' = ?", refID)
+	}
+	if err := query.First(&item).Error; err != nil {
+		return nil, err
+	}
+	return &item, nil
+}
+
+func cloneProjectionSpec(input map[string]any) map[string]any {
+	output := make(map[string]any, len(input)+2)
+	for key, value := range input {
+		output[key] = value
+	}
+	return output
+}
+
+func marshalProjectionSpec(input map[string]any) (datatypes.JSON, error) {
+	data, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
+	return datatypes.JSON(data), nil
+}
+
+func isMissingProjectionTableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	message := strings.ToLower(err.Error())
+	return strings.Contains(message, "no such table") || strings.Contains(message, "does not exist")
+}
+
+func (s *service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error) {
 	var poolHost types.ResourcePoolHost
 	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).First(&poolHost).Error; err == nil {
 		return &types.ResourcePoolHostLifecycle{
@@ -552,7 +773,7 @@ func (s *Service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*type
 	if len(bizRelations) > 0 || len(moduleRelations) > 0 {
 		businessIDs := make([]string, 0, len(bizRelations))
 		for _, item := range bizRelations {
-			businessIDs = append(businessIDs, item.BusinessID.String())
+			businessIDs = append(businessIDs, fmt.Sprintf("%d", item.BusinessID))
 		}
 
 		moduleIDs := make([]uint64, 0, len(moduleRelations))
@@ -577,7 +798,7 @@ func (s *Service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*type
 }
 
 // ListPoolHosts 获取资源池主机列表
-func (s *Service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error) {
+func (s *service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error) {
 	var total int64
 	var poolHosts []types.ResourcePoolHost
 
@@ -601,10 +822,32 @@ func (s *Service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, 
 		hostIDs = append(hostIDs, ph.HostID)
 	}
 
-	var hosts []types.Host
+	hosts := make([]types.Host, 0)
 	if len(hostIDs) > 0 {
 		if err := s.db.Where("id IN ?", hostIDs).Find(&hosts).Error; err != nil {
 			return nil, 0, err
+		}
+
+		// 批量加载 CloudArea，填充 host.CloudArea（用于前端展示名称，避免只返回 UUID）
+		cloudAreaIDs := make([]uuid.UUID, 0, len(hosts))
+		for _, h := range hosts {
+			if h.CloudAreaID != nil {
+				cloudAreaIDs = append(cloudAreaIDs, *h.CloudAreaID)
+			}
+		}
+		if len(cloudAreaIDs) > 0 {
+			var cloudAreas []types.CloudArea
+			if err := s.db.WithContext(ctx).Where("id IN ?", cloudAreaIDs).Find(&cloudAreas).Error; err == nil {
+				caMap := make(map[uuid.UUID]*types.CloudArea, len(cloudAreas))
+				for i := range cloudAreas {
+					caMap[cloudAreas[i].ID] = &cloudAreas[i]
+				}
+				for i := range hosts {
+					if hosts[i].CloudAreaID != nil {
+						hosts[i].CloudArea = caMap[*hosts[i].CloudAreaID]
+					}
+				}
+			}
 		}
 	}
 
@@ -612,7 +855,7 @@ func (s *Service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, 
 }
 
 // GetStatistics 获取资源池统计
-func (s *Service) GetStatistics(ctx context.Context) (*types.ResourcePoolStatistics, error) {
+func (s *service) GetStatistics(ctx context.Context) (*types.ResourcePoolStatistics, error) {
 	stats := &types.ResourcePoolStatistics{
 		ByDirectory: make(map[string]int),
 	}

@@ -1,7 +1,5 @@
 package types
 
-import "github.com/google/uuid"
-
 type CreateMainlineModelRequest struct {
 	UID            string  `json:"uid" binding:"required"`
 	DisplayName    string  `json:"display_name" binding:"required"`
@@ -37,7 +35,7 @@ type MainlineModelResponse struct {
 }
 
 type CreateMainlineNodeRequest struct {
-	BusinessID     uuid.UUID              `json:"business_id" binding:"required"`
+	BusinessID     uint64                 `json:"business_id" binding:"required"`
 	ModelUID       string                 `json:"model_uid" binding:"required"`
 	ParentModelUID *string                `json:"parent_model_uid,omitempty"`
 	ParentRefID    *string                `json:"parent_ref_id,omitempty"`

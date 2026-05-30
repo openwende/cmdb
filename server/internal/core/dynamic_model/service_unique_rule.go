@@ -12,7 +12,7 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-func (s *Service) EnsureLegacyUniqueRules(ctx context.Context, modelUID string) error {
+func (s *service) EnsureLegacyUniqueRules(ctx context.Context, modelUID string) error {
 	var existingCount int64
 	if err := s.db.WithContext(ctx).Model(&types.ModelUniqueRule{}).Where("model_uid = ? AND deleted_at IS NULL", modelUID).Count(&existingCount).Error; err != nil {
 		return err
@@ -110,7 +110,7 @@ func (s *Service) EnsureLegacyUniqueRules(ctx context.Context, modelUID string) 
 	})
 }
 
-func (s *Service) ListUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error) {
+func (s *service) ListUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error) {
 	if _, err := s.GetModel(ctx, modelUID); err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func (s *Service) ListUniqueRules(ctx context.Context, modelUID string) ([]types
 	return s.listUniqueRules(ctx, modelUID)
 }
 
-func (s *Service) CreateUniqueRule(ctx context.Context, rule *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error) {
+func (s *service) CreateUniqueRule(ctx context.Context, rule *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error) {
 	if _, err := s.GetModel(ctx, rule.ModelUID); err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (s *Service) CreateUniqueRule(ctx context.Context, rule *types.ModelUniqueR
 	return s.getUniqueRuleDetail(ctx, rule.ID)
 }
 
-func (s *Service) UpdateUniqueRule(ctx context.Context, modelUID string, ruleID uint64, updates *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error) {
+func (s *service) UpdateUniqueRule(ctx context.Context, modelUID string, ruleID uint64, updates *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error) {
 	current, err := s.getUniqueRule(ctx, modelUID, ruleID)
 	if err != nil {
 		return nil, err
@@ -183,7 +183,7 @@ func (s *Service) UpdateUniqueRule(ctx context.Context, modelUID string, ruleID 
 	return s.getUniqueRuleDetail(ctx, ruleID)
 }
 
-func (s *Service) DeleteUniqueRule(ctx context.Context, modelUID string, ruleID uint64) error {
+func (s *service) DeleteUniqueRule(ctx context.Context, modelUID string, ruleID uint64) error {
 	rule, err := s.getUniqueRule(ctx, modelUID, ruleID)
 	if err != nil {
 		return err
@@ -194,7 +194,7 @@ func (s *Service) DeleteUniqueRule(ctx context.Context, modelUID string, ruleID 
 	return s.db.WithContext(ctx).Delete(&types.ModelUniqueRule{}, ruleID).Error
 }
 
-func (s *Service) ValidateUnique(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}) ([]types.UniqueRuleViolation, error) {
+func (s *service) ValidateUnique(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}) ([]types.UniqueRuleViolation, error) {
 	if _, err := s.GetModel(ctx, modelUID); err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func (s *Service) ValidateUnique(ctx context.Context, modelUID string, resourceI
 	return violations, nil
 }
 
-func (s *Service) listUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error) {
+func (s *service) listUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error) {
 	var rules []types.ModelUniqueRule
 	if err := s.db.WithContext(ctx).
 		Where("model_uid = ? AND deleted_at IS NULL", modelUID).
@@ -281,7 +281,7 @@ func (s *Service) listUniqueRules(ctx context.Context, modelUID string) ([]types
 	return result, nil
 }
 
-func (s *Service) getUniqueRule(ctx context.Context, modelUID string, ruleID uint64) (*types.ModelUniqueRule, error) {
+func (s *service) getUniqueRule(ctx context.Context, modelUID string, ruleID uint64) (*types.ModelUniqueRule, error) {
 	var rule types.ModelUniqueRule
 	if err := s.db.WithContext(ctx).Where("id = ? AND model_uid = ? AND deleted_at IS NULL", ruleID, modelUID).First(&rule).Error; err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (s *Service) getUniqueRule(ctx context.Context, modelUID string, ruleID uin
 	return &rule, nil
 }
 
-func (s *Service) getUniqueRuleDetail(ctx context.Context, ruleID uint64) (*types.UniqueRuleDetail, error) {
+func (s *service) getUniqueRuleDetail(ctx context.Context, ruleID uint64) (*types.UniqueRuleDetail, error) {
 	var rule types.ModelUniqueRule
 	if err := s.db.WithContext(ctx).Where("id = ? AND deleted_at IS NULL", ruleID).First(&rule).Error; err != nil {
 		return nil, err
@@ -313,7 +313,7 @@ func (s *Service) getUniqueRuleDetail(ctx context.Context, ruleID uint64) (*type
 	}, nil
 }
 
-func (s *Service) listUniqueRuleFields(ctx context.Context, ruleID uint64) ([]string, error) {
+func (s *service) listUniqueRuleFields(ctx context.Context, ruleID uint64) ([]string, error) {
 	var fields []types.ModelUniqueRuleField
 	if err := s.db.WithContext(ctx).Where("rule_id = ?", ruleID).Order("sort_order ASC, id ASC").Find(&fields).Error; err != nil {
 		return nil, err
@@ -325,7 +325,7 @@ func (s *Service) listUniqueRuleFields(ctx context.Context, ruleID uint64) ([]st
 	return result, nil
 }
 
-func (s *Service) createUniqueRuleInTx(tx *gorm.DB, rule *types.ModelUniqueRule, fields []string) error {
+func (s *service) createUniqueRuleInTx(tx *gorm.DB, rule *types.ModelUniqueRule, fields []string) error {
 	rule.Name = strings.TrimSpace(rule.Name)
 	rule.ModelUID = strings.TrimSpace(rule.ModelUID)
 	if err := tx.Create(rule).Error; err != nil {
@@ -340,7 +340,7 @@ func (s *Service) createUniqueRuleInTx(tx *gorm.DB, rule *types.ModelUniqueRule,
 	return nil
 }
 
-func (s *Service) validateUniqueRuleDefinition(ctx context.Context, modelUID string, ruleID uint64, rule *types.ModelUniqueRule, fields []string) error {
+func (s *service) validateUniqueRuleDefinition(ctx context.Context, modelUID string, ruleID uint64, rule *types.ModelUniqueRule, fields []string) error {
 	if strings.TrimSpace(rule.Name) == "" {
 		return fmt.Errorf("rule name is required")
 	}

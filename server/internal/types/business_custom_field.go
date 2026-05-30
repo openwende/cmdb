@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,7 +15,7 @@ const (
 
 type BusinessCustomFieldGroup struct {
 	ID                 uint64         `gorm:"primaryKey" json:"id"`
-	BusinessID         uuid.UUID      `gorm:"type:uuid;index;not null" json:"business_id"`
+	BusinessID         uint64         `gorm:"index;not null" json:"business_id"`
 	ObjectType         string         `gorm:"size:20;index;not null" json:"object_type"`
 	Name               string         `gorm:"size:100;not null" json:"name"`
 	CollapsedByDefault bool           `gorm:"default:false" json:"collapsed_by_default"`
@@ -34,7 +33,7 @@ func (BusinessCustomFieldGroup) TableName() string {
 
 type BusinessCustomField struct {
 	ID           uint64          `gorm:"primaryKey" json:"id"`
-	BusinessID   uuid.UUID       `gorm:"type:uuid;index;not null" json:"business_id"`
+	BusinessID   uint64          `gorm:"index;not null" json:"business_id"`
 	ObjectType   string          `gorm:"size:20;index;not null" json:"object_type"`
 	GroupID      *uint64         `gorm:"index" json:"group_id,omitempty"`
 	FieldUID     string          `gorm:"size:50;not null" json:"field_uid"`

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"strconv"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
@@ -24,10 +26,10 @@ type service struct {
 	instanceRepo storage.InstanceRepository
 	modelRepo    storage.ModelRepository
 	db           *gorm.DB
-	mainline     *mainline.Service
+	mainline     mainline.Service
 }
 
-func NewService(instanceRepo storage.InstanceRepository, modelRepo storage.ModelRepository, db *gorm.DB, mainlineSvc *mainline.Service) Service {
+func NewService(instanceRepo storage.InstanceRepository, modelRepo storage.ModelRepository, db *gorm.DB, mainlineSvc mainline.Service) Service {
 	if mainlineSvc == nil && db != nil {
 		mainlineSvc = mainline.NewService(db)
 	}
@@ -66,8 +68,7 @@ func (s *service) CreateInstance(ctx context.Context, tenantID string, modelName
 
 	// Optional Business Binding
 	if req.BusinessID != nil {
-		bid, err := uuid.Parse(*req.BusinessID)
-		if err == nil {
+		if bid, err := strconv.ParseUint(*req.BusinessID, 10, 64); err == nil {
 			instance.BusinessID = &bid
 		}
 	}
@@ -133,8 +134,7 @@ func (s *service) BatchCreateInstances(ctx context.Context, tenantID string, mod
 		}
 
 		if item.BusinessID != nil {
-			bid, err := uuid.Parse(*item.BusinessID)
-			if err == nil {
+			if bid, err := strconv.ParseUint(*item.BusinessID, 10, 64); err == nil {
 				inst.BusinessID = &bid
 			}
 		}

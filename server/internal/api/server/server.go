@@ -181,7 +181,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// Dynamic Model APIs (New)
 	// ==========================
 	dynamicModelService := dynamic_model.NewService(db.DB())
-	RegisterDynamicModelRoutes(s.router, dynamicModelService)
+	RegisterDynamicModelRoutes(s.router, dynamicModelService, db.DB())
 
 	// ==========================
 	// Import/Export APIs
@@ -192,7 +192,7 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// ==========================
 	// Business Topology APIs
 	// ==========================
-	RegisterTopologyRoutes(s.router, db.DB())
+	RegisterTopologyRoutesWithBusinessHandler(s.router, db.DB(), s.businessHandler)
 	RegisterMainlineRoutes(s.router, db.DB())
 
 	// ==========================
@@ -205,6 +205,11 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	RegisterDynamicGroupRoutes(s.router, db.DB())
 	RegisterBusinessCustomFieldRoutes(s.router, db.DB())
 	RegisterResourceGraphRoutes(s.router, db.DB())
+
+	// ==========================
+	// Audit APIs
+	// ==========================
+	RegisterAuditRoutes(s.router, db.DB())
 }
 
 func (s *Server) Run() error {

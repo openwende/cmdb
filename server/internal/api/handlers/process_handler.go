@@ -13,11 +13,11 @@ import (
 
 // ProcessHandler 进程管理 HTTP Handler
 type ProcessHandler struct {
-	service *process.Service
+	service process.Service
 }
 
 // NewProcessHandler 创建 Handler
-func NewProcessHandler(service *process.Service) *ProcessHandler {
+func NewProcessHandler(service process.Service) *ProcessHandler {
 	return &ProcessHandler{service: service}
 }
 
@@ -68,8 +68,8 @@ func (h *ProcessHandler) ListProcessTemplates(c *gin.Context) {
 		return
 	}
 
-	businessID, err := uuid.Parse(businessIDStr)
-	if err != nil {
+	businessID, err := strconv.ParseUint(businessIDStr, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的 business_id"})
 		return
 	}
@@ -185,7 +185,7 @@ func (h *ProcessHandler) ListProcesses(c *gin.Context) {
 	}
 
 	if bizID := c.Query("business_id"); bizID != "" {
-		if id, err := uuid.Parse(bizID); err == nil {
+		if id, err := strconv.ParseUint(bizID, 10, 64); err == nil {
 			params.BusinessID = &id
 		}
 	}

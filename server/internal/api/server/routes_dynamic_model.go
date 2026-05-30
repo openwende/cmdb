@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
@@ -9,8 +10,8 @@ import (
 
 // RegisterDynamicModelRoutes 注册动态模型路由
 // 接收已创建的 Service 实例，保持 DI 风格一致
-func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Service) {
-	handler := handlers.NewDynamicModelHandler(service)
+func RegisterDynamicModelRoutes(router *gin.Engine, service dynamic_model.Service, db *gorm.DB) {
+	handler := handlers.NewDynamicModelHandler(service, db)
 
 	// API v1 路由组
 	v1 := router.Group("/api/v1")
@@ -80,5 +81,5 @@ func RegisterDynamicModelRoutes(router *gin.Engine, service *dynamic_model.Servi
 		}
 	}
 
-	RegisterInstanceAggregateRoutes(router, service)
+	RegisterInstanceAggregateRoutes(router, service, db)
 }

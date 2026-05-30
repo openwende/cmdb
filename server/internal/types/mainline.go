@@ -3,7 +3,6 @@ package types
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -19,7 +18,7 @@ const (
 type MainlineInstance struct {
 	ID         uint64         `json:"id" gorm:"primaryKey"`
 	ModelName  string         `json:"model_name" gorm:"size:100;not null;index:idx_mainline_model_ref,priority:1"`
-	BusinessID uuid.UUID      `json:"business_id" gorm:"type:uuid;not null;index"`
+	BusinessID uint64         `json:"business_id" gorm:"not null;index"`
 	ParentID   *uint64        `json:"parent_id,omitempty" gorm:"index"`
 	RefID      string         `json:"ref_id" gorm:"size:100;not null;index:idx_mainline_model_ref,priority:2"`
 	Name       string         `json:"name" gorm:"size:200;not null"`

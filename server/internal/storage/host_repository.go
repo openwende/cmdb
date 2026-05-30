@@ -23,7 +23,7 @@ type HostRepository interface {
 	ListHosts(ctx context.Context, tenantID uuid.UUID, params *types.HostQueryParams) ([]types.Host, int64, error)
 	UpdateHost(ctx context.Context, id uuid.UUID, req *types.UpdateHostRequest, updatedBy *uuid.UUID) (*types.Host, error)
 	UpdateCustomFields(ctx context.Context, id uuid.UUID, customFields map[string]interface{}, updatedBy *uuid.UUID) (*types.Host, error)
-	AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error
+	AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error
 	ReclaimToPool(ctx context.Context, id uuid.UUID) error
 	MarkAsDestroyed(ctx context.Context, id uuid.UUID) error
 	DeleteHost(ctx context.Context, id uuid.UUID) error
@@ -77,13 +77,9 @@ func (r *hostRepository) CreateHost(ctx context.Context, tenantID uuid.UUID, req
 			return err
 		}
 		if req.BusinessID != nil {
-			bizUUID, err := r.resolveBusinessUUID(tx, *req.BusinessID)
-			if err != nil {
-				return err
-			}
 			rel := &types.HostBusinessRelation{
 				HostID:     host.ID,
-				BusinessID: bizUUID,
+				BusinessID: *req.BusinessID,
 			}
 			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
 				return err
@@ -115,34 +111,10 @@ func (r *hostRepository) BatchCreateHosts(ctx context.Context, tenantID uuid.UUI
 		host.UpdatedAt = now
 	}
 
-	bizByHostID := make(map[uuid.UUID]int64, len(hosts))
-	for _, host := range hosts {
-		if host.BusinessID != nil {
-			bizByHostID[host.ID] = *host.BusinessID
-			host.BusinessID = nil
-		}
-	}
-
 	// 批量插入（每次500条）
 	batchSize := 500
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.CreateInBatches(hosts, batchSize).Error; err != nil {
-			return err
-		}
-		for hostID, bizID := range bizByHostID {
-			bizUUID, err := r.resolveBusinessUUID(tx, bizID)
-			if err != nil {
-				return err
-			}
-			rel := &types.HostBusinessRelation{
-				HostID:     hostID,
-				BusinessID: bizUUID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
-				return err
-			}
-		}
-		return nil
+		return tx.CreateInBatches(hosts, batchSize).Error
 	})
 }
 
@@ -213,8 +185,7 @@ func (r *hostRepository) ListHosts(ctx context.Context, tenantID uuid.UUID, para
 	if params.BusinessID != nil {
 		query = query.
 			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
-			Joins("JOIN businesses b ON b.id = hbr.business_id").
-			Where("b.business_id = ?", *params.BusinessID)
+			Where("hbr.business_id = ?", *params.BusinessID)
 	}
 	// 资源池查询（business_id IS NULL）
 	if params.InPool != nil && *params.InPool {
@@ -335,13 +306,9 @@ func (r *hostRepository) UpdateHost(ctx context.Context, id uuid.UUID, req *type
 			return err
 		}
 		if req.BusinessID != nil {
-			bizUUID, err := r.resolveBusinessUUID(tx, *req.BusinessID)
-			if err != nil {
-				return err
-			}
 			rel := &types.HostBusinessRelation{
 				HostID:     id,
-				BusinessID: bizUUID,
+				BusinessID: *req.BusinessID,
 			}
 			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
 				return err
@@ -433,7 +400,7 @@ func (r *hostRepository) DeleteHost(ctx context.Context, id uuid.UUID) error {
 }
 
 // AssignToBusiness 分配主机到业务
-func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID int64) error {
+func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var count int64
 		if err := tx.Model(&types.Host{}).
@@ -445,14 +412,9 @@ func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, bus
 			return errors.New("host not found")
 		}
 
-		bizUUID, err := r.resolveBusinessUUID(tx, businessID)
-		if err != nil {
-			return err
-		}
-
 		rel := &types.HostBusinessRelation{
 			HostID:     id,
-			BusinessID: bizUUID,
+			BusinessID: businessID,
 		}
 		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error
 	})
@@ -499,19 +461,6 @@ func (r *hostRepository) CheckIPConflict(ctx context.Context, cloudAreaID *uuid.
 	return count > 0, nil
 }
 
-func (r *hostRepository) resolveBusinessUUID(tx *gorm.DB, businessID int64) (uuid.UUID, error) {
-	var biz types.Business
-	if err := tx.Model(&types.Business{}).
-		Where("business_id = ? AND deleted_at IS NULL", businessID).
-		First(&biz).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return uuid.Nil, fmt.Errorf("business with business_id %d not found", businessID)
-		}
-		return uuid.Nil, err
-	}
-	return biz.ID, nil
-}
-
 func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.Host) error {
 	if len(hosts) == 0 {
 		return nil
@@ -524,7 +473,7 @@ func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.H
 
 	var bizRows []struct {
 		HostID     uuid.UUID `gorm:"column:host_id"`
-		BusinessID uuid.UUID `gorm:"column:business_id"`
+		BusinessID uint64    `gorm:"column:business_id"`
 	}
 	if err := r.db.WithContext(ctx).
 		Table("host_business_relations").
@@ -532,7 +481,7 @@ func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.H
 		Find(&bizRows).Error; err != nil {
 		return err
 	}
-	bizMap := make(map[uuid.UUID][]uuid.UUID, len(hosts))
+	bizMap := make(map[uuid.UUID][]uint64, len(hosts))
 	for _, row := range bizRows {
 		bizMap[row.HostID] = append(bizMap[row.HostID], row.BusinessID)
 	}

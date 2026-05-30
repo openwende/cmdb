@@ -16,14 +16,14 @@ import (
 
 // ImportExportHandler 导入导出处理器
 type ImportExportHandler struct {
-	dynamicService *dynamic_model.Service
+	dynamicService dynamic_model.Service
 	templateGen    *import_export.TemplateGenerator
 	importer       *import_export.ExcelImporter
 	uploadDir      string // 上传文件临时目录
 }
 
 // NewImportExportHandler 创建处理器
-func NewImportExportHandler(dynamicService *dynamic_model.Service, uploadDir string) *ImportExportHandler {
+func NewImportExportHandler(dynamicService dynamic_model.Service, uploadDir string) *ImportExportHandler {
 	// 确保上传目录存在
 	if uploadDir == "" {
 		uploadDir = "/tmp/cmdb-uploads"

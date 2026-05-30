@@ -72,7 +72,7 @@ func (f *fakeHostRepo) UpdateCustomFields(context.Context, uuid.UUID, map[string
 	return nil, nil
 }
 
-func (f *fakeHostRepo) AssignToBusiness(context.Context, uuid.UUID, int64) error {
+func (f *fakeHostRepo) AssignToBusiness(context.Context, uuid.UUID, uint64) error {
 	return nil
 }
 
@@ -124,6 +124,10 @@ func (f *fakeCloudAreaRepo) DeleteCloudArea(context.Context, uuid.UUID) error {
 	return nil
 }
 
+func (f *fakeCloudAreaRepo) CountHostsInCloudArea(context.Context, uuid.UUID) (int64, error) {
+	return 0, nil
+}
+
 func TestHostHandler_CreateHostUsesDefaultTenant(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
@@ -150,7 +154,7 @@ func TestHostHandler_CreateHostUsesDefaultTenant(t *testing.T) {
 	router.ServeHTTP(resp, req)
 
 	require.Equal(t, http.StatusCreated, resp.Code)
-	require.Equal(t, defaultTenantUUID, hostRepo.createTenantID)
+	require.Equal(t, systemTenantUUID, hostRepo.createTenantID)
 }
 
 func TestHostHandler_ListHostsUsesDefaultTenant(t *testing.T) {
@@ -171,5 +175,5 @@ func TestHostHandler_ListHostsUsesDefaultTenant(t *testing.T) {
 	router.ServeHTTP(resp, req)
 
 	require.Equal(t, http.StatusOK, resp.Code)
-	require.Equal(t, defaultTenantUUID, hostRepo.listTenantID)
+	require.Equal(t, systemTenantUUID, hostRepo.listTenantID)
 }

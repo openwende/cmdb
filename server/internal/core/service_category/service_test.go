@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -23,7 +22,7 @@ func setupServiceCategoryTestDB(t *testing.T) *gorm.DB {
 	require.NoError(t, db.Exec(`
 		CREATE TABLE service_categories (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
-			business_id TEXT,
+			business_id BIGINT,
 			name TEXT NOT NULL,
 			parent_id BIGINT,
 			root_id BIGINT NOT NULL,
@@ -38,7 +37,7 @@ func setupServiceCategoryTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func seedServiceCategoryRow(t *testing.T, db *gorm.DB, id uint64, businessID *uuid.UUID, name string, parentID *uint64, rootID uint64, isBuiltin bool, sortOrder int) {
+func seedServiceCategoryRow(t *testing.T, db *gorm.DB, id uint64, businessID *uint64, name string, parentID *uint64, rootID uint64, isBuiltin bool, sortOrder int) {
 	t.Helper()
 
 	require.NoError(t, db.Exec(`
@@ -51,7 +50,7 @@ func TestListCategories_ReturnsBuiltinAndBusinessRows(t *testing.T) {
 	db := setupServiceCategoryTestDB(t)
 	svc := NewService(db)
 
-	bizID := uuid.MustParse("2f567fe1-1e9d-4f5e-8f07-e7804a11f001")
+	var bizID uint64 = 1001
 	rootID := uint64(10)
 
 	seedServiceCategoryRow(t, db, 1, nil, "Default", nil, 1, true, 0)

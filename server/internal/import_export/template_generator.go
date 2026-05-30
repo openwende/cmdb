@@ -14,11 +14,11 @@ import (
 
 // TemplateGenerator 模板生成器
 type TemplateGenerator struct {
-	dynamicService *dynamic_model.Service
+	dynamicService dynamic_model.Service
 }
 
 // NewTemplateGenerator 创建模板生成器
-func NewTemplateGenerator(dynamicService *dynamic_model.Service) *TemplateGenerator {
+func NewTemplateGenerator(dynamicService dynamic_model.Service) *TemplateGenerator {
 	return &TemplateGenerator{
 		dynamicService: dynamicService,
 	}

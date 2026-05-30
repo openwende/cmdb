@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -217,8 +219,32 @@ func (v *Validator) convertToDate(value interface{}, fieldUID, fieldName string)
 		return "", err
 	}
 
-	// TODO: 添加日期格式校验
+	if strings.TrimSpace(strValue) == "" {
+		return strValue, nil
+	}
+	if !isValidDateString(strValue) {
+		return "", NewValidationError(fieldName, strValue, "date",
+			fmt.Sprintf("字段 %s 的值不是合法的日期，需为 YYYY-MM-DD、YYYY-MM-DD HH:MM:SS 或 RFC3339 格式", fieldName))
+	}
 	return strValue, nil
+}
+
+// dateLayouts 是日期字段允许的输入格式。
+var dateLayouts = []string{
+	"2006-01-02",
+	"2006-01-02 15:04:05",
+	time.RFC3339,
+}
+
+// isValidDateString 判断字符串是否符合任一允许的日期格式。
+func isValidDateString(s string) bool {
+	s = strings.TrimSpace(s)
+	for _, layout := range dateLayouts {
+		if _, err := time.Parse(layout, s); err == nil {
+			return true
+		}
+	}
+	return false
 }
 
 // validateRules 校验规则

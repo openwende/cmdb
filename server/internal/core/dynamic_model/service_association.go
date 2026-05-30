@@ -22,7 +22,7 @@ var validAssociationDeleteActions = map[string]struct{}{
 	"set_null": {},
 }
 
-func (s *Service) ListAssociationTypes(ctx context.Context) ([]types.AssociationType, error) {
+func (s *service) ListAssociationTypes(ctx context.Context) ([]types.AssociationType, error) {
 	var items []types.AssociationType
 	if err := s.db.WithContext(ctx).Order("is_builtin DESC, created_at ASC, id ASC").Find(&items).Error; err != nil {
 		return nil, err
@@ -30,7 +30,7 @@ func (s *Service) ListAssociationTypes(ctx context.Context) ([]types.Association
 	return items, nil
 }
 
-func (s *Service) GetAssociationType(ctx context.Context, uid string) (*types.AssociationType, error) {
+func (s *service) GetAssociationType(ctx context.Context, uid string) (*types.AssociationType, error) {
 	var item types.AssociationType
 	if err := s.db.WithContext(ctx).Where("uid = ?", strings.TrimSpace(uid)).First(&item).Error; err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func (s *Service) GetAssociationType(ctx context.Context, uid string) (*types.As
 	return &item, nil
 }
 
-func (s *Service) CreateAssociationType(ctx context.Context, item *types.AssociationType) error {
+func (s *service) CreateAssociationType(ctx context.Context, item *types.AssociationType) error {
 	item.UID = strings.TrimSpace(item.UID)
 	item.Name = strings.TrimSpace(item.Name)
 	item.SourceToDestDesc = strings.TrimSpace(item.SourceToDestDesc)
@@ -59,7 +59,7 @@ func (s *Service) CreateAssociationType(ctx context.Context, item *types.Associa
 	return s.db.WithContext(ctx).Create(item).Error
 }
 
-func (s *Service) UpdateAssociationType(ctx context.Context, uid string, updates map[string]interface{}) (*types.AssociationType, error) {
+func (s *service) UpdateAssociationType(ctx context.Context, uid string, updates map[string]interface{}) (*types.AssociationType, error) {
 	item, err := s.GetAssociationType(ctx, uid)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (s *Service) UpdateAssociationType(ctx context.Context, uid string, updates
 	return s.GetAssociationType(ctx, uid)
 }
 
-func (s *Service) DeleteAssociationType(ctx context.Context, uid string) error {
+func (s *service) DeleteAssociationType(ctx context.Context, uid string) error {
 	item, err := s.GetAssociationType(ctx, uid)
 	if err != nil {
 		return err
@@ -112,7 +112,7 @@ func (s *Service) DeleteAssociationType(ctx context.Context, uid string) error {
 	return s.db.WithContext(ctx).Delete(&types.AssociationType{}, item.ID).Error
 }
 
-func (s *Service) ListModelAssociations(ctx context.Context, sourceModelUID string) ([]types.DynamicModelAssociation, error) {
+func (s *service) ListModelAssociations(ctx context.Context, sourceModelUID string) ([]types.DynamicModelAssociation, error) {
 	if _, err := s.GetModel(ctx, strings.TrimSpace(sourceModelUID)); err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (s *Service) ListModelAssociations(ctx context.Context, sourceModelUID stri
 	return items, nil
 }
 
-func (s *Service) CreateModelAssociation(ctx context.Context, item *types.DynamicModelAssociation) error {
+func (s *service) CreateModelAssociation(ctx context.Context, item *types.DynamicModelAssociation) error {
 	item.SourceModelUID = strings.TrimSpace(item.SourceModelUID)
 	item.TargetModelUID = strings.TrimSpace(item.TargetModelUID)
 	item.AssociationUID = strings.TrimSpace(item.AssociationUID)
@@ -161,7 +161,7 @@ func (s *Service) CreateModelAssociation(ctx context.Context, item *types.Dynami
 	return s.db.WithContext(ctx).Create(item).Error
 }
 
-func (s *Service) UpdateModelAssociation(ctx context.Context, sourceModelUID string, id uint64, updates map[string]interface{}) (*types.DynamicModelAssociation, error) {
+func (s *service) UpdateModelAssociation(ctx context.Context, sourceModelUID string, id uint64, updates map[string]interface{}) (*types.DynamicModelAssociation, error) {
 	item, err := s.getModelAssociation(ctx, sourceModelUID, id)
 	if err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func (s *Service) UpdateModelAssociation(ctx context.Context, sourceModelUID str
 	return s.getModelAssociation(ctx, sourceModelUID, id)
 }
 
-func (s *Service) DeleteModelAssociation(ctx context.Context, sourceModelUID string, id uint64) error {
+func (s *service) DeleteModelAssociation(ctx context.Context, sourceModelUID string, id uint64) error {
 	item, err := s.getModelAssociation(ctx, sourceModelUID, id)
 	if err != nil {
 		return err
@@ -233,7 +233,7 @@ func (s *Service) DeleteModelAssociation(ctx context.Context, sourceModelUID str
 	return s.db.WithContext(ctx).Delete(&types.DynamicModelAssociation{}, item.ID).Error
 }
 
-func (s *Service) GetAvailableRelations(ctx context.Context, sourceModelUID string) (map[string]interface{}, error) {
+func (s *service) GetAvailableRelations(ctx context.Context, sourceModelUID string) (map[string]interface{}, error) {
 	sourceModel, err := s.GetModel(ctx, strings.TrimSpace(sourceModelUID))
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (s *Service) GetAvailableRelations(ctx context.Context, sourceModelUID stri
 	}, nil
 }
 
-func (s *Service) getModelAssociation(ctx context.Context, sourceModelUID string, id uint64) (*types.DynamicModelAssociation, error) {
+func (s *service) getModelAssociation(ctx context.Context, sourceModelUID string, id uint64) (*types.DynamicModelAssociation, error) {
 	var item types.DynamicModelAssociation
 	if err := s.db.WithContext(ctx).Where("id = ? AND source_model_uid = ?", id, strings.TrimSpace(sourceModelUID)).First(&item).Error; err != nil {
 		return nil, err
@@ -273,7 +273,7 @@ func (s *Service) getModelAssociation(ctx context.Context, sourceModelUID string
 	return &item, nil
 }
 
-func (s *Service) validateModelAssociation(ctx context.Context, sourceModelUID, targetModelUID, associationUID, mapping, onDelete string) error {
+func (s *service) validateModelAssociation(ctx context.Context, sourceModelUID, targetModelUID, associationUID, mapping, onDelete string) error {
 	if _, err := s.GetModel(ctx, sourceModelUID); err != nil {
 		return fmt.Errorf("source model not found: %w", err)
 	}

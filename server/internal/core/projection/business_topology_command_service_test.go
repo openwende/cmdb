@@ -12,13 +12,11 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-func seedProjectionBusiness(t *testing.T, db *gorm.DB, name string) uuid.UUID {
+func seedProjectionBusiness(t *testing.T, db *gorm.DB, name string) uint64 {
 	t.Helper()
 
-	bizID := uuid.New()
 	description := name + " description"
 	biz := types.Business{
-		ID:          bizID,
 		TenantID:    uuid.New(),
 		Name:        name,
 		Identifier:  name,
@@ -28,13 +26,14 @@ func seedProjectionBusiness(t *testing.T, db *gorm.DB, name string) uuid.UUID {
 		Language:    "en",
 	}
 	require.NoError(t, db.Create(&biz).Error)
-	return bizID
+	require.NotZero(t, biz.ID)
+	return biz.ID
 }
 
 func seedProjectionBusinessPersonnel(
 	t *testing.T,
 	db *gorm.DB,
-	businessID uuid.UUID,
+	businessID uint64,
 	role string,
 	identities ...string,
 ) {
@@ -45,7 +44,7 @@ func seedProjectionBusinessPersonnel(
 			`INSERT INTO business_personnel (id, created_at, business_id, identity, role)
 			VALUES (?, CURRENT_TIMESTAMP, ?, ?, ?)`,
 			uuid.NewString(),
-			businessID.String(),
+			businessID,
 			identity,
 			role,
 		).Error)
@@ -76,7 +75,7 @@ func TestBusinessTopologyCommandService_InitializeBusinessTopology_CreatesIdleBr
 	require.NoError(t, svc.InitializeBusinessTopology(context.Background(), bizID))
 
 	readSvc := NewBusinessTopologyService(db)
-	tree, err := readSvc.GetTopologyTree(context.Background(), bizID.String(), false, 3, "")
+	tree, err := readSvc.GetTopologyTree(context.Background(), strconv.FormatUint(bizID, 10), false, 3, "")
 	require.NoError(t, err)
 	require.Len(t, tree, 1)
 	require.Len(t, tree[0].Children, 1)
@@ -96,7 +95,7 @@ func TestBusinessTopologyCommandService_InitializeBusinessTopology_SeedsBusiness
 	svc := NewBusinessTopologyCommandService(db)
 	require.NoError(t, svc.InitializeBusinessTopology(context.Background(), bizID))
 
-	detail, err := NewBusinessTopologyService(db).GetNodeDetail(context.Background(), "business-"+bizID.String())
+	detail, err := NewBusinessTopologyService(db).GetNodeDetail(context.Background(), "business-"+strconv.FormatUint(bizID, 10))
 	require.NoError(t, err)
 	require.Equal(t, "online", detail.BindingSummary["lifecycle"])
 	require.Equal(t, "UTC", detail.BindingSummary["timezone"])
@@ -131,7 +130,7 @@ func TestBusinessTopologyCommandService_CreateAndUpdateSet_ReflectsInProjection(
 	require.Equal(t, "staging", updated.EnvType)
 
 	readSvc := NewBusinessTopologyService(db)
-	tree, err := readSvc.GetTopologyTree(context.Background(), bizID.String(), false, 2, "")
+	tree, err := readSvc.GetTopologyTree(context.Background(), strconv.FormatUint(bizID, 10), false, 2, "")
 	require.NoError(t, err)
 	require.Len(t, tree, 1)
 	require.Len(t, tree[0].Children, 1)
@@ -168,7 +167,7 @@ func TestBusinessTopologyCommandService_CreateAndUpdateModule_ReflectsInProjecti
 	require.Equal(t, "db", updated.ServiceType)
 
 	readSvc := NewBusinessTopologyService(db)
-	tree, err := readSvc.GetTopologyTree(context.Background(), bizID.String(), false, 3, "")
+	tree, err := readSvc.GetTopologyTree(context.Background(), strconv.FormatUint(bizID, 10), false, 3, "")
 	require.NoError(t, err)
 	require.Len(t, tree[0].Children, 1)
 	require.Len(t, tree[0].Children[0].Children, 1)
@@ -201,7 +200,7 @@ func TestBusinessTopologyCommandService_MoveModule_ChangesParentSet(t *testing.T
 
 	require.NoError(t, svc.MoveModule(context.Background(), module.ID, setB.ID))
 
-	tree, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizID.String(), false, 3, "")
+	tree, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), strconv.FormatUint(bizID, 10), false, 3, "")
 	require.NoError(t, err)
 	require.Empty(t, tree[0].Children[0].Children)
 	require.Len(t, tree[0].Children[1].Children, 1)
@@ -245,18 +244,18 @@ func TestBusinessTopologyCommandService_MoveSetAndDeleteSet(t *testing.T) {
 
 	require.NoError(t, svc.MoveSet(context.Background(), setNode.ID, bizB))
 
-	treeA, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizA.String(), false, 2, "")
+	treeA, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), strconv.FormatUint(bizA, 10), false, 2, "")
 	require.NoError(t, err)
 	require.Empty(t, treeA[0].Children)
 
-	treeB, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizB.String(), false, 2, "")
+	treeB, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), strconv.FormatUint(bizB, 10), false, 2, "")
 	require.NoError(t, err)
 	require.Len(t, treeB[0].Children, 1)
 	require.Equal(t, "set-a", treeB[0].Children[0].Name)
 
 	require.NoError(t, svc.DeleteSet(context.Background(), setNode.ID))
 
-	treeB, err = NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizB.String(), false, 2, "")
+	treeB, err = NewBusinessTopologyService(db).GetTopologyTree(context.Background(), strconv.FormatUint(bizB, 10), false, 2, "")
 	require.NoError(t, err)
 	require.Empty(t, treeB[0].Children)
 }
@@ -312,6 +311,149 @@ func TestBusinessTopologyCommandService_TransferHostsAndReleaseToPool(t *testing
 	require.Equal(t, hostID.String(), idleList.Items[0].HostID)
 }
 
+func TestBusinessTopologyCommandService_TransferHosts_FromIdlePoolToBusinessModuleRemovesIdleRelation(t *testing.T) {
+	db := setupProjectionTestDB(t)
+	bizID := seedProjectionBusiness(t, db, "idle-to-module-biz")
+
+	svc := NewBusinessTopologyCommandService(db)
+	sourceSet, err := svc.CreateSet(context.Background(), &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "set-a",
+	})
+	require.NoError(t, err)
+	sourceModule, err := svc.CreateModule(context.Background(), &types.CreateModuleRequest{
+		SetID: sourceSet.ID,
+		Name:  "module-a",
+	})
+	require.NoError(t, err)
+	targetSet, err := svc.CreateSet(context.Background(), &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "set-b",
+	})
+	require.NoError(t, err)
+	targetModule, err := svc.CreateModule(context.Background(), &types.CreateModuleRequest{
+		SetID: targetSet.ID,
+		Name:  "module-b",
+	})
+	require.NoError(t, err)
+	hostID := seedProjectionHost(t, db, "host-b", "10.0.0.11")
+
+	_, err = svc.TransferHosts(context.Background(), &types.TransferHostsRequest{
+		HostIDs:        []uuid.UUID{hostID},
+		TargetModuleID: sourceModule.ID,
+	})
+	require.NoError(t, err)
+
+	_, err = svc.TransferHostsToPool(context.Background(), []uuid.UUID{hostID})
+	require.NoError(t, err)
+
+	sets, err := svc.ListSets(context.Background(), bizID)
+	require.NoError(t, err)
+	var idleSetID uint64
+	for _, item := range sets {
+		if item.IsDefault {
+			idleSetID = item.ID
+			break
+		}
+	}
+	require.NotZero(t, idleSetID)
+
+	readSvc := NewBusinessTopologyService(db)
+	idleListBefore, err := readSvc.ListNodeHosts(context.Background(), "idle_set-"+strconv.FormatUint(idleSetID, 10), 1, 20, "")
+	require.NoError(t, err)
+	require.Len(t, idleListBefore.Items, 1)
+	require.Equal(t, hostID.String(), idleListBefore.Items[0].HostID)
+
+	result, err := svc.TransferHosts(context.Background(), &types.TransferHostsRequest{
+		HostIDs:        []uuid.UUID{hostID},
+		TargetModuleID: targetModule.ID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Successful)
+
+	idleListAfter, err := readSvc.ListNodeHosts(context.Background(), "idle_set-"+strconv.FormatUint(idleSetID, 10), 1, 20, "")
+	require.NoError(t, err)
+	require.Empty(t, idleListAfter.Items)
+
+	targetList, err := readSvc.ListNodeHosts(context.Background(), "module-"+strconv.FormatUint(targetModule.ID, 10), 1, 20, "")
+	require.NoError(t, err)
+	require.Len(t, targetList.Items, 1)
+	require.Equal(t, hostID.String(), targetList.Items[0].HostID)
+}
+
+func TestBusinessTopologyCommandService_TransferHosts_ToIdleModuleRemovesSourceModuleRelation(t *testing.T) {
+	db := setupProjectionTestDB(t)
+	bizID := seedProjectionBusiness(t, db, "module-to-idle-biz")
+
+	svc := NewBusinessTopologyCommandService(db)
+	require.NoError(t, svc.InitializeBusinessTopology(context.Background(), bizID))
+	sourceSet, err := svc.CreateSet(context.Background(), &types.CreateSetRequest{
+		BusinessID: bizID,
+		Name:       "set-a",
+	})
+	require.NoError(t, err)
+	sourceModule, err := svc.CreateModule(context.Background(), &types.CreateModuleRequest{
+		SetID: sourceSet.ID,
+		Name:  "module-a",
+	})
+	require.NoError(t, err)
+	hostID := seedProjectionHost(t, db, "host-c", "10.0.0.12")
+
+	result, err := svc.TransferHosts(context.Background(), &types.TransferHostsRequest{
+		HostIDs:        []uuid.UUID{hostID},
+		TargetModuleID: sourceModule.ID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Successful)
+
+	sets, err := svc.ListSets(context.Background(), bizID)
+	require.NoError(t, err)
+	var idleSetID uint64
+	var idleModuleID uint64
+	for _, item := range sets {
+		if !item.IsDefault {
+			continue
+		}
+		idleSetID = item.ID
+		modules, err := svc.ListModules(context.Background(), item.ID)
+		require.NoError(t, err)
+		require.Len(t, modules, 1)
+		idleModuleID = modules[0].ID
+		break
+	}
+	require.NotZero(t, idleSetID)
+	require.NotZero(t, idleModuleID)
+
+	result, err = svc.TransferHosts(context.Background(), &types.TransferHostsRequest{
+		HostIDs:        []uuid.UUID{hostID},
+		TargetModuleID: idleModuleID,
+	})
+	require.NoError(t, err)
+	require.Equal(t, 1, result.Successful)
+
+	readSvc := NewBusinessTopologyService(db)
+	sourceList, err := readSvc.ListNodeHosts(context.Background(), "module-"+strconv.FormatUint(sourceModule.ID, 10), 1, 20, "")
+	require.NoError(t, err)
+	require.Empty(t, sourceList.Items)
+
+	idleList, err := readSvc.ListNodeHosts(context.Background(), "idle_set-"+strconv.FormatUint(idleSetID, 10), 1, 20, "")
+	require.NoError(t, err)
+	require.Len(t, idleList.Items, 1)
+	require.Equal(t, hostID.String(), idleList.Items[0].HostID)
+
+	var edgeCount int64
+	require.NoError(t, db.Table("edges_v2 AS edge").
+		Joins("JOIN resources_v2 AS host ON host.id = edge.to_id").
+		Where("host.type_name = ? AND host.spec ->> 'ref_id' = ? AND edge.rel_type = ?", string(types.NodeTypeHost), hostID.String(), containsRelType).
+		Count(&edgeCount).Error)
+	require.EqualValues(t, 1, edgeCount)
+
+	var moduleRelations []types.HostModuleRelation
+	require.NoError(t, db.Where("host_id = ?", hostID).Find(&moduleRelations).Error)
+	require.Len(t, moduleRelations, 1)
+	require.Equal(t, idleModuleID, moduleRelations[0].ModuleID)
+}
+
 func TestBusinessTopologyCommandService_UpdateModule_StoresServiceCategoryIDInSpec(t *testing.T) {
 	db := setupProjectionTestDB(t)
 	bizID := seedProjectionBusiness(t, db, "module-category-biz")
@@ -335,7 +477,7 @@ func TestBusinessTopologyCommandService_UpdateModule_StoresServiceCategoryIDInSp
 	require.NoError(t, db.Exec(`
 		INSERT INTO service_categories (id, business_id, name, parent_id, root_id, is_builtin, sort_order, created_at, updated_at)
 		VALUES (?, ?, ?, NULL, ?, FALSE, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, categoryID, bizID.String(), "Database", categoryID).Error)
+	`, categoryID, bizID, "Database", categoryID).Error)
 
 	svc := NewBusinessTopologyCommandService(db)
 	setNode, err := svc.CreateSet(context.Background(), &types.CreateSetRequest{
@@ -357,7 +499,7 @@ func TestBusinessTopologyCommandService_UpdateModule_StoresServiceCategoryIDInSp
 	require.NotNil(t, updated.ServiceCategoryID)
 	require.Equal(t, categoryID, *updated.ServiceCategoryID)
 
-	tree, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), bizID.String(), false, 3, "")
+	tree, err := NewBusinessTopologyService(db).GetTopologyTree(context.Background(), strconv.FormatUint(bizID, 10), false, 3, "")
 	require.NoError(t, err)
 	require.Equal(t, float64(categoryID), tree[0].Children[0].Children[0].Extra["service_category_id"])
 }

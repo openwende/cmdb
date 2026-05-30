@@ -15,20 +15,18 @@ var ErrInvalidRelationInstanceKey = fmt.Errorf("invalid relation instance key")
 
 type RelationAggregateService struct {
 	db      *gorm.DB
-	dynamic *Service
+	dynamic *service
 }
 
-func NewRelationAggregateService(db *gorm.DB, dynamicService *Service) *RelationAggregateService {
-	if dynamicService == nil && db != nil {
-		dynamicService = NewService(db)
-	}
-	if db == nil && dynamicService != nil {
-		db = dynamicService.DB()
+func NewRelationAggregateService(db *gorm.DB, dynamicService Service) *RelationAggregateService {
+	svc, _ := dynamicService.(*service)
+	if svc == nil && db != nil {
+		svc = NewService(db).(*service)
 	}
 
 	return &RelationAggregateService{
 		db:      db,
-		dynamic: dynamicService,
+		dynamic: svc,
 	}
 }
 

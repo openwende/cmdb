@@ -4,31 +4,47 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
 // Service 服务模板管理服务
-type Service struct {
+type Service interface {
+	CreateServiceTemplate(ctx context.Context, req *types.CreateServiceTemplateRequest, createdBy string) (*types.ServiceTemplate, error)
+	GetServiceTemplate(ctx context.Context, id uint64) (*types.ServiceTemplate, error)
+	ListServiceTemplates(ctx context.Context, businessID uint64) ([]types.ServiceTemplateWithStats, error)
+	UpdateServiceTemplate(ctx context.Context, id uint64, req *types.UpdateServiceTemplateRequest, updatedBy string) (*types.ServiceTemplate, error)
+	DeleteServiceTemplate(ctx context.Context, id uint64) error
+	AddProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error
+	RemoveProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error
+	CreateModuleFromTemplate(ctx context.Context, templateID uint64, req *types.CreateModuleFromTemplateRequest) (*types.Module, error)
+	SyncModulesToTemplate(ctx context.Context, templateID uint64, moduleIDs []uint64) (*types.BatchOperationResult, error)
+	CreateSetTemplate(ctx context.Context, req *types.CreateSetTemplateRequest, createdBy string) (*types.SetTemplate, error)
+	GetSetTemplate(ctx context.Context, id uint64) (*types.SetTemplate, error)
+	ListSetTemplates(ctx context.Context, businessID uint64) ([]types.SetTemplate, error)
+	DeleteSetTemplate(ctx context.Context, id uint64) error
+	CreateSetFromTemplate(ctx context.Context, templateID uint64, req *types.CreateSetFromTemplateRequest) (*types.Set, error)
+}
+
+type service struct {
 	db *gorm.DB
 }
 
 // NewService 创建服务实例
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
 // DB 返回数据库连接
-func (s *Service) DB() *gorm.DB {
+func (s *service) DB() *gorm.DB {
 	return s.db
 }
 
 // ========== 服务模板管理 ==========
 
 // CreateServiceTemplate 创建服务模板
-func (s *Service) CreateServiceTemplate(ctx context.Context, req *types.CreateServiceTemplateRequest, createdBy string) (*types.ServiceTemplate, error) {
+func (s *service) CreateServiceTemplate(ctx context.Context, req *types.CreateServiceTemplateRequest, createdBy string) (*types.ServiceTemplate, error) {
 	// 验证业务是否存在
 	var business types.Business
 	if err := s.db.Where("id = ?", req.BusinessID).First(&business).Error; err != nil {
@@ -52,7 +68,7 @@ func (s *Service) CreateServiceTemplate(ctx context.Context, req *types.CreateSe
 }
 
 // GetServiceTemplate 获取服务模板
-func (s *Service) GetServiceTemplate(ctx context.Context, id uint64) (*types.ServiceTemplate, error) {
+func (s *service) GetServiceTemplate(ctx context.Context, id uint64) (*types.ServiceTemplate, error) {
 	var template types.ServiceTemplate
 	if err := s.db.Preload("ProcessTemplates").First(&template, id).Error; err != nil {
 		return nil, err
@@ -61,7 +77,7 @@ func (s *Service) GetServiceTemplate(ctx context.Context, id uint64) (*types.Ser
 }
 
 // ListServiceTemplates 获取服务模板列表
-func (s *Service) ListServiceTemplates(ctx context.Context, businessID uuid.UUID) ([]types.ServiceTemplateWithStats, error) {
+func (s *service) ListServiceTemplates(ctx context.Context, businessID uint64) ([]types.ServiceTemplateWithStats, error) {
 	var templates []types.ServiceTemplate
 	if err := s.db.Where("business_id = ?", businessID).
 		Order("created_at DESC").
@@ -100,7 +116,7 @@ func (s *Service) ListServiceTemplates(ctx context.Context, businessID uuid.UUID
 }
 
 // UpdateServiceTemplate 更新服务模板
-func (s *Service) UpdateServiceTemplate(ctx context.Context, id uint64, req *types.UpdateServiceTemplateRequest, updatedBy string) (*types.ServiceTemplate, error) {
+func (s *service) UpdateServiceTemplate(ctx context.Context, id uint64, req *types.UpdateServiceTemplateRequest, updatedBy string) (*types.ServiceTemplate, error) {
 	updates := map[string]interface{}{
 		"updated_by": updatedBy,
 	}
@@ -123,7 +139,7 @@ func (s *Service) UpdateServiceTemplate(ctx context.Context, id uint64, req *typ
 }
 
 // DeleteServiceTemplate 删除服务模板
-func (s *Service) DeleteServiceTemplate(ctx context.Context, id uint64) error {
+func (s *service) DeleteServiceTemplate(ctx context.Context, id uint64) error {
 	// 检查是否有模块使用此模板
 	var moduleCount int64
 	s.db.Model(&types.Module{}).Where("service_template_id = ?", id).Count(&moduleCount)
@@ -147,7 +163,7 @@ func (s *Service) DeleteServiceTemplate(ctx context.Context, id uint64) error {
 // ========== 进程模板关联 ==========
 
 // AddProcessTemplate 添加进程模板到服务模板
-func (s *Service) AddProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error {
+func (s *service) AddProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error {
 	// 验证服务模板存在
 	var st types.ServiceTemplate
 	if err := s.db.First(&st, serviceTemplateID).Error; err != nil {
@@ -171,7 +187,7 @@ func (s *Service) AddProcessTemplate(ctx context.Context, serviceTemplateID, pro
 }
 
 // RemoveProcessTemplate 从服务模板移除进程模板
-func (s *Service) RemoveProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error {
+func (s *service) RemoveProcessTemplate(ctx context.Context, serviceTemplateID, processTemplateID uint64) error {
 	return s.db.Model(&types.ProcessTemplate{}).
 		Where("id = ? AND service_template_id = ?", processTemplateID, serviceTemplateID).
 		Update("service_template_id", nil).Error
@@ -180,7 +196,7 @@ func (s *Service) RemoveProcessTemplate(ctx context.Context, serviceTemplateID, 
 // ========== 从模板创建模块 ==========
 
 // CreateModuleFromTemplate 从服务模板创建模块
-func (s *Service) CreateModuleFromTemplate(ctx context.Context, templateID uint64, req *types.CreateModuleFromTemplateRequest) (*types.Module, error) {
+func (s *service) CreateModuleFromTemplate(ctx context.Context, templateID uint64, req *types.CreateModuleFromTemplateRequest) (*types.Module, error) {
 	// 获取服务模板
 	template, err := s.GetServiceTemplate(ctx, templateID)
 	if err != nil {
@@ -220,7 +236,7 @@ func (s *Service) CreateModuleFromTemplate(ctx context.Context, templateID uint6
 }
 
 // SyncModulesToTemplate 同步模块配置到模板（将模板变更应用到关联模块）
-func (s *Service) SyncModulesToTemplate(ctx context.Context, templateID uint64, moduleIDs []uint64) (*types.BatchOperationResult, error) {
+func (s *service) SyncModulesToTemplate(ctx context.Context, templateID uint64, moduleIDs []uint64) (*types.BatchOperationResult, error) {
 	// 获取服务模板
 	template, err := s.GetServiceTemplate(ctx, templateID)
 	if err != nil {
@@ -262,7 +278,7 @@ func (s *Service) SyncModulesToTemplate(ctx context.Context, templateID uint64, 
 // ========== 集群模板管理 ==========
 
 // CreateSetTemplate 创建集群模板
-func (s *Service) CreateSetTemplate(ctx context.Context, req *types.CreateSetTemplateRequest, createdBy string) (*types.SetTemplate, error) {
+func (s *service) CreateSetTemplate(ctx context.Context, req *types.CreateSetTemplateRequest, createdBy string) (*types.SetTemplate, error) {
 	// 验证业务是否存在
 	var business types.Business
 	if err := s.db.Where("id = ?", req.BusinessID).First(&business).Error; err != nil {
@@ -309,7 +325,7 @@ func (s *Service) CreateSetTemplate(ctx context.Context, req *types.CreateSetTem
 }
 
 // GetSetTemplate 获取集群模板
-func (s *Service) GetSetTemplate(ctx context.Context, id uint64) (*types.SetTemplate, error) {
+func (s *service) GetSetTemplate(ctx context.Context, id uint64) (*types.SetTemplate, error) {
 	var template types.SetTemplate
 	if err := s.db.Preload("ServiceBindings.ServiceTemplate").First(&template, id).Error; err != nil {
 		return nil, err
@@ -318,7 +334,7 @@ func (s *Service) GetSetTemplate(ctx context.Context, id uint64) (*types.SetTemp
 }
 
 // ListSetTemplates 获取集群模板列表
-func (s *Service) ListSetTemplates(ctx context.Context, businessID uuid.UUID) ([]types.SetTemplate, error) {
+func (s *service) ListSetTemplates(ctx context.Context, businessID uint64) ([]types.SetTemplate, error) {
 	var templates []types.SetTemplate
 	if err := s.db.Where("business_id = ?", businessID).
 		Preload("ServiceBindings.ServiceTemplate").
@@ -330,7 +346,7 @@ func (s *Service) ListSetTemplates(ctx context.Context, businessID uuid.UUID) ([
 }
 
 // DeleteSetTemplate 删除集群模板
-func (s *Service) DeleteSetTemplate(ctx context.Context, id uint64) error {
+func (s *service) DeleteSetTemplate(ctx context.Context, id uint64) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		// 删除绑定关系
 		if err := tx.Where("set_template_id = ?", id).Delete(&types.SetTemplateServiceBinding{}).Error; err != nil {
@@ -342,7 +358,7 @@ func (s *Service) DeleteSetTemplate(ctx context.Context, id uint64) error {
 }
 
 // CreateSetFromTemplate 从集群模板创建集群
-func (s *Service) CreateSetFromTemplate(ctx context.Context, templateID uint64, req *types.CreateSetFromTemplateRequest) (*types.Set, error) {
+func (s *service) CreateSetFromTemplate(ctx context.Context, templateID uint64, req *types.CreateSetFromTemplateRequest) (*types.Set, error) {
 	// 获取集群模板
 	template, err := s.GetSetTemplate(ctx, templateID)
 	if err != nil {

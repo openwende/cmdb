@@ -21,39 +21,48 @@ const (
 	modelSet    = "set"
 )
 
-type Service struct {
+type Service interface {
+	List(ctx context.Context, businessID uint64, targetModelUID, searchField, keyword string, limit, offset int) ([]types.DynamicGroupDetail, int64, error)
+	Get(ctx context.Context, businessID uint64, groupID uuid.UUID) (*types.DynamicGroupDetail, error)
+	Create(ctx context.Context, businessID uint64, input *CreateDynamicGroupInput) (*types.DynamicGroupDetail, error)
+	Update(ctx context.Context, businessID uint64, groupID uuid.UUID, input *UpdateDynamicGroupInput) (*types.DynamicGroupDetail, error)
+	Delete(ctx context.Context, businessID uint64, groupID uuid.UUID) error
+	GetMeta(ctx context.Context) (map[string]interface{}, error)
+	Preview(ctx context.Context, businessID uint64, targetModelUID string, condition []types.DynamicGroupConditionGroup, limit int) ([]types.DynamicGroupPreviewHost, int64, error)
+	UpdatePreviewCount(ctx context.Context, businessID uint64, groupID uuid.UUID, count int64) error
+}
+
+type service struct {
 	db *gorm.DB
 }
 
-func NewService(db *gorm.DB) *Service {
-	return &Service{db: db}
+func NewService(db *gorm.DB) Service {
+	return &service{db: db}
 }
 
 type CreateDynamicGroupInput struct {
-	Name              string
-	TargetModelUID    string
-	Condition         []types.DynamicGroupConditionGroup
-	VariableCondition []types.DynamicGroupConditionGroup
-	Description       string
-	CreatedBy         string
+	Name           string
+	TargetModelUID string
+	Condition      []types.DynamicGroupConditionGroup
+	Description    string
+	CreatedBy      string
 }
 
 type UpdateDynamicGroupInput struct {
-	Name              string
-	TargetModelUID    string
-	Condition         []types.DynamicGroupConditionGroup
-	VariableCondition []types.DynamicGroupConditionGroup
-	Description       string
-	UpdatedBy         string
+	Name           string
+	TargetModelUID string
+	Condition      []types.DynamicGroupConditionGroup
+	Description    string
+	UpdatedBy      string
 }
 
-func (s *Service) List(ctx context.Context, businessID uuid.UUID, targetModelUID, keyword string, limit, offset int) ([]types.DynamicGroupDetail, int64, error) {
+func (s *service) List(ctx context.Context, businessID uint64, targetModelUID, searchField, keyword string, limit, offset int) ([]types.DynamicGroupDetail, int64, error) {
 	query := s.db.WithContext(ctx).Model(&types.DynamicGroup{}).Where("business_id = ? AND deleted_at IS NULL", businessID)
 	if targetModelUID != "" {
 		query = query.Where("target_model_uid = ?", targetModelUID)
 	}
-	if keyword != "" {
-		query = query.Where("name ILIKE ?", "%"+keyword+"%")
+	if strings.TrimSpace(keyword) != "" {
+		query = applyListKeywordFilter(query, searchField, keyword)
 	}
 
 	var total int64
@@ -77,7 +86,25 @@ func (s *Service) List(ctx context.Context, businessID uuid.UUID, targetModelUID
 	return items, total, nil
 }
 
-func (s *Service) Get(ctx context.Context, businessID, groupID uuid.UUID) (*types.DynamicGroupDetail, error) {
+func applyListKeywordFilter(query *gorm.DB, searchField, keyword string) *gorm.DB {
+	like := "%" + strings.TrimSpace(keyword) + "%"
+	switch searchField {
+	case "id":
+		return query.Where("id::text ILIKE ?", like)
+	case "bk_obj_id", "target_model_uid":
+		return query.Where("target_model_uid ILIKE ?", like)
+	case "modify_user":
+		return query.Where("updated_by ILIKE ?", like)
+	case "create_user":
+		return query.Where("created_by ILIKE ?", like)
+	case "name", "":
+		return query.Where("name ILIKE ?", like)
+	default:
+		return query.Where("name ILIKE ?", like)
+	}
+}
+
+func (s *service) Get(ctx context.Context, businessID uint64, groupID uuid.UUID) (*types.DynamicGroupDetail, error) {
 	var group types.DynamicGroup
 	if err := s.db.WithContext(ctx).
 		Where("id = ? AND business_id = ? AND deleted_at IS NULL", groupID, businessID).
@@ -91,20 +118,19 @@ func (s *Service) Get(ctx context.Context, businessID, groupID uuid.UUID) (*type
 	return &item, nil
 }
 
-func (s *Service) Create(ctx context.Context, businessID uuid.UUID, input *CreateDynamicGroupInput) (*types.DynamicGroupDetail, error) {
-	if err := s.validateInput(input.TargetModelUID, input.Condition, input.VariableCondition); err != nil {
+func (s *service) Create(ctx context.Context, businessID uint64, input *CreateDynamicGroupInput) (*types.DynamicGroupDetail, error) {
+	if err := s.validateInput(input.TargetModelUID, input.Condition); err != nil {
 		return nil, err
 	}
 	group := types.DynamicGroup{
-		ID:                uuid.New(),
-		BusinessID:        businessID,
-		Name:              strings.TrimSpace(input.Name),
-		TargetModelUID:    input.TargetModelUID,
-		Condition:         mustMarshalJSON(input.Condition),
-		VariableCondition: mustMarshalJSON(input.VariableCondition),
-		Description:       strings.TrimSpace(input.Description),
-		CreatedBy:         input.CreatedBy,
-		UpdatedBy:         input.CreatedBy,
+		ID:             uuid.New(),
+		BusinessID:     businessID,
+		Name:           strings.TrimSpace(input.Name),
+		TargetModelUID: input.TargetModelUID,
+		Condition:      mustMarshalJSON(input.Condition),
+		Description:    strings.TrimSpace(input.Description),
+		CreatedBy:      input.CreatedBy,
+		UpdatedBy:      input.CreatedBy,
 	}
 	if err := s.db.WithContext(ctx).Create(&group).Error; err != nil {
 		return nil, err
@@ -116,8 +142,8 @@ func (s *Service) Create(ctx context.Context, businessID uuid.UUID, input *Creat
 	return &item, nil
 }
 
-func (s *Service) Update(ctx context.Context, businessID, groupID uuid.UUID, input *UpdateDynamicGroupInput) (*types.DynamicGroupDetail, error) {
-	if err := s.validateInput(input.TargetModelUID, input.Condition, input.VariableCondition); err != nil {
+func (s *service) Update(ctx context.Context, businessID uint64, groupID uuid.UUID, input *UpdateDynamicGroupInput) (*types.DynamicGroupDetail, error) {
+	if err := s.validateInput(input.TargetModelUID, input.Condition); err != nil {
 		return nil, err
 	}
 
@@ -129,13 +155,12 @@ func (s *Service) Update(ctx context.Context, businessID, groupID uuid.UUID, inp
 	}
 
 	updates := map[string]interface{}{
-		"name":               strings.TrimSpace(input.Name),
-		"target_model_uid":   input.TargetModelUID,
-		"condition":          mustMarshalJSON(input.Condition),
-		"variable_condition": mustMarshalJSON(input.VariableCondition),
-		"description":        strings.TrimSpace(input.Description),
-		"updated_by":         input.UpdatedBy,
-		"updated_at":         time.Now().UTC(),
+		"name":             strings.TrimSpace(input.Name),
+		"target_model_uid": input.TargetModelUID,
+		"condition":        mustMarshalJSON(input.Condition),
+		"description":      strings.TrimSpace(input.Description),
+		"updated_by":       input.UpdatedBy,
+		"updated_at":       time.Now().UTC(),
 	}
 	if err := s.db.WithContext(ctx).Model(&group).Updates(updates).Error; err != nil {
 		return nil, err
@@ -143,13 +168,20 @@ func (s *Service) Update(ctx context.Context, businessID, groupID uuid.UUID, inp
 	return s.Get(ctx, businessID, groupID)
 }
 
-func (s *Service) Delete(ctx context.Context, businessID, groupID uuid.UUID) error {
-	return s.db.WithContext(ctx).
+func (s *service) Delete(ctx context.Context, businessID uint64, groupID uuid.UUID) error {
+	res := s.db.WithContext(ctx).
 		Where("id = ? AND business_id = ? AND deleted_at IS NULL", groupID, businessID).
-		Delete(&types.DynamicGroup{}).Error
+		Delete(&types.DynamicGroup{})
+	if res.Error != nil {
+		return res.Error
+	}
+	if res.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
-func (s *Service) GetMeta(_ context.Context) (map[string]interface{}, error) {
+func (s *service) GetMeta(_ context.Context) (map[string]interface{}, error) {
 	propertyMap := map[string][]types.DynamicGroupProperty{
 		modelHost: {
 			newProperty(101, modelHost, "bk_host_id", "主机 ID", "singlechar", "", true),
@@ -190,11 +222,11 @@ func (s *Service) GetMeta(_ context.Context) (map[string]interface{}, error) {
 	}, nil
 }
 
-func (s *Service) Preview(ctx context.Context, businessID uuid.UUID, targetModelUID string, condition, variableCondition []types.DynamicGroupConditionGroup, limit int) ([]types.DynamicGroupPreviewHost, int64, error) {
-	if targetModelUID != targetHost {
-		return nil, 0, fmt.Errorf("only host target is supported in current phase")
+func (s *service) Preview(ctx context.Context, businessID uint64, targetModelUID string, condition []types.DynamicGroupConditionGroup, limit int) ([]types.DynamicGroupPreviewHost, int64, error) {
+	if !isSupportedTargetModelUID(targetModelUID) {
+		return nil, 0, fmt.Errorf("only host target is supported")
 	}
-	if err := s.validateInput(targetModelUID, condition, variableCondition); err != nil {
+	if err := s.validateInput(targetModelUID, condition); err != nil {
 		return nil, 0, err
 	}
 
@@ -205,10 +237,9 @@ func (s *Service) Preview(ctx context.Context, businessID uuid.UUID, targetModel
 		Joins("LEFT JOIN modules m ON m.id = hmr.module_id AND m.deleted_at IS NULL").
 		Joins("LEFT JOIN sets s ON s.id = m.set_id AND s.deleted_at IS NULL").
 		Joins("LEFT JOIN businesses b ON b.id = hbr.business_id").
-		Where("hbr.business_id = ? AND h.deleted_at IS NULL", businessID).
-		Distinct("h.id")
+		Where("hbr.business_id = ? AND h.deleted_at IS NULL", businessID)
 
-	for _, group := range append(append([]types.DynamicGroupConditionGroup{}, condition...), variableCondition...) {
+	for _, group := range condition {
 		for _, rule := range group.Condition {
 			var err error
 			query, err = applyCondition(query, group.ObjectID, rule)
@@ -229,7 +260,7 @@ func (s *Service) Preview(ctx context.Context, businessID uuid.UUID, targetModel
 
 	countQuery := query.Session(&gorm.Session{})
 	var total int64
-	if err := countQuery.Count(&total).Error; err != nil {
+	if err := countQuery.Distinct("h.id").Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
@@ -239,16 +270,8 @@ func (s *Service) Preview(ctx context.Context, businessID uuid.UUID, targetModel
 
 	rows := make([]types.DynamicGroupPreviewHost, 0)
 	if err := query.
-		Select([]string{
-			"h.id::text AS id",
-			"COALESCE(h.primary_ip, '') AS internal_ipv4",
-			"COALESCE(h.cloud_region, '') AS region",
-			"COALESCE(h.cloud_vendor, '') AS cloud_vendor",
-			"COALESCE(h.cloud_instance_id, '') AS cloud_vendor_id",
-			"COALESCE(b.name, '') AS cloud_business",
-			"TO_CHAR(h.created_at, 'YYYY-MM-DD HH24:MI:SS') AS create_time",
-			"COALESCE(h.created_by::text, '') AS creator",
-		}).
+		Select(previewHostSelectColumns()).
+		Group("h.id, b.name").
 		Order("h.created_at DESC").
 		Limit(limit).
 		Scan(&rows).Error; err != nil {
@@ -258,18 +281,18 @@ func (s *Service) Preview(ctx context.Context, businessID uuid.UUID, targetModel
 	return rows, total, nil
 }
 
-func (s *Service) UpdatePreviewCount(ctx context.Context, businessID, groupID uuid.UUID, count int64) error {
+func (s *service) UpdatePreviewCount(ctx context.Context, businessID uint64, groupID uuid.UUID, count int64) error {
 	return s.db.WithContext(ctx).
 		Model(&types.DynamicGroup{}).
 		Where("id = ? AND business_id = ? AND deleted_at IS NULL", groupID, businessID).
 		Update("last_preview_count", int(count)).Error
 }
 
-func (s *Service) validateInput(targetModelUID string, condition, variableCondition []types.DynamicGroupConditionGroup) error {
-	if targetModelUID != targetHost {
-		return fmt.Errorf("only host target is supported in current phase")
+func (s *service) validateInput(targetModelUID string, condition []types.DynamicGroupConditionGroup) error {
+	if !isSupportedTargetModelUID(targetModelUID) {
+		return fmt.Errorf("only host target is supported")
 	}
-	for _, group := range append(append([]types.DynamicGroupConditionGroup{}, condition...), variableCondition...) {
+	for _, group := range condition {
 		if group.ObjectID != modelHost && group.ObjectID != modelModule && group.ObjectID != modelSet {
 			return fmt.Errorf("unsupported condition object: %s", group.ObjectID)
 		}
@@ -282,7 +305,11 @@ func (s *Service) validateInput(targetModelUID string, condition, variableCondit
 	return nil
 }
 
-func (s *Service) toDetail(group types.DynamicGroup) (types.DynamicGroupDetail, error) {
+func isSupportedTargetModelUID(targetModelUID string) bool {
+	return targetModelUID == targetHost
+}
+
+func (s *service) toDetail(group types.DynamicGroup) (types.DynamicGroupDetail, error) {
 	detail := types.DynamicGroupDetail{
 		ID:               group.ID,
 		BusinessID:       group.BusinessID,
@@ -301,16 +328,8 @@ func (s *Service) toDetail(group types.DynamicGroup) (types.DynamicGroupDetail, 
 			return detail, err
 		}
 	}
-	if len(group.VariableCondition) > 0 {
-		if err := json.Unmarshal(group.VariableCondition, &detail.Info.VariableCondition); err != nil {
-			return detail, err
-		}
-	}
 	if detail.Info.Condition == nil {
 		detail.Info.Condition = []types.DynamicGroupConditionGroup{}
-	}
-	if detail.Info.VariableCondition == nil {
-		detail.Info.VariableCondition = []types.DynamicGroupConditionGroup{}
 	}
 	return detail, nil
 }
@@ -357,6 +376,19 @@ func newEnumProperty(id int64, objID, propertyID, propertyName string, values []
 	property := newProperty(id, objID, propertyID, propertyName, "enum", "", true)
 	property.Option = string(data)
 	return property
+}
+
+func previewHostSelectColumns() []string {
+	return []string{
+		"h.id::text AS id",
+		"host(h.primary_ip) AS internal_ipv4",
+		"COALESCE(h.cloud_region, '') AS region",
+		"COALESCE(h.cloud_vendor, '') AS cloud_vendor",
+		"COALESCE(h.cloud_instance_id, '') AS cloud_vendor_id",
+		"COALESCE(b.name, '') AS cloud_business",
+		"TO_CHAR(h.created_at, 'YYYY-MM-DD HH24:MI:SS') AS create_time",
+		"COALESCE(h.created_by::text, '') AS creator",
+	}
 }
 
 func applyCondition(query *gorm.DB, objectID string, rule types.DynamicGroupCondition) (*gorm.DB, error) {
@@ -428,7 +460,7 @@ func mapColumn(objectID, field string) (string, error) {
 		modelHost: {
 			"bk_host_id":      "h.id::text",
 			"bk_host_name":    "h.host_name",
-			"bk_host_innerip": "h.primary_ip",
+			"bk_host_innerip": "host(h.primary_ip)",
 			"bk_cloud_vendor": "COALESCE(h.cloud_vendor, '')",
 			"bk_cloud_region": "COALESCE(h.cloud_region, '')",
 			"bk_cpu":          "COALESCE(h.cpu, 0)",
@@ -440,9 +472,10 @@ func mapColumn(objectID, field string) (string, error) {
 			"bk_updated_at":   "h.updated_at",
 		},
 		modelModule: {
-			"bk_module_id":    "m.id",
-			"bk_module_name":  "m.name",
-			"bk_service_type": "COALESCE(m.service_type, '')",
+			"bk_module_id":        "m.id",
+			"bk_module_name":      "m.name",
+			"service_template_id": "m.service_template_id",
+			"bk_service_type":     "COALESCE(m.service_type, '')",
 		},
 		modelSet: {
 			"bk_set_id":   "s.id",

@@ -20,6 +20,12 @@ func NewBusinessHandler(service business.Service) *BusinessHandler {
 	return &BusinessHandler{service: service}
 }
 
+// SetTopologyInitializer wires the topology initializer into the business service.
+// Called from server setup after both services are constructed.
+func (h *BusinessHandler) SetTopologyInitializer(fn business.TopologyInitializer) {
+	h.service.SetTopologyInitializer(fn)
+}
+
 // CreateBusiness handles business creation
 func (h *BusinessHandler) CreateBusiness(c *gin.Context) {
 	var req types.CreateBusinessRequest
@@ -73,8 +79,7 @@ func (h *BusinessHandler) ListBusinesses(c *gin.Context) {
 		offset = 0
 	}
 
-	// Use default tenant ID (for MVP)
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
 	businesses, total, err := h.service.ListBusinesses(c.Request.Context(), tenantID, limit, offset)
 	if err != nil {
@@ -101,14 +106,15 @@ func (h *BusinessHandler) GetBusiness(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
 		return
 	}
-	if _, err := uuid.Parse(id); err != nil {
+	businessID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid business ID format"})
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
-	business, err := h.service.GetBusiness(c.Request.Context(), tenantID, id)
+	business, err := h.service.GetBusiness(c.Request.Context(), tenantID, businessID)
 	if err != nil {
 		status := apperrors.HTTPStatus(err)
 		c.JSON(status, apperrors.NewErrorResponse(err, ""))
@@ -128,7 +134,8 @@ func (h *BusinessHandler) UpdateBusiness(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
 		return
 	}
-	if _, err := uuid.Parse(id); err != nil {
+	businessID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid business ID format"})
 		return
 	}
@@ -144,9 +151,9 @@ func (h *BusinessHandler) UpdateBusiness(c *gin.Context) {
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
-	business, err := h.service.UpdateBusiness(c.Request.Context(), tenantID, id, &req)
+	business, err := h.service.UpdateBusiness(c.Request.Context(), tenantID, businessID, &req)
 	if err != nil {
 		status := apperrors.HTTPStatus(err)
 		c.JSON(status, apperrors.NewErrorResponse(err, ""))
@@ -167,14 +174,15 @@ func (h *BusinessHandler) DeleteBusiness(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
 		return
 	}
-	if _, err := uuid.Parse(id); err != nil {
+	businessID, err := strconv.ParseUint(id, 10, 64)
+	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid business ID format"})
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
-	err := h.service.DeleteBusiness(c.Request.Context(), tenantID, id)
+	err = h.service.DeleteBusiness(c.Request.Context(), tenantID, businessID)
 	if err != nil {
 		status := apperrors.HTTPStatus(err)
 		c.JSON(status, apperrors.NewErrorResponse(err, ""))
@@ -199,7 +207,7 @@ func (h *BusinessHandler) CreateBusinessSet(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business set name is required"})
 		return
 	}
-	if req.BusinessID == uuid.Nil {
+	if req.BusinessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "BusinessID is required"})
 		return
 	}
@@ -230,7 +238,7 @@ func (h *BusinessHandler) GetBusinessSet(c *gin.Context) {
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
 	businessSet, err := h.service.GetBusinessSet(c.Request.Context(), tenantID, id)
 	if err != nil {
@@ -260,7 +268,7 @@ func (h *BusinessHandler) ListBusinessSets(c *gin.Context) {
 		offset = 0
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
 	businessSets, total, err := h.service.ListBusinessSets(c.Request.Context(), tenantID, limit, offset)
 	if err != nil {
@@ -303,7 +311,7 @@ func (h *BusinessHandler) UpdateBusinessSet(c *gin.Context) {
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
 	businessSet, err := h.service.UpdateBusinessSet(c.Request.Context(), tenantID, id, &req)
 	if err != nil {
@@ -331,7 +339,7 @@ func (h *BusinessHandler) DeleteBusinessSet(c *gin.Context) {
 		return
 	}
 
-	tenantID := "00000000-0000-0000-0000-000000000001"
+	tenantID := types.SystemTenantID
 
 	err := h.service.DeleteBusinessSet(c.Request.Context(), tenantID, id)
 	if err != nil {
@@ -365,7 +373,7 @@ func (h *BusinessHandler) AddBusinessToSet(c *gin.Context) {
 		return
 	}
 
-	if req.BusinessID == uuid.Nil {
+	if req.BusinessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
 		return
 	}
@@ -403,13 +411,13 @@ func (h *BusinessHandler) RemoveBusinessFromSet(c *gin.Context) {
 		return
 	}
 
-	businessUUID, err := uuid.Parse(businessID)
-	if err != nil {
+	bizID, err := strconv.ParseUint(businessID, 10, 64)
+	if err != nil || bizID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid business ID format"})
 		return
 	}
 
-	err = h.service.RemoveBusinessFromSet(c.Request.Context(), businessSetUUID, businessUUID)
+	err = h.service.RemoveBusinessFromSet(c.Request.Context(), businessSetUUID, bizID)
 	if err != nil {
 		status := apperrors.HTTPStatus(err)
 		c.JSON(status, apperrors.NewErrorResponse(err, ""))
