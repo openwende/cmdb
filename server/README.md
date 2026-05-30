@@ -10,7 +10,6 @@
 ## 🚀 核心特性
 
 *   **清晰架构**: 三层架构设计 (`Handler` → `Service` → `Repository`)
-*   **高性能**: N+1 查询优化，批量操作性能提升 50-500 倍
 *   **测试完善**: 50+ 单元测试用例，核心业务逻辑覆盖率 20%+
 *   **云原生设计**: 支持多云环境 IP 隔离，借鉴蓝鲸 CMDB 设计理念
 *   **PostgreSQL 原生**: 充分利用 PostgreSQL 特性（UUID、JSONB、数组等）
@@ -117,7 +116,7 @@ chmod +x scripts/test-api.sh
 
 #### 业务管理
 - `POST /api/v1/businesses` - 创建业务
-- `GET /api/v1/businesses` - 列出业务（已优化 N+1 查询，性能提升 50-500 倍）
+- `GET /api/v1/businesses` - 列出业务
 - `GET /api/v1/businesses/:id` - 获取业务详情
 - `PUT /api/v1/businesses/:id` - 更新业务
 - `DELETE /api/v1/businesses/:id` - 删除业务（仅限归档状态）
@@ -165,25 +164,6 @@ The application loads configuration from `config/config.yaml`. See `config/confi
 
 详细的部署指南（虚拟机、Kubernetes、Docker）请参见 [deploy/README.md](deploy/README.md)。
 
-## ⚡ 性能优化
-
-### N+1 查询优化
-
-项目已修复关键的 N+1 查询问题，显著提升性能：
-
-| 业务数量 | 优化前查询次数 | 优化后查询次数 | 性能提升 |
-|---------|--------------|--------------|---------|
-| 10      | 11 (1+10)    | 2            | **5.5x** |
-| 100     | 101 (1+100)  | 2            | **50x** |
-| 1000    | 1001         | 2            | **500x** |
-
-**优化方法**：
-- 使用批量查询替代逐个查询
-- 实现 `ListByBusinessIDs` 批量查询方法
-- 在内存中关联数据，避免重复数据库访问
-
-详细性能优化说明请参见 **[架构文档](docs/ARCHITECTURE.md#性能优化)**
-
 ## 🤝 贡献
 
 欢迎贡献！请参阅 **[贡献指南](docs/CONTRIBUTING.md)** 了解：
@@ -202,7 +182,6 @@ The application loads configuration from `config/config.yaml`. See `config/confi
 - ✅ 主机管理和云区域管理
 - ✅ 动态模型引擎
 - ✅ 测试框架（覆盖率 20%+）
-- ✅ N+1 查询性能优化（50-500 倍提升）
 - ✅ 完整文档体系
 
 **进行中**:
