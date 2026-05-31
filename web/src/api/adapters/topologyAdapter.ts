@@ -15,29 +15,6 @@ const DEFAULT_OBJECT_NAMES: Partial<Record<BackendNodeType, string>> = {
   [BackendNodeType.IdleModule]: '模块',
 };
 
-const REQUIRED_IDLE_MODULES = [
-  { title: '待回收', id: 1 },
-  { title: '故障机', id: 2 },
-  { title: '空闲机', id: 3 },
-] as const;
-
-const REQUIRED_IDLE_MODULE_TITLES: string[] = REQUIRED_IDLE_MODULES.map((module) => module.title);
-
-const getSyntheticIdleModuleNodeID = (idleSetNodeID: number | string, syntheticID: number) => {
-  const parentID = Number(idleSetNodeID);
-
-  if (!Number.isFinite(parentID) || parentID <= 0) {
-    return String(syntheticID);
-  }
-
-  return String(parentID * 1000 + syntheticID);
-};
-
-const getIdleModuleOrder = (title: TreeData['title']) => {
-  const index = REQUIRED_IDLE_MODULE_TITLES.indexOf(String(title));
-  return index === -1 ? REQUIRED_IDLE_MODULE_TITLES.length : index;
-};
-
 const sortBusinessChildren = (children: TreeData[]): TreeData[] =>
   children
     .map((child, index) => ({ child, index }))
@@ -155,44 +132,6 @@ export const adaptTopologyNode = (
     treeData.children = backendNode.children.map((child) =>
       adaptTopologyNode(child, mainlineModelMap),
     );
-  }
-
-  if (backendNodeType === BackendNodeType.IdleSet) {
-    const existingChildren = treeData.children || [];
-    const existingTitles = new Set(existingChildren.map((child) => String(child.title)));
-    const syntheticChildren = REQUIRED_IDLE_MODULES.filter(
-      (module) => !existingTitles.has(module.title),
-    ).map((module) => {
-      const syntheticNodeID = getSyntheticIdleModuleNodeID(backendNode.node_id, module.id);
-      return {
-        title: module.title,
-        key: `idle_module-${syntheticNodeID}`,
-        type: TopoTreeNodeType.Module,
-        objName: getObjName(BackendNodeType.IdleModule, undefined, mainlineModelMap),
-        nodeId: syntheticNodeID,
-        backendType: BackendNodeType.IdleModule,
-        icon: 'module',
-        isLeaf: true,
-        expandable: false,
-        extra: {
-          child_count: 0,
-          host_count: 0,
-          is_default: true,
-          isSyntheticIdleModule: true,
-          synthetic_idle_module_id: module.id,
-        },
-      };
-    });
-
-    treeData.children = [...syntheticChildren, ...existingChildren].sort((left, right) => {
-      return getIdleModuleOrder(left.title) - getIdleModuleOrder(right.title);
-    });
-    treeData.isLeaf = false;
-    treeData.expandable = true;
-    treeData.extra = {
-      ...treeData.extra,
-      child_count: treeData.children.length,
-    };
   }
 
   if (backendNodeType === BackendNodeType.Business && treeData.children?.length) {

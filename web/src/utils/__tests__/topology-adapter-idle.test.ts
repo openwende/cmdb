@@ -32,17 +32,11 @@ describe('topology adapter idle nodes', () => {
 
     expect(idleSetNode.key).toBe('idle_set-3');
     expect(idleSetNode.backendType).toBe(BackendNodeType.IdleSet);
-    expect(idleSetNode.extra?.child_count).toBe(3);
-    expect(idleSetNode.children?.map((node) => node.title)).toEqual(['待回收', '故障机', '空闲机']);
-    expect(idleSetNode.children?.[0].extra?.isSyntheticIdleModule).toBe(true);
-    expect(idleSetNode.children?.[1].extra?.isSyntheticIdleModule).toBe(true);
-    expect(idleSetNode.children?.[0].key).toBe('idle_module-3001');
-    expect(idleSetNode.children?.[0].nodeId).toBe('3001');
-    expect(idleSetNode.children?.[1].key).toBe('idle_module-3002');
-    expect(idleSetNode.children?.[1].nodeId).toBe('3002');
-    expect(idleSetNode.children?.[2].key).toBe('idle_module-2');
-    expect(idleSetNode.children?.[2].backendType).toBe(BackendNodeType.IdleModule);
-    expect(idleSetNode.children?.[2].extra?.child_count).toBe(0);
+    // 不再前端合成"待回收/故障机"：直接透传后端真实子节点（后端已建出三内置模块，见 R5/C5）
+    expect(idleSetNode.children?.map((node) => node.title)).toEqual(['空闲机']);
+    expect(idleSetNode.children?.[0].key).toBe('idle_module-2');
+    expect(idleSetNode.children?.[0].backendType).toBe(BackendNodeType.IdleModule);
+    expect(idleSetNode.children?.[0].extra?.isSyntheticIdleModule).toBeUndefined();
   });
 
   it('keeps the idle pool as the first business child regardless of backend order', () => {
