@@ -1872,6 +1872,7 @@
       },
       "sampleDataBadge": "Sample data",
       "sampleDataTip": "Charts currently show sample data and are not connected to live statistics yet.",
+      "sampleDataTipHost": "Distribution charts (OS / business / cloud area) use live statistics; trend and custom charts are still sample data.",
       "sampleData": {
         "hostBusiness": {
           "blueking": "BlueKing",

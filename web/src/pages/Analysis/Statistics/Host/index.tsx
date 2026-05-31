@@ -7,6 +7,7 @@ import { ChartContainer, PieChart, BarChart, LineChart, ChartFilters } from '../
 import EditorModal, { SelectOption } from '../components/ChartEditorModal';
 import ConfirmModal from '@/components/common/ConfirmModal';
 import { mockChartData, mockChartDetailData } from '@/mock/Analysis';
+import { getHostStatistics } from '@/api/services/resource';
 import { dynamicGroupCondition } from '@/mock/business';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
 import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
@@ -74,8 +75,28 @@ const HostStatistics: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // TODO: api
-    setChartDatas(mockChartDetailData);
+    let cancelled = false;
+    const loadChartData = async () => {
+      // 内置主机分布图(OS/业务/管控区域)接真实聚合统计；趋势(6)与自定义图暂用示例数据
+      const next: Record<number, any[]> = { ...mockChartDetailData };
+      try {
+        const { data } = await getHostStatistics();
+        if (data) {
+          next[3] = (data.by_os_type || []).map((b) => ({ type: b.name, value: b.count }));
+          next[4] = (data.by_business || []).map((b) => ({ category: b.name, value: b.count }));
+          next[5] = (data.by_cloud_area || []).map((b) => ({ category: b.name, value: b.count }));
+        }
+      } catch (error) {
+        console.error('Failed to load host statistics:', error);
+      }
+      if (!cancelled) {
+        setChartDatas(next);
+      }
+    };
+    void loadChartData();
+    return () => {
+      cancelled = true;
+    };
   }, [charts]);
 
   const getChartDisplayName = useCallback(
@@ -270,7 +291,7 @@ const HostStatistics: React.FC = () => {
 
       <div className="sample-data-notice">
         <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge')}</span>
-        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip')}</span>
+        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTipHost')}</span>
       </div>
 
       <Row gutter={[24, 24]}>

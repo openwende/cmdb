@@ -162,3 +162,19 @@ export const renamePoolDirectory = (id: number, name: string): Promise<void> => 
 export const deletePoolDirectory = (id: number): Promise<void> => {
   return axios.delete(`/v1/resource-pool/directories/${id}`);
 };
+
+// ===== 主机维度聚合统计（运营概览分布图，R4）=====
+export interface HostStatBucket {
+  name: string;
+  count: number;
+}
+export interface HostStatistics {
+  by_os_type: HostStatBucket[];
+  by_business: HostStatBucket[];
+  by_cloud_area: HostStatBucket[];
+}
+
+// 返回信封 { code, data }；axiosInstance 已解包一层至 HTTP body。
+export const getHostStatistics = (): Promise<{ code: number; data: HostStatistics }> => {
+  return axios.get('/v1/hosts/statistics');
+};
