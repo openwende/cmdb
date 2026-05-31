@@ -18,8 +18,6 @@ import (
 	"gorm.io/gorm/logger"
 
 	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/core/projection"
-	"github.com/wend/cmdb-backend/internal/core/resource_graph"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -254,7 +252,7 @@ func TestTopologyHandler_GetNodeDetail(t *testing.T) {
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	ctx := context.Background()
 	bizID := seedTopologyHandlerBusiness(t, db, "handler-biz")
@@ -296,7 +294,7 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	ctx := context.Background()
 	bizID := seedTopologyHandlerBusiness(t, db, "host-scope-biz")
@@ -481,136 +479,14 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 	}
 }
 
-func TestTopologyHandler_GetTopologyTree_UsesProjectionWhenGraphDataExists(t *testing.T) {
+func TestTopologyHandler_CreateSet_PersistsViaTopologyService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
-
-	graphSvc := resource_graph.NewService(db)
-	registerProjectionHandlerType(t, graphSvc, "business", "org")
-	registerProjectionHandlerType(t, graphSvc, "set", "org")
-	registerProjectionHandlerType(t, graphSvc, "module", "app")
-
-	bizID := "3001"
-	biz, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
-		TypeName: "business",
-		Name:     "Projected Biz",
-		Spec:     map[string]any{"ref_id": bizID},
-	})
-	require.NoError(t, err)
-	setNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
-		TypeName: "set",
-		Name:     "proj-set",
-		Spec:     map[string]any{"ref_id": "88"},
-	})
-	require.NoError(t, err)
-	_, err = graphSvc.CreateEdge(context.Background(), resource_graph.CreateEdgeInput{
-		FromID:  biz.ID,
-		ToID:    setNode.ID,
-		RelType: "contains",
-	})
-	require.NoError(t, err)
-
-	router := gin.New()
-	router.GET("/api/v1/topology/tree", handler.GetTopologyTree)
-
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/topology/tree?business_id="+bizID+"&max_depth=3", nil)
-	require.NoError(t, err)
-	resp := httptest.NewRecorder()
-	router.ServeHTTP(resp, req)
-
-	require.Equal(t, http.StatusOK, resp.Code)
-	require.Contains(t, resp.Body.String(), `"Projected Biz"`)
-	require.Contains(t, resp.Body.String(), `"set_88"`)
-}
-
-func TestTopologyHandler_GetNodeDetail_UsesProjectionWhenGraphDataExists(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	db := setupTopologyHandlerTestDB(t)
-	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
-	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
-
-	graphSvc := resource_graph.NewService(db)
-	registerProjectionHandlerType(t, graphSvc, "business", "org")
-	registerProjectionHandlerType(t, graphSvc, "set", "org")
-	registerProjectionHandlerType(t, graphSvc, "module", "app")
-
-	bizID := uuid.NewString()
-	biz, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
-		TypeName: "business",
-		Name:     "Projection Detail Biz",
-		Spec:     map[string]any{"ref_id": bizID},
-	})
-	require.NoError(t, err)
-	setNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
-		TypeName: "set",
-		Name:     "detail-set",
-		Spec:     map[string]any{"ref_id": "91"},
-	})
-	require.NoError(t, err)
-	moduleNode, err := graphSvc.CreateResource(context.Background(), resource_graph.CreateResourceInput{
-		TypeName: "module",
-		Name:     "detail-module",
-		Spec: map[string]any{
-			"ref_id":       "92",
-			"service_type": "api",
-		},
-	})
-	require.NoError(t, err)
-	for _, edge := range []resource_graph.CreateEdgeInput{
-		{FromID: biz.ID, ToID: setNode.ID, RelType: "contains"},
-		{FromID: setNode.ID, ToID: moduleNode.ID, RelType: "contains"},
-	} {
-		_, err := graphSvc.CreateEdge(context.Background(), edge)
-		require.NoError(t, err)
-	}
-
-	router := gin.New()
-	router.GET("/api/v1/topology/nodes/:id", handler.GetNodeDetail)
-
-	req, err := http.NewRequest(http.MethodGet, "/api/v1/topology/nodes/module-92", nil)
-	require.NoError(t, err)
-	resp := httptest.NewRecorder()
-	router.ServeHTTP(resp, req)
-
-	require.Equal(t, http.StatusOK, resp.Code)
-	require.Contains(t, resp.Body.String(), `"model_uid":"module"`)
-	require.Contains(t, resp.Body.String(), `"node_id":"module-92"`)
-	require.Contains(t, resp.Body.String(), `"service_type":"api"`)
-}
-
-func registerProjectionHandlerType(t *testing.T, svc resource_graph.Service, name, category string) {
-	t.Helper()
-
-	_, err := svc.CreateType(context.Background(), resource_graph.CreateTypeInput{
-		Name:        name,
-		DisplayName: name,
-		Category:    category,
-		Schema: map[string]any{
-			"type": "object",
-			"properties": map[string]any{
-				"ref_id": map[string]any{"type": "string"},
-			},
-		},
-	})
-	require.NoError(t, err)
-}
-
-func TestTopologyHandler_CreateSet_UsesProjectionCommandService(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	db := setupTopologyHandlerTestDB(t)
-	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
-	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "projection-write-biz")
 
@@ -643,14 +519,14 @@ func TestTopologyHandler_CreateSet_UsesProjectionCommandService(t *testing.T) {
 	require.Contains(t, treeResp.Body.String(), `"write-set"`)
 }
 
-func TestTopologyHandler_UpdateModule_UsesProjectionCommandService(t *testing.T) {
+func TestTopologyHandler_UpdateModule_PersistsViaTopologyService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "projection-module-biz")
 
@@ -723,17 +599,16 @@ func TestTopologyHandler_UpdateModule_UsesProjectionCommandService(t *testing.T)
 
 	require.Equal(t, http.StatusOK, treeResp.Code)
 	require.Contains(t, treeResp.Body.String(), `"gateway-v2"`)
-	require.Contains(t, treeResp.Body.String(), `"bk_module_type":"2"`)
 }
 
-func TestTopologyHandler_InitializeBusinessTopology_UsesProjectionCommandService(t *testing.T) {
+func TestTopologyHandler_InitializeBusinessTopology_PersistsViaTopologyService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "projection-init-biz")
 
@@ -754,14 +629,14 @@ func TestTopologyHandler_InitializeBusinessTopology_UsesProjectionCommandService
 	require.Contains(t, treeResp.Body.String(), `"is_default":true`)
 }
 
-func TestTopologyHandler_TransferHosts_UsesProjectionCommandService(t *testing.T) {
+func TestTopologyHandler_TransferHosts_PersistsViaTopologyService(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "projection-host-transfer-biz")
 	hostID := uuid.New()
@@ -839,14 +714,14 @@ func TestTopologyHandler_TransferHosts_UsesProjectionCommandService(t *testing.T
 	require.Contains(t, hostsResp.Body.String(), `"module":{"id":`)
 }
 
-func TestTopologyHandler_TransferHosts_FallsBackToLegacyTablesWhenProjectionEmpty(t *testing.T) {
+func TestTopologyHandler_TransferHosts_PersistsToLegacyTables(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "legacy-transfer-biz")
 	hostID := uuid.New()
@@ -905,14 +780,14 @@ func TestTopologyHandler_TransferHosts_FallsBackToLegacyTablesWhenProjectionEmpt
 	require.EqualValues(t, 1, businessRelationCount)
 }
 
-func TestTopologyHandler_TransferHosts_FallsBackToLegacyTablesMovesFromSourceModule(t *testing.T) {
+func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "legacy-transfer-source-biz")
 	hostID := uuid.New()
@@ -985,115 +860,14 @@ func TestTopologyHandler_TransferHosts_FallsBackToLegacyTablesMovesFromSourceMod
 	require.EqualValues(t, 1, targetRelationCount)
 }
 
-func TestTopologyHandler_TransferHostsToPool_UsesProjectionCommandService(t *testing.T) {
+func TestTopologyHandler_TransferHostsToPool_PersistsToLegacyTables(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
-
-	bizID := seedTopologyHandlerBusiness(t, db, "projection-host-pool-biz")
-	hostID := uuid.New()
-	require.NoError(t, db.Exec(
-		`INSERT INTO hosts (id, tenant_id, host_name, primary_ip, status, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
-		hostID.String(),
-		uuid.New().String(),
-		"host-pool",
-		"10.0.0.31",
-		"running",
-	).Error)
-
-	router := gin.New()
-	router.POST("/api/v1/topology/sets", handler.CreateSet)
-	router.POST("/api/v1/topology/modules", handler.CreateModule)
-	router.POST("/api/v1/topology/hosts/transfer", handler.TransferHosts)
-	router.POST("/api/v1/topology/hosts/transfer-to-pool", handler.TransferHostsToPool)
-	router.POST("/api/v1/topology/businesses/:id/initialize", handler.InitializeBusinessTopology)
-	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
-
-	initReq := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/api/v1/topology/businesses/%d/initialize", bizID), nil)
-	initResp := httptest.NewRecorder()
-	router.ServeHTTP(initResp, initReq)
-	require.Equal(t, http.StatusOK, initResp.Code)
-
-	setPayload, err := json.Marshal(map[string]any{
-		"business_id": bizID,
-		"name":        "pool-set",
-	})
-	require.NoError(t, err)
-	setReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/sets", bytes.NewReader(setPayload))
-	setReq.Header.Set("Content-Type", "application/json")
-	setResp := httptest.NewRecorder()
-	router.ServeHTTP(setResp, setReq)
-	require.Equal(t, http.StatusCreated, setResp.Code)
-
-	var setBody struct {
-		Data struct {
-			ID uint64 `json:"id"`
-		} `json:"data"`
-	}
-	require.NoError(t, json.Unmarshal(setResp.Body.Bytes(), &setBody))
-
-	modulePayload, err := json.Marshal(map[string]any{
-		"set_id": setBody.Data.ID,
-		"name":   "pool-module",
-	})
-	require.NoError(t, err)
-	moduleReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/modules", bytes.NewReader(modulePayload))
-	moduleReq.Header.Set("Content-Type", "application/json")
-	moduleResp := httptest.NewRecorder()
-	router.ServeHTTP(moduleResp, moduleReq)
-	require.Equal(t, http.StatusCreated, moduleResp.Code)
-
-	var moduleBody struct {
-		Data struct {
-			ID uint64 `json:"id"`
-		} `json:"data"`
-	}
-	require.NoError(t, json.Unmarshal(moduleResp.Body.Bytes(), &moduleBody))
-
-	transferPayload, err := json.Marshal(map[string]any{
-		"host_ids":         []string{hostID.String()},
-		"target_module_id": moduleBody.Data.ID,
-	})
-	require.NoError(t, err)
-	transferReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/hosts/transfer", bytes.NewReader(transferPayload))
-	transferReq.Header.Set("Content-Type", "application/json")
-	transferResp := httptest.NewRecorder()
-	router.ServeHTTP(transferResp, transferReq)
-	require.Equal(t, http.StatusOK, transferResp.Code)
-
-	poolPayload, err := json.Marshal(map[string]any{
-		"host_ids": []string{hostID.String()},
-	})
-	require.NoError(t, err)
-	poolReq := httptest.NewRequest(http.MethodPost, "/api/v1/topology/hosts/transfer-to-pool", bytes.NewReader(poolPayload))
-	poolReq.Header.Set("Content-Type", "application/json")
-	poolResp := httptest.NewRecorder()
-	router.ServeHTTP(poolResp, poolReq)
-
-	require.Equal(t, http.StatusOK, poolResp.Code)
-	require.Contains(t, poolResp.Body.String(), `"successful":1`)
-
-	idleHostsReq := httptest.NewRequest(http.MethodGet, "/api/v1/topology/nodes/idle_set-1/hosts", nil)
-	idleHostsResp := httptest.NewRecorder()
-	router.ServeHTTP(idleHostsResp, idleHostsReq)
-
-	require.Equal(t, http.StatusOK, idleHostsResp.Code)
-	require.Contains(t, idleHostsResp.Body.String(), hostID.String())
-}
-
-func TestTopologyHandler_TransferHostsToPool_FallsBackToLegacyTablesWhenProjectionEmpty(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	db := setupTopologyHandlerTestDB(t)
-	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
-	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "legacy-pool-biz")
 	hostID := uuid.New()
@@ -1183,7 +957,7 @@ func TestTopologyHandler_UpdateModule_PersistsServiceCategoryID(t *testing.T) {
 	mainlineSvc := mainline.NewService(db)
 	service := topology.NewService(db, mainlineSvc)
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
-	handler := NewTopologyHandler(service, aggregate, projection.NewBusinessTopologyService(db), projection.NewBusinessTopologyCommandService(db))
+	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "projection-category-biz")
 	categoryID := uint64(10)

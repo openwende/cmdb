@@ -6,7 +6,6 @@ import (
 
 	"github.com/wend/cmdb-backend/internal/api/handlers"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/core/projection"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 )
 
@@ -17,13 +16,11 @@ func RegisterTopologyRoutes(router *gin.Engine, db *gorm.DB) {
 
 // RegisterTopologyRoutesWithBusinessHandler 注册业务拓扑路由，并将空闲机池初始化器注入 businessHandler
 func RegisterTopologyRoutesWithBusinessHandler(router *gin.Engine, db *gorm.DB, businessHandler *handlers.BusinessHandler) {
-	// 创建服务
+	// 创建服务（真相层:topology.Service 写 sets/modules + 双写 mainline,读经 mainline 主线树）
 	mainlineService := mainline.NewService(db)
 	service := topology.NewService(db, mainlineService)
 	aggregateService := topology.NewAggregateService(db, service, mainlineService)
-	projectionService := projection.NewBusinessTopologyService(db)
-	commandService := projection.NewBusinessTopologyCommandService(db)
-	handler := handlers.NewTopologyHandler(service, aggregateService, projectionService, commandService)
+	handler := handlers.NewTopologyHandler(service, aggregateService)
 
 	// 将空闲机池初始化器注入到业务创建流程
 	if businessHandler != nil {

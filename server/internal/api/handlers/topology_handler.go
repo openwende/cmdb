@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"math"
 	"net/http"
 	"strconv"
@@ -13,31 +11,27 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/projection"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
 // TopologyHandler 业务拓扑处理器
+//
+// 真相层:业务拓扑读写统一走 topology.Service(写 sets/modules + 双写 mainline_instances,
+// 读经 mainline 主线树),节点详情走 topology.AggregateService。v2 projection 已在 P1 退出拓扑路径。
 type TopologyHandler struct {
-	service    topology.Service
-	aggregate  *topology.AggregateService
-	projection *projection.BusinessTopologyService
-	commands   *projection.BusinessTopologyCommandService
+	service   topology.Service
+	aggregate *topology.AggregateService
 }
 
 // NewTopologyHandler 创建处理器
 func NewTopologyHandler(
 	service topology.Service,
 	aggregate *topology.AggregateService,
-	projectionSvc *projection.BusinessTopologyService,
-	commandSvc *projection.BusinessTopologyCommandService,
 ) *TopologyHandler {
 	return &TopologyHandler{
-		service:    service,
-		aggregate:  aggregate,
-		projection: projectionSvc,
-		commands:   commandSvc,
+		service:   service,
+		aggregate: aggregate,
 	}
 }
 
@@ -61,34 +55,6 @@ func (h *TopologyHandler) GetTopologyTree(c *gin.Context) {
 	req.IncludeHosts = c.Query("include_hosts") == "true"
 	req.MaxDepth, _ = strconv.Atoi(c.DefaultQuery("max_depth", "3"))
 	req.ExpandNodeID = c.Query("expand_node_id")
-
-	var businessRef string
-	if req.BusinessID != nil {
-		businessRef = strconv.FormatUint(*req.BusinessID, 10)
-	}
-
-	if h.projection != nil {
-		tree, err := h.projection.GetTopologyTree(
-			c.Request.Context(),
-			businessRef,
-			req.IncludeHosts,
-			req.MaxDepth,
-			req.ExpandNodeID,
-		)
-		switch {
-		case err == nil && len(tree) > 0:
-			if projectionTreeNeedsLegacyDefault(tree) {
-				if legacyTree, legacyErr := h.service.GetTopologyTree(c.Request.Context(), &req); legacyErr == nil {
-					tree = mergeLegacyDefaultTopology(tree, legacyTree)
-				}
-			}
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": tree})
-			return
-		case err != nil && !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
 
 	tree, err := h.service.GetTopologyTree(c.Request.Context(), &req)
 	if err != nil {
@@ -141,25 +107,6 @@ func (h *TopologyHandler) GetNodeChildren(c *gin.Context) {
 // GetNodeDetail 获取聚合节点详情
 // GET /api/v1/topology/nodes/:id
 func (h *TopologyHandler) GetNodeDetail(c *gin.Context) {
-	if h.projection != nil {
-		detail, err := h.projection.GetNodeDetail(c.Request.Context(), c.Param("id"))
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": detail})
-			return
-		case err != nil && !shouldFallbackProjection(err):
-			switch {
-			case errors.Is(err, gorm.ErrRecordNotFound):
-				c.JSON(http.StatusNotFound, gin.H{"error": "节点不存在"})
-			case err.Error() == "invalid node id":
-				c.JSON(http.StatusBadRequest, gin.H{"error": "无效的节点ID"})
-			default:
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			}
-			return
-		}
-	}
-
 	detail, err := h.aggregate.GetNodeDetail(c.Request.Context(), c.Param("id"))
 	if err != nil {
 		switch {
@@ -177,141 +124,6 @@ func (h *TopologyHandler) GetNodeDetail(c *gin.Context) {
 		"code": 0,
 		"data": detail,
 	})
-}
-
-func shouldFallbackProjection(err error) bool {
-	if err == nil {
-		return false
-	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return true
-	}
-
-	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "no such table") ||
-		strings.Contains(message, "does not exist") ||
-		strings.Contains(message, "record not found") ||
-		strings.Contains(message, "目标模块不存在")
-}
-
-func projectionTreeNeedsLegacyDefault(tree []types.TopologyTreeNode) bool {
-	for _, root := range tree {
-		if root.NodeType != types.NodeTypeBusiness {
-			continue
-		}
-		if !containsDefaultSetNode(root.Children) {
-			return true
-		}
-	}
-	return false
-}
-
-func containsDefaultSetNode(children []types.TopologyTreeNode) bool {
-	for _, child := range children {
-		if child.NodeType == types.NodeTypeSet && child.IsDefault {
-			return true
-		}
-	}
-	return false
-}
-
-func mergeLegacyDefaultTopology(
-	projected []types.TopologyTreeNode,
-	legacy []types.TopologyTreeNode,
-) []types.TopologyTreeNode {
-	if len(projected) == 0 || len(legacy) == 0 {
-		return projected
-	}
-
-	legacyDefaultsByBusiness := make(map[string][]types.TopologyTreeNode, len(legacy))
-	for _, root := range legacy {
-		if root.NodeType != types.NodeTypeBusiness {
-			continue
-		}
-		defaults := make([]types.TopologyTreeNode, 0, 1)
-		for _, child := range root.Children {
-			if child.NodeType == types.NodeTypeSet && child.IsDefault {
-				defaults = append(defaults, child)
-			}
-		}
-		if len(defaults) > 0 {
-			legacyDefaultsByBusiness[topologyTreeNodeRef(root)] = defaults
-		}
-	}
-
-	merged := append([]types.TopologyTreeNode(nil), projected...)
-	for index := range merged {
-		root := &merged[index]
-		if root.NodeType != types.NodeTypeBusiness || containsDefaultSetNode(root.Children) {
-			continue
-		}
-
-		legacyDefaults := legacyDefaultsByBusiness[topologyTreeNodeRef(*root)]
-		if len(legacyDefaults) == 0 {
-			continue
-		}
-
-		existingChildren := make(map[string]struct{}, len(root.Children))
-		for _, child := range root.Children {
-			existingChildren[topologyTreeNodeIdentity(child)] = struct{}{}
-		}
-
-		injected := make([]types.TopologyTreeNode, 0, len(legacyDefaults))
-		for _, child := range legacyDefaults {
-			if _, exists := existingChildren[topologyTreeNodeIdentity(child)]; exists {
-				continue
-			}
-			injected = append(injected, child)
-		}
-		if len(injected) == 0 {
-			continue
-		}
-
-		root.Children = append(injected, root.Children...)
-		root.ChildCount = len(root.Children)
-		root.IsLeaf = false
-		root.Expandable = true
-	}
-
-	return merged
-}
-
-func topologyTreeNodeRef(node types.TopologyTreeNode) string {
-	switch value := node.NodeID.(type) {
-	case string:
-		return strings.TrimSpace(value)
-	case fmt.Stringer:
-		return strings.TrimSpace(value.String())
-	default:
-		return strings.TrimSpace(fmt.Sprint(value))
-	}
-}
-
-func topologyTreeNodeIdentity(node types.TopologyTreeNode) string {
-	return string(node.NodeType) + ":" + topologyTreeNodeRef(node)
-}
-
-func shouldFallbackProjectionBatch(result *types.BatchOperationResult) bool {
-	if result == nil || result.Successful > 0 || len(result.Errors) == 0 {
-		return false
-	}
-
-	for _, item := range result.Errors {
-		message := strings.ToLower(item)
-		if strings.Contains(message, "record not found") ||
-			strings.Contains(message, "does not exist") ||
-			strings.Contains(message, "无法确定主机所属业务") {
-			return true
-		}
-	}
-	return false
-}
-
-func (h *TopologyHandler) hasProjectionTopology(ctx context.Context) bool {
-	if h.service == nil {
-		return false
-	}
-	return h.service.HasProjectionTopology(ctx)
 }
 
 // GetNodeHosts 获取聚合节点下的主机列表
@@ -336,18 +148,6 @@ func (h *TopologyHandler) GetNodeHosts(c *gin.Context) {
 	}
 
 	keyword := strings.TrimSpace(c.Query("keyword"))
-
-	if h.projection != nil {
-		result, err := h.projection.ListNodeHosts(c.Request.Context(), c.Param("id"), page, pageSize, keyword)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-	}
 
 	rows, total, err := h.service.GetNodeHosts(c.Request.Context(), nodeType, refID, keyword, page, pageSize)
 	if err != nil {
@@ -411,18 +211,6 @@ func (h *TopologyHandler) CreateSet(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		set, err := h.commands.CreateSet(c.Request.Context(), &req)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusCreated, gin.H{"code": 0, "data": set})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	set, err := h.service.CreateSet(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -442,18 +230,6 @@ func (h *TopologyHandler) GetSet(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的集群ID"})
 		return
-	}
-
-	if h.commands != nil {
-		set, err := h.commands.GetSet(c.Request.Context(), id)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": set})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusNotFound, gin.H{"error": "集群不存在"})
-			return
-		}
 	}
 
 	set, err := h.service.GetSet(c.Request.Context(), id)
@@ -483,18 +259,6 @@ func (h *TopologyHandler) ListSets(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		sets, err := h.commands.ListSets(c.Request.Context(), businessID)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": sets})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	sets, err := h.service.ListSets(c.Request.Context(), businessID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -522,18 +286,6 @@ func (h *TopologyHandler) UpdateSet(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		set, err := h.commands.UpdateSet(c.Request.Context(), id, &req)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": set})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	set, err := h.service.UpdateSet(c.Request.Context(), id, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -553,16 +305,6 @@ func (h *TopologyHandler) DeleteSet(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的集群ID"})
 		return
-	}
-
-	if h.commands != nil {
-		if err := h.commands.DeleteSet(c.Request.Context(), id); err == nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
-			return
-		} else if !shouldFallbackProjection(err) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 	}
 
 	if err := h.service.DeleteSet(c.Request.Context(), id); err != nil {
@@ -593,16 +335,6 @@ func (h *TopologyHandler) MoveSet(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		if err := h.commands.MoveSet(c.Request.Context(), id, req.TargetBusinessID); err == nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "移动成功"}})
-			return
-		} else if !shouldFallbackProjection(err) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	if err := h.service.MoveSet(c.Request.Context(), id, req.TargetBusinessID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -625,18 +357,6 @@ func (h *TopologyHandler) CreateModule(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		module, err := h.commands.CreateModule(c.Request.Context(), &req)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusCreated, gin.H{"code": 0, "data": module})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	module, err := h.service.CreateModule(c.Request.Context(), &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -656,18 +376,6 @@ func (h *TopologyHandler) GetModule(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的模块ID"})
 		return
-	}
-
-	if h.commands != nil {
-		module, err := h.commands.GetModule(c.Request.Context(), id)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": module})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusNotFound, gin.H{"error": "模块不存在"})
-			return
-		}
 	}
 
 	module, err := h.service.GetModule(c.Request.Context(), id)
@@ -695,18 +403,6 @@ func (h *TopologyHandler) ListModules(c *gin.Context) {
 			return
 		}
 
-		if h.commands != nil {
-			modules, err := h.commands.ListModules(c.Request.Context(), setID)
-			switch {
-			case err == nil:
-				c.JSON(http.StatusOK, gin.H{"code": 0, "data": modules})
-				return
-			case !shouldFallbackProjection(err):
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-		}
-
 		modules, err := h.service.ListModules(c.Request.Context(), setID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -725,18 +421,6 @@ func (h *TopologyHandler) ListModules(c *gin.Context) {
 		if err != nil || businessID == 0 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 			return
-		}
-
-		if h.commands != nil {
-			modules, err := h.commands.ListModulesByBusiness(c.Request.Context(), businessID)
-			switch {
-			case err == nil:
-				c.JSON(http.StatusOK, gin.H{"code": 0, "data": modules})
-				return
-			case !shouldFallbackProjection(err):
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
 		}
 
 		modules, err := h.service.ListModulesByBusiness(c.Request.Context(), businessID)
@@ -770,18 +454,6 @@ func (h *TopologyHandler) UpdateModule(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		module, err := h.commands.UpdateModule(c.Request.Context(), id, &req)
-		switch {
-		case err == nil:
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": module})
-			return
-		case !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	module, err := h.service.UpdateModule(c.Request.Context(), id, &req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -801,16 +473,6 @@ func (h *TopologyHandler) DeleteModule(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的模块ID"})
 		return
-	}
-
-	if h.commands != nil {
-		if err := h.commands.DeleteModule(c.Request.Context(), id); err == nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "删除成功"}})
-			return
-		} else if !shouldFallbackProjection(err) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 	}
 
 	if err := h.service.DeleteModule(c.Request.Context(), id); err != nil {
@@ -841,16 +503,6 @@ func (h *TopologyHandler) MoveModule(c *gin.Context) {
 		return
 	}
 
-	if h.commands != nil {
-		if err := h.commands.MoveModule(c.Request.Context(), id, req.TargetSetID); err == nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "移动成功"}})
-			return
-		} else if !shouldFallbackProjection(err) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	}
-
 	if err := h.service.MoveModule(c.Request.Context(), id, req.TargetSetID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -871,18 +523,6 @@ func (h *TopologyHandler) TransferHosts(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
-	}
-
-	if h.commands != nil && h.hasProjectionTopology(c.Request.Context()) {
-		result, err := h.commands.TransferHosts(c.Request.Context(), &req)
-		switch {
-		case err == nil && !shouldFallbackProjectionBatch(result):
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
-			return
-		case err != nil && !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
 	}
 
 	result, err := h.service.TransferHosts(c.Request.Context(), &req)
@@ -906,18 +546,6 @@ func (h *TopologyHandler) TransferHostsToPool(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
-	}
-
-	if h.commands != nil && h.hasProjectionTopology(c.Request.Context()) {
-		result, err := h.commands.TransferHostsToPool(c.Request.Context(), req.HostIDs)
-		switch {
-		case err == nil && !shouldFallbackProjectionBatch(result):
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": result})
-			return
-		case err != nil && !shouldFallbackProjection(err):
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
 	}
 
 	result, err := h.service.TransferHostsToPool(c.Request.Context(), req.HostIDs)
@@ -1048,16 +676,6 @@ func (h *TopologyHandler) InitializeBusinessTopology(c *gin.Context) {
 	if err != nil || businessID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的业务ID"})
 		return
-	}
-
-	if h.commands != nil {
-		if err := h.commands.InitializeBusinessTopology(c.Request.Context(), businessID); err == nil {
-			c.JSON(http.StatusOK, gin.H{"code": 0, "data": gin.H{"message": "初始化成功"}})
-			return
-		} else if !shouldFallbackProjection(err) {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
 	}
 
 	if err := h.service.InitializeBusinessTopology(c.Request.Context(), businessID); err != nil {
