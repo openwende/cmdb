@@ -121,6 +121,7 @@ export const getTopologyNodeDetail = async (
 
 export interface TopologyNodeHostItem {
   host_id: string;
+  display_id: number;
   inner_ipv4: string;
   inner_ipv6: string;
   cloud_area?: {

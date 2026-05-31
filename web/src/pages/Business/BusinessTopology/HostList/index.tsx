@@ -66,6 +66,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     return {
       host: {
         bk_host_id: item.host_id,
+        display_id: item.display_id,
         bk_host_innerip: item.inner_ipv4,
         bk_host_innerip_v6: item.inner_ipv6,
         bk_cloud_host_status: item.status,
@@ -381,8 +382,8 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const columns = [
     {
       title: 'ID',
-      dataIndex: ['host', 'bk_host_id'],
-      render: (id: number) => <span>{id}</span>,
+      dataIndex: ['host', 'display_id'],
+      render: (id: number) => <span>{id ?? '--'}</span>,
     },
     {
       title: t('resource.host.columns.innerIpv4'),
