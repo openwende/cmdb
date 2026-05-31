@@ -92,6 +92,10 @@ func (f *fakeHostRepo) CheckIPConflict(context.Context, *uuid.UUID, string, *uui
 	return false, nil
 }
 
+func (f *fakeHostRepo) HostStatistics(context.Context) (*types.HostStatistics, error) {
+	return &types.HostStatistics{}, nil
+}
+
 type fakeCloudAreaRepo struct {
 	defaultArea *types.CloudArea
 }

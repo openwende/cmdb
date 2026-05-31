@@ -28,6 +28,7 @@ type HostRepository interface {
 	MarkAsDestroyed(ctx context.Context, id uuid.UUID) error
 	DeleteHost(ctx context.Context, id uuid.UUID) error
 	CheckIPConflict(ctx context.Context, cloudAreaID *uuid.UUID, primaryIP string, excludeHostID *uuid.UUID) (bool, error)
+	HostStatistics(ctx context.Context) (*types.HostStatistics, error)
 }
 
 type hostRepository struct {
@@ -507,4 +508,49 @@ func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.H
 	}
 
 	return nil
+}
+
+// HostStatistics 按维度聚合主机数量（os_type / 业务 / 管控区域），供运营概览分布图（R4）。
+func (r *hostRepository) HostStatistics(ctx context.Context) (*types.HostStatistics, error) {
+	db := r.db.WithContext(ctx)
+	stats := &types.HostStatistics{
+		ByOSType:    []types.HostStatBucket{},
+		ByBusiness:  []types.HostStatBucket{},
+		ByCloudArea: []types.HostStatBucket{},
+	}
+
+	// 按操作系统类型
+	if err := db.Table("hosts").
+		Select("COALESCE(NULLIF(os_type, ''), '未知') AS name, COUNT(*) AS count").
+		Where("deleted_at IS NULL AND is_destroyed = false").
+		Group("os_type").
+		Order("count DESC").
+		Scan(&stats.ByOSType).Error; err != nil {
+		return nil, err
+	}
+
+	// 按管控区域
+	if err := db.Table("hosts AS h").
+		Select("COALESCE(NULLIF(ca.name, ''), '未分配') AS name, COUNT(*) AS count").
+		Joins("LEFT JOIN cloud_areas ca ON ca.id = h.cloud_area_id").
+		Where("h.deleted_at IS NULL AND h.is_destroyed = false").
+		Group("ca.name").
+		Order("count DESC").
+		Scan(&stats.ByCloudArea).Error; err != nil {
+		return nil, err
+	}
+
+	// 按业务（无归属计入"未分配"；跨多业务的主机在各业务各计一次）
+	if err := db.Table("hosts AS h").
+		Select("COALESCE(b.name, '未分配') AS name, COUNT(DISTINCT h.id) AS count").
+		Joins("LEFT JOIN host_business_relations hbr ON hbr.host_id = h.id").
+		Joins("LEFT JOIN businesses b ON b.id = hbr.business_id AND b.deleted_at IS NULL").
+		Where("h.deleted_at IS NULL AND h.is_destroyed = false").
+		Group("b.name").
+		Order("count DESC").
+		Scan(&stats.ByBusiness).Error; err != nil {
+		return nil, err
+	}
+
+	return stats, nil
 }

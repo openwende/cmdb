@@ -23,6 +23,17 @@ func NewHostHandler(service *host.Service) *HostHandler {
 	}
 }
 
+// GetHostStatistics 主机维度聚合统计（os_type / 业务 / 管控区域），供运营概览分布图
+// GET /api/v1/hosts/statistics
+func (h *HostHandler) GetHostStatistics(c *gin.Context) {
+	stats, err := h.service.HostStatistics(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": stats})
+}
+
 // CreateHost 创建单个主机
 // @Summary 创建主机
 // @Tags Host

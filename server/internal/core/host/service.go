@@ -456,3 +456,8 @@ func (s *Service) ReclaimToPool(ctx context.Context, id uuid.UUID) error {
 
 	return s.hostRepo.ReclaimToPool(ctx, id)
 }
+
+// HostStatistics 主机维度聚合统计（os_type / 业务 / 管控区域），供运营概览分布图（R4）。
+func (s *Service) HostStatistics(ctx context.Context) (*types.HostStatistics, error) {
+	return s.hostRepo.HostStatistics(ctx)
+}

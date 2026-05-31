@@ -99,6 +99,10 @@ func (m *MockHostRepository) CheckIPConflict(ctx context.Context, cloudAreaID *u
 	return args.Get(0).(bool), args.Error(1)
 }
 
+func (m *MockHostRepository) HostStatistics(ctx context.Context) (*types.HostStatistics, error) {
+	return &types.HostStatistics{}, nil
+}
+
 // MockCloudAreaRepository 云区域仓库的 Mock
 type MockCloudAreaRepository struct {
 	mock.Mock

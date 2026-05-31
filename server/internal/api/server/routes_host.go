@@ -44,6 +44,7 @@ func RegisterHostRoutes(router *gin.Engine, db *gorm.DB) {
 			hosts.POST("", hostHandler.CreateHost)
 			hosts.POST("/batch", hostHandler.BatchImportHosts) // 批量导入
 			hosts.GET("", hostHandler.ListHosts)
+			hosts.GET("/statistics", hostHandler.GetHostStatistics) // 运营概览分布图聚合数据
 			hosts.GET("/:id", hostHandler.GetHost)
 			hosts.PUT("/:id", hostHandler.UpdateHost)
 			hosts.PUT("/:id/custom-fields", hostHandler.UpdateHostCustomFields)
