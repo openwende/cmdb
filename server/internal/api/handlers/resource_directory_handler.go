@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -10,6 +11,20 @@ import (
 	"github.com/wend/cmdb-backend/internal/core/resource_directory"
 	"github.com/wend/cmdb-backend/internal/types"
 )
+
+// bindHostRequestError 把请求体绑定错误转成对前端友好的结构化错误。
+// host_ids 字段类型是 []uuid.UUID，若误传 display_id/整数编号（如 ["2","3"]），
+// JSON 解码会抛 "invalid UUID length: 1" 之类的底层错误——这里识别后换成明确的业务提示，
+// 不再把 UUID 解析异常裸暴露给调用方（R6）。
+func bindHostRequestError(err error) (int, gin.H) {
+	if msg := err.Error(); strings.Contains(strings.ToLower(msg), "uuid") {
+		return http.StatusBadRequest, gin.H{
+			"error": "host_ids 格式无效：每个 host_id 必须是主机 UUID，不能传 display_id（整数编号）",
+			"code":  "INVALID_HOST_ID",
+		}
+	}
+	return http.StatusBadRequest, gin.H{"error": err.Error()}
+}
 
 // ResourceDirectoryHandler 资源目录 HTTP Handler
 type ResourceDirectoryHandler struct {
@@ -171,7 +186,7 @@ func (h *ResourceDirectoryHandler) MoveDirectory(c *gin.Context) {
 func (h *ResourceDirectoryHandler) ImportHostsToPool(c *gin.Context) {
 	var req types.ImportHostsToPoolRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(bindHostRequestError(err))
 		return
 	}
 
@@ -194,7 +209,7 @@ func (h *ResourceDirectoryHandler) ImportHostsToPool(c *gin.Context) {
 func (h *ResourceDirectoryHandler) MoveHostsInPool(c *gin.Context) {
 	var req types.MoveHostsInPoolRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(bindHostRequestError(err))
 		return
 	}
 
@@ -212,7 +227,7 @@ func (h *ResourceDirectoryHandler) MoveHostsInPool(c *gin.Context) {
 func (h *ResourceDirectoryHandler) AllocateHosts(c *gin.Context) {
 	var req types.AllocateHostsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(bindHostRequestError(err))
 		return
 	}
 
@@ -230,7 +245,7 @@ func (h *ResourceDirectoryHandler) AllocateHosts(c *gin.Context) {
 func (h *ResourceDirectoryHandler) ReclaimHosts(c *gin.Context) {
 	var req types.ReclaimHostsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(bindHostRequestError(err))
 		return
 	}
 
