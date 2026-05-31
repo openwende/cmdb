@@ -32,11 +32,12 @@
 
 ## P1 — 数据正确性 / 一致性 / 功能缺失
 
-### [ ] R3　操作审计对核心操作零覆盖（本轮新增）
+### [x] R3　操作审计对核心操作零覆盖（主机 + 业务/拓扑写操作均已落审计）
 - **现象**：审计页 UI 完整（主机/业务/资源三 tab + 筛选器 + 列），但三 tab **全部恒空**。实测：跑完整套主机流转（6+ 次写操作）审计零记录。
 - **根因（架构裂缝，见末节）**：审计读 `resource_histories` 表（`[后端] internal/storage/audit_repository.go:33`），该表**唯一写入点**是 `dynamic_model` 的 `recordHistory`，仅在动态模型资源 CRUD 时触发（`[后端] internal/core/dynamic_model/service.go:266/282/504`）。主机/业务/拓扑的写操作走专用 service，**全都不调 `recordHistory`** → 永不进审计。
 - **修复**：
-  - [ ] 在主机/业务/拓扑的写操作里埋审计点（统一调 `recordHistory` 或等价的资源变更通道）
+  - [x] 在主机/业务/拓扑的写操作里埋审计点 —— **已完成**：主机流转 `1787c47`（host_membership 审计录制器）；业务/拓扑结构 `461fc31`（新增 `internal/core/auditlog` 统一入口，topology set/module + business 的 create/update/delete 落 `resource_histories`，model_uid ∈ {set,module,business}）。实测建 set+module → 审计"业务"tab 出现 2 条 create（此前恒空）
+- **遗留（非本项，新发现）**：`DeleteSet`/`DeleteModule` 因 mainline `DeleteNodeByRef` 对 ltree 列用了 `~~`(LIKE) 报 `operator does not exist: ltree ~~ unknown` → 删除集群/模块 400。属 mainline 删除路径独立 bug，待单独修（建议作 R10）
 
 ### [ ] R4　运营概览统计图表全是 mock（本轮新增）
 - **现象**：顶部 4 个概览卡片（业务/主机/资源类型/实例总数）是**真实数据**（`[前端] src/pages/Analysis/Statistics/Overview/index.tsx:62-66` 调真实 API）；但"主机统计""实例统计"的所有饼/柱/趋势图**全是 mock 示例数据**，页面自挂提示"尚未接入真实统计源"。
