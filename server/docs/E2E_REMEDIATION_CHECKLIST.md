@@ -39,12 +39,13 @@
   - [x] 在主机/业务/拓扑的写操作里埋审计点 —— **已完成**：主机流转 `1787c47`（host_membership 审计录制器）；业务/拓扑结构 `461fc31`（新增 `internal/core/auditlog` 统一入口，topology set/module + business 的 create/update/delete 落 `resource_histories`，model_uid ∈ {set,module,business}）。实测建 set+module → 审计"业务"tab 出现 2 条 create（此前恒空）
 - **遗留（非本项，新发现）**：`DeleteSet`/`DeleteModule` 因 mainline `DeleteNodeByRef` 对 ltree 列用了 `~~`(LIKE) 报 `operator does not exist: ltree ~~ unknown` → 删除集群/模块 400。属 mainline 删除路径独立 bug，待单独修（建议作 R10）
 
-### [ ] R4　运营概览统计图表全是 mock（本轮新增）
+### [~] R4　运营概览统计图表全是 mock（最小真数据切片已落：主机分布图接真实数据）
 - **现象**：顶部 4 个概览卡片（业务/主机/资源类型/实例总数）是**真实数据**（`[前端] src/pages/Analysis/Statistics/Overview/index.tsx:62-66` 调真实 API）；但"主机统计""实例统计"的所有饼/柱/趋势图**全是 mock 示例数据**，页面自挂提示"尚未接入真实统计源"。
 - **根因**：`import { mockChartData } from '@/mock/Analysis'` + 满屏 `// TODO: api`。`[前端] src/pages/Analysis/Statistics/Host/index.tsx:9,58`、`Statistics/Instance/index.tsx`
-- **修复**：
-  - [ ] 后端：提供主机/实例的聚合统计 API（按 OS / 业务 / 管控区域 / 时间趋势）
-  - [ ] 前端：替换 `mockChartData` 接入真实统计 API
+- **修复**（范围：用户选定"最小真数据切片"）：
+  - [x] 后端：主机聚合统计 API `GET /v1/hosts/statistics`（按 os_type/业务/管控区域计数）—— 后端 commit `7be38e2`
+  - [x] 前端：主机分布图(OS/业务/管控区域)接真实数据 —— 前端 commit `7b71540`；实测概览"按操作系统类型统计"饼图显示 `linux:3`（真实），横幅文案改为如实说明
+  - [ ] 暂缓（非本切片）：主机数趋势图（需历史快照）、自定义图表配置持久化、实例统计页（仍 mock）
 
 ### [x] R5　"待回收/故障机"是前端凭空合成的假节点（后端 C5 建真实模块 + 前端删合成，已闭合）
 - **现象**：空闲机池下的"待回收""故障机"在后端不存在，是前端合成的虚拟节点（`key=idle_module-1001/1002`）。
