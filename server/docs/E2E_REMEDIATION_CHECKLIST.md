@@ -45,12 +45,12 @@
   - [ ] 后端：提供主机/实例的聚合统计 API（按 OS / 业务 / 管控区域 / 时间趋势）
   - [ ] 前端：替换 `mockChartData` 接入真实统计 API
 
-### [~] R5　"待回收/故障机"是前端凭空合成的假节点（后端 C5 已建真实模块；前端合成已惰性失效，死代码待清）
+### [x] R5　"待回收/故障机"是前端凭空合成的假节点（后端 C5 建真实模块 + 前端删合成，已闭合）
 - **现象**：空闲机池下的"待回收""故障机"在后端不存在，是前端合成的虚拟节点（`key=idle_module-1001/1002`）。
 - **根因**：`[前端] src/api/adapters/topologyAdapter.ts:18-22,160-196` 后端没返回这些模块时前端 `REQUIRED_IDLE_MODULES` 合成；且 `[前端] src/pages/Business/BusinessTopology/HostList/index.tsx:104-105` `canContainHosts = isModule && !isSyntheticIdleModule` → 合成节点**永不加载主机**。若转移目标落到 `target_module_id=1001` 会直接失效。
 - **修复**：
   - [x] 后端：业务初始化时真实建出"空闲机/待回收/故障机"三内置模块 —— **已完成（2026-05-31，commit `f246b93`）；`InitializeBusinessTopology` 幂等补建，每次取拓扑树时对每个业务回填，旧业务自动补出**
-  - [~] 前端：合成逻辑已因后端提供真实模块而**惰性失效**（`existingTitles` 去重不再合成）；转移弹窗 `filterTransferNodesByMode` 已改为认"空闲机池下所有模块"使三模块可选（commit `b2dd430`）。`topologyAdapter.ts` 的 `REQUIRED_IDLE_MODULES` 合成块现为死代码，待清理
+  - [x] 前端：移除合成逻辑，改用后端真实模块 —— **已完成（commit `5718f46`）；删除 `topologyAdapter.ts` 的 `REQUIRED_IDLE_MODULES` 合成块及相关 helper，直接透传后端子节点，测试改为断言透传。另转移弹窗 `filterTransferNodesByMode` 已认"空闲机池下所有模块"使三模块可选（commit `b2dd430`）**
 - **附带修复**：`countModuleHosts` 此前对 is_default 的空闲机模块去数 `resource_pool_hosts`（资源池），主机分配进业务后池空→空闲机 `host_count` 恒 0、"分配后没出现在业务空闲机池"。已改为按 `module_id` 数 `host_module_relations`（commit `f246b93`），与节点主机列表口径一致
 
 ### [x] R6　allocate 对整数 host_id 直接 4xx/5xx（已修，commit `8fa8850`）
@@ -59,10 +59,10 @@
 - **修复**：
   - [x] 后端：host_id 解析失败返回结构化业务错误，不裸抛 UUID 解析异常 —— **已完成（commit `8fa8850`）；`bindHostRequestError` 套用于 allocate/import/move/reclaim，整数 host_id 返回 `{code:INVALID_HOST_ID}` + 400，API 实测通过**
 
-### [ ] R7　资源池主机被投影为"业务空闲机"主机
+### [x] R7　资源池主机被投影为"业务空闲机"主机（已被 host_count 修复 + hms 归属模型解决）
 - **现象**：pooled 主机同时出现在业务空闲机模块（`host_count` 与 `idle_module-1/hosts` 都含它们），叠加 R1 造成"看着在空闲机、其实没分配、资源池还在"的认知混乱。
 - **修复**：
-  - [ ] 明确投影语义：资源池主机是否应计入业务空闲机；与 R1/R5 一并梳理空闲机模块的真实归属
+  - [x] 明确投影语义：资源池主机**不**计入业务空闲机 —— **已解决**：空闲机模块 host_count/节点主机均只读 `host_module_relations`（commit `f246b93`），pooled 主机无此关系故不再现身；实测 reclaim 后该机从空闲机列表/计数消失、只在资源池。v2 `EdgeV2` 旁路投影随 v2 退役(C4)另议
 
 ### [ ] R8　API 响应格式不统一
 - **现象**：三套规范并存——`/businesses` 用 `{success, data:{items,total,limit,offset}}`；`/resource-pool/*` 用 `{code:0, data:{...,pagination:{page,page_size,total}}}`；`/hosts/batch` 裸返回 `{created_ids,...}` + HTTP **207**。包裹结构、分页字段、状态码三处不一致。
