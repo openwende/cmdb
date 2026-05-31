@@ -11,13 +11,13 @@
 
 ## P0 — 功能性损坏（阻断核心流程，最高优先）
 
-### [ ] R1　主机"分配到业务空闲机"：后端失败 + 前端谎报成功
+### [~] R1　主机"分配到业务空闲机"：后端失败 + 前端谎报成功（前端 F3 已修，后端 F2 待办）
 - **现象**：UI 选业务点确定 → 弹"分配成功" → 但资源池列表纹丝不动，主机实际未分配。
 - **后端根因**：`AllocateHosts` 调 `attachProjectionHostToModule` 时对空闲机模块(id=1)报 `"目标模块投影不存在"`，`failed:2` 事务回滚，主机从未移动。`[后端] internal/core/resource_directory/service.go:444`
 - **前端根因**：`AssignModal.onOk` 只要 axios 不抛错（HTTP 200）就 `message.success('分配成功')`，**不检查响应体里的 `result.failed`**。`[前端] src/pages/Resource/Host/components/AssignModal/index.tsx:44-52`
 - **修复**：
   - [ ] 后端：补齐业务空闲机模块的投影初始化，使 `attachProjectionHostToModule` 能找到目标模块投影
-  - [ ] 前端：`onOk` 校验 `result.failed/successful`，失败时报错而非谎报成功（参照 `TransferHost` 的 `assertTransferResult`）
+  - [x] 前端：`onOk` 校验 `result.failed/successful`，失败时报错而非谎报成功（参照 `TransferHost` 的 `assertTransferResult`）—— **F3 已完成（2026-05-31，浏览器验证通过）**；注意响应是信封 `{code,data}` 且恒 HTTP 200，实际校验内层 `data.failed`/`data.successful`
 
 ### [ ] R2　"业务模块→待回收"：主机蒸发成孤儿
 - **现象**：`transfer-to-pool` 返回 `successful:2`，但事后 e2e-module=0、空闲机=0、资源池=0、整棵拓扑树全 0；主机详情仍 200、`is_destroyed:false`——主机游离于所有视图之外却仍占用 IP（这正是重新导入 `10.0.0.1` 报 `already exists` 的根源）。

@@ -31,11 +31,13 @@
   更稳妥：`AllocateHosts` 里把整个 `attachProjectionHostToModule` 的返回降级为 warning（log 不回滚），让主流程（建关系 + 删 `ResourcePoolHost`）始终成功。
 - **验收**：分配到业务空闲机后，主机真正离开资源池、`successful:2`；资源池列表不再显示这两台
 
-### F3 — 修 R1（前端）：`AssignModal` 校验分配结果
-- **文件**：`[前端] src/pages/Resource/Host/components/AssignModal/index.tsx:39-58`
+### F3 ✅ 已完成（2026-05-31，浏览器验证通过）— 修 R1（前端）：`AssignModal` 校验分配结果
+- **文件**：`[前端] src/pages/Resource/Host/components/AssignModal/index.tsx`
 - **现状**：`onOk` 只要 HTTP 200 就 `message.success('分配成功')`，不看 `result.failed`
-- **改法**：拿到响应后判 `result.failed > 0 || result.successful === 0` → `message.error` 并保留弹窗（参照 `TransferHost` 的 `assertTransferResult`，`src/pages/Business/BusinessTopology/TransferHost/index.tsx:92-101`）
-- **验收**：后端 failed 时前端如实报错，不再谎报成功
+- **改法**：拿到响应后判 `failed > 0 || successful === 0` → `message.error` 并保留弹窗（参照 `TransferHost` 的 `assertTransferResult`，`src/pages/Business/BusinessTopology/TransferHost/index.tsx:92-101`）
+- **⚠ 实现订正（侦察后纠偏）**：allocate/import 两端点均为信封响应 `{code, data:{...}}` 且**恒返回 HTTP 200**（见后端 `resource_directory_handler.go:189/225`），故字段在内层 `data.failed`/`data.successful`，**非**扁平 `result.failed`；且两端点 data 形状不同（import=`BatchOperationResult.errors[]`，allocate=`ResourcePoolLifecycleResult.failed_items[].message`），错误明细二者兼取。前端类型仍标 `Promise<BatchOperationResult>`（漏信封）属横切 R8，未在本项修。新增 i18n `host.assign.modal.failedDetail` 作无明细时的计数兜底。
+- **验收**：✅ 后端 failed 时前端如实报错，不再谎报成功
+- **验证记录**：后端经 `docker compose up -d --build app`（容器 `cmdb-server`，镜像 `wende-cmdb-backend-app`，:8080 healthy）部署后验证。浏览器走真实"分配到业务空闲机池"流程（解析空闲模块等前置请求打真实容器后端），拦截 allocate 响应注入真实失败形状（`successful:0, failed:1, failed_items[].message`）→ 弹出 **error** toast 显示后端原文「主机不在资源池中」、弹窗保留、无成功提示；切成功形状（`successful:1`）→ **success** toast「分配成功」、弹窗关闭。tsc/eslint 均 0 报错。
 
 ### F4 — 修 R2（前端）：`TransferHost` 的 `idlePool` 分支别丢目标
 - **文件**：`[前端] src/pages/Business/BusinessTopology/TransferHost/index.tsx:126-132`
@@ -96,7 +98,7 @@
 | 修复 | 解决 | 层 |
 |---|---|---|
 | F1 | R2 | 止血 |
-| F2+F3 | R1 | 止血 |
+| F2 + F3✅ | R1 | 止血（F3 前端已完成；F2 后端仍待办） |
 | F4(+C5) | R2前端/语义 | 止血+收口 |
 | F5 | R2 残留 | 止血 |
 | F6 | R6,R9 | 止血 |
