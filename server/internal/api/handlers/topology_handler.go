@@ -638,6 +638,7 @@ func collapseTopologyHostRows(rows []topology.TopologyHostRow) []types.Aggregate
 
 		item := types.AggregateTopologyHostItem{
 			HostID:    row.HostID,
+			DisplayID: row.DisplayID,
 			InnerIPv4: row.InnerIPv4,
 			InnerIPv6: row.InnerIPv6,
 			Status:    row.Status,

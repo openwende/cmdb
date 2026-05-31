@@ -36,6 +36,7 @@ type AggregateTopologyHostSet struct {
 
 type AggregateTopologyHostItem struct {
 	HostID    string                          `json:"host_id"`
+	DisplayID int64                           `json:"display_id"`
 	InnerIPv4 string                          `json:"inner_ipv4"`
 	InnerIPv6 string                          `json:"inner_ipv6"`
 	CloudArea *AggregateTopologyHostCloudArea `json:"cloud_area,omitempty"`

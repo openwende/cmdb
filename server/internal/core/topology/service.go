@@ -18,6 +18,7 @@ import (
 // TopologyHostRow is the scan target for node-level host queries.
 type TopologyHostRow struct {
 	HostID        string  `gorm:"column:host_id"`
+	DisplayID     int64   `gorm:"column:display_id"`
 	InnerIPv4     string  `gorm:"column:inner_ipv4"`
 	InnerIPv6     string  `gorm:"column:inner_ipv6"`
 	CloudAreaID   *string `gorm:"column:cloud_area_id"`
@@ -1175,6 +1176,7 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 
 	baseSelect := `
 		hosts.id AS host_id,
+		hosts.display_id AS display_id,
 		hosts.primary_ip AS inner_ipv4,
 		'' AS inner_ipv6,
 		cloud_areas.id AS cloud_area_id,
