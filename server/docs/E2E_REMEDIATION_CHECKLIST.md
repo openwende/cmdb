@@ -19,14 +19,14 @@
   - [ ] 后端：补齐业务空闲机模块的投影初始化，使 `attachProjectionHostToModule` 能找到目标模块投影
   - [x] 前端：`onOk` 校验 `result.failed/successful`，失败时报错而非谎报成功（参照 `TransferHost` 的 `assertTransferResult`）—— **F3 已完成（2026-05-31，浏览器验证通过）**；注意响应是信封 `{code,data}` 且恒 HTTP 200，实际校验内层 `data.failed`/`data.successful`
 
-### [ ] R2　"业务模块→待回收"：主机蒸发成孤儿
+### [~] R2　"业务模块→待回收"：主机蒸发成孤儿（前端 F4 已修，后端 F1/孤儿清理待办）
 - **现象**：`transfer-to-pool` 返回 `successful:2`，但事后 e2e-module=0、空闲机=0、资源池=0、整棵拓扑树全 0；主机详情仍 200、`is_destroyed:false`——主机游离于所有视图之外却仍占用 IP（这正是重新导入 `10.0.0.1` 报 `already exists` 的根源）。
 - **后端根因**：`TransferHostsToPool` 注释写"转移到资源池"，实现却**只删 `HostModuleRelation`+`HostBusinessRelation`，从不创建 `ResourcePoolHost`**。`[后端] internal/core/topology/service.go:420-453`（对比正常的 `TransferHosts:373` 会维护资源池、`ReclaimHosts` 会 `Create(poolHost)` @ `internal/core/resource_directory/service.go:511`）
 - **前端根因**：`handleConfirm` 在 `idlePool` 分支直接 `transferTopologyHostsToPool({host_ids})`，**把用户在弹窗里选定的"待回收"目标模块 `targetModules` 完全丢弃**，不传 `target_module_id`；"移出当前模块"也走同一分支。`[前端] src/pages/Business/BusinessTopology/TransferHost/index.tsx:126-132`
 - **修复**：
-  - [ ] 后端：`TransferHostsToPool` 补回 `ResourcePoolHost` 创建（止血"主机蒸发"，最高优先）
-  - [ ] 前端：idlePool 分支按所选目标模块走 `transferTopologyHosts`（带 `target_module_id`），不再无脑 transfer-to-pool
-  - [ ] 运维：清理已产生的孤儿主机（含 `10.0.0.1`、本次测试的 `10.0.0.2/10.0.0.3` 若未回收）
+  - [ ] 后端：`TransferHostsToPool` 补回 `ResourcePoolHost` 创建（注：经 hms 通道上交资源池实测已能正确落 `ResourcePoolHost`/`pool_directory` 归属、未再孤儿，待确认是否仍需单独补这条旧路径）
+  - [x] 前端：idlePool 分支按所选目标模块走 `transferTopologyHosts`（带 `target_module_id` + `source_module_id`），不再无脑 transfer-to-pool —— **已完成（2026-05-31，前端 commit `b2dd430`）；浏览器实测转移到空闲机/故障机均正确落入业务、不再蒸发到资源池**
+  - [ ] 运维：清理已产生的孤儿主机（注：本次测试机 `10.0.0.2` 已回收进业务故障机、`10.0.0.3` 在 e2e-module；历史 `10.0.0.1` 待清）
 
 ---
 
@@ -45,12 +45,13 @@
   - [ ] 后端：提供主机/实例的聚合统计 API（按 OS / 业务 / 管控区域 / 时间趋势）
   - [ ] 前端：替换 `mockChartData` 接入真实统计 API
 
-### [ ] R5　"待回收/故障机"是前端凭空合成的假节点
+### [~] R5　"待回收/故障机"是前端凭空合成的假节点（后端 C5 已建真实模块；前端合成已惰性失效，死代码待清）
 - **现象**：空闲机池下的"待回收""故障机"在后端不存在，是前端合成的虚拟节点（`key=idle_module-1001/1002`）。
 - **根因**：`[前端] src/api/adapters/topologyAdapter.ts:18-22,160-196` 后端没返回这些模块时前端 `REQUIRED_IDLE_MODULES` 合成；且 `[前端] src/pages/Business/BusinessTopology/HostList/index.tsx:104-105` `canContainHosts = isModule && !isSyntheticIdleModule` → 合成节点**永不加载主机**。若转移目标落到 `target_module_id=1001` 会直接失效。
 - **修复**：
-  - [ ] 后端：业务初始化时真实建出"空闲机/待回收/故障机"三内置模块
-  - [ ] 前端：移除合成逻辑，改用后端真实模块（与 R1 的投影初始化同源）
+  - [x] 后端：业务初始化时真实建出"空闲机/待回收/故障机"三内置模块 —— **已完成（2026-05-31，commit `f246b93`）；`InitializeBusinessTopology` 幂等补建，每次取拓扑树时对每个业务回填，旧业务自动补出**
+  - [~] 前端：合成逻辑已因后端提供真实模块而**惰性失效**（`existingTitles` 去重不再合成）；转移弹窗 `filterTransferNodesByMode` 已改为认"空闲机池下所有模块"使三模块可选（commit `b2dd430`）。`topologyAdapter.ts` 的 `REQUIRED_IDLE_MODULES` 合成块现为死代码，待清理
+- **附带修复**：`countModuleHosts` 此前对 is_default 的空闲机模块去数 `resource_pool_hosts`（资源池），主机分配进业务后池空→空闲机 `host_count` 恒 0、"分配后没出现在业务空闲机池"。已改为按 `module_id` 数 `host_module_relations`（commit `f246b93`），与节点主机列表口径一致
 
 ### [ ] R6　allocate 对整数 host_id 直接 4xx/5xx
 - **现象**：`host_ids` 传 `["2","3"]`（display_id）→ 后端 400 `invalid UUID length: 1`，原始错误裸暴露。

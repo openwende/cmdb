@@ -39,12 +39,13 @@
 - **验收**：✅ 后端 failed 时前端如实报错，不再谎报成功
 - **验证记录**：后端经 `docker compose up -d --build app`（容器 `cmdb-server`，镜像 `wende-cmdb-backend-app`，:8080 healthy）部署后验证。浏览器走真实"分配到业务空闲机池"流程（解析空闲模块等前置请求打真实容器后端），拦截 allocate 响应注入真实失败形状（`successful:0, failed:1, failed_items[].message`）→ 弹出 **error** toast 显示后端原文「主机不在资源池中」、弹窗保留、无成功提示；切成功形状（`successful:1`）→ **success** toast「分配成功」、弹窗关闭。tsc/eslint 均 0 报错。
 
-### F4 — 修 R2（前端）：`TransferHost` 的 `idlePool` 分支别丢目标
-- **文件**：`[前端] src/pages/Business/BusinessTopology/TransferHost/index.tsx:126-132`
+### F4 ✅ 已完成（2026-05-31，C5 一并落地，浏览器验证通过）— 修 R2（前端）：`TransferHost` 的 `idlePool` 分支别丢目标
+- **文件**：`[前端] TransferHost/index.tsx`（idlePool 分支）+ `components/TransferHostModal/index.tsx`（`filterTransferNodesByMode`）
 - **现状**：选"待回收"等目标后，`idlePool` 分支直接 `transferTopologyHostsToPool({host_ids})`，丢弃 `targetModules`
-- **改法**：按所选目标模块走 `transferTopologyHosts({host_ids, target_module_id})`；仅当目标确为"资源池"时才走 transfer-to-pool
-- **依赖**：完整的"转到待回收"语义需 **C5**（后端真实建出待回收模块）配合；在 C5 落地前，F4+F1 至少保证"不丢主机"（最坏退化为回资源池而非蒸发）
-- **验收**：业务模块→待回收，主机进入业务空闲机池下的待回收模块（C5 后）
+- **改法**：idlePool 按所选目标模块走 `transferTopologyHosts({host_ids, target_module_id, source_module_id})`，不再 transfer-to-pool；仅"移出/上交主机池"才回资源池。
+- **C5 同源问题**：后端只建"空闲机"，待回收/故障机是前端合成假节点（见 R5）。本次**一并修了 C5 后端**（`InitializeBusinessTopology` 补建三内置模块，commit `f246b93`），并修转移弹窗过滤（`filterTransferNodesByMode` 改认"空闲机池下所有模块"，commit `b2dd430`）使三模块可选。
+- **验收**：✅ 业务模块→空闲机/故障机/待回收，主机进入对应业务模块、不再蒸发到资源池
+- **验证记录**：容器后端部署后浏览器实操——「转移到空闲机池」弹窗三模块（空闲机/故障机/待回收）均可选；转移到空闲机/故障机后主机 `module_ids` 落到对应模块、`resource_status=allocated`、资源池不含该机。`tsc`/`eslint` 0 报错。
 
 ### F5 — 清理现存孤儿主机
 - **动作**：对历史孤儿（`10.0.0.1` 及本次 `10.0.0.2/10.0.0.3` 若未回收）执行 `reclaim` 到默认目录归位；或一次性 SQL 校正（无 `ResourcePoolHost` 且无 `HostModuleRelation` 的 host → 补默认目录）
@@ -99,10 +100,10 @@
 |---|---|---|
 | F1 | R2 | 止血 |
 | F2 + F3✅ | R1 | 止血（F3 前端已完成；F2 后端仍待办） |
-| F4(+C5) | R2前端/语义 | 止血+收口 |
+| F4✅(+C5✅) | R2前端/语义 | 止血+收口 |
 | F5 | R2 残留 | 止血 |
 | F6 | R6,R9 | 止血 |
 | C1/C2/C3 | R1,R2,R3,R7 根因 | 收口 |
 | C4 | R7 | 收口 |
-| C5 | R5 | 收口 |
+| C5✅ | R5 | 收口（后端三内置模块已落，前端死代码待清） |
 | R8 | R8 | 横切 |
