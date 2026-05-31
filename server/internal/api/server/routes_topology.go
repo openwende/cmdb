@@ -20,7 +20,7 @@ func RegisterTopologyRoutesWithBusinessHandler(router *gin.Engine, db *gorm.DB, 
 	// 创建服务（真相层:topology.Service 写 sets/modules + 双写 mainline,读经 mainline 主线树）
 	mainlineService := mainline.NewService(db)
 	// 阶段 1：主机归属统一通道（双写旧三表过渡），注入 topology service 使转回资源池走它（修 R2）
-	hms := host_membership.NewService(db, nil, host_membership.WithLegacyMirror())
+	hms := host_membership.NewService(db, host_membership.NewResourceHistoryAuditRecorder(), host_membership.WithLegacyMirror())
 	service := topology.NewService(db, mainlineService, topology.WithHostMembership(hms))
 	aggregateService := topology.NewAggregateService(db, service, mainlineService)
 	handler := handlers.NewTopologyHandler(service, aggregateService)

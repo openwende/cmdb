@@ -59,6 +59,10 @@ func setupHMTestDB(t *testing.T) *gorm.DB {
 		`CREATE TABLE host_module_relations (host_id TEXT NOT NULL, module_id INTEGER NOT NULL, created_at DATETIME, PRIMARY KEY (host_id, module_id))`,
 		`CREATE TABLE host_business_relations (host_id TEXT NOT NULL, business_id BIGINT NOT NULL, created_at DATETIME, PRIMARY KEY (host_id, business_id))`,
 		`CREATE TABLE resource_pool_hosts (host_id TEXT PRIMARY KEY, directory_id INTEGER NOT NULL, imported_at DATETIME, imported_by TEXT, remark TEXT)`,
+		// 审计落点依赖的表（R3）
+		`CREATE TABLE hosts (id TEXT PRIMARY KEY, display_id INTEGER, primary_ip TEXT, host_name TEXT, deleted_at DATETIME)`,
+		`CREATE TABLE businesses (id INTEGER PRIMARY KEY, name TEXT)`,
+		`CREATE TABLE resource_histories (id INTEGER PRIMARY KEY AUTOINCREMENT, resource_id INTEGER, model_uid TEXT, change_type TEXT, before_data TEXT, after_data TEXT, changed_by TEXT, changed_at DATETIME, client_ip TEXT, user_agent TEXT, resource_name TEXT, biz_name TEXT)`,
 	}
 	for _, s := range stmts {
 		require.NoError(t, db.Exec(s).Error)
@@ -248,6 +252,39 @@ func TestValidateNode(t *testing.T) {
 	require.Error(t, err)
 	_, err = svc.Move(context.Background(), []uuid.UUID{uuid.New()}, NodeRef{Kind: types.NodeKindBizModule, ID: 0}, MoveOptions{})
 	require.Error(t, err)
+}
+
+// R3 审计：归属变更写 resource_histories(model_uid=host)，使"审计→主机"tab 能查到主机流转。
+func TestMove_WritesHostAudit(t *testing.T) {
+	db := setupHMTestDB(t)
+	host := uuid.New()
+	require.NoError(t, db.Exec(`INSERT INTO hosts (id, display_id, primary_ip, host_name) VALUES (?, 7, '10.0.0.7', 'h7')`, host.String()).Error)
+	require.NoError(t, db.Exec(`INSERT INTO businesses (id, name) VALUES (?, 'biz-x')`, testBiz).Error)
+
+	svc := NewService(db, NewResourceHistoryAuditRecorder())
+	_, err := svc.Move(context.Background(), []uuid.UUID{host}, mod(moduleAID),
+		MoveOptions{Source: types.HostMembershipSourceAllocate, By: "admin"})
+	require.NoError(t, err)
+
+	var cnt int64
+	require.NoError(t, db.Table("resource_histories").
+		Where("model_uid = ? AND resource_id = ?", "host", 7).Count(&cnt).Error)
+	require.Equal(t, int64(1), cnt, "应写入一条 host 审计")
+
+	var row struct {
+		ChangeType string
+		AfterData  string
+		BizName    string
+		ChangedBy  string
+	}
+	require.NoError(t, db.Table("resource_histories").
+		Select("change_type, after_data, biz_name, changed_by").
+		Where("resource_id = ?", 7).Scan(&row).Error)
+	require.Equal(t, "update", row.ChangeType)
+	require.Equal(t, "admin", row.ChangedBy)
+	require.Equal(t, "biz-x", row.BizName)
+	require.Contains(t, row.AfterData, `"business_id":"1000"`)
+	require.Contains(t, row.AfterData, "10.0.0.7")
 }
 
 func requireLegacyCount(t *testing.T, db *gorm.DB, table string, host uuid.UUID, want int64) {

@@ -84,7 +84,7 @@ func RegisterServiceTemplateRoutes(router *gin.Engine, db *gorm.DB) {
 // RegisterResourcePoolRoutes 注册资源池相关路由
 func RegisterResourcePoolRoutes(router *gin.Engine, db *gorm.DB) {
 	// 阶段 1：主机归属统一通道（双写旧三表过渡），注入使 allocate/reclaim 走它并停写 v2 投影（修 R1，配合空闲机读路径改造修 R7）
-	hms := host_membership.NewService(db, nil, host_membership.WithLegacyMirror())
+	hms := host_membership.NewService(db, host_membership.NewResourceHistoryAuditRecorder(), host_membership.WithLegacyMirror())
 	dirService := resource_directory.NewService(db, resource_directory.WithHostMembership(hms))
 	handler := handlers.NewResourceDirectoryHandler(dirService)
 
