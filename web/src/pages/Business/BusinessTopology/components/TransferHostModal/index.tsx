@@ -41,6 +41,7 @@ const annotateParentPaths = (nodes: TreeData[], ancestors: string[] = []): TreeD
 const filterTransferNodesByMode = (
   nodes: TreeData[],
   mode: 'businessModule' | 'idlePool',
+  underIdleSet = false,
 ): TreeData[] =>
   nodes.reduce<TreeData[]>((acc, node) => {
       const backendType = node.backendType || node.type;
@@ -48,13 +49,15 @@ const filterTransferNodesByMode = (
       const isModule = node.type === TopoTreeNodeType.Module;
       const isSet = node.type === TopoTreeNodeType.Set;
       const isIdleSet = backendType === 'idle_set';
-      const isIdleModule = backendType === 'idle_module';
+      // 空闲机池(idle_set)下的模块都属于空闲机池：空闲机/故障机/待回收。
+      // 不能只认 is_default 衍生的 idle_module —— 故障机/待回收 is_default=false 会被规整成普通
+      // module，但它们仍在空闲机池下，转移到空闲机池时应可选；按业务模块转移时则应排除。
       const keepCurrentNode =
         mode === 'businessModule'
-          ? isBusiness || (isSet && !isIdleSet) || (isModule && !isIdleModule)
-          : isBusiness || isIdleSet || isIdleModule;
+          ? isBusiness || (isSet && !isIdleSet) || (isModule && !underIdleSet)
+          : isBusiness || isIdleSet || (isModule && underIdleSet);
       const filteredChildren = node.children
-        ? filterTransferNodesByMode(node.children, mode)
+        ? filterTransferNodesByMode(node.children, mode, underIdleSet || isIdleSet)
         : undefined;
 
       if (!keepCurrentNode && (!filteredChildren || filteredChildren.length === 0)) {

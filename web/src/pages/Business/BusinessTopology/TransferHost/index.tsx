@@ -123,14 +123,6 @@ const TransferHost: React.FC = () => {
     }
 
     try {
-      if (transferHostType === TransferMenuItemType.idlePool) {
-        const response = await transferTopologyHostsToPool({ host_ids: hostIDs });
-        assertTransferResult(response);
-        message.success(t('business.topology.transferHost.messages.transferSuccess'));
-        backToPrePage();
-        return;
-      }
-
       if (transferHostType === RemoveMenuItemKey.CurrentModule) {
         const response = await transferTopologyHostsToPool({ host_ids: hostIDs });
         assertTransferResult(response);
@@ -139,12 +131,11 @@ const TransferHost: React.FC = () => {
         return;
       }
 
+      // 转移到"空闲机池"(空闲机/故障机/待回收)与"业务模块"一样，本质都是把主机移动到所选的
+      // 业务模块：必须按 target_module_id 走 transfer，并带上 source_module_id 以从原模块移除。
+      // 不能再走 transfer-to-pool —— 那会把主机上交到全局资源池，从而"消失"出业务拓扑。
       const transferGroups = selectedHosts.reduce((groups, host) => {
-        const hostSourceModuleId = host.sourceModuleId || sourceModuleId;
-        const groupKey =
-          transferHostType === TransferMenuItemType.businessModule && hostSourceModuleId
-            ? hostSourceModuleId
-            : 0;
+        const groupKey = host.sourceModuleId || sourceModuleId || 0;
         const nextHosts = groups.get(groupKey) || [];
         nextHosts.push(String(host.id));
         groups.set(groupKey, nextHosts);
@@ -166,7 +157,7 @@ const TransferHost: React.FC = () => {
             host_ids: groupHostIDs,
             target_module_id: targetModuleID,
           };
-          if (transferHostType === TransferMenuItemType.businessModule && groupSourceModuleId) {
+          if (groupSourceModuleId) {
             payload.source_module_id = groupSourceModuleId;
           }
 
