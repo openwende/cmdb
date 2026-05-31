@@ -59,7 +59,7 @@ func (m *MockBusinessRepository) ListBusinesses(ctx context.Context, tenantID st
 
 func TestLifecycleLogic(t *testing.T) {
 	mockRepo := new(MockBusinessRepository)
-	service := NewService(mockRepo, nil, nil)
+	service := NewService(nil, mockRepo, nil, nil)
 
 	t.Run("Create Default", func(t *testing.T) {
 		req := &types.CreateBusinessRequest{Name: "default-test"}
@@ -150,7 +150,7 @@ func TestLifecycleLogic(t *testing.T) {
 
 func TestDeleteBusiness(t *testing.T) {
 	mockRepo := new(MockBusinessRepository)
-	service := NewService(mockRepo, nil, nil)
+	service := NewService(nil, mockRepo, nil, nil)
 
 	t.Run("Delete Offline Business - Success", func(t *testing.T) {
 		id := uint64(1001)

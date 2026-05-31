@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/wend/cmdb-backend/internal/core/auditlog"
 	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -123,6 +124,7 @@ func (s *service) CreateSet(ctx context.Context, req *types.CreateSetRequest) (*
 	}); err != nil {
 		return nil, err
 	}
+	auditlog.Record(s.db, "set", "create", set.ID, set.BusinessID, set.Name, business.Name)
 	return set, nil
 }
 
@@ -177,6 +179,7 @@ func (s *service) UpdateSet(ctx context.Context, id uint64, req *types.UpdateSet
 		return nil, err
 	}
 
+	auditlog.Record(s.db, "set", "update", updated.ID, updated.BusinessID, updated.Name, "")
 	return s.GetSet(ctx, id)
 }
 
@@ -189,12 +192,19 @@ func (s *service) DeleteSet(ctx context.Context, id uint64) error {
 		return fmt.Errorf("集群下还有 %d 个模块，无法删除", moduleCount)
 	}
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	var set types.Set
+	s.db.Select("id", "name", "business_id").First(&set, id)
+
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		if err := s.mainline.WithDB(tx).DeleteNodeByRef(ctx, string(types.NodeTypeSet), fmt.Sprintf("%d", id)); err != nil {
 			return err
 		}
 		return tx.Delete(&types.Set{}, id).Error
-	})
+	}); err != nil {
+		return err
+	}
+	auditlog.Record(s.db, "set", "delete", id, set.BusinessID, set.Name, "")
+	return nil
 }
 
 // ========== 模块（Module）操作 ==========
@@ -225,6 +235,7 @@ func (s *service) CreateModule(ctx context.Context, req *types.CreateModuleReque
 	}); err != nil {
 		return nil, err
 	}
+	auditlog.Record(s.db, "module", "create", module.ID, module.BusinessID, module.Name, "")
 	return module, nil
 }
 
@@ -316,6 +327,7 @@ func (s *service) UpdateModule(ctx context.Context, id uint64, req *types.Update
 		return nil, err
 	}
 
+	auditlog.Record(s.db, "module", "update", updated.ID, updated.BusinessID, updated.Name, "")
 	return s.GetModule(ctx, id)
 }
 
@@ -339,12 +351,19 @@ func (s *service) DeleteModule(ctx context.Context, id uint64) error {
 		return fmt.Errorf("模块下还有 %d 台主机，无法删除", hostCount)
 	}
 
-	return s.db.Transaction(func(tx *gorm.DB) error {
+	var module types.Module
+	s.db.Select("id", "name", "business_id").First(&module, id)
+
+	if err := s.db.Transaction(func(tx *gorm.DB) error {
 		if err := s.mainline.WithDB(tx).DeleteNodeByRef(ctx, string(types.NodeTypeModule), fmt.Sprintf("%d", id)); err != nil {
 			return err
 		}
 		return tx.Delete(&types.Module{}, id).Error
-	})
+	}); err != nil {
+		return err
+	}
+	auditlog.Record(s.db, "module", "delete", id, module.BusinessID, module.Name, "")
+	return nil
 }
 
 // ========== 主机转移 ==========

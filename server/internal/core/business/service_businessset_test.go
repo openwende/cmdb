@@ -88,7 +88,7 @@ func TestCreateBusinessSet_Success(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -128,7 +128,7 @@ func TestCreateBusinessSet_AutoGenerateIdentifier(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -168,7 +168,7 @@ func TestCreateBusinessSet_BusinessNotFound(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -198,7 +198,7 @@ func TestCreateBusinessSet_RepositoryError(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -237,7 +237,7 @@ func TestCreateBusinessSet_RepositoryError(t *testing.T) {
 func TestGetBusinessSet_Success(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -266,7 +266,7 @@ func TestGetBusinessSet_Success(t *testing.T) {
 func TestGetBusinessSet_NotFound(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -291,7 +291,7 @@ func TestGetBusinessSet_NotFound(t *testing.T) {
 func TestListBusinessSets_MultipleWithPagination(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -321,7 +321,7 @@ func TestListBusinessSets_MultipleWithPagination(t *testing.T) {
 func TestListBusinessSets_Empty(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -346,7 +346,7 @@ func TestListBusinessSets_Empty(t *testing.T) {
 func TestUpdateBusinessSet_AllFields(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -399,7 +399,7 @@ func TestUpdateBusinessSet_AllFields(t *testing.T) {
 func TestUpdateBusinessSet_IdentifierConflict(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -435,7 +435,7 @@ func TestUpdateBusinessSet_IdentifierConflict(t *testing.T) {
 func TestUpdateBusinessSet_NotFound(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -462,7 +462,7 @@ func TestUpdateBusinessSet_NotFound(t *testing.T) {
 func TestUpdateBusinessSet_PartialUpdate(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -504,7 +504,7 @@ func TestUpdateBusinessSet_PartialUpdate(t *testing.T) {
 func TestDeleteBusinessSet_Success(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -524,7 +524,7 @@ func TestDeleteBusinessSet_Success(t *testing.T) {
 func TestDeleteBusinessSet_NotFound(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -549,7 +549,7 @@ func TestAddBusinessToSet_Success(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -584,7 +584,7 @@ func TestAddBusinessToSet_BusinessNotFound(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -612,7 +612,7 @@ func TestAddBusinessToSet_DuplicateMember(t *testing.T) {
 	// Arrange
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(mockBusinessRepo, mockBusinessSetRepo, nil)
+	service := NewService(nil, mockBusinessRepo, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -649,7 +649,7 @@ func TestAddBusinessToSet_DuplicateMember(t *testing.T) {
 func TestRemoveBusinessFromSet_Success(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	businessSetID := uuid.New()
@@ -669,7 +669,7 @@ func TestRemoveBusinessFromSet_Success(t *testing.T) {
 func TestRemoveBusinessFromSet_NonExistentMember(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	businessSetID := uuid.New()
@@ -694,7 +694,7 @@ func TestRemoveBusinessFromSet_NonExistentMember(t *testing.T) {
 func TestListBusinessSetMembers_Multiple(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	businessSetID := uuid.New()
@@ -717,7 +717,7 @@ func TestListBusinessSetMembers_Multiple(t *testing.T) {
 func TestListBusinessSetMembers_Empty(t *testing.T) {
 	// Arrange
 	mockBusinessSetRepo := new(MockBusinessSetRepository)
-	service := NewService(nil, mockBusinessSetRepo, nil)
+	service := NewService(nil, nil, mockBusinessSetRepo, nil)
 
 	ctx := context.Background()
 	businessSetID := uuid.New()

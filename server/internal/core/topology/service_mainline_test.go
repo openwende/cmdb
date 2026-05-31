@@ -265,7 +265,8 @@ func TestInitializeBusinessTopologyBuildsMainlineTree(t *testing.T) {
 
 	var count int64
 	require.NoError(t, db.Table("mainline_instances").Count(&count).Error)
-	require.EqualValues(t, 3, count)
+	// 业务 + 空闲机池(set) + 三内置模块(空闲机/故障机/待回收) = 5
+	require.EqualValues(t, 5, count)
 
 	tree, err := svc.GetTopologyTree(ctx, &types.GetTopologyTreeRequest{
 		BusinessID: &bizID,
@@ -276,11 +277,18 @@ func TestInitializeBusinessTopologyBuildsMainlineTree(t *testing.T) {
 	require.Equal(t, types.NodeTypeBusiness, tree[0].NodeType)
 	require.Len(t, tree[0].Children, 1)
 	require.Equal(t, true, tree[0].Children[0].IsDefault)
-	require.Len(t, tree[0].Children[0].Children, 1)
-	require.Equal(t, true, tree[0].Children[0].Children[0].IsDefault)
+	idleModules := tree[0].Children[0].Children
+	require.Len(t, idleModules, 3)
+	defaults := 0
+	for _, m := range idleModules {
+		if m.IsDefault {
+			defaults++
+		}
+	}
+	require.Equal(t, 1, defaults) // 仅"空闲机"为默认落点
 }
 
-func TestDefaultIdleModuleCountsResourcePoolHosts(t *testing.T) {
+func TestDefaultIdleModuleExcludesResourcePoolHosts(t *testing.T) {
 	db := setupTopologyTestDB(t)
 	svc := newTestTopologyService(db)
 	ctx := context.Background()
@@ -312,13 +320,21 @@ func TestDefaultIdleModuleCountsResourcePoolHosts(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, tree, 1)
 	require.Len(t, tree[0].Children, 1)
-	require.Len(t, tree[0].Children[0].Children, 1)
+	require.Len(t, tree[0].Children[0].Children, 3)
 
-	idleModule := tree[0].Children[0].Children[0]
+	// 找到默认(空闲机)模块
+	var idleModule *types.TopologyTreeNode
+	for i := range tree[0].Children[0].Children {
+		if tree[0].Children[0].Children[i].IsDefault {
+			idleModule = &tree[0].Children[0].Children[i]
+		}
+	}
+	require.NotNil(t, idleModule)
 	require.Equal(t, types.NodeTypeModule, idleModule.NodeType)
-	require.True(t, idleModule.IsDefault)
-	require.Equal(t, 2, idleModule.Extra["host_count"])
-	require.Equal(t, 2, idleModule.ChildCount)
+	// 主机仅在 resource_pool_hosts（资源池），未分配进业务空闲机模块（host_module_relations），
+	// 故空闲机 host_count 必须为 0——资源池主机不再被投影为业务空闲机（R7 / countModuleHosts 修复）。
+	require.Equal(t, 0, idleModule.Extra["host_count"])
+	require.Equal(t, 0, idleModule.ChildCount)
 }
 
 func TestCreateAndMoveModuleKeepsMainlineTreeInSync(t *testing.T) {

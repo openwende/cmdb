@@ -8,6 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
+
+	"github.com/wend/cmdb-backend/internal/core/auditlog"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
@@ -37,14 +40,15 @@ type Service interface {
 type TopologyInitializer func(ctx context.Context, businessID uint64) error
 
 type service struct {
+	db              *gorm.DB
 	businessRepo    storage.BusinessRepository
 	businessSetRepo storage.BusinessSetRepository
 	personnelRepo   storage.BusinessPersonnelRepository
 	initTopology    TopologyInitializer
 }
 
-func NewService(businessRepo storage.BusinessRepository, businessSetRepo storage.BusinessSetRepository, personnelRepo storage.BusinessPersonnelRepository) Service {
-	return &service{businessRepo: businessRepo, businessSetRepo: businessSetRepo, personnelRepo: personnelRepo}
+func NewService(db *gorm.DB, businessRepo storage.BusinessRepository, businessSetRepo storage.BusinessSetRepository, personnelRepo storage.BusinessPersonnelRepository) Service {
+	return &service{db: db, businessRepo: businessRepo, businessSetRepo: businessSetRepo, personnelRepo: personnelRepo}
 }
 
 // SetTopologyInitializer injects the topology initializer after construction to break the
@@ -135,6 +139,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		business.Testers = req.Testers
 		business.Bizops = req.Bizops
 	}
+	auditlog.Record(s.db, "business", "create", business.ID, business.ID, business.Name, business.Name)
 	return business, nil
 }
 
@@ -199,6 +204,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID string, id uint64
 		return nil, err
 	}
 
+	auditlog.Record(s.db, "business", "update", business.ID, business.ID, business.Name, business.Name)
 	return business, nil
 }
 
@@ -214,7 +220,11 @@ func (s *service) DeleteBusiness(ctx context.Context, tenantID string, id uint64
 		return apperrors.InvalidStateError("business", business.Lifecycle, "offline")
 	}
 
-	return s.businessRepo.DeleteBusiness(ctx, tenantID, id)
+	if err := s.businessRepo.DeleteBusiness(ctx, tenantID, id); err != nil {
+		return err
+	}
+	auditlog.Record(s.db, "business", "delete", business.ID, business.ID, business.Name, business.Name)
+	return nil
 }
 
 func (s *service) ListBusinesses(ctx context.Context, tenantID string, limit, offset int) ([]types.Business, int, error) {

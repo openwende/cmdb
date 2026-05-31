@@ -61,7 +61,7 @@ func (m *MockBusinessPersonnelRepository) RemoveByBusinessAndRole(ctx context.Co
 func TestGetBusiness_Success_WithPersonnel(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -102,7 +102,7 @@ func TestGetBusiness_Success_WithPersonnel(t *testing.T) {
 
 func TestGetBusiness_Success_WithoutPersonnelRepo(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
-	service := NewService(mockBusinessRepo, nil, nil)
+	service := NewService(nil, mockBusinessRepo, nil, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -131,7 +131,7 @@ func TestGetBusiness_Success_WithoutPersonnelRepo(t *testing.T) {
 func TestGetBusiness_NotFound(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -150,7 +150,7 @@ func TestGetBusiness_NotFound(t *testing.T) {
 func TestGetBusiness_PersonnelError(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -181,7 +181,7 @@ func TestGetBusiness_PersonnelError(t *testing.T) {
 func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -224,7 +224,7 @@ func TestListBusinesses_Success_WithPersonnel(t *testing.T) {
 func TestListBusinesses_EmptyResult(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -244,7 +244,7 @@ func TestListBusinesses_EmptyResult(t *testing.T) {
 func TestListBusinesses_Pagination(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -270,7 +270,7 @@ func TestListBusinesses_Pagination(t *testing.T) {
 func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -312,7 +312,7 @@ func TestListBusinesses_BatchPersonnelLoading(t *testing.T) {
 func TestListBusinesses_PersonnelError(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
 	mockPersonnelRepo := new(MockBusinessPersonnelRepository)
-	service := NewService(mockBusinessRepo, nil, mockPersonnelRepo)
+	service := NewService(nil, mockBusinessRepo, nil, mockPersonnelRepo)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"
@@ -338,7 +338,7 @@ func TestListBusinesses_PersonnelError(t *testing.T) {
 
 func TestListBusinesses_WithoutPersonnelRepo(t *testing.T) {
 	mockBusinessRepo := new(MockBusinessRepository)
-	service := NewService(mockBusinessRepo, nil, nil)
+	service := NewService(nil, mockBusinessRepo, nil, nil)
 
 	ctx := context.Background()
 	tenantID := "00000000-0000-0000-0000-000000000001"

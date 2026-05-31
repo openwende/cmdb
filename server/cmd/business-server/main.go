@@ -106,7 +106,7 @@ func main() {
 	personnelRepo := storage.NewBusinessPersonnelRepository(db.DB())
 
 	// Initialize Business Services
-	businessService := business.NewService(businessRepo, businessSetRepo, personnelRepo)
+	businessService := business.NewService(db.DB(), businessRepo, businessSetRepo, personnelRepo)
 
 	// Initialize Dynamic Engine Repositories
 	modelRepo := storage.NewModelRepository(db.DB())
