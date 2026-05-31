@@ -9,6 +9,14 @@ import { useAppMessage } from '@/utils/message';
 import { addHostsToPoolDirectory, assignHostsToBusinessIdlePool } from '@/api/services/resource';
 import './style.css';
 
+// 兼容 import(BatchOperationResult: errors[]) 与 allocate(ResourcePoolLifecycleResult: failed_items[]) 两种 data 形状。
+interface AssignResultPayload {
+  successful?: number;
+  failed?: number;
+  errors?: string[];
+  failed_items?: Array<{ message?: string }>;
+}
+
 interface AssignModalProps {
   assignType: AssignType;
   selectedRowKeys: React.Key[];
@@ -36,22 +44,43 @@ const AssignModal: React.FC<AssignModalProps> = ({
     }
   }, [assignType, directories.length, fetchDirectories, dirLoading]);
 
+  // allocate / import 后端均返回信封 { code, data: { successful, failed, errors | failed_items } }，
+  // 且无论成败都回 HTTP 200，故必须校验 body 而非只看 HTTP 状态（参照 TransferHost.assertTransferResult）。
+  const assertAssignResult = (response: unknown) => {
+    const result = (response as { data?: AssignResultPayload } | undefined)?.data;
+    const successful = result?.successful ?? 0;
+    const failed = result?.failed ?? 0;
+    if (failed > 0 || successful === 0) {
+      const detail = result?.errors?.[0] ?? result?.failed_items?.[0]?.message;
+      throw new Error(detail || t('host.assign.modal.failedDetail', { successful, failed }));
+    }
+  };
+
+  const getAssignErrorMessage = (error: unknown) => {
+    if (typeof error === 'object' && error !== null && 'response' in error) {
+      const response = (error as { response?: { data?: { error?: string } } }).response;
+      if (response?.data?.error) return response.data.error;
+    }
+    if (error instanceof Error && error.message) return error.message;
+    return t('host.assign.modal.error');
+  };
+
   const onOk = async () => {
     if (selected === null) return;
     const hostIds = selectedRowKeys.map(String);
     setLoading(true);
     try {
-      if (assignType === AssignType.Biz) {
-        await assignHostsToBusinessIdlePool(selected as number, hostIds);
-      } else {
-        await addHostsToPoolDirectory(selected as number, hostIds);
-      }
+      const response =
+        assignType === AssignType.Biz
+          ? await assignHostsToBusinessIdlePool(selected as number, hostIds)
+          : await addHostsToPoolDirectory(selected as number, hostIds);
+      assertAssignResult(response);
       message.success(t('host.assign.modal.success'));
       setSelected(null);
       onClose();
       onSuccess?.(assignType);
-    } catch {
-      message.error(t('host.assign.modal.error'));
+    } catch (error) {
+      message.error(getAssignErrorMessage(error));
     } finally {
       setLoading(false);
     }

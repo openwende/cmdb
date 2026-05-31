@@ -1756,7 +1756,8 @@
           "pool": "目录列表"
         },
         "success": "分配成功",
-        "error": "分配失败，请稍后重试"
+        "error": "分配失败，请稍后重试",
+        "failedDetail": "分配失败：成功 {{successful}} 台，失败 {{failed}} 台"
       }
     }
   },

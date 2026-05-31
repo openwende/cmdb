@@ -1756,7 +1756,8 @@
           "pool": "Directory list"
         },
         "success": "Assigned successfully",
-        "error": "Assignment failed, please try again"
+        "error": "Assignment failed, please try again",
+        "failedDetail": "Assignment failed: {{successful}} succeeded, {{failed}} failed"
       }
     }
   },
