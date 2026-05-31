@@ -747,31 +747,17 @@ func (s *service) countModuleHosts(ctx context.Context, refID string) (int, erro
 		return 0, err
 	}
 
-	var module types.Module
-	err = s.db.WithContext(ctx).
-		Select("id", "is_default").
-		Where("id = ? AND deleted_at IS NULL", moduleID).
-		First(&module).
-		Error
-	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
-		return 0, err
-	}
-
+	// 业务模块（含 is_default 的"空闲机"模块）的主机归属统一记在 host_module_relations，
+	// 必须按 module_id 计数，与 buildModuleHostNodes 的列表口径一致。
+	// 不要对 is_default 模块改数 resource_pool_hosts——那是资源池：主机分配进业务后已移出池，
+	// 会让空闲机模块明明有主机却显示 0（与节点主机列表自相矛盾，即"分配后没出现在业务空闲机池"）。
 	var hostCount int64
-	query := s.db.WithContext(ctx)
-	if module.IsDefault {
-		query = query.Table("resource_pool_hosts rph").
-			Joins("JOIN hosts ON hosts.id = rph.host_id").
-			Where("hosts.deleted_at IS NULL").
-			Distinct("rph.host_id")
-	} else {
-		query = query.Table("host_module_relations hmr").
-			Joins("JOIN hosts ON hosts.id = hmr.host_id").
-			Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID).
-			Distinct("hmr.host_id")
-	}
-
-	if err := query.Count(&hostCount).Error; err != nil {
+	if err := s.db.WithContext(ctx).
+		Table("host_module_relations hmr").
+		Joins("JOIN hosts ON hosts.id = hmr.host_id").
+		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID).
+		Distinct("hmr.host_id").
+		Count(&hostCount).Error; err != nil {
 		return 0, err
 	}
 	return int(hostCount), nil
@@ -1025,7 +1011,23 @@ func (s *service) GetStatistics(ctx context.Context, businessID *uint64) (*types
 
 // ========== 初始化默认拓扑 ==========
 
-// InitializeBusinessTopology 为业务初始化默认拓扑结构（幂等）
+// builtinIdleModules 是业务"空闲机池"下的内置模块（蓝鲸语义）。
+// 仅"空闲机"为默认落点（is_default，主机分配/上交回到这里）；故障机/待回收是普通内置模块。
+var builtinIdleModules = []struct {
+	Name        string
+	Description string
+	IsDefault   bool
+	SortOrder   int
+}{
+	{Name: "空闲机", Description: "未分配的空闲主机", IsDefault: true, SortOrder: -3},
+	{Name: "故障机", Description: "故障主机", IsDefault: false, SortOrder: -2},
+	{Name: "待回收", Description: "待回收主机", IsDefault: false, SortOrder: -1},
+}
+
+// InitializeBusinessTopology 为业务初始化默认拓扑结构（幂等）。
+// 幂等地确保"空闲机池"集群及其下三个内置模块（空闲机/故障机/待回收）都存在——
+// 该方法在每次取拓扑树时对每个业务调用一次（见 listBusinessNodes 的补偿调用），
+// 因此对仅有"空闲机"的旧业务会自动补建故障机/待回收。
 func (s *service) InitializeBusinessTopology(ctx context.Context, businessID uint64) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
 		txMainline := s.mainline.WithDB(tx)
@@ -1040,46 +1042,51 @@ func (s *service) InitializeBusinessTopology(ctx context.Context, businessID uin
 			return err
 		}
 
-		// 已有空闲机池则跳过
-		var existCount int64
-		if err := tx.Model(&types.Set{}).
-			Where("business_id = ? AND is_default = true AND deleted_at IS NULL", businessID).
-			Count(&existCount).Error; err != nil {
-			return err
-		}
-		if existCount > 0 {
-			return nil
-		}
-
-		// 创建默认集群（空闲机池）
-		defaultSet := &types.Set{
-			BusinessID:  businessID,
-			Name:        "空闲机池",
-			Description: "未分配到具体模块的主机",
-			IsDefault:   true,
-			SortOrder:   -1, // 排在最前面
-		}
-		if err := tx.Create(defaultSet).Error; err != nil {
-			return err
-		}
-		if _, err := txMainline.SyncSet(ctx, defaultSet); err != nil {
+		// 确保默认集群（空闲机池）存在（幂等）
+		var defaultSet types.Set
+		err := tx.Where("business_id = ? AND is_default = true AND deleted_at IS NULL", businessID).
+			First(&defaultSet).Error
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			defaultSet = types.Set{
+				BusinessID:  businessID,
+				Name:        "空闲机池",
+				Description: "未分配到具体模块的主机",
+				IsDefault:   true,
+				SortOrder:   -1, // 排在最前面
+			}
+			if err := tx.Create(&defaultSet).Error; err != nil {
+				return err
+			}
+			if _, err := txMainline.SyncSet(ctx, &defaultSet); err != nil {
+				return err
+			}
+		} else if err != nil {
 			return err
 		}
 
-		// 创建默认模块（空闲机）
-		defaultModule := &types.Module{
-			SetID:       defaultSet.ID,
-			BusinessID:  businessID,
-			Name:        "空闲机",
-			Description: "未分配的空闲主机",
-			IsDefault:   true,
-			SortOrder:   -1,
-		}
-		if err := tx.Create(defaultModule).Error; err != nil {
-			return err
-		}
-		if _, err := txMainline.SyncModule(ctx, defaultModule); err != nil {
-			return err
+		// 确保空闲机池下的内置模块都存在（幂等补建，兼容只有"空闲机"的旧业务）
+		for _, m := range builtinIdleModules {
+			var module types.Module
+			err := tx.Where("set_id = ? AND name = ? AND deleted_at IS NULL", defaultSet.ID, m.Name).
+				First(&module).Error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				module = types.Module{
+					SetID:       defaultSet.ID,
+					BusinessID:  businessID,
+					Name:        m.Name,
+					Description: m.Description,
+					IsDefault:   m.IsDefault,
+					SortOrder:   m.SortOrder,
+				}
+				if err := tx.Create(&module).Error; err != nil {
+					return err
+				}
+				if _, err := txMainline.SyncModule(ctx, &module); err != nil {
+					return err
+				}
+			} else if err != nil {
+				return err
+			}
 		}
 
 		return nil
