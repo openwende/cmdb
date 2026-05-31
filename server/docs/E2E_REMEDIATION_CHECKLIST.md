@@ -53,11 +53,11 @@
   - [~] 前端：合成逻辑已因后端提供真实模块而**惰性失效**（`existingTitles` 去重不再合成）；转移弹窗 `filterTransferNodesByMode` 已改为认"空闲机池下所有模块"使三模块可选（commit `b2dd430`）。`topologyAdapter.ts` 的 `REQUIRED_IDLE_MODULES` 合成块现为死代码，待清理
 - **附带修复**：`countModuleHosts` 此前对 is_default 的空闲机模块去数 `resource_pool_hosts`（资源池），主机分配进业务后池空→空闲机 `host_count` 恒 0、"分配后没出现在业务空闲机池"。已改为按 `module_id` 数 `host_module_relations`（commit `f246b93`），与节点主机列表口径一致
 
-### [ ] R6　allocate 对整数 host_id 直接 4xx/5xx
+### [x] R6　allocate 对整数 host_id 直接 4xx/5xx（已修，commit `8fa8850`）
 - **现象**：`host_ids` 传 `["2","3"]`（display_id）→ 后端 400 `invalid UUID length: 1`，原始错误裸暴露。
 - **根因**：后端用 UUID 解析 host_id，无类型容错与友好报错。前端目前侥幸传 UUID（`PoolHostStore` 适配 `bk_host_id: item.id`，`[前端] src/store/PoolHostStore.ts:66`）规避了，但接口本身脆弱。
 - **修复**：
-  - [ ] 后端：host_id 解析失败返回结构化业务错误，不裸抛 UUID 解析异常
+  - [x] 后端：host_id 解析失败返回结构化业务错误，不裸抛 UUID 解析异常 —— **已完成（commit `8fa8850`）；`bindHostRequestError` 套用于 allocate/import/move/reclaim，整数 host_id 返回 `{code:INVALID_HOST_ID}` + 400，API 实测通过**
 
 ### [ ] R7　资源池主机被投影为"业务空闲机"主机
 - **现象**：pooled 主机同时出现在业务空闲机模块（`host_count` 与 `idle_module-1/hosts` 都含它们），叠加 R1 造成"看着在空闲机、其实没分配、资源池还在"的认知混乱。
@@ -69,10 +69,10 @@
 - **修复**：
   - [ ] 后端：统一响应包裹（`code`/`success` 二选一）、统一分页字段、统一批量状态码语义
 
-### [ ] R9　主机 ID 展示不一致
+### [x] R9　主机 ID 展示不一致（已修，commit `af782ab` 后端 + `a964da2` 前端）
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。
 - **修复**：
-  - [ ] 前端：统一以 `display_id` 展示，UUID 仅作内部标识（业务拓扑列 `[前端] src/pages/Business/BusinessTopology/HostList/index.tsx:381-386`）
+  - [x] 前端：统一以 `display_id` 展示，UUID 仅作内部标识（业务拓扑列）—— **已完成（后端 node-hosts 补 `display_id` commit `af782ab`；前端 ID 列改 `display_id` commit `a964da2`）；浏览器实测业务拓扑空闲机列表 ID 列显示 2/3（与资源池页一致）**
 
 ---
 
