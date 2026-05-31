@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -64,14 +65,27 @@ type Service interface {
 type service struct {
 	db       *gorm.DB
 	mainline mainline.Service
+	hms      host_membership.Service // 阶段 1：注入后主机归属变更走统一通道（nil 时回退旧逻辑）
 }
 
-// NewService 创建服务实例
-func NewService(db *gorm.DB, mainlineSvc mainline.Service) Service {
+// Option 服务可选项。
+type Option func(*service)
+
+// WithHostMembership 注入主机归属统一服务（阶段 1 接入，使归属变更走单一通道）。
+func WithHostMembership(hms host_membership.Service) Option {
+	return func(s *service) { s.hms = hms }
+}
+
+// NewService 创建服务实例。opts 向后兼容：现有 NewService(db, mainlineSvc) 调用不受影响。
+func NewService(db *gorm.DB, mainlineSvc mainline.Service, opts ...Option) Service {
 	if mainlineSvc == nil {
 		mainlineSvc = mainline.NewService(db)
 	}
-	return &service{db: db, mainline: mainlineSvc}
+	s := &service{db: db, mainline: mainlineSvc}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 func (s *service) DB() *gorm.DB {
@@ -418,6 +432,12 @@ func (s *service) removeIdleModuleRelation(tx *gorm.DB, hostID uuid.UUID, target
 
 // TransferHostsToPool 将主机转移到资源池（空闲机池）
 func (s *service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error) {
+	// 阶段 1：注入统一归属通道后，转回资源池经 HostMembershipService
+	// （修 R2 主机蒸发：删模块/业务关系 + 写 resource_pool_hosts，原子）。
+	if s.hms != nil {
+		return s.transferToPoolViaMembership(ctx, hostIDs)
+	}
+
 	result := &types.BatchOperationResult{
 		Total:  len(hostIDs),
 		Errors: make([]string, 0),
@@ -450,6 +470,35 @@ func (s *service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) 
 	}
 
 	return result, nil
+}
+
+// transferToPoolViaMembership 经统一归属通道把主机转回资源池默认目录（阶段 1，修 R2）。
+func (s *service) transferToPoolViaMembership(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error) {
+	dirID, err := s.defaultDirectoryID(ctx)
+	if err != nil {
+		return nil, err
+	}
+	res, err := s.hms.Move(ctx, hostIDs,
+		host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: dirID},
+		host_membership.MoveOptions{Source: types.HostMembershipSourceReclaim, By: "system"})
+	if err != nil {
+		return nil, err
+	}
+	return &types.BatchOperationResult{
+		Total:      res.Total,
+		Successful: res.Successful,
+		Failed:     res.Failed,
+		Errors:     res.Errors,
+	}, nil
+}
+
+// defaultDirectoryID 返回资源池默认目录 ID。
+func (s *service) defaultDirectoryID(ctx context.Context) (uint64, error) {
+	var dir types.ResourceDirectory
+	if err := s.db.WithContext(ctx).Where("is_default = ?", true).Order("id").First(&dir).Error; err != nil {
+		return 0, fmt.Errorf("默认资源目录不存在: %w", err)
+	}
+	return dir.ID, nil
 }
 
 // ========== 节点移动 ==========
@@ -1175,21 +1224,25 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 			Where("hosts.deleted_at IS NULL").
 			Where("modules.id = ?", moduleID)
 	case "idle_set", "idle_module", "idle":
+		// 阶段 1（R7 根治）：业务空闲机不再等同全局资源池（不再 JOIN resource_pool_hosts），
+		// 改读该业务空闲机模块的真实归属（host_module_relations），按业务隔离。
+		if idleBinding == nil {
+			return []TopologyHostRow{}, 0, nil
+		}
 		query = db.Table("hosts").
-			Select(`
-				hosts.id AS host_id,
-				hosts.primary_ip AS inner_ipv4,
-				'' AS inner_ipv6,
-				cloud_areas.id AS cloud_area_id,
-				cloud_areas.name AS cloud_area_name,
-				NULL AS module_id,
-				NULL AS module_name,
-				NULL AS set_id,
-				NULL AS set_name,
-				hosts.status AS status`).
-			Joins("JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
+			Select(baseSelect).
+			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
+			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
 			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
 			Where("hosts.deleted_at IS NULL")
+		if nodeType == "idle_set" && idleBinding.setID != 0 {
+			query = query.Where("modules.set_id = ?", idleBinding.setID)
+		} else if idleBinding.moduleID != 0 {
+			query = query.Where("modules.id = ?", idleBinding.moduleID)
+		} else {
+			return []TopologyHostRow{}, 0, nil
+		}
 	default:
 		return nil, 0, fmt.Errorf("无效的节点类型")
 	}

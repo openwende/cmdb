@@ -380,11 +380,17 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 		idleHostID.String(),
 		bizID,
 	).Error)
+	// 新语义（R7 根治）：业务空闲机 = 该业务空闲机模块（is_default set/module）的真实归属，不再等同全局资源池。
+	idleSetID, idleModuleID := uint64(900), uint64(900)
 	require.NoError(t, db.Exec(
-		`INSERT INTO resource_pool_hosts (host_id, directory_id, imported_at, imported_by, remark)
-		VALUES (?, 1, CURRENT_TIMESTAMP, 'tester', 'idle host')`,
-		idleHostID.String(),
-	).Error)
+		`INSERT INTO sets (id, business_id, name, is_default, sort_order, created_at, updated_at)
+		VALUES (?, ?, '空闲机池', 1, -1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`, idleSetID, bizID).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO modules (id, set_id, business_id, name, is_default, sort_order, created_at, updated_at)
+		VALUES (?, ?, ?, '空闲机', 1, -1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`, idleModuleID, idleSetID, bizID).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_module_relations (host_id, module_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
+		idleHostID.String(), idleModuleID).Error)
 
 	router := gin.New()
 	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
@@ -438,11 +444,11 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 			wantSet:    &setNode.ID,
 		},
 		{
-			name:       "idle scope returns pooled hosts",
-			nodeID:     "idle_set-1",
+			name:       "idle scope returns business idle-module hosts",
+			nodeID:     fmt.Sprintf("idle_set-%d", idleSetID),
 			wantHostID: idleHostID.String(),
-			wantModule: nil,
-			wantSet:    nil,
+			wantModule: &idleModuleID,
+			wantSet:    &idleSetID,
 		},
 	}
 

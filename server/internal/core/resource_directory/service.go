@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -34,14 +35,63 @@ type Service interface {
 }
 
 type service struct {
-	db *gorm.DB
+	db  *gorm.DB
+	hms host_membership.Service // 阶段 1：注入后 allocate/reclaim 走统一归属通道（nil 时回退旧逻辑）
 }
 
 const projectionContainsRelType = "contains"
 
-// NewService 创建服务实例
-func NewService(db *gorm.DB) Service {
-	return &service{db: db}
+// Option 服务可选项。
+type Option func(*service)
+
+// WithHostMembership 注入主机归属统一服务（阶段 1 接入，allocate/reclaim 经单一通道并停写 v2 投影）。
+func WithHostMembership(hms host_membership.Service) Option {
+	return func(s *service) { s.hms = hms }
+}
+
+// NewService 创建服务实例。opts 向后兼容：现有 NewService(db) 调用不受影响。
+func NewService(db *gorm.DB, opts ...Option) Service {
+	s := &service{db: db}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
+}
+
+// allocateViaMembership 经统一归属通道把主机分配进业务空闲机模块（阶段 1，修 R1；不再写 v2 投影）。
+func (s *service) allocateViaMembership(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
+	res, err := s.hms.Move(ctx, req.HostIDs,
+		host_membership.NodeRef{Kind: types.NodeKindBizModule, ID: req.TargetModuleID},
+		host_membership.MoveOptions{Source: types.HostMembershipSourceAllocate, By: "system"})
+	if err != nil {
+		return nil, err
+	}
+	return lifecycleResultFrom(res, types.ResourceStatusAllocated), nil
+}
+
+// reclaimViaMembership 经统一归属通道把主机回收到资源池目录（阶段 1；不再写 v2 投影）。
+func (s *service) reclaimViaMembership(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
+	res, err := s.hms.Move(ctx, req.HostIDs,
+		host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: req.DirectoryID},
+		host_membership.MoveOptions{Source: types.HostMembershipSourceReclaim, By: reclaimedBy})
+	if err != nil {
+		return nil, err
+	}
+	return lifecycleResultFrom(res, types.ResourceStatusPooled), nil
+}
+
+func lifecycleResultFrom(res *host_membership.Result, status string) *types.ResourcePoolLifecycleResult {
+	out := &types.ResourcePoolLifecycleResult{
+		Total:          res.Total,
+		Successful:     res.Successful,
+		Failed:         res.Failed,
+		SucceededItems: make([]types.ResourcePoolLifecycleItem, 0),
+		FailedItems:    make([]types.ResourcePoolLifecycleItem, 0),
+	}
+	for _, e := range res.Errors {
+		out.FailedItems = append(out.FailedItems, types.ResourcePoolLifecycleItem{ResourceStatus: status, Message: e})
+	}
+	return out
 }
 
 // ========== 资源目录管理 ==========
@@ -403,6 +453,12 @@ func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 
 // AllocateHosts 分配主机到业务模块
 func (s *service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
+	// 阶段 1：注入统一归属通道后，分配到业务空闲机经 HostMembershipService
+	// （主机进该业务空闲机模块 + 移出资源池，原子；不再依赖/阻断于 v2 投影，修 R1）。
+	if s.hms != nil {
+		return s.allocateViaMembership(ctx, req)
+	}
+
 	// 验证目标模块存在
 	var module types.Module
 	if err := s.db.First(&module, req.TargetModuleID).Error; err != nil {
@@ -482,6 +538,11 @@ func (s *service) AllocateHosts(ctx context.Context, req *types.AllocateHostsReq
 
 // ReclaimHosts 回收主机到资源池
 func (s *service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
+	// 阶段 1：注入统一归属通道后，回收经 HostMembershipService（不再写 v2 投影）。
+	if s.hms != nil {
+		return s.reclaimViaMembership(ctx, req, reclaimedBy)
+	}
+
 	// 验证目录存在
 	var dir types.ResourceDirectory
 	if err := s.db.First(&dir, req.DirectoryID).Error; err != nil {
