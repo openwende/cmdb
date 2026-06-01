@@ -31,6 +31,35 @@ func NewAggregateService(db *gorm.DB, dynamicModelService dynamic_model.Service)
 	}
 }
 
+// InstanceStatistics 按模型类型聚合实例数量，供运营概览"实例统计"分布图（R4）。
+// 与概览实例口径一致：mainline 实例(set/module，排除 business) + 动态模型实例(resources)，
+// 按模型显示名(models.name，回退 uid)分组。
+func (s *AggregateService) InstanceStatistics(ctx context.Context) (*types.InstanceStatistics, error) {
+	out := &types.InstanceStatistics{ByModel: []types.HostStatBucket{}}
+	const sql = `
+		SELECT COALESCE(NULLIF(m.display_name, ''), sub.uid) AS name, sub.cnt AS count
+		FROM (
+			SELECT model_name AS uid, COUNT(*) AS cnt
+			FROM mainline_instances
+			WHERE deleted_at IS NULL AND model_name <> 'business'
+			GROUP BY model_name
+			UNION ALL
+			SELECT model_uid AS uid, COUNT(*) AS cnt
+			FROM resources
+			WHERE deleted_at IS NULL
+			GROUP BY model_uid
+		) sub
+		LEFT JOIN models m ON m.name = sub.uid
+		ORDER BY count DESC`
+	if err := s.db.WithContext(ctx).Raw(sql).Scan(&out.ByModel).Error; err != nil {
+		return nil, err
+	}
+	if out.ByModel == nil {
+		out.ByModel = []types.HostStatBucket{}
+	}
+	return out, nil
+}
+
 func (s *AggregateService) GetAggregateInstance(ctx context.Context, instanceKey string) (*types.AggregateInstanceView, error) {
 	modelUID, rawID, err := parseAggregateInstanceKey(instanceKey)
 	if err != nil {

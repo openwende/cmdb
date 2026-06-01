@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/core/instance"
 )
@@ -15,6 +16,18 @@ type InstanceAggregateHandler struct {
 
 func NewInstanceAggregateHandler(service *instance.AggregateService) *InstanceAggregateHandler {
 	return &InstanceAggregateHandler{service: service}
+}
+
+// GetInstanceStatistics 按模型类型聚合实例数量，供运营概览"实例统计"分布图（R4）。
+// 采用统一响应规范（R8）：response.OK → {"code":0,"data":{"by_model":[...]}}。
+// GET /api/v1/instances/statistics
+func (h *InstanceAggregateHandler) GetInstanceStatistics(c *gin.Context) {
+	stats, err := h.service.InstanceStatistics(c.Request.Context())
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.OK(c, stats)
 }
 
 func (h *InstanceAggregateHandler) GetInstance(c *gin.Context) {

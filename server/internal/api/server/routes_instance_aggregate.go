@@ -17,6 +17,7 @@ func RegisterInstanceAggregateRoutes(router *gin.Engine, dynamicModelService dyn
 	v1 := router.Group("/api/v1/instances")
 	{
 		v1.GET("", handler.ListInstances)
+		v1.GET("/statistics", handler.GetInstanceStatistics) // 运营概览实例分布图聚合数据
 		v1.GET("/:instanceKey/relation-capabilities", dynamicHandler.GetAggregateInstanceRelationCapabilities)
 		v1.GET("/:instanceKey", handler.GetInstance)
 	}
