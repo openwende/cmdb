@@ -45,24 +45,28 @@ vi.mock('react-router-dom', () => ({
 vi.mock('@/store/BusinessStore', () => ({
   BusinessType: {
     Business: 'business',
-    BusinessSet: 'business_set',
+    BusinessSet: 'businessSet',
   },
-  useBusinessStore: () => ({
-    currentBusiness: mockCurrentBusiness,
-    businessList: mockBusinessList,
-    businessSetList: mockBusinessSetList,
-    loading: false,
-    initialized: true,
-    loadBusinessData,
-    getBusinessById,
-    setCurrentBusiness,
-  }),
+  useBusinessStore: (selector?: any) => {
+    const state = {
+      currentBusiness: mockCurrentBusiness,
+      businessList: mockBusinessList,
+      businessSetList: mockBusinessSetList,
+      loading: false,
+      initialized: true,
+      loadBusinessData,
+      getBusinessById,
+      setCurrentBusiness,
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock('@/utils/routes', () => ({
   getBusinessTopologyPath: (id: string) => `/business/${id}/topology`,
   getBusinessSetTopologyPath: (id: string) => `/business-set/${id}/topology`,
-  isBusinessRelatedPage: () => true,
+  isBusinessRelatedPage: (pathname: string) =>
+    pathname.startsWith('/business/') || pathname.startsWith('/business-set/'),
   parseBusinessInfoFromUrl: () => {
     const match = mockPathname.match(/^\/business\/([^/]+)\/topology/);
     return match
@@ -147,6 +151,20 @@ describe('BusinessSelector layout props', () => {
         name: 'ProbeBiz',
         displayId: '1002',
       });
+    });
+  });
+
+  it('refreshes cached business data when entering the business section', async () => {
+    mockPathname = '/resource/business';
+    const { rerender } = render(<BusinessSelector collapsed={false} />);
+
+    expect(loadBusinessData).not.toHaveBeenCalled();
+
+    mockPathname = '/business/biz-1/topology';
+    rerender(<BusinessSelector collapsed />);
+
+    await waitFor(() => {
+      expect(loadBusinessData).toHaveBeenCalledWith(true);
     });
   });
 });

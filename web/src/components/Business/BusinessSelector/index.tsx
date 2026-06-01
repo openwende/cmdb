@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Select, Spin, Divider, Button } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -36,17 +36,34 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   const loadBusinessData = useBusinessStore((s) => s.loadBusinessData);
   const getBusinessById = useBusinessStore((s) => s.getBusinessById);
   const setCurrentBusiness = useBusinessStore((s) => s.setCurrentBusiness);
+  const wasBusinessPathRef = useRef(false);
 
   // Stable popup container so the antd Select dropdown's portal doesn't churn
   // its internal innerContainer state during the navigation cascade.
   const getPopupContainer = useCallback(() => document.body, []);
+  const isBusinessPath = isBusinessRelatedPage(location.pathname);
 
   useEffect(() => {
-    // 只在未初始化时加载数据
-    if (!initialized && !loading) {
-      loadBusinessData();
+    if (!isBusinessPath) {
+      wasBusinessPathRef.current = false;
+      return;
     }
-  }, [initialized, loading]); // 依赖 initialized 而不是 loadBusinessData
+
+    if (loading) {
+      return;
+    }
+
+    if (!initialized) {
+      wasBusinessPathRef.current = true;
+      void loadBusinessData();
+      return;
+    }
+
+    if (!wasBusinessPathRef.current) {
+      wasBusinessPathRef.current = true;
+      void loadBusinessData(true);
+    }
+  }, [initialized, isBusinessPath, loading, loadBusinessData]);
 
   // Update current business when URL changes
   useEffect(() => {
@@ -56,9 +73,15 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
     if (business && currentBusiness?.id !== business.id) {
       setCurrentBusiness(business);
     }
-    // getBusinessById/setCurrentBusiness are zustand action refs (stable);
-    // depending on the lists' identities would re-fire on every store update.
-  }, [location.pathname, currentBusiness?.id, businessList.length, businessSetList.length]);
+    // Depending on list lengths lets the URL sync re-run after business data refreshes.
+  }, [
+    location.pathname,
+    currentBusiness?.id,
+    businessList.length,
+    businessSetList.length,
+    getBusinessById,
+    setCurrentBusiness,
+  ]);
 
   // Generate select value from current business
   const getSelectValue = (): string => {
@@ -116,7 +139,6 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({ collapsed = false }
   );
 
   // Show selector in business or business set pages
-  const isBusinessPath = isBusinessRelatedPage(location.pathname);
   if (!isBusinessPath) {
     return null;
   }

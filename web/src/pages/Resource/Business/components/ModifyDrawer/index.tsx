@@ -8,6 +8,7 @@ import { createBusiness } from '@/api';
 import { LIFECYCLE_OPTIONS, LANGUAGE_OPTIONS } from '@/pages/Resource/constants';
 import { CreateBusinessRequest } from '@/api/types/resource';
 import { useResponsive } from '@/utils/useResponsive';
+import { useBusinessStore } from '@/store/BusinessStore';
 import {
   FormFieldItem,
   PersonnelSelectItem,
@@ -33,6 +34,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
   const { t } = useTranslation();
   const { isMobile } = useResponsive();
   const message = useAppMessage();
+  const refreshBusinessData = useBusinessStore((state) => state.loadBusinessData);
   const [lang, setLang] = useState<string>('chinese');
   const [searchOptions, setSearchOptions] = useState<{ value: string; label: string }[]>([]);
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -187,6 +189,7 @@ const ModifyDrawer: React.FC<DrawerProps> = ({ visible, type, onClose, onSuccess
 
       const data = await createBusiness(payload);
       if (data.success) {
+        await refreshBusinessData(true);
         message.success(t('common.message.createSuccess'));
       } else {
         message.error(t('common.message.createFailed'));
