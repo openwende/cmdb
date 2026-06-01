@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/host"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
@@ -25,13 +26,15 @@ func NewHostHandler(service *host.Service) *HostHandler {
 
 // GetHostStatistics 主机维度聚合统计（os_type / 业务 / 管控区域），供运营概览分布图
 // GET /api/v1/hosts/statistics
+//
+// 采用统一响应规范（R8 标准的示范端点）：成功 response.OK → {"code":0,"data":...}。
 func (h *HostHandler) GetHostStatistics(c *gin.Context) {
 	stats, err := h.service.HostStatistics(c.Request.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"code": 0, "data": stats})
+	response.OK(c, stats)
 }
 
 // CreateHost 创建单个主机

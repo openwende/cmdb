@@ -66,10 +66,11 @@
 - **修复**：
   - [x] 明确投影语义：资源池主机**不**计入业务空闲机 —— **已解决**：空闲机模块 host_count/节点主机均只读 `host_module_relations`（commit `f246b93`），pooled 主机无此关系故不再现身；实测 reclaim 后该机从空闲机列表/计数消失、只在资源池。v2 `EdgeV2` 旁路投影随 v2 退役(C4)另议
 
-### [ ] R8　API 响应格式不统一
+### [~] R8　API 响应格式不统一（已立标准+助手，不破坏存量；逐接口迁移留独立任务）
 - **现象**：三套规范并存——`/businesses` 用 `{success, data:{items,total,limit,offset}}`；`/resource-pool/*` 用 `{code:0, data:{...,pagination:{page,page_size,total}}}`；`/hosts/batch` 裸返回 `{created_ids,...}` + HTTP **207**。包裹结构、分页字段、状态码三处不一致。
-- **修复**：
-  - [ ] 后端：统一响应包裹（`code`/`success` 二选一）、统一分页字段、统一批量状态码语义
+- **修复**（范围：用户选定"只立标准+助手、不破坏存量"）：
+  - [x] 后端：统一响应包裹标准（选 `code`）+ 分页/批量语义，落 `internal/api/response`（`OK`/`Created`/`List`/`Error` 助手）+ 规范文档 `docs/API_RESPONSE_STANDARD.md`；示范端点 `GET /v1/hosts/statistics` 已采用。零回归（存量端点不动）。
+  - [ ] 逐接口迁移存量端点到统一形状（需前后端同步、按域分批），作为独立横切任务推进——见 `API_RESPONSE_STANDARD.md` 的迁移策略
 
 ### [x] R9　主机 ID 展示不一致（已修，commit `af782ab` 后端 + `a964da2` 前端）
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。
