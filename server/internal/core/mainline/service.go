@@ -318,7 +318,11 @@ func (s *service) DeleteNodeByRef(ctx context.Context, modelName, refID string) 
 		}
 		return err
 	}
-	return s.db.WithContext(ctx).Where("id = ? OR path LIKE ?", node.ID, node.Path+".%").Delete(&types.MainlineInstance{}).Error
+	// path 是 ltree 列，不能用 LIKE(~~)——会报 "operator does not exist: ltree ~~ unknown"。
+	// 用 ltree 的 <@（"是…的子孙或自身"）匹配该节点及其全部子孙，删整棵子树。
+	return s.db.WithContext(ctx).
+		Where("id = ? OR path <@ ?::ltree", node.ID, node.Path).
+		Delete(&types.MainlineInstance{}).Error
 }
 
 func (s *service) GetNodeByRef(ctx context.Context, nodeType types.TopologyNodeType, refID string) (*types.MainlineInstance, error) {
