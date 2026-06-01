@@ -178,3 +178,11 @@ export interface HostStatistics {
 export const getHostStatistics = (): Promise<{ code: number; data: HostStatistics }> => {
   return axios.get('/v1/hosts/statistics');
 };
+
+// 实例按模型类型聚合（运营概览"实例统计"分布图，R4）
+export interface InstanceStatistics {
+  by_model: HostStatBucket[];
+}
+export const getInstanceStatistics = (): Promise<{ code: number; data: InstanceStatistics }> => {
+  return axios.get('/v1/instances/statistics');
+};

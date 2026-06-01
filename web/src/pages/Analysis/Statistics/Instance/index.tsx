@@ -11,6 +11,7 @@ import {
   mockStatisticsObjectData,
   instanceStatsDims,
 } from '@/mock/Analysis';
+import { getInstanceStatistics } from '@/api/services/resource';
 import { ChartConfig, ChartItem, ChartSourceType } from '../../Types';
 import { ModalMode, ChartType, ChartMoveDirection } from '@/pages/Analysis/Types';
 import { X_AXIS_COUNT_MAX } from '../components/Charts/constants';
@@ -66,8 +67,26 @@ const InstanceStatistics: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    // TODO: api
-    setChartDatas(mockChartDetailData);
+    let cancelled = false;
+    const loadChartData = async () => {
+      // 内置"实例数量统计"(按模型类型, config 7)接真实聚合；变更趋势(8)暂用示例数据
+      const next: Record<number, any[]> = { ...mockChartDetailData };
+      try {
+        const { data } = await getInstanceStatistics();
+        if (data) {
+          next[7] = (data.by_model || []).map((b) => ({ category: b.name, value: b.count }));
+        }
+      } catch (error) {
+        console.error('Failed to load instance statistics:', error);
+      }
+      if (!cancelled) {
+        setChartDatas(next);
+      }
+    };
+    void loadChartData();
+    return () => {
+      cancelled = true;
+    };
   }, [charts]);
 
   const getChartDisplayName = useCallback(
@@ -260,7 +279,7 @@ const InstanceStatistics: React.FC = () => {
 
       <div className="sample-data-notice">
         <span className="sample-data-badge">{t('analysis.statistics.sampleDataBadge')}</span>
-        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTip')}</span>
+        <span className="sample-data-tip">{t('analysis.statistics.sampleDataTipInstance')}</span>
       </div>
 
       <Row gutter={[24, 24]}>

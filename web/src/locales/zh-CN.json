@@ -1873,6 +1873,7 @@
       "sampleDataBadge": "示例数据",
       "sampleDataTip": "图表当前展示示例数据，尚未接入真实统计源",
       "sampleDataTipHost": "分布图（操作系统/业务/管控区域）已接入真实统计；趋势图与自定义图仍为示例数据",
+      "sampleDataTipInstance": "实例数量统计已接入真实数据；变更趋势与自定义图仍为示例数据",
       "sampleData": {
         "hostBusiness": {
           "blueking": "蓝鲸",
