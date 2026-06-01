@@ -37,7 +37,7 @@
 - **根因（架构裂缝，见末节）**：审计读 `resource_histories` 表（`[后端] internal/storage/audit_repository.go:33`），该表**唯一写入点**是 `dynamic_model` 的 `recordHistory`，仅在动态模型资源 CRUD 时触发（`[后端] internal/core/dynamic_model/service.go:266/282/504`）。主机/业务/拓扑的写操作走专用 service，**全都不调 `recordHistory`** → 永不进审计。
 - **修复**：
   - [x] 在主机/业务/拓扑的写操作里埋审计点 —— **已完成**：主机流转 `1787c47`（host_membership 审计录制器）；业务/拓扑结构 `461fc31`（新增 `internal/core/auditlog` 统一入口，topology set/module + business 的 create/update/delete 落 `resource_histories`，model_uid ∈ {set,module,business}）。实测建 set+module → 审计"业务"tab 出现 2 条 create（此前恒空）
-- **遗留（非本项，新发现）**：`DeleteSet`/`DeleteModule` 因 mainline `DeleteNodeByRef` 对 ltree 列用了 `~~`(LIKE) 报 `operator does not exist: ltree ~~ unknown` → 删除集群/模块 400。属 mainline 删除路径独立 bug，待单独修（建议作 R10）
+- **关联（新发现，已立项 R10 并修复）**：`DeleteSet`/`DeleteModule` 因 mainline `DeleteNodeByRef` 对 ltree 列用 `~~`(LIKE) 报错、删除 400 —— 见下方 R10（commit `40d73da`，已修）
 
 ### [~] R4　运营概览统计图表全是 mock（最小真数据切片已落：主机分布图接真实数据）
 - **现象**：顶部 4 个概览卡片（业务/主机/资源类型/实例总数）是**真实数据**（`[前端] src/pages/Analysis/Statistics/Overview/index.tsx:62-66` 调真实 API）；但"主机统计""实例统计"的所有饼/柱/趋势图**全是 mock 示例数据**，页面自挂提示"尚未接入真实统计源"。
@@ -76,6 +76,12 @@
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。
 - **修复**：
   - [x] 前端：统一以 `display_id` 展示，UUID 仅作内部标识（业务拓扑列）—— **已完成（后端 node-hosts 补 `display_id` commit `af782ab`；前端 ID 列改 `display_id` commit `a964da2`）；浏览器实测业务拓扑空闲机列表 ID 列显示 2/3（与资源池页一致）**
+
+### [x] R10　删除集群/模块报 ltree 错（本轮新发现并修复）
+- **现象**：`DELETE /v1/topology/sets/:id`、`/modules/:id` 恒 400 `operator does not exist: ltree ~~ unknown`，无法删除集群/模块。
+- **根因**：`mainline.DeleteNodeByRef`（`internal/core/mainline/service.go:321`）用 `path LIKE ?` 删子树，但 `path` 是 **ltree** 列，`LIKE`(`~~`) 对 ltree 无定义 → 事务回滚。
+- **修复**：
+  - [x] 改用 ltree `<@`（"是…的子孙或自身"）匹配整棵子树 —— **已完成（commit `40d73da`）；容器实测删 module/set 均 200，mainline 子树软删、拓扑树不再显示、审计出现 delete 记录**
 
 ---
 
