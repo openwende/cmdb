@@ -102,8 +102,8 @@ func (s *service) ListServiceTemplates(ctx context.Context, businessID uint64) (
 		// 统计主机数量
 		var hostCount int64
 		s.db.Model(&types.Host{}).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id").
+			Joins("JOIN host_node_memberships hnm ON hnm.host_id = hosts.id AND hnm.node_kind = ?", types.NodeKindBizModule).
+			Joins("JOIN modules ON modules.id = hnm.node_id").
 			Where("modules.service_template_id = ?", t.ID).
 			Distinct("hosts.id").
 			Count(&hostCount)

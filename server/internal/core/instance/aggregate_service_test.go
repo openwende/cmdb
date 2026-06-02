@@ -150,6 +150,21 @@ func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {
 		require.NoError(t, db.Exec(sql).Error)
 	}
 
+	// 读切换(里程碑2)：测试库补建 host_node_memberships，读路径已改读新表
+	require.NoError(t, db.Exec(`CREATE TABLE host_node_memberships (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		host_id TEXT NOT NULL,
+		node_kind TEXT NOT NULL,
+		node_id BIGINT NOT NULL,
+		business_id BIGINT,
+		set_id BIGINT,
+		relation_type TEXT NOT NULL DEFAULT 'member_of',
+		source TEXT,
+		created_at DATETIME,
+		created_by TEXT,
+		UNIQUE (host_id, node_kind, node_id, relation_type)
+	)`).Error)
+
 	return db
 }
 

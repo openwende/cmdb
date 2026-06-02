@@ -17,6 +17,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
 	"github.com/wend/cmdb-backend/internal/core/topology"
 	"github.com/wend/cmdb-backend/internal/storage"
@@ -220,6 +221,21 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 	for _, sql := range sqls {
 		require.NoError(t, db.Exec(sql).Error)
 	}
+
+	// 读切换(里程碑2)：测试库补建 host_node_memberships，读路径已改读新表
+	require.NoError(t, db.Exec(`CREATE TABLE host_node_memberships (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		host_id TEXT NOT NULL,
+		node_kind TEXT NOT NULL,
+		node_id BIGINT NOT NULL,
+		business_id BIGINT,
+		set_id BIGINT,
+		relation_type TEXT NOT NULL DEFAULT 'member_of',
+		source TEXT,
+		created_at DATETIME,
+		created_by TEXT,
+		UNIQUE (host_id, node_kind, node_id, relation_type)
+	)`).Error)
 	require.NoError(t, storage.MigrateResourceGraphTables(db))
 
 	return db
@@ -341,6 +357,11 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 		moduleHostID.String(),
 		module.ID,
 	).Error)
+	// 读切换(里程碑2)：节点主机列表改读 host_node_memberships(biz_module)，补该主机的业务模块归属行
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_node_memberships (host_id, node_kind, node_id, business_id, set_id, relation_type, source, created_at) VALUES (?, 'biz_module', ?, ?, ?, 'member_of', 'backfill', CURRENT_TIMESTAMP)`,
+		moduleHostID.String(), module.ID, bizID, setNode.ID,
+	).Error)
 
 	otherTenantHostID := uuid.New()
 	require.NoError(t, db.Exec(
@@ -362,6 +383,10 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 		`INSERT INTO host_module_relations (host_id, module_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		otherTenantHostID.String(),
 		module.ID,
+	).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_node_memberships (host_id, node_kind, node_id, business_id, set_id, relation_type, source, created_at) VALUES (?, 'biz_module', ?, ?, ?, 'member_of', 'backfill', CURRENT_TIMESTAMP)`,
+		otherTenantHostID.String(), module.ID, bizID, setNode.ID,
 	).Error)
 
 	idleHostID := uuid.New()
@@ -391,6 +416,9 @@ func TestTopologyHandler_GetNodeHosts(t *testing.T) {
 	require.NoError(t, db.Exec(
 		`INSERT INTO host_module_relations (host_id, module_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		idleHostID.String(), idleModuleID).Error)
+	require.NoError(t, db.Exec(
+		`INSERT INTO host_node_memberships (host_id, node_kind, node_id, business_id, set_id, relation_type, source, created_at) VALUES (?, 'biz_module', ?, ?, ?, 'member_of', 'backfill', CURRENT_TIMESTAMP)`,
+		idleHostID.String(), idleModuleID, bizID, idleSetID).Error)
 
 	router := gin.New()
 	router.GET("/api/v1/topology/nodes/:id/hosts", handler.GetNodeHosts)
@@ -640,7 +668,8 @@ func TestTopologyHandler_TransferHosts_PersistsViaTopologyService(t *testing.T) 
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
+	// 读切换(里程碑2)：transfer 后读路径改读 host_node_memberships；注入 hms 使写路径同事务回填新表（与生产一致）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil)))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 

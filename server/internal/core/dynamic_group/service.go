@@ -230,14 +230,15 @@ func (s *service) Preview(ctx context.Context, businessID uint64, targetModelUID
 		return nil, 0, err
 	}
 
+	// 读切换：host_business_relations + host_module_relations 合一为 host_node_memberships(biz_module)，
+	// 其冗余列 business_id 当业务过滤、node_id 当 module_id。别名 h/m/s/b 保留，条件映射(mapColumn)不变。
 	query := s.db.WithContext(ctx).
 		Table("hosts h").
-		Joins("JOIN host_business_relations hbr ON hbr.host_id = h.id").
-		Joins("LEFT JOIN host_module_relations hmr ON hmr.host_id = h.id").
-		Joins("LEFT JOIN modules m ON m.id = hmr.module_id AND m.deleted_at IS NULL").
+		Joins("JOIN host_node_memberships hnm ON hnm.host_id = h.id AND hnm.node_kind = ?", types.NodeKindBizModule).
+		Joins("LEFT JOIN modules m ON m.id = hnm.node_id AND m.deleted_at IS NULL").
 		Joins("LEFT JOIN sets s ON s.id = m.set_id AND s.deleted_at IS NULL").
-		Joins("LEFT JOIN businesses b ON b.id = hbr.business_id").
-		Where("hbr.business_id = ? AND h.deleted_at IS NULL", businessID)
+		Joins("LEFT JOIN businesses b ON b.id = hnm.business_id").
+		Where("hnm.business_id = ? AND h.deleted_at IS NULL", businessID)
 
 	for _, group := range condition {
 		for _, rule := range group.Condition {

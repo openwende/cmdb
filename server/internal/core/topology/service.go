@@ -255,9 +255,9 @@ func (s *service) GetModule(ctx context.Context, id uint64) (*types.Module, erro
 		return nil, err
 	}
 
-	// 统计主机数量
+	// 统计主机数量（读切换：host_node_memberships biz_module，node_id 即 module_id）
 	var hostCount int64
-	s.db.Table("host_module_relations").Where("module_id = ?", id).Distinct("host_id").Count(&hostCount)
+	s.db.Table("host_node_memberships").Where("node_kind = ? AND node_id = ?", types.NodeKindBizModule, id).Distinct("host_id").Count(&hostCount)
 	module.HostCount = int(hostCount)
 
 	return &module, nil
@@ -275,7 +275,7 @@ func (s *service) ListModules(ctx context.Context, setID uint64) ([]types.Module
 	// 统计每个模块的主机数量
 	for i := range modules {
 		var count int64
-		s.db.Table("host_module_relations").Where("module_id = ?", modules[i].ID).Distinct("host_id").Count(&count)
+		s.db.Table("host_node_memberships").Where("node_kind = ? AND node_id = ?", types.NodeKindBizModule, modules[i].ID).Distinct("host_id").Count(&count)
 		modules[i].HostCount = int(count)
 	}
 
@@ -353,9 +353,9 @@ func (s *service) validateServiceCategory(ctx context.Context, businessID uint64
 
 // DeleteModule 删除模块
 func (s *service) DeleteModule(ctx context.Context, id uint64) error {
-	// 检查是否有主机
+	// 检查是否有主机（读切换：host_node_memberships biz_module）
 	var hostCount int64
-	s.db.Table("host_module_relations").Where("module_id = ?", id).Distinct("host_id").Count(&hostCount)
+	s.db.Table("host_node_memberships").Where("node_kind = ? AND node_id = ?", types.NodeKindBizModule, id).Distinct("host_id").Count(&hostCount)
 	if hostCount > 0 {
 		return fmt.Errorf("模块下还有 %d 台主机，无法删除", hostCount)
 	}
@@ -762,8 +762,8 @@ func (s *service) buildModuleHostNodes(ctx context.Context, node *types.Mainline
 	}
 	var hosts []types.Host
 	if err := s.db.WithContext(ctx).Model(&types.Host{}).
-		Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID).
+		Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+		Where("hmr.node_id = ? AND hosts.deleted_at IS NULL", moduleID).
 		Limit(100).
 		Find(&hosts).Error; err != nil {
 		return nil, err
@@ -795,15 +795,15 @@ func (s *service) countModuleHosts(ctx context.Context, refID string) (int, erro
 		return 0, err
 	}
 
-	// 业务模块（含 is_default 的"空闲机"模块）的主机归属统一记在 host_module_relations，
-	// 必须按 module_id 计数，与 buildModuleHostNodes 的列表口径一致。
-	// 不要对 is_default 模块改数 resource_pool_hosts——那是资源池：主机分配进业务后已移出池，
+	// 业务模块（含 is_default 的"空闲机"模块）的主机归属统一记在 host_node_memberships(biz_module)，
+	// 必须按 node_id(=module_id) 计数，与 buildModuleHostNodes 的列表口径一致。
+	// 不要对 is_default 模块改数 pool_directory——那是资源池：主机分配进业务后已移出池，
 	// 会让空闲机模块明明有主机却显示 0（与节点主机列表自相矛盾，即"分配后没出现在业务空闲机池"）。
 	var hostCount int64
 	if err := s.db.WithContext(ctx).
-		Table("host_module_relations hmr").
+		Table("host_node_memberships hmr").
 		Joins("JOIN hosts ON hosts.id = hmr.host_id").
-		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID).
+		Where("hmr.node_id = ? AND hmr.node_kind = ? AND hosts.deleted_at IS NULL", moduleID, types.NodeKindBizModule).
 		Distinct("hmr.host_id").
 		Count(&hostCount).Error; err != nil {
 		return 0, err
@@ -886,7 +886,7 @@ func (s *service) buildSetNode(ctx context.Context, set *types.Set, req *types.G
 // buildModuleNode 构建模块节点
 func (s *service) buildModuleNode(ctx context.Context, module *types.Module, req *types.GetTopologyTreeRequest) types.TopologyTreeNode {
 	var hostCount int64
-	s.db.Table("host_module_relations").Where("module_id = ?", module.ID).Distinct("host_id").Count(&hostCount)
+	s.db.Table("host_node_memberships").Where("node_kind = ? AND node_id = ?", types.NodeKindBizModule, module.ID).Distinct("host_id").Count(&hostCount)
 
 	node := types.TopologyTreeNode{
 		ID:         fmt.Sprintf("module_%d", module.ID),
@@ -910,8 +910,8 @@ func (s *service) buildModuleNode(ctx context.Context, module *types.Module, req
 	if req.IncludeHosts && (req.MaxDepth >= 4 || req.ExpandNodeID == node.ID) {
 		var hosts []types.Host
 		s.db.Model(&types.Host{}).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", module.ID).
+			Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+			Where("hmr.node_id = ? AND hosts.deleted_at IS NULL", module.ID).
 			Limit(100).
 			Find(&hosts)
 
@@ -1011,12 +1011,12 @@ func (s *service) GetStatistics(ctx context.Context, businessID *uint64) (*types
 	}
 	moduleQuery.Count(&stats.ModuleCount)
 
-	// 主机数量
+	// 主机数量（读切换：host_node_memberships biz_module 的冗余列 business_id；多模块多行，Distinct 去重）
 	if businessID != nil {
-		s.db.Table("host_business_relations hbr").
-			Joins("JOIN hosts ON hosts.id = hbr.host_id").
-			Where("hbr.business_id = ? AND hosts.deleted_at IS NULL", *businessID).
-			Distinct("hbr.host_id").
+		s.db.Table("host_node_memberships hnm").
+			Joins("JOIN hosts ON hosts.id = hnm.host_id").
+			Where("hnm.business_id = ? AND hnm.node_kind = ? AND hosts.deleted_at IS NULL", *businessID, types.NodeKindBizModule).
+			Distinct("hnm.host_id").
 			Count(&stats.HostCount)
 	} else {
 		s.db.Model(&types.Host{}).
@@ -1205,8 +1205,8 @@ func (s *service) GetModuleHosts(ctx context.Context, moduleID uint64, page, pag
 
 	query := s.db.WithContext(ctx).
 		Model(&types.Host{}).
-		Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-		Where("hmr.module_id = ? AND hosts.deleted_at IS NULL", moduleID)
+		Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+		Where("hmr.node_id = ? AND hosts.deleted_at IS NULL", moduleID)
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -1242,17 +1242,19 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 		if err != nil {
 			return nil, 0, fmt.Errorf("无效的业务ID")
 		}
+		// 读切换：业务归属读 host_node_memberships(biz_module) 的冗余列 business_id；
+		// "不在资源池"判定平移为 LEFT JOIN host_node_memberships(pool_directory) IS NULL（I2 下与旧表一致）。
+		// node_id 即 module_id，模块/集群展示列由 hnm.node_id 关联 modules。
 		query = db.Table("hosts").
 			Select(baseSelect).
-			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
-			Joins("LEFT JOIN resource_pool_hosts rph ON rph.host_id = hosts.id").
-			Joins("LEFT JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("LEFT JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("JOIN host_node_memberships hnm ON hnm.host_id = hosts.id AND hnm.node_kind = ?", types.NodeKindBizModule).
+			Joins("LEFT JOIN host_node_memberships rph ON rph.host_id = hosts.id AND rph.node_kind = ?", types.NodeKindPoolDirectory).
+			Joins("LEFT JOIN modules ON modules.id = hnm.node_id AND modules.deleted_at IS NULL").
 			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
 			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
 			Where("hosts.deleted_at IS NULL").
 			Where("rph.host_id IS NULL").
-			Where("hbr.business_id = ?", bizID)
+			Where("hnm.business_id = ?", bizID)
 	case "set":
 		setID, err := mainline.ParseRefUint(refID)
 		if err != nil {
@@ -1260,8 +1262,8 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 		}
 		query = db.Table("hosts").
 			Select(baseSelect).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+			Joins("JOIN modules ON modules.id = hmr.node_id AND modules.deleted_at IS NULL").
 			Joins("JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
 			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
 			Where("hosts.deleted_at IS NULL").
@@ -1273,22 +1275,22 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 		}
 		query = db.Table("hosts").
 			Select(baseSelect).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+			Joins("JOIN modules ON modules.id = hmr.node_id AND modules.deleted_at IS NULL").
 			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
 			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
 			Where("hosts.deleted_at IS NULL").
 			Where("modules.id = ?", moduleID)
 	case "idle_set", "idle_module", "idle":
-		// 阶段 1（R7 根治）：业务空闲机不再等同全局资源池（不再 JOIN resource_pool_hosts），
-		// 改读该业务空闲机模块的真实归属（host_module_relations），按业务隔离。
+		// 阶段 1（R7 根治）：业务空闲机不再等同全局资源池（不再 JOIN 资源池），
+		// 改读该业务空闲机模块的真实归属（host_node_memberships biz_module），按业务隔离。
 		if idleBinding == nil {
 			return []TopologyHostRow{}, 0, nil
 		}
 		query = db.Table("hosts").
 			Select(baseSelect).
-			Joins("JOIN host_module_relations hmr ON hmr.host_id = hosts.id").
-			Joins("JOIN modules ON modules.id = hmr.module_id AND modules.deleted_at IS NULL").
+			Joins("JOIN host_node_memberships hmr ON hmr.host_id = hosts.id AND hmr.node_kind = ?", types.NodeKindBizModule).
+			Joins("JOIN modules ON modules.id = hmr.node_id AND modules.deleted_at IS NULL").
 			Joins("LEFT JOIN sets ON sets.id = modules.set_id AND sets.deleted_at IS NULL").
 			Joins("LEFT JOIN cloud_areas ON cloud_areas.id = hosts.cloud_area_id AND cloud_areas.deleted_at IS NULL").
 			Where("hosts.deleted_at IS NULL")

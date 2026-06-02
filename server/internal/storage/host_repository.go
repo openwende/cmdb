@@ -184,15 +184,18 @@ func (r *hostRepository) ListHosts(ctx context.Context, tenantID uuid.UUID, para
 		query = query.Where("cloud_area_id = ?", *params.CloudAreaID)
 	}
 	if params.BusinessID != nil {
+		// 读切换：业务过滤读 host_node_memberships biz_module 的冗余列 business_id；
+		// 一主机多模块同业务会多行，count/find 已 Distinct(hosts.id) 去重。
 		query = query.
-			Joins("JOIN host_business_relations hbr ON hbr.host_id = hosts.id").
-			Where("hbr.business_id = ?", *params.BusinessID)
+			Joins("JOIN host_node_memberships hnm ON hnm.host_id = hosts.id AND hnm.node_kind = ?", types.NodeKindBizModule).
+			Where("hnm.business_id = ?", *params.BusinessID)
 	}
-	// 资源池查询（business_id IS NULL）
+	// 资源池查询（无业务模块归属者）：读切换为 LEFT JOIN host_node_memberships(biz_module) IS NULL。
+	// node_kind 过滤必须放 ON 子句，否则 LEFT JOIN 退化为内连接。
 	if params.InPool != nil && *params.InPool {
 		query = query.
-			Joins("LEFT JOIN host_business_relations hbr_pool ON hbr_pool.host_id = hosts.id").
-			Where("hbr_pool.host_id IS NULL")
+			Joins("LEFT JOIN host_node_memberships hnm_pool ON hnm_pool.host_id = hosts.id AND hnm_pool.node_kind = ?", types.NodeKindBizModule).
+			Where("hnm_pool.host_id IS NULL")
 	}
 	if params.CloudVendor != nil {
 		query = query.Where("hosts.cloud_vendor = ?", *params.CloudVendor)
@@ -472,13 +475,16 @@ func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.H
 		hostIDs = append(hostIDs, hosts[i].ID)
 	}
 
+	// 读切换：业务归属读 host_node_memberships biz_module 的冗余列 business_id；
+	// 一主机多模块同业务会多行，按业务维度 DISTINCT(host_id,business_id) 去重。
 	var bizRows []struct {
 		HostID     uuid.UUID `gorm:"column:host_id"`
 		BusinessID uint64    `gorm:"column:business_id"`
 	}
 	if err := r.db.WithContext(ctx).
-		Table("host_business_relations").
-		Where("host_id IN ?", hostIDs).
+		Table("host_node_memberships").
+		Select("DISTINCT host_id, business_id").
+		Where("host_id IN ? AND node_kind = ?", hostIDs, types.NodeKindBizModule).
 		Find(&bizRows).Error; err != nil {
 		return err
 	}
@@ -487,13 +493,15 @@ func (r *hostRepository) fillHostRelations(ctx context.Context, hosts []*types.H
 		bizMap[row.HostID] = append(bizMap[row.HostID], row.BusinessID)
 	}
 
+	// 读切换：模块归属读 host_node_memberships biz_module 的 node_id（即 module_id）。
 	var modRows []struct {
 		HostID   uuid.UUID `gorm:"column:host_id"`
 		ModuleID uint64    `gorm:"column:module_id"`
 	}
 	if err := r.db.WithContext(ctx).
-		Table("host_module_relations").
-		Where("host_id IN ?", hostIDs).
+		Table("host_node_memberships").
+		Select("host_id, node_id AS module_id").
+		Where("host_id IN ? AND node_kind = ?", hostIDs, types.NodeKindBizModule).
 		Find(&modRows).Error; err != nil {
 		return err
 	}
@@ -541,10 +549,12 @@ func (r *hostRepository) HostStatistics(ctx context.Context) (*types.HostStatist
 	}
 
 	// 按业务（无归属计入"未分配"；跨多业务的主机在各业务各计一次）
+	// 读切换：业务归属读 host_node_memberships biz_module 的冗余列 business_id；
+	// node_kind 过滤放 LEFT JOIN ON 子句，无业务模块归属者落 b.name NULL→"未分配"。
 	if err := db.Table("hosts AS h").
 		Select("COALESCE(b.name, '未分配') AS name, COUNT(DISTINCT h.id) AS count").
-		Joins("LEFT JOIN host_business_relations hbr ON hbr.host_id = h.id").
-		Joins("LEFT JOIN businesses b ON b.id = hbr.business_id AND b.deleted_at IS NULL").
+		Joins("LEFT JOIN host_node_memberships hnm ON hnm.host_id = h.id AND hnm.node_kind = ?", types.NodeKindBizModule).
+		Joins("LEFT JOIN businesses b ON b.id = hnm.business_id AND b.deleted_at IS NULL").
 		Where("h.deleted_at IS NULL AND h.is_destroyed = false").
 		Group("b.name").
 		Order("count DESC").

@@ -337,20 +337,23 @@ func (s *AggregateService) loadHostBindingContext(ctx context.Context, hostID uu
 		ModuleID uint64
 	}
 
+	// 读切换：业务归属读 host_node_memberships biz_module 的冗余列 business_id。
+	// 一主机多模块同业务会出现多行，按业务维度需 DISTINCT 去重。
 	var businessRows []hostBusinessRow
 	if err := s.db.WithContext(ctx).
-		Table("host_business_relations").
-		Select("business_id").
-		Where("host_id = ?", hostID.String()).
+		Table("host_node_memberships").
+		Select("DISTINCT business_id").
+		Where("host_id = ? AND node_kind = ?", hostID.String(), types.NodeKindBizModule).
 		Find(&businessRows).Error; err != nil {
 		return false, nil, nil, err
 	}
 
+	// 读切换：模块归属读 host_node_memberships biz_module 的 node_id（即 module_id）。
 	var moduleRows []hostModuleRow
 	if err := s.db.WithContext(ctx).
-		Table("host_module_relations").
-		Select("module_id").
-		Where("host_id = ?", hostID.String()).
+		Table("host_node_memberships").
+		Select("node_id AS module_id").
+		Where("host_id = ? AND node_kind = ?", hostID.String(), types.NodeKindBizModule).
 		Find(&moduleRows).Error; err != nil {
 		return false, nil, nil, err
 	}

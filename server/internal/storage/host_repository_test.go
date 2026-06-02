@@ -93,6 +93,24 @@ func setupHostTestDB(t *testing.T) *gorm.DB {
 	`).Error
 	require.NoError(t, err)
 
+	// 读切换(里程碑2)：测试库补建 host_node_memberships，读路径已改读新表
+	err = db.Exec(`
+		CREATE TABLE host_node_memberships (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			host_id TEXT NOT NULL,
+			node_kind TEXT NOT NULL,
+			node_id INTEGER NOT NULL,
+			business_id INTEGER,
+			set_id INTEGER,
+			relation_type TEXT NOT NULL DEFAULT 'member_of',
+			source TEXT,
+			created_at DATETIME,
+			created_by TEXT,
+			UNIQUE (host_id, node_kind, node_id, relation_type)
+		)
+	`).Error
+	require.NoError(t, err)
+
 	return db
 }
 
@@ -321,6 +339,10 @@ func TestHostRepository_ListHosts_ResourcePool(t *testing.T) {
 	db.Create(businessHost)
 	db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?, ?)`,
 		businessHost.ID.String(), businessID)
+	// 读切换(里程碑2)：读路径改读 host_node_memberships(biz_module)，业务主机补一条业务模块归属行
+	// （node_id 为模块ID，此处无 modules 表用占位值；business_id 冗余列供业务过滤）。poolHost 无 biz_module 行即属"池内/未分配"。
+	db.Exec(`INSERT INTO host_node_memberships (host_id, node_kind, node_id, business_id, relation_type, source) VALUES (?, 'biz_module', ?, ?, 'member_of', 'backfill')`,
+		businessHost.ID.String(), 1, businessID)
 
 	t.Run("查询资源池主机", func(t *testing.T) {
 		inPool := true

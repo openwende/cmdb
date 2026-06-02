@@ -141,9 +141,11 @@ func (s *service) GetDirectory(ctx context.Context, id uint64) (*types.ResourceD
 	s.db.Model(&types.ResourceDirectory{}).Where("parent_id = ?", id).Count(&childCount)
 	dir.ChildCount = int(childCount)
 
-	// 统计主机数量
+	// 统计主机数量（读切换：host_node_memberships pool_directory，node_id 即目录ID）
 	var hostCount int64
-	s.db.Model(&types.ResourcePoolHost{}).Where("directory_id = ?", id).Count(&hostCount)
+	s.db.Model(&types.HostNodeMembership{}).
+		Where("node_kind = ? AND node_id = ?", types.NodeKindPoolDirectory, id).
+		Count(&hostCount)
 	dir.HostCount = int(hostCount)
 
 	return &dir, nil
@@ -171,7 +173,9 @@ func (s *service) ListDirectories(ctx context.Context, parentID *uint64) ([]type
 		dirs[i].ChildCount = int(childCount)
 
 		var hostCount int64
-		s.db.Model(&types.ResourcePoolHost{}).Where("directory_id = ?", dirs[i].ID).Count(&hostCount)
+		s.db.Model(&types.HostNodeMembership{}).
+			Where("node_kind = ? AND node_id = ?", types.NodeKindPoolDirectory, dirs[i].ID).
+			Count(&hostCount)
 		dirs[i].HostCount = int(hostCount)
 	}
 
@@ -191,9 +195,10 @@ func (s *service) GetDirectoryTree(ctx context.Context) ([]types.ResourceDirecto
 		DirectoryID uint64
 		Count       int64
 	}
-	s.db.Model(&types.ResourcePoolHost{}).
-		Select("directory_id, count(*) as count").
-		Group("directory_id").
+	s.db.Model(&types.HostNodeMembership{}).
+		Select("node_id as directory_id, count(*) as count").
+		Where("node_kind = ?", types.NodeKindPoolDirectory).
+		Group("node_id").
 		Scan(&counts)
 	for _, c := range counts {
 		hostCounts[c.DirectoryID] = int(c.Count)
@@ -297,9 +302,11 @@ func (s *service) DeleteDirectory(ctx context.Context, id uint64) error {
 		return fmt.Errorf("目录下还有 %d 个子目录，无法删除", childCount)
 	}
 
-	// 检查是否有主机
+	// 检查是否有主机（读切换：host_node_memberships pool_directory）
 	var hostCount int64
-	s.db.Model(&types.ResourcePoolHost{}).Where("directory_id = ?", id).Count(&hostCount)
+	s.db.Model(&types.HostNodeMembership{}).
+		Where("node_kind = ? AND node_id = ?", types.NodeKindPoolDirectory, id).
+		Count(&hostCount)
 	if hostCount > 0 {
 		return fmt.Errorf("目录下还有 %d 台主机，无法删除", hostCount)
 	}
@@ -383,9 +390,9 @@ func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 			continue
 		}
 
-		// 检查主机是否已分配到业务（多对多关系）
+		// 检查主机是否已分配到业务（读切换：host_node_memberships biz_module）
 		var bizRelCount int64
-		if err := s.db.Model(&types.HostBusinessRelation{}).Where("host_id = ?", hostID).Count(&bizRelCount).Error; err != nil {
+		if err := s.db.Model(&types.HostNodeMembership{}).Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindBizModule).Count(&bizRelCount).Error; err != nil {
 			result.Failed++
 			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
 			continue
@@ -888,11 +895,12 @@ func (s *service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*type
 // ListPoolHosts 获取资源池主机列表
 func (s *service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error) {
 	var total int64
-	var poolHosts []types.ResourcePoolHost
+	var poolMemberships []types.HostNodeMembership
 
-	query := s.db.Model(&types.ResourcePoolHost{})
+	// 读切换：资源池主机列表读 host_node_memberships pool_directory（node_id 即目录ID）
+	query := s.db.Model(&types.HostNodeMembership{}).Where("node_kind = ?", types.NodeKindPoolDirectory)
 	if directoryID != nil {
-		query = query.Where("directory_id = ?", *directoryID)
+		query = query.Where("node_id = ?", *directoryID)
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -900,13 +908,13 @@ func (s *service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, 
 	}
 
 	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Find(&poolHosts).Error; err != nil {
+	if err := query.Offset(offset).Limit(pageSize).Find(&poolMemberships).Error; err != nil {
 		return nil, 0, err
 	}
 
 	// 获取主机详情
-	hostIDs := make([]uuid.UUID, 0, len(poolHosts))
-	for _, ph := range poolHosts {
+	hostIDs := make([]uuid.UUID, 0, len(poolMemberships))
+	for _, ph := range poolMemberships {
 		hostIDs = append(hostIDs, ph.HostID)
 	}
 
@@ -953,19 +961,22 @@ func (s *service) GetStatistics(ctx context.Context) (*types.ResourcePoolStatist
 	s.db.Model(&types.ResourceDirectory{}).Count(&dirCount)
 	stats.TotalDirectories = int(dirCount)
 
-	// 主机总数
+	// 主机总数（读切换：host_node_memberships pool_directory）
 	var hostCount int64
-	s.db.Model(&types.ResourcePoolHost{}).Count(&hostCount)
+	s.db.Model(&types.HostNodeMembership{}).
+		Where("node_kind = ?", types.NodeKindPoolDirectory).
+		Count(&hostCount)
 	stats.TotalHosts = int(hostCount)
 
-	// 按目录统计
+	// 按目录统计（读切换：host_node_memberships pool_directory，node_id 即目录ID）
 	var results []struct {
 		DirName string
 		Count   int64
 	}
-	s.db.Model(&types.ResourcePoolHost{}).
+	s.db.Model(&types.HostNodeMembership{}).
 		Select("resource_directories.name as dir_name, count(*) as count").
-		Joins("JOIN resource_directories ON resource_directories.id = resource_pool_hosts.directory_id").
+		Joins("JOIN resource_directories ON resource_directories.id = host_node_memberships.node_id").
+		Where("host_node_memberships.node_kind = ?", types.NodeKindPoolDirectory).
 		Group("resource_directories.name").
 		Scan(&results)
 

@@ -201,6 +201,21 @@ func setupTopologyTestDB(t *testing.T) *gorm.DB {
 		require.NoError(t, db.Exec(sql).Error)
 	}
 
+	// 读切换(里程碑2)：测试库补建 host_node_memberships，读路径已改读新表
+	require.NoError(t, db.Exec(`CREATE TABLE host_node_memberships (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		host_id TEXT NOT NULL,
+		node_kind TEXT NOT NULL,
+		node_id BIGINT NOT NULL,
+		business_id BIGINT,
+		set_id BIGINT,
+		relation_type TEXT NOT NULL DEFAULT 'member_of',
+		source TEXT,
+		created_at DATETIME,
+		created_by TEXT,
+		UNIQUE (host_id, node_kind, node_id, relation_type)
+	)`).Error)
+
 	return db
 }
 
@@ -404,6 +419,12 @@ func TestModuleChildrenReturnHostsFromRelations(t *testing.T) {
 		"status":     "running",
 	}).Error)
 	require.NoError(t, db.Create(&types.HostModuleRelation{HostID: hostID, ModuleID: module.ID}).Error)
+	// 读切换(里程碑2)：节点子项改读 host_node_memberships(biz_module)，补该主机的业务模块归属行
+	bid, sid := bizID, setNode.ID
+	require.NoError(t, db.Create(&types.HostNodeMembership{
+		HostID: hostID, NodeKind: types.NodeKindBizModule, NodeID: module.ID,
+		BusinessID: &bid, SetID: &sid, RelationType: types.HostMembershipRelMemberOf, Source: types.HostMembershipSourceBackfill,
+	}).Error)
 
 	children, err := svc.GetNodeChildren(ctx, types.NodeTypeModule, module.ID)
 	require.NoError(t, err)
