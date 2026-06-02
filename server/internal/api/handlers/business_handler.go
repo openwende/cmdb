@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/business"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
@@ -88,24 +89,10 @@ func (h *BusinessHandler) ListBusinesses(c *gin.Context) {
 		return
 	}
 
-	// R8 渐进迁移：在保留旧字段(success/total/limit/offset)的同时，附加统一响应规范的
-	// code + pagination（见 docs/API_RESPONSE_STANDARD.md）。旧消费端零影响，新消费端可读标准字段。
-	page := offset/limit + 1
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"code":    0,
-		"data": gin.H{
-			"items":  businesses,
-			"total":  total,
-			"limit":  limit,
-			"offset": offset,
-			"pagination": gin.H{
-				"page":      page,
-				"page_size": limit,
-				"total":     total,
-			},
-		},
-	})
+	// R8：businesses 列表收口为统一响应规范 {code,data:{items,pagination}}。
+	// 旧字段(success/total/limit/offset)的消费端已全部迁到 pagination（概览/Home/业务列表），
+	// 故此处移除旧字段。其余调用方只读 items（标准 data 中保留）。
+	response.List(c, businesses, offset/limit+1, limit, int64(total))
 }
 
 // GetBusiness handles retrieving a single business
