@@ -333,3 +333,53 @@ func TestMove_LegacyMirror_AllocateClearsResourcePoolHost(t *testing.T) {
 	requireLegacyCount(t, db, "host_module_relations", host, 1)
 	requireLegacyCount(t, db, "host_business_relations", host, 1)
 }
+
+// SyncFromLegacy：按旧三表重建新表归属，幂等清旧建新；business_id/set_id 由 module 推导。
+// 用于阶段1未走本服务的写路径（导入/转移/集群转业务）写旧表后回填新表。
+func TestSyncFromLegacy_RebuildsFromLegacyAndClearsStale(t *testing.T) {
+	db := setupHMTestDB(t)
+	svc := NewService(db, nil)
+	ctx := context.Background()
+	host := uuid.New()
+
+	// 预置一条“陈旧”的新表行（指向 moduleB），应被同步清掉
+	require.NoError(t, db.Create(&types.HostNodeMembership{
+		HostID: host, NodeKind: types.NodeKindBizModule, NodeID: moduleBID,
+		RelationType: types.HostMembershipRelMemberOf,
+	}).Error)
+
+	// 旧表真相：host 在 moduleA（+ 业务关系）
+	require.NoError(t, db.Exec(`INSERT INTO host_module_relations (host_id, module_id) VALUES (?,?)`, host.String(), moduleAID).Error)
+	require.NoError(t, db.Exec(`INSERT INTO host_business_relations (host_id, business_id) VALUES (?,?)`, host.String(), testBiz).Error)
+
+	require.NoError(t, svc.WithTx(db).SyncFromLegacy(ctx, host))
+
+	rows := membershipsOf(t, db, host)
+	require.Len(t, rows, 1, "陈旧 moduleB 行应被清，仅剩与旧表一致的 moduleA 行")
+	require.Equal(t, types.NodeKindBizModule, rows[0].NodeKind)
+	require.Equal(t, moduleAID, rows[0].NodeID)
+	require.NotNil(t, rows[0].BusinessID)
+	require.Equal(t, testBiz, *rows[0].BusinessID, "business_id 由 module 推导")
+	require.Equal(t, testSet, *rows[0].SetID)
+}
+
+// SyncFromLegacy：资源池归属重建；旧表清空后新表同步清空（无游离残留）。
+func TestSyncFromLegacy_PoolAndEmpty(t *testing.T) {
+	db := setupHMTestDB(t)
+	svc := NewService(db, nil)
+	ctx := context.Background()
+	host := uuid.New()
+
+	require.NoError(t, db.Exec(`INSERT INTO resource_pool_hosts (host_id, directory_id) VALUES (?,?)`, host.String(), poolDirID).Error)
+	require.NoError(t, svc.SyncFromLegacy(ctx, host))
+	rows := membershipsOf(t, db, host)
+	require.Len(t, rows, 1)
+	require.Equal(t, types.NodeKindPoolDirectory, rows[0].NodeKind)
+	require.Equal(t, poolDirID, rows[0].NodeID)
+	require.Nil(t, rows[0].BusinessID, "资源池行无 business")
+
+	// 旧表清空 → 同步后新表清空
+	require.NoError(t, db.Exec(`DELETE FROM resource_pool_hosts WHERE host_id = ?`, host.String()).Error)
+	require.NoError(t, svc.SyncFromLegacy(ctx, host))
+	require.Len(t, membershipsOf(t, db, host), 0, "旧表无归属 → 新表应清空")
+}

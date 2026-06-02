@@ -353,6 +353,15 @@ func (s *service) MoveDirectory(ctx context.Context, id uint64, req *types.MoveR
 // ========== 资源池主机管理 ==========
 
 // ImportHostsToPool 导入主机到资源池
+// syncMembership 阶段1过渡：未走 hms 的归属写路径（导入/池内移动）在写旧表的同一事务内，
+// 把新表 host_node_memberships 同步成与旧表一致，使新表成为权威读源（hms 注入时生效）。
+func (s *service) syncMembership(ctx context.Context, tx *gorm.DB, hostID uuid.UUID) error {
+	if s.hms == nil {
+		return nil
+	}
+	return s.hms.WithTx(tx).SyncFromLegacy(ctx, hostID)
+}
+
 func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsToPoolRequest, importedBy string) (*types.BatchOperationResult, error) {
 	// 验证目录存在
 	var dir types.ResourceDirectory
@@ -390,32 +399,43 @@ func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 		// 检查是否已在资源池
 		var existing types.ResourcePoolHost
 		if err := s.db.Where("host_id = ?", hostID).First(&existing).Error; err == nil {
-			// 已存在，更新目录
-			if err := s.db.Model(&existing).Updates(map[string]interface{}{
-				"directory_id": req.DirectoryID,
-				"imported_by":  importedBy,
-				"remark":       req.Remark,
-			}).Error; err != nil {
+			// 已存在，更新目录（旧表写 + 新表同步，同事务原子）
+			txErr := s.db.Transaction(func(tx *gorm.DB) error {
+				if err := tx.Model(&existing).Updates(map[string]interface{}{
+					"directory_id": req.DirectoryID,
+					"imported_by":  importedBy,
+					"remark":       req.Remark,
+				}).Error; err != nil {
+					return err
+				}
+				return s.syncMembership(ctx, tx, hostID)
+			})
+			if txErr != nil {
 				result.Failed++
-				result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+				result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
 			} else {
 				result.Successful++
 			}
 			continue
 		}
 
-		// 新增资源池记录
-		poolHost := &types.ResourcePoolHost{
-			HostID:      hostID,
-			DirectoryID: req.DirectoryID,
-			ImportedAt:  time.Now(),
-			ImportedBy:  importedBy,
-			Remark:      req.Remark,
-		}
-
-		if err := s.db.Create(poolHost).Error; err != nil {
+		// 新增资源池记录（旧表写 + 新表同步，同事务原子）
+		txErr := s.db.Transaction(func(tx *gorm.DB) error {
+			poolHost := &types.ResourcePoolHost{
+				HostID:      hostID,
+				DirectoryID: req.DirectoryID,
+				ImportedAt:  time.Now(),
+				ImportedBy:  importedBy,
+				Remark:      req.Remark,
+			}
+			if err := tx.Create(poolHost).Error; err != nil {
+				return err
+			}
+			return s.syncMembership(ctx, tx, hostID)
+		})
+		if txErr != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
 		} else {
 			result.Successful++
 		}
@@ -438,11 +458,18 @@ func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 	}
 
 	for _, hostID := range req.HostIDs {
-		if err := s.db.Model(&types.ResourcePoolHost{}).
-			Where("host_id = ?", hostID).
-			Update("directory_id", req.TargetDirectoryID).Error; err != nil {
+		// 旧表写 + 新表同步，同事务原子
+		txErr := s.db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&types.ResourcePoolHost{}).
+				Where("host_id = ?", hostID).
+				Update("directory_id", req.TargetDirectoryID).Error; err != nil {
+				return err
+			}
+			return s.syncMembership(ctx, tx, hostID)
+		})
+		if txErr != nil {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
 		} else {
 			result.Successful++
 		}

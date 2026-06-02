@@ -78,6 +78,15 @@ func WithHostMembership(hms host_membership.Service) Option {
 	return func(s *service) { s.hms = hms }
 }
 
+// syncMembership 阶段1过渡：未走 hms 的归属写路径（空闲机→业务模块、集群转业务）在写旧表的
+// 同一事务内，把新表 host_node_memberships 同步成与旧表一致，使新表成为权威读源（hms 注入时生效）。
+func (s *service) syncMembership(ctx context.Context, tx *gorm.DB, hostID uuid.UUID) error {
+	if s.hms == nil {
+		return nil
+	}
+	return s.hms.WithTx(tx).SyncFromLegacy(ctx, hostID)
+}
+
 // NewService 创建服务实例。opts 向后兼容：现有 NewService(db, mainlineSvc) 调用不受影响。
 func NewService(db *gorm.DB, mainlineSvc mainline.Service, opts ...Option) Service {
 	if mainlineSvc == nil {
@@ -420,7 +429,11 @@ func (s *service) TransferHosts(ctx context.Context, req *types.TransferHostsReq
 				HostID:     hostID,
 				BusinessID: targetModule.BusinessID,
 			}
-			return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(bizRel).Error
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(bizRel).Error; err != nil {
+				return err
+			}
+			// 阶段1过渡：旧表写完后同步新表（同事务），使新表权威
+			return s.syncMembership(ctx, tx, hostID)
 		})
 
 		if err != nil {
@@ -589,6 +602,21 @@ func (s *service) MoveSet(ctx context.Context, setID uint64, targetBusinessID ui
 				ON CONFLICT (host_id, business_id) DO NOTHING
 			`, targetBusinessID, moduleIDs).Error; err != nil {
 				return err
+			}
+
+			// 阶段1过渡：集群改挂业务后，模块的 business_id 已更新，需同步该集群下所有主机的
+			// 新表归属（business_id 由 module 重新推导），使新表与旧表一致。
+			var affectedHostIDs []uuid.UUID
+			if err := tx.Table("host_module_relations").
+				Where("module_id IN ?", moduleIDs).
+				Distinct("host_id").
+				Pluck("host_id", &affectedHostIDs).Error; err != nil {
+				return err
+			}
+			for _, hostID := range affectedHostIDs {
+				if err := s.syncMembership(ctx, tx, hostID); err != nil {
+					return err
+				}
 			}
 		}
 

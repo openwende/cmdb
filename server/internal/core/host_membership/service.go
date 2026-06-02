@@ -65,6 +65,11 @@ type Service interface {
 	Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opts MoveOptions) (*Result, error)
 	// NodesOfHost 查询主机当前归属节点。
 	NodesOfHost(ctx context.Context, hostID uuid.UUID) ([]NodeRef, error)
+	// SyncFromLegacy 阶段1过渡：把该主机在新表 host_node_memberships 的归属重建为与旧三表一致。
+	// 用于尚未收敛到本服务的写路径（导入资源池 / 资源池内移动 / 空闲机→业务模块 / 集群转业务）：
+	// 这些路径直写旧三表后调用本方法，使新表与旧表实时一致，让阶段2迁读侧前新表即为权威源。
+	// 须在调用方事务内调用（经 WithTx 绑定 tx），以与旧表写入保持原子。
+	SyncFromLegacy(ctx context.Context, hostID uuid.UUID) error
 }
 
 type service struct {
@@ -217,6 +222,65 @@ func (s *service) NodesOfHost(ctx context.Context, hostID uuid.UUID) ([]NodeRef,
 		return nil, err
 	}
 	return toNodeRefs(rows), nil
+}
+
+// SyncFromLegacy 按旧三表重建该主机的新表归属（幂等：先删该主机所有新表行，再按旧表逐行重建）。
+// business_id/set_id 由 module 推导（与 Attach/Move 的 resolveDims 口径一致）；资源池行 business_id 留空。
+// 须在调用方事务内（WithTx 绑定 tx）调用，使其与旧表写入原子。
+func (s *service) SyncFromLegacy(ctx context.Context, hostID uuid.UUID) error {
+	now := time.Now().UTC()
+	db := s.db.WithContext(ctx)
+
+	// 1. 清该主机现有新表行
+	if err := db.Where("host_id = ?", hostID).Delete(&types.HostNodeMembership{}).Error; err != nil {
+		return err
+	}
+
+	rows := make([]types.HostNodeMembership, 0, 4)
+
+	// 2. 业务模块归属：host_module_relations → biz_module 行（business_id/set_id 由 module 推导）
+	var moduleIDs []uint64
+	if err := db.Table("host_module_relations").Where("host_id = ?", hostID).Pluck("module_id", &moduleIDs).Error; err != nil {
+		return err
+	}
+	for _, mid := range moduleIDs {
+		var m types.Module
+		if err := db.Select("id", "business_id", "set_id").First(&m, mid).Error; err != nil {
+			return fmt.Errorf("同步主机归属失败: 业务模块 %d 不存在: %w", mid, err)
+		}
+		b, st := m.BusinessID, m.SetID
+		rows = append(rows, types.HostNodeMembership{
+			HostID:       hostID,
+			NodeKind:     types.NodeKindBizModule,
+			NodeID:       mid,
+			BusinessID:   &b,
+			SetID:        &st,
+			RelationType: types.HostMembershipRelMemberOf,
+			Source:       types.HostMembershipSourceBackfill,
+			CreatedAt:    now,
+		})
+	}
+
+	// 3. 资源池归属：resource_pool_hosts → pool_directory 行
+	var dirIDs []uint64
+	if err := db.Table("resource_pool_hosts").Where("host_id = ?", hostID).Pluck("directory_id", &dirIDs).Error; err != nil {
+		return err
+	}
+	for _, did := range dirIDs {
+		rows = append(rows, types.HostNodeMembership{
+			HostID:       hostID,
+			NodeKind:     types.NodeKindPoolDirectory,
+			NodeID:       did,
+			RelationType: types.HostMembershipRelMemberOf,
+			Source:       types.HostMembershipSourceBackfill,
+			CreatedAt:    now,
+		})
+	}
+
+	if len(rows) > 0 {
+		return db.Create(&rows).Error
+	}
+	return nil
 }
 
 // mirrorLegacy 在同事务内把归属变更镜像到旧三表（阶段 1 双写过渡）。
