@@ -94,6 +94,16 @@ func lifecycleResultFrom(res *host_membership.Result, status string) *types.Reso
 	return out
 }
 
+// batchResultFrom 把统一归属通道结果转为批量操作结果（import/move-in-pool 用）。
+func batchResultFrom(res *host_membership.Result) *types.BatchOperationResult {
+	return &types.BatchOperationResult{
+		Total:      res.Total,
+		Successful: res.Successful,
+		Failed:     res.Failed,
+		Errors:     res.Errors,
+	}
+}
+
 // ========== 资源目录管理 ==========
 
 // CreateDirectory 创建资源目录
@@ -360,15 +370,6 @@ func (s *service) MoveDirectory(ctx context.Context, id uint64, req *types.MoveR
 // ========== 资源池主机管理 ==========
 
 // ImportHostsToPool 导入主机到资源池
-// syncMembership 阶段1过渡：未走 hms 的归属写路径（导入/池内移动）在写旧表的同一事务内，
-// 把新表 host_node_memberships 同步成与旧表一致，使新表成为权威读源（hms 注入时生效）。
-func (s *service) syncMembership(ctx context.Context, tx *gorm.DB, hostID uuid.UUID) error {
-	if s.hms == nil {
-		return nil
-	}
-	return s.hms.WithTx(tx).SyncFromLegacy(ctx, hostID)
-}
-
 func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsToPoolRequest, importedBy string) (*types.BatchOperationResult, error) {
 	// 验证目录存在
 	var dir types.ResourceDirectory
@@ -390,7 +391,7 @@ func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 			continue
 		}
 
-		// 检查主机是否已分配到业务（读切换：host_node_memberships biz_module）
+		// 已分配到业务则拒绝（须先回收）
 		var bizRelCount int64
 		if err := s.db.Model(&types.HostNodeMembership{}).Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindBizModule).Count(&bizRelCount).Error; err != nil {
 			result.Failed++
@@ -403,49 +404,25 @@ func (s *service) ImportHostsToPool(ctx context.Context, req *types.ImportHostsT
 			continue
 		}
 
-		// 检查是否已在资源池
-		var existing types.ResourcePoolHost
-		if err := s.db.Where("host_id = ?", hostID).First(&existing).Error; err == nil {
-			// 已存在，更新目录（旧表写 + 新表同步，同事务原子）
-			txErr := s.db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Model(&existing).Updates(map[string]interface{}{
-					"directory_id": req.DirectoryID,
-					"imported_by":  importedBy,
-					"remark":       req.Remark,
-				}).Error; err != nil {
-					return err
-				}
-				return s.syncMembership(ctx, tx, hostID)
-			})
-			if txErr != nil {
-				result.Failed++
-				result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
-			} else {
-				result.Successful++
-			}
+		// 写收敛（阶段2）：经统一归属通道导入到目标资源池目录（Move 兼容新导入与改目录；mirror 仍写旧表作安全网）。
+		res, err := s.hms.Move(ctx, []uuid.UUID{hostID},
+			host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: req.DirectoryID},
+			host_membership.MoveOptions{Source: types.HostMembershipSourceImport, By: importedBy})
+		if err != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
 			continue
 		}
-
-		// 新增资源池记录（旧表写 + 新表同步，同事务原子）
-		txErr := s.db.Transaction(func(tx *gorm.DB) error {
-			poolHost := &types.ResourcePoolHost{
-				HostID:      hostID,
-				DirectoryID: req.DirectoryID,
-				ImportedAt:  time.Now(),
-				ImportedBy:  importedBy,
-				Remark:      req.Remark,
-			}
-			if err := tx.Create(poolHost).Error; err != nil {
-				return err
-			}
-			return s.syncMembership(ctx, tx, hostID)
-		})
-		if txErr != nil {
+		if res.Failed > 0 {
 			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
-		} else {
-			result.Successful++
+			msg := "导入失败"
+			if len(res.Errors) > 0 {
+				msg = res.Errors[0]
+			}
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, msg))
+			continue
 		}
+		result.Successful++
 	}
 
 	return result, nil
@@ -459,30 +436,14 @@ func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 		return nil, fmt.Errorf("目标目录不存在")
 	}
 
-	result := &types.BatchOperationResult{
-		Total:  len(req.HostIDs),
-		Errors: make([]string, 0),
+	// 写收敛（阶段2）：经统一归属通道把主机移到目标资源池目录（Move 删旧 pool 行+增新；mirror 仍写旧表作安全网）。
+	res, err := s.hms.Move(ctx, req.HostIDs,
+		host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: req.TargetDirectoryID},
+		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer, By: "system"})
+	if err != nil {
+		return nil, err
 	}
-
-	for _, hostID := range req.HostIDs {
-		// 旧表写 + 新表同步，同事务原子
-		txErr := s.db.Transaction(func(tx *gorm.DB) error {
-			if err := tx.Model(&types.ResourcePoolHost{}).
-				Where("host_id = ?", hostID).
-				Update("directory_id", req.TargetDirectoryID).Error; err != nil {
-				return err
-			}
-			return s.syncMembership(ctx, tx, hostID)
-		})
-		if txErr != nil {
-			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
-		} else {
-			result.Successful++
-		}
-	}
-
-	return result, nil
+	return batchResultFrom(res), nil
 }
 
 // AllocateHosts 分配主机到业务模块

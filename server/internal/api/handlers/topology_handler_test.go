@@ -754,7 +754,8 @@ func TestTopologyHandler_TransferHosts_PersistsToLegacyTables(t *testing.T) {
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
+	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules；注入带 mirror 的 hms 使旧表仍被写（本用例断言旧表）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil, host_membership.WithLegacyMirror())))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 
@@ -820,7 +821,8 @@ func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
+	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules；注入带 mirror 的 hms 使旧表仍被写（本用例断言旧表）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil, host_membership.WithLegacyMirror())))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 

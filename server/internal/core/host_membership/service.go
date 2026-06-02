@@ -63,6 +63,9 @@ type Service interface {
 	Attach(ctx context.Context, hostIDs []uuid.UUID, node NodeRef, opts MoveOptions) (*Result, error)
 	// Move 归属迁移（分配/转移/回收/待回收）：单事务内删旧 + 增新 + 审计，保证 I1/I2。
 	Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opts MoveOptions) (*Result, error)
+	// MoveBetweenModules 业务模块间转移：删源模块归属（removeModuleID；nil=该主机的空闲/默认模块）、
+	// 清资源池归属、追加目标模块归属，并保留其它业务模块归属（I4 多属）。用于 topology TransferHosts。
+	MoveBetweenModules(ctx context.Context, hostIDs []uuid.UUID, targetModuleID uint64, removeModuleID *uint64, opts MoveOptions) (*Result, error)
 	// NodesOfHost 查询主机当前归属节点。
 	NodesOfHost(ctx context.Context, hostID uuid.UUID) ([]NodeRef, error)
 	// SyncFromLegacy 阶段1过渡：把该主机在新表 host_node_memberships 的归属重建为与旧三表一致。
@@ -199,6 +202,105 @@ func (s *service) Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opt
 			}
 
 			// I5 审计（阶段 0 audit 可为 nil）
+			if s.audit != nil {
+				if err := s.audit.RecordHostMembershipChange(tx, hostID, toNodeRefs(before), []NodeRef{to}, opts.Source, opts.By); err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if txErr != nil {
+			result.Failed++
+			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, txErr.Error()))
+			continue
+		}
+		result.Successful++
+	}
+	return result, nil
+}
+
+func (s *service) MoveBetweenModules(ctx context.Context, hostIDs []uuid.UUID, targetModuleID uint64, removeModuleID *uint64, opts MoveOptions) (*Result, error) {
+	to := NodeRef{Kind: types.NodeKindBizModule, ID: targetModuleID}
+	if err := validateNode(to); err != nil {
+		return nil, err
+	}
+	bizID, setID, err := s.resolveDims(ctx, to)
+	if err != nil {
+		return nil, err
+	}
+	result := &Result{Total: len(hostIDs), Errors: make([]string, 0)}
+	now := time.Now().UTC()
+
+	for _, hostID := range hostIDs {
+		txErr := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+			// 读取并（PG 上）锁定该主机现有归属，防并发竞态
+			readQ := tx.Where("host_id = ?", hostID)
+			if tx.Dialector.Name() == "postgres" {
+				readQ = readQ.Clauses(clause.Locking{Strength: "UPDATE"})
+			}
+			var before []types.HostNodeMembership
+			if err := readQ.Find(&before).Error; err != nil {
+				return err
+			}
+
+			// 计算要删的源业务模块：指定 removeModuleID 则删它（≠目标时）；否则删该主机的空闲(默认)模块归属
+			var removeIDs []uint64
+			if removeModuleID != nil {
+				if *removeModuleID != targetModuleID {
+					removeIDs = []uint64{*removeModuleID}
+				}
+			} else {
+				if err := tx.Table("host_node_memberships AS hnm").
+					Joins("JOIN modules m ON m.id = hnm.node_id").
+					Where("hnm.host_id = ? AND hnm.node_kind = ? AND hnm.node_id <> ? AND m.is_default = ?",
+						hostID, types.NodeKindBizModule, targetModuleID, true).
+					Pluck("hnm.node_id", &removeIDs).Error; err != nil {
+					return err
+				}
+			}
+
+			// 删源业务模块归属
+			if len(removeIDs) > 0 {
+				if err := tx.Where("host_id = ? AND node_kind = ? AND node_id IN ?", hostID, types.NodeKindBizModule, removeIDs).
+					Delete(&types.HostNodeMembership{}).Error; err != nil {
+					return err
+				}
+			}
+			// 清资源池归属（进业务必出池，I2）
+			if err := tx.Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindPoolDirectory).
+				Delete(&types.HostNodeMembership{}).Error; err != nil {
+				return err
+			}
+			// 增目标业务模块归属（幂等），保留其它业务模块归属（I4）
+			row := newMembershipRow(hostID, to, bizID, setID, opts, now)
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(row).Error; err != nil {
+				return err
+			}
+
+			// 阶段 1：镜像维护旧三表（安全网）
+			if s.mirror {
+				if len(removeIDs) > 0 {
+					if err := tx.Where("host_id = ? AND module_id IN ?", hostID, removeIDs).
+						Delete(&types.HostModuleRelation{}).Error; err != nil {
+						return err
+					}
+				}
+				if err := tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error; err != nil {
+					return err
+				}
+				mr := &types.HostModuleRelation{HostID: hostID, ModuleID: targetModuleID, CreatedAt: now}
+				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(mr).Error; err != nil {
+					return err
+				}
+				if bizID != nil {
+					br := &types.HostBusinessRelation{HostID: hostID, BusinessID: *bizID, CreatedAt: now}
+					if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(br).Error; err != nil {
+						return err
+					}
+				}
+			}
+
+			// I5 审计
 			if s.audit != nil {
 				if err := s.audit.RecordHostMembershipChange(tx, hostID, toNodeRefs(before), []NodeRef{to}, opts.Source, opts.By); err != nil {
 					return err

@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/core/auditlog"
 	"github.com/wend/cmdb-backend/internal/core/host_membership"
@@ -76,15 +75,6 @@ type Option func(*service)
 // WithHostMembership 注入主机归属统一服务（阶段 1 接入，使归属变更走单一通道）。
 func WithHostMembership(hms host_membership.Service) Option {
 	return func(s *service) { s.hms = hms }
-}
-
-// syncMembership 阶段1过渡：未走 hms 的归属写路径（空闲机→业务模块、集群转业务）在写旧表的
-// 同一事务内，把新表 host_node_memberships 同步成与旧表一致，使新表成为权威读源（hms 注入时生效）。
-func (s *service) syncMembership(ctx context.Context, tx *gorm.DB, hostID uuid.UUID) error {
-	if s.hms == nil {
-		return nil
-	}
-	return s.hms.WithTx(tx).SyncFromLegacy(ctx, hostID)
 }
 
 // NewService 创建服务实例。opts 向后兼容：现有 NewService(db, mainlineSvc) 调用不受影响。
@@ -379,88 +369,25 @@ func (s *service) DeleteModule(ctx context.Context, id uint64) error {
 
 // TransferHosts 转移主机到目标模块
 func (s *service) TransferHosts(ctx context.Context, req *types.TransferHostsRequest) (*types.BatchOperationResult, error) {
-	result := &types.BatchOperationResult{
-		Total:  len(req.HostIDs),
-		Errors: make([]string, 0),
-	}
-
 	// 验证目标模块
 	var targetModule types.Module
 	if err := s.db.First(&targetModule, req.TargetModuleID).Error; err != nil {
 		return nil, fmt.Errorf("目标模块不存在")
 	}
 
-	// 批量更新
-	for _, hostID := range req.HostIDs {
-		err := s.db.Transaction(func(tx *gorm.DB) error {
-			var hostCount int64
-			if err := tx.Model(&types.Host{}).
-				Where("id = ? AND deleted_at IS NULL", hostID).
-				Count(&hostCount).Error; err != nil {
-				return err
-			}
-			if hostCount == 0 {
-				return fmt.Errorf("主机不存在")
-			}
-
-			if req.SourceModuleID != nil && *req.SourceModuleID != req.TargetModuleID {
-				if err := tx.Where("host_id = ? AND module_id = ?", hostID, *req.SourceModuleID).
-					Delete(&types.HostModuleRelation{}).Error; err != nil {
-					return err
-				}
-			} else if err := s.removeIdleModuleRelation(tx, hostID, req.TargetModuleID); err != nil {
-				return err
-			}
-
-			// 主机转入业务模块后，从资源池中移除（如果存在）
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error; err != nil {
-				return err
-			}
-
-			moduleRel := &types.HostModuleRelation{
-				HostID:   hostID,
-				ModuleID: req.TargetModuleID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(moduleRel).Error; err != nil {
-				return err
-			}
-
-			bizRel := &types.HostBusinessRelation{
-				HostID:     hostID,
-				BusinessID: targetModule.BusinessID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(bizRel).Error; err != nil {
-				return err
-			}
-			// 阶段1过渡：旧表写完后同步新表（同事务），使新表权威
-			return s.syncMembership(ctx, tx, hostID)
-		})
-
-		if err != nil {
-			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
-		} else {
-			result.Successful++
-		}
+	// 写收敛（阶段2）：经统一归属通道做业务模块间转移
+	// （删源/空闲模块归属 + 清资源池归属 + 加目标模块，保留其它模块归属；mirror 仍写旧表作安全网）。
+	res, err := s.hms.MoveBetweenModules(ctx, req.HostIDs, req.TargetModuleID, req.SourceModuleID,
+		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer, By: "system"})
+	if err != nil {
+		return nil, err
 	}
-
-	return result, nil
-}
-
-func (s *service) removeIdleModuleRelation(tx *gorm.DB, hostID uuid.UUID, targetModuleID uint64) error {
-	var idleModuleIDs []uint64
-	if err := tx.Table("host_module_relations AS hmr").
-		Select("hmr.module_id").
-		Joins("JOIN modules m ON m.id = hmr.module_id").
-		Where("hmr.host_id = ? AND hmr.module_id <> ? AND m.is_default = ?", hostID, targetModuleID, true).
-		Pluck("hmr.module_id", &idleModuleIDs).Error; err != nil {
-		return err
-	}
-	if len(idleModuleIDs) == 0 {
-		return nil
-	}
-	return tx.Where("host_id = ? AND module_id IN ?", hostID, idleModuleIDs).
-		Delete(&types.HostModuleRelation{}).Error
+	return &types.BatchOperationResult{
+		Total:      res.Total,
+		Successful: res.Successful,
+		Failed:     res.Failed,
+		Errors:     res.Errors,
+	}, nil
 }
 
 // TransferHostsToPool 将主机转移到资源池（空闲机池）
@@ -587,36 +514,17 @@ func (s *service) MoveSet(ctx context.Context, setID uint64, targetBusinessID ui
 			return err
 		}
 
-		// 为模块下所有主机补充目标业务关联（多对多，不覆盖原有关联）
+		// 写收敛（阶段2）：集群改挂业务后，重绑该集群下所有业务模块归属的冗余列 business_id（新表权威）。
+		// 主机的模块归属本身不变，仅所属业务变；不再写旧 host_business_relations（对账只比模块/池归属，不受影响）。
 		var moduleIDs []uint64
 		if err := tx.Model(&types.Module{}).Where("set_id = ?", setID).Pluck("id", &moduleIDs).Error; err != nil {
 			return err
 		}
-
 		if len(moduleIDs) > 0 {
-			if err := tx.Exec(`
-				INSERT INTO host_business_relations (host_id, business_id, created_at)
-				SELECT DISTINCT host_id, ?, NOW()
-				FROM host_module_relations
-				WHERE module_id IN ?
-				ON CONFLICT (host_id, business_id) DO NOTHING
-			`, targetBusinessID, moduleIDs).Error; err != nil {
+			if err := tx.Model(&types.HostNodeMembership{}).
+				Where("node_kind = ? AND node_id IN ?", types.NodeKindBizModule, moduleIDs).
+				Update("business_id", targetBusinessID).Error; err != nil {
 				return err
-			}
-
-			// 阶段1过渡：集群改挂业务后，模块的 business_id 已更新，需同步该集群下所有主机的
-			// 新表归属（business_id 由 module 重新推导），使新表与旧表一致。
-			var affectedHostIDs []uuid.UUID
-			if err := tx.Table("host_module_relations").
-				Where("module_id IN ?", moduleIDs).
-				Distinct("host_id").
-				Pluck("host_id", &affectedHostIDs).Error; err != nil {
-				return err
-			}
-			for _, hostID := range affectedHostIDs {
-				if err := s.syncMembership(ctx, tx, hostID); err != nil {
-					return err
-				}
 			}
 		}
 
