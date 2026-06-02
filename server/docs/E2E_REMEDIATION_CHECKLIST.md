@@ -76,7 +76,8 @@
     - **`/businesses` 列表已完全收口为标准**——经"附加(c7d3c8d/ceca82b)→消费端全迁(概览/Home/业务列表)→移除旧字段(后端 `d8b0e83` 改 `response.List`、前端 `d0e7935`)"三步，现响应仅 `{code,data:{items,pagination}}`，实测业务列表页"共计 4 条"正常。
     - **`/hosts/batch` 批量导入已完全收口为标准**——后端 `74be870` 改 `response.OK`、批量统一 HTTP **200**（曾 207 部分失败 / 400 全失败），响应 `{code,data:{total,successful,failed,errors,created_ids}}`；前端 `a769ede` `batchCreateHosts` 解包 `data`，消费端 `ImportHost` 按 body 的 `successful/failed` 判定（曾抛错的全失败分支现走成功路径如实展示错误）。新增 handler 单测 `TestHostHandler_BatchImportPartialFailureReturns200Envelope` 锁定契约；容器 curl 三用例(全成功/部分/全失败)实测均 200+envelope，浏览器 origin 全失败用例实测 200（曾 400）。
     - **`/hosts` 列表已收口为标准**——`ListHosts` 从裸 `HostListResponse{total,page,page_size,hosts}` 改 `response.List`（后端 `df10e8e`）→ `{code,data:{items,pagination}}`；前端 `823ebb0` 统计概览读 `data.pagination.total`、`AddHostModal` 读 `data.items`（均防御回退旧扁平字段，过渡期兼容）。handler 测试补 envelope 断言；容器实测 `GET /hosts` 200+envelope（total:3），浏览器运营概览"主机总数 3"正常（读 `pagination.total`）。注：`PoolHostStore` 资源池主机走 `/resource-pool/hosts`，早已是标准 envelope。
-    - **剩余**：其余分歧 list 端点（`/business-sets`、cloud-area、dynamic-group 仍用 `limit/offset` 或扁平分页）按同套流程逐个收口；v2 `resource_graph`（`{success}` 形状）已裁定不扶正、不迁。策略见 `API_RESPONSE_STANDARD.md`
+    - **`/business-sets` 列表已收口为标准**——`ListBusinessSets` 从 `{success:true,data:{items,total,limit,offset}}` 改 `response.List`（后端 `a777a43`）→ `{code,data:{items,pagination}}`（对齐 `ListBusinesses`）。**前端零改动**：唯一消费端 `BusinessStore` 只读 `data.items`（新旧形状都在）。新增 `TestListBusinessSets` 锁定契约；容器实测 `GET /business-sets` 200+envelope，浏览器整页重载 `BusinessStore` 重新拉取无报错。
+    - **剩余**：其余分歧 list 端点（cloud-area 扁平 `{total,page,page_size,cloud_areas}`、dynamic-group `limit/offset`）按同套流程逐个收口；v2 `resource_graph`（`{success}` 形状）已裁定不扶正、不迁。策略见 `API_RESPONSE_STANDARD.md`
 
 ### [x] R9　主机 ID 展示不一致（已修，commit `af782ab` 后端 + `a964da2` 前端）
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。

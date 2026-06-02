@@ -52,8 +52,8 @@ response.Error(c, http.StatusBadRequest, msg) // {"code":400,"error":msg}       
 4. 一个 PR 收敛一个域，避免大范围回归。
 
 > 状态：标准 + 助手 + 示范端点已落；存量迁移按上述策略逐接口推进。
-> **已收口**：`/businesses` 列表、`/hosts` 列表（均 `response.List`，仅 `{code,data:{items,pagination}}`）、
+> **已收口**：`/businesses`、`/hosts`、`/business-sets` 列表（均 `response.List`，仅 `{code,data:{items,pagination}}`）、
 > `/hosts/batch` 批量导入（`response.OK`，批量统一 HTTP **200**——部分/全部失败由响应体
 > `successful/failed/errors` 表达，不再用 207/400；前端按 body 判定，见 E2E 清单 R8）。
-> **剩余**：其余 list/批量端点（`/business-sets`、cloud-area、dynamic-group 等仍用 `limit/offset` 或扁平分页）
+> **剩余**：其余 list/批量端点（cloud-area、dynamic-group 等仍用 `limit/offset` 或扁平分页）
 > 按同套"附加→迁消费端→移除"流程续推；v2 `resource_graph` 已裁定不扶正、不迁。
