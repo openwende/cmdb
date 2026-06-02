@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/host"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -180,4 +181,51 @@ func TestHostHandler_ListHostsUsesDefaultTenant(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Equal(t, systemTenantUUID, hostRepo.listTenantID)
+}
+
+// TestHostHandler_BatchImportPartialFailureReturns200Envelope 锁定 R8 契约：
+// 批量导入即便部分失败也返回 HTTP 200（曾为 207），且响应体为统一 envelope
+// {"code":0,"data":<BatchImportResult>}，部分失败由 body 的 successful/failed 表达。
+func TestHostHandler_BatchImportPartialFailureReturns200Envelope(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	hostRepo := &fakeHostRepo{}
+	cloudAreaRepo := &fakeCloudAreaRepo{
+		defaultArea: &types.CloudArea{ID: uuid.New()},
+	}
+	handler := NewHostHandler(host.NewService(hostRepo, cloudAreaRepo))
+
+	router := gin.New()
+	router.POST("/hosts/batch", handler.BatchImportHosts)
+
+	// 一台合法主机 + 一台 primary_ip 非法 → 部分失败（skip_errors 跳过继续）。
+	body, err := json.Marshal(types.BatchImportHostsRequest{
+		Hosts: []types.CreateHostRequest{
+			{HostName: "ok-host", PrimaryIP: "10.0.0.1"},
+			{HostName: "bad-host", PrimaryIP: "not-an-ip"},
+		},
+		SkipErrors:          true,
+		UseDefaultCloudArea: true,
+	})
+	require.NoError(t, err)
+
+	req := httptest.NewRequest(http.MethodPost, "/hosts/batch", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	resp := httptest.NewRecorder()
+
+	router.ServeHTTP(resp, req)
+
+	// 部分失败也是 200（不再 207）。
+	require.Equal(t, http.StatusOK, resp.Code)
+
+	var envelope struct {
+		Code int                     `json:"code"`
+		Data types.BatchImportResult `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &envelope))
+	require.Equal(t, response.CodeOK, envelope.Code)
+	require.Equal(t, 2, envelope.Data.Total)
+	require.Equal(t, 1, envelope.Data.Successful)
+	require.Equal(t, 1, envelope.Data.Failed)
+	require.Len(t, envelope.Data.Errors, 1)
 }

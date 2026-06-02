@@ -72,10 +72,14 @@ func (h *HostHandler) CreateHost(c *gin.Context) {
 // @Param request body types.BatchImportHostsRequest true "批量导入主机请求"
 // @Success 200 {object} types.BatchImportResult
 // @Router /api/v1/hosts/batch [post]
+//
+// 采用统一响应规范（R8）：成功 response.OK → {"code":0,"data":<BatchImportResult>}，
+// 批量统一 HTTP 200——部分/全部失败由响应体的 successful/failed/errors 表达，
+// 不再用 207/400 混合状态码（前端统一按 body 判定，见 docs/API_RESPONSE_STANDARD.md）。
 func (h *HostHandler) BatchImportHosts(c *gin.Context) {
 	var req types.BatchImportHostsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -84,19 +88,11 @@ func (h *HostHandler) BatchImportHosts(c *gin.Context) {
 
 	result, err := h.service.BatchImportHosts(c.Request.Context(), tenantID, &req, createdBy)
 	if err != nil {
-		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
+		response.Error(c, apperrors.HTTPStatus(err), err.Error())
 		return
 	}
 
-	// 如果有部分失败，返回 207 Multi-Status
-	statusCode := http.StatusOK
-	if result.Failed > 0 && result.Successful > 0 {
-		statusCode = http.StatusMultiStatus
-	} else if result.Failed > 0 && result.Successful == 0 {
-		statusCode = http.StatusBadRequest
-	}
-
-	c.JSON(statusCode, result)
+	response.OK(c, result)
 }
 
 // GetHost 获取主机详情
