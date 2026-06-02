@@ -71,8 +71,8 @@
 ### [~] R8　API 响应格式不统一（已立标准+助手，不破坏存量；逐接口迁移留独立任务）
 - **现象**：三套规范并存——`/businesses` 用 `{success, data:{items,total,limit,offset}}`；`/resource-pool/*` 用 `{code:0, data:{...,pagination:{page,page_size,total}}}`；`/hosts/batch` 裸返回 `{created_ids,...}` + HTTP **207**。包裹结构、分页字段、状态码三处不一致。
 - **修复**（范围：用户选定"只立标准+助手、不破坏存量"）：
-  - [x] 后端：统一响应包裹标准（选 `code`）+ 分页/批量语义，落 `internal/api/response`（`OK`/`Created`/`List`/`Error` 助手）+ 规范文档 `docs/API_RESPONSE_STANDARD.md`；示范端点 `GET /v1/hosts/statistics` 已采用。零回归（存量端点不动）。
-  - [ ] 逐接口迁移存量端点到统一形状（需前后端同步、按域分批），作为独立横切任务推进——见 `API_RESPONSE_STANDARD.md` 的迁移策略
+  - [x] 后端：统一响应包裹标准（选 `code`）+ 分页/批量语义，落 `internal/api/response`（`OK`/`Created`/`List`/`Error` 助手）+ 规范文档 `docs/API_RESPONSE_STANDARD.md`；新端点 `hosts/statistics`、`instances/statistics` 已采用。零回归。
+  - [~] 逐接口迁移存量端点：**第一步(非破坏渐进式)已落**——`/businesses` 列表附加 `code`+`pagination`(保留旧字段，~15 消费端零影响，commit `c7d3c8d`)，概览业务计数迁到 `pagination.total`(commit `ceca82b`)。后续：其余消费端逐个切到 `pagination` → 移除旧字段；再迁 resource-pool 外的其他域。策略见 `API_RESPONSE_STANDARD.md`
 
 ### [x] R9　主机 ID 展示不一致（已修，commit `af782ab` 后端 + `a964da2` 前端）
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。
