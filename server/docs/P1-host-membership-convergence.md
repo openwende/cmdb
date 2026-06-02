@@ -126,6 +126,22 @@ R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前�
 
 止血层（`E2E_FIX_PLAN.md` F1/F3）可与阶段 0/1 并行先上，互不阻塞。
 
+### 实施现状（2026-06-02 复核纠偏）
+
+阶段 0 完成。阶段 1 **此前只做了一半**：`HostMembershipService` 写新表 + 旧表镜像仅覆盖
+`allocate`/`reclaim`/`transfer-to-pool`（经 hms）；但 **4 个改归属的写路径仍直写旧三表、绕过新表**——
+`ImportHostsToPool`、`MoveHostsInPool`、`TransferHosts`（空闲机→业务模块）、`MoveSet`（集群转业务）。
+即新表当时是“只写影子表 + 写洞”，**尚不可作读源**。
+
+- **阶段 1·里程碑 1（已完成，commit `fb76d34`）｜堵写洞使新表权威**：给 `HostMembershipService`
+  加 `SyncFromLegacy(hostID)` 原语（按旧三表重建该主机新表归属，幂等、business_id/set_id 由 module 推导）；
+  上述 4 个写路径在写旧表的同一事务内 guarded 调用之，零改动旧表写语义。容器全生命周期 + 浏览器真实动线 +
+  全量对账验证：新表与旧表实时一致。**读侧仍读旧表，UI 行为不变。**
+  - 遗留（建议废弃而非同步）：host 级 `/hosts/:id/assign|reclaim`（前端未用、storage 层无 hms、语义遗留）；
+    `projection` 命令服务（死代码，无构造调用）。
+- **阶段 1·里程碑 2（待做）｜读切换**：把 ~31 处读旧三表的查询（7 文件，topology 占 15，10 处需去重）
+  切到 `host_node_memberships`；旧表仍双写作安全网。完成后阶段 1 才算收口，方可进阶段 2 退役旧表。
+
 ---
 
 ## 7. 阶段 B：终态对齐 mainline / 蓝鲸（可选、长期）
