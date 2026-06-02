@@ -121,12 +121,18 @@ const getBusinessIdleModuleId = async (bizId: number): Promise<number> => {
   return initializedIdleModuleId;
 };
 
-export const batchCreateHosts = (hosts: BatchCreateHostItem[]): Promise<BatchCreateHostsResult> => {
-  return axios.post(URLS.hostsBatch, {
+export const batchCreateHosts = async (
+  hosts: BatchCreateHostItem[],
+): Promise<BatchCreateHostsResult> => {
+  // R8 统一响应：成功体为 { code, data }，批量统一 HTTP 200（部分/全部失败由 body 的
+  // successful/failed 表达）。此处解包 data 返回批量结果；兼容迁移过渡期的历史裸响应
+  // （无 data 时回退到顶层）。详见 docs/API_RESPONSE_STANDARD.md。
+  const res: any = await axios.post(URLS.hostsBatch, {
     hosts,
     skip_errors: true,
     use_default_cloud_area: true,
   });
+  return (res?.data ?? res) as BatchCreateHostsResult;
 };
 
 export const addHostsToPoolDirectory = (
