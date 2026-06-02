@@ -72,7 +72,7 @@
 - **现象**：三套规范并存——`/businesses` 用 `{success, data:{items,total,limit,offset}}`；`/resource-pool/*` 用 `{code:0, data:{...,pagination:{page,page_size,total}}}`；`/hosts/batch` 裸返回 `{created_ids,...}` + HTTP **207**。包裹结构、分页字段、状态码三处不一致。
 - **修复**（范围：用户选定"只立标准+助手、不破坏存量"）：
   - [x] 后端：统一响应包裹标准（选 `code`）+ 分页/批量语义，落 `internal/api/response`（`OK`/`Created`/`List`/`Error` 助手）+ 规范文档 `docs/API_RESPONSE_STANDARD.md`；新端点 `hosts/statistics`、`instances/statistics` 已采用。零回归。
-  - [~] 逐接口迁移存量端点：**第一步(非破坏渐进式)已落**——`/businesses` 列表附加 `code`+`pagination`(保留旧字段，~15 消费端零影响，commit `c7d3c8d`)，概览业务计数迁到 `pagination.total`(commit `ceca82b`)。后续：其余消费端逐个切到 `pagination` → 移除旧字段；再迁 resource-pool 外的其他域。策略见 `API_RESPONSE_STANDARD.md`
+  - [~] 逐接口迁移存量端点：**`/businesses` 列表已完全收口为标准**——经"附加(c7d3c8d/ceca82b)→消费端全迁(概览/Home/业务列表)→移除旧字段(后端 `d8b0e83` 改 `response.List`、前端 `d0e7935`)"三步，现响应仅 `{code,data:{items,pagination}}`，实测业务列表页"共计 4 条"正常。**剩余**：其他分歧端点(`/hosts/batch` 的 207、其余 list 端点)按同套"附加→迁消费端→移除"流程逐个收口。策略见 `API_RESPONSE_STANDARD.md`
 
 ### [x] R9　主机 ID 展示不一致（已修，commit `af782ab` 后端 + `a964da2` 前端）
 - **现象**：资源池页显示短整数 `display_id`(2/3)，业务拓扑页显示 `UUID`，同一台主机两副面孔。
