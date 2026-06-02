@@ -9,9 +9,7 @@
 //	I4 业务多属：一主机可属多个业务模块（由 UNIQUE 约束承载）。
 //	I5 单一审计点：任何归属变更经唯一写入点统一落审计。
 //
-// 阶段 1（WithLegacyMirror）：在写新表的同时，于同一事务内镜像维护旧三表
-// （host_module_relations / host_business_relations / resource_pool_hosts），
-// 使旧读路径在过渡期不破，并让 R1/R2 通过统一逻辑消失。阶段 2 退役镜像与旧表。
+// 阶段 2 起：本服务只写新表 host_node_memberships（旧三表已退役，读写均不再涉及）。
 package host_membership
 
 import (
@@ -68,26 +66,17 @@ type Service interface {
 	MoveBetweenModules(ctx context.Context, hostIDs []uuid.UUID, targetModuleID uint64, removeModuleID *uint64, opts MoveOptions) (*Result, error)
 	// NodesOfHost 查询主机当前归属节点。
 	NodesOfHost(ctx context.Context, hostID uuid.UUID) ([]NodeRef, error)
-	// SyncFromLegacy 阶段1过渡：把该主机在新表 host_node_memberships 的归属重建为与旧三表一致。
-	// 用于尚未收敛到本服务的写路径（导入资源池 / 资源池内移动 / 空闲机→业务模块 / 集群转业务）：
-	// 这些路径直写旧三表后调用本方法，使新表与旧表实时一致，让阶段2迁读侧前新表即为权威源。
-	// 须在调用方事务内调用（经 WithTx 绑定 tx），以与旧表写入保持原子。
-	SyncFromLegacy(ctx context.Context, hostID uuid.UUID) error
 }
 
 type service struct {
-	db     *gorm.DB
-	audit  AuditRecorder
-	mirror bool // 阶段 1：是否在同事务镜像维护旧三表
+	db    *gorm.DB
+	audit AuditRecorder
 }
 
 // Option 服务可选项。
 type Option func(*service)
 
-// WithLegacyMirror 开启旧三表镜像（阶段 1 双写过渡）。
-func WithLegacyMirror() Option { return func(s *service) { s.mirror = true } }
-
-// NewService 创建主机归属服务。audit 可为 nil（阶段 0 骨架，暂不落审计）。
+// NewService 创建主机归属服务。audit 可为 nil（暂不落审计）。
 func NewService(db *gorm.DB, audit AuditRecorder, opts ...Option) Service {
 	s := &service{db: db, audit: audit}
 	for _, o := range opts {
@@ -97,7 +86,7 @@ func NewService(db *gorm.DB, audit AuditRecorder, opts ...Option) Service {
 }
 
 func (s *service) WithTx(tx *gorm.DB) Service {
-	return &service{db: tx, audit: s.audit, mirror: s.mirror}
+	return &service{db: tx, audit: s.audit}
 }
 
 func validateNode(n NodeRef) error {
@@ -136,13 +125,7 @@ func (s *service) Attach(ctx context.Context, hostIDs []uuid.UUID, node NodeRef,
 	for _, hostID := range hostIDs {
 		txErr := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 			row := newMembershipRow(hostID, node, bizID, setID, opts, now)
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(row).Error; err != nil {
-				return err
-			}
-			if s.mirror {
-				return s.mirrorLegacy(tx, hostID, node, bizID, opts, false, now)
-			}
-			return nil
+			return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(row).Error
 		})
 		if txErr != nil {
 			result.Failed++
@@ -194,14 +177,7 @@ func (s *service) Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opt
 				return err
 			}
 
-			// 阶段 1：镜像维护旧三表（同事务）
-			if s.mirror {
-				if err := s.mirrorLegacy(tx, hostID, to, bizID, opts, true, now); err != nil {
-					return err
-				}
-			}
-
-			// I5 审计（阶段 0 audit 可为 nil）
+			// I5 审计（audit 可为 nil）
 			if s.audit != nil {
 				if err := s.audit.RecordHostMembershipChange(tx, hostID, toNodeRefs(before), []NodeRef{to}, opts.Source, opts.By); err != nil {
 					return err
@@ -277,29 +253,6 @@ func (s *service) MoveBetweenModules(ctx context.Context, hostIDs []uuid.UUID, t
 				return err
 			}
 
-			// 阶段 1：镜像维护旧三表（安全网）
-			if s.mirror {
-				if len(removeIDs) > 0 {
-					if err := tx.Where("host_id = ? AND module_id IN ?", hostID, removeIDs).
-						Delete(&types.HostModuleRelation{}).Error; err != nil {
-						return err
-					}
-				}
-				if err := tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error; err != nil {
-					return err
-				}
-				mr := &types.HostModuleRelation{HostID: hostID, ModuleID: targetModuleID, CreatedAt: now}
-				if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(mr).Error; err != nil {
-					return err
-				}
-				if bizID != nil {
-					br := &types.HostBusinessRelation{HostID: hostID, BusinessID: *bizID, CreatedAt: now}
-					if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(br).Error; err != nil {
-						return err
-					}
-				}
-			}
-
 			// I5 审计
 			if s.audit != nil {
 				if err := s.audit.RecordHostMembershipChange(tx, hostID, toNodeRefs(before), []NodeRef{to}, opts.Source, opts.By); err != nil {
@@ -324,113 +277,6 @@ func (s *service) NodesOfHost(ctx context.Context, hostID uuid.UUID) ([]NodeRef,
 		return nil, err
 	}
 	return toNodeRefs(rows), nil
-}
-
-// SyncFromLegacy 按旧三表重建该主机的新表归属（幂等：先删该主机所有新表行，再按旧表逐行重建）。
-// business_id/set_id 由 module 推导（与 Attach/Move 的 resolveDims 口径一致）；资源池行 business_id 留空。
-// 须在调用方事务内（WithTx 绑定 tx）调用，使其与旧表写入原子。
-func (s *service) SyncFromLegacy(ctx context.Context, hostID uuid.UUID) error {
-	now := time.Now().UTC()
-	db := s.db.WithContext(ctx)
-
-	// 1. 清该主机现有新表行
-	if err := db.Where("host_id = ?", hostID).Delete(&types.HostNodeMembership{}).Error; err != nil {
-		return err
-	}
-
-	rows := make([]types.HostNodeMembership, 0, 4)
-
-	// 2. 业务模块归属：host_module_relations → biz_module 行（business_id/set_id 由 module 推导）
-	var moduleIDs []uint64
-	if err := db.Table("host_module_relations").Where("host_id = ?", hostID).Pluck("module_id", &moduleIDs).Error; err != nil {
-		return err
-	}
-	for _, mid := range moduleIDs {
-		var m types.Module
-		if err := db.Select("id", "business_id", "set_id").First(&m, mid).Error; err != nil {
-			return fmt.Errorf("同步主机归属失败: 业务模块 %d 不存在: %w", mid, err)
-		}
-		b, st := m.BusinessID, m.SetID
-		rows = append(rows, types.HostNodeMembership{
-			HostID:       hostID,
-			NodeKind:     types.NodeKindBizModule,
-			NodeID:       mid,
-			BusinessID:   &b,
-			SetID:        &st,
-			RelationType: types.HostMembershipRelMemberOf,
-			Source:       types.HostMembershipSourceBackfill,
-			CreatedAt:    now,
-		})
-	}
-
-	// 3. 资源池归属：resource_pool_hosts → pool_directory 行
-	var dirIDs []uint64
-	if err := db.Table("resource_pool_hosts").Where("host_id = ?", hostID).Pluck("directory_id", &dirIDs).Error; err != nil {
-		return err
-	}
-	for _, did := range dirIDs {
-		rows = append(rows, types.HostNodeMembership{
-			HostID:       hostID,
-			NodeKind:     types.NodeKindPoolDirectory,
-			NodeID:       did,
-			RelationType: types.HostMembershipRelMemberOf,
-			Source:       types.HostMembershipSourceBackfill,
-			CreatedAt:    now,
-		})
-	}
-
-	if len(rows) > 0 {
-		return db.Create(&rows).Error
-	}
-	return nil
-}
-
-// mirrorLegacy 在同事务内把归属变更镜像到旧三表（阶段 1 双写过渡）。
-// replace=true（Move）：按 I2/additive 清理冲突的旧关系后再写；replace=false（Attach）：仅追加。
-func (s *service) mirrorLegacy(tx *gorm.DB, hostID uuid.UUID, to NodeRef, bizID *uint64, opts MoveOptions, replace bool, now time.Time) error {
-	switch to.Kind {
-	case types.NodeKindPoolDirectory:
-		if replace {
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostModuleRelation{}).Error; err != nil {
-				return err
-			}
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error; err != nil {
-				return err
-			}
-		}
-		// 进资源池：upsert resource_pool_hosts（host_id 主键，单属，更新目录）—— 修 R2 主机蒸发
-		ph := &types.ResourcePoolHost{HostID: hostID, DirectoryID: to.ID, ImportedAt: now, ImportedBy: opts.By}
-		return tx.Clauses(clause.OnConflict{
-			Columns:   []clause.Column{{Name: "host_id"}},
-			DoUpdates: clause.AssignmentColumns([]string{"directory_id", "imported_at", "imported_by"}),
-		}).Create(ph).Error
-
-	case types.NodeKindBizModule:
-		// 进业务：必出资源池 —— 修 R1 双重归属
-		if err := tx.Where("host_id = ?", hostID).Delete(&types.ResourcePoolHost{}).Error; err != nil {
-			return err
-		}
-		if replace && !opts.Additive {
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostModuleRelation{}).Error; err != nil {
-				return err
-			}
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error; err != nil {
-				return err
-			}
-		}
-		mr := &types.HostModuleRelation{HostID: hostID, ModuleID: to.ID, CreatedAt: now}
-		if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(mr).Error; err != nil {
-			return err
-		}
-		if bizID != nil {
-			br := &types.HostBusinessRelation{HostID: hostID, BusinessID: *bizID, CreatedAt: now}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(br).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-	return nil
 }
 
 func newMembershipRow(hostID uuid.UUID, node NodeRef, bizID, setID *uint64, opts MoveOptions, now time.Time) *types.HostNodeMembership {

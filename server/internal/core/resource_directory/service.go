@@ -2,15 +2,11 @@ package resource_directory
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -36,10 +32,8 @@ type Service interface {
 
 type service struct {
 	db  *gorm.DB
-	hms host_membership.Service // 阶段 1：注入后 allocate/reclaim 走统一归属通道（nil 时回退旧逻辑）
+	hms host_membership.Service // 主机归属统一写入通道（唯一写入点，只写 host_node_memberships）
 }
-
-const projectionContainsRelType = "contains"
 
 // Option 服务可选项。
 type Option func(*service)
@@ -448,395 +442,53 @@ func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 
 // AllocateHosts 分配主机到业务模块
 func (s *service) AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
-	// 阶段 1：注入统一归属通道后，分配到业务空闲机经 HostMembershipService
-	// （主机进该业务空闲机模块 + 移出资源池，原子；不再依赖/阻断于 v2 投影，修 R1）。
-	if s.hms != nil {
-		return s.allocateViaMembership(ctx, req)
-	}
-
-	// 验证目标模块存在
-	var module types.Module
-	if err := s.db.First(&module, req.TargetModuleID).Error; err != nil {
-		return nil, fmt.Errorf("目标模块不存在")
-	}
-
-	result := &types.ResourcePoolLifecycleResult{
-		Total:          len(req.HostIDs),
-		SucceededItems: make([]types.ResourcePoolLifecycleItem, 0),
-		FailedItems:    make([]types.ResourcePoolLifecycleItem, 0),
-	}
-
-	for _, hostID := range req.HostIDs {
-		err := s.db.Transaction(func(tx *gorm.DB) error {
-			// 验证主机在资源池中
-			var poolHost types.ResourcePoolHost
-			if err := tx.Where("host_id = ?", hostID).First(&poolHost).Error; err != nil {
-				return fmt.Errorf("主机不在资源池中")
-			}
-
-			// 建立主机与模块的关联（多对多）
-			moduleRel := &types.HostModuleRelation{
-				HostID:   hostID,
-				ModuleID: req.TargetModuleID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(moduleRel).Error; err != nil {
-				return err
-			}
-
-			// 建立主机与业务的关联（多对多）
-			bizRel := &types.HostBusinessRelation{
-				HostID:     hostID,
-				BusinessID: module.BusinessID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(bizRel).Error; err != nil {
-				return err
-			}
-
-			if err := s.attachProjectionHostToModule(tx, hostID, module); err != nil {
-				return err
-			}
-
-			// 从资源池移除
-			return tx.Delete(&poolHost).Error
-		})
-
-		if err != nil {
-			result.Failed++
-			item, lookupErr := s.GetHostLifecycle(ctx, hostID)
-			if lookupErr != nil {
-				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
-					HostID:         hostID.String(),
-					ResourceStatus: types.ResourceStatusUnknown,
-					Message:        err.Error(),
-				})
-			} else {
-				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
-					HostID:         item.HostID,
-					ResourceStatus: item.ResourceStatus,
-					DirectoryID:    item.DirectoryID,
-					Message:        err.Error(),
-				})
-			}
-		} else {
-			result.Successful++
-			result.SucceededItems = append(result.SucceededItems, types.ResourcePoolLifecycleItem{
-				HostID:         hostID.String(),
-				ResourceStatus: types.ResourceStatusAllocated,
-				BusinessID:     fmt.Sprintf("%d", module.BusinessID),
-				ModuleID:       req.TargetModuleID,
-			})
-		}
-	}
-
-	return result, nil
+	// 分配到业务空闲机经统一归属通道（主机进该业务模块 + 移出资源池，原子；修 R1 双重归属）。
+	return s.allocateViaMembership(ctx, req)
 }
 
 // ReclaimHosts 回收主机到资源池
 func (s *service) ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error) {
-	// 阶段 1：注入统一归属通道后，回收经 HostMembershipService（不再写 v2 投影）。
-	if s.hms != nil {
-		return s.reclaimViaMembership(ctx, req, reclaimedBy)
-	}
-
-	// 验证目录存在
-	var dir types.ResourceDirectory
-	if err := s.db.First(&dir, req.DirectoryID).Error; err != nil {
-		return nil, fmt.Errorf("目录不存在")
-	}
-
-	result := &types.ResourcePoolLifecycleResult{
-		Total:          len(req.HostIDs),
-		SucceededItems: make([]types.ResourcePoolLifecycleItem, 0),
-		FailedItems:    make([]types.ResourcePoolLifecycleItem, 0),
-	}
-
-	for _, hostID := range req.HostIDs {
-		err := s.db.Transaction(func(tx *gorm.DB) error {
-			// 清除主机的业务和模块关联（多对多）
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostModuleRelation{}).Error; err != nil {
-				return err
-			}
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error; err != nil {
-				return err
-			}
-			if err := s.detachProjectionHostFromTopology(tx, hostID, req.DirectoryID); err != nil {
-				return err
-			}
-
-			// 添加到资源池
-			poolHost := &types.ResourcePoolHost{
-				HostID:      hostID,
-				DirectoryID: req.DirectoryID,
-				ImportedAt:  time.Now(),
-				ImportedBy:  reclaimedBy,
-				Remark:      req.Remark,
-			}
-
-			return tx.Clauses(clause.OnConflict{
-				Columns: []clause.Column{{Name: "host_id"}},
-				DoUpdates: clause.AssignmentColumns([]string{
-					"directory_id",
-					"imported_at",
-					"imported_by",
-					"remark",
-				}),
-			}).Create(poolHost).Error
-		})
-
-		if err != nil {
-			result.Failed++
-			item, lookupErr := s.GetHostLifecycle(ctx, hostID)
-			if lookupErr != nil {
-				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
-					HostID:         hostID.String(),
-					ResourceStatus: types.ResourceStatusUnknown,
-					Message:        err.Error(),
-				})
-			} else {
-				result.FailedItems = append(result.FailedItems, types.ResourcePoolLifecycleItem{
-					HostID:         item.HostID,
-					ResourceStatus: item.ResourceStatus,
-					DirectoryID:    item.DirectoryID,
-					Message:        err.Error(),
-				})
-			}
-		} else {
-			result.Successful++
-			result.SucceededItems = append(result.SucceededItems, types.ResourcePoolLifecycleItem{
-				HostID:         hostID.String(),
-				ResourceStatus: types.ResourceStatusPooled,
-				DirectoryID:    req.DirectoryID,
-			})
-		}
-	}
-
-	return result, nil
-}
-
-func (s *service) attachProjectionHostToModule(tx *gorm.DB, hostID uuid.UUID, module types.Module) error {
-	moduleResource, err := s.findProjectionModuleByRef(tx, fmt.Sprintf("%d", module.ID))
-	if err != nil {
-		if isMissingProjectionTableError(err) {
-			return nil
-		}
-		return fmt.Errorf("目标模块投影不存在")
-	}
-
-	hostResource, err := s.ensureProjectionHostResource(tx, hostID)
-	if err != nil {
-		if isMissingProjectionTableError(err) {
-			return nil
-		}
-		return err
-	}
-
-	if err := tx.Where("to_id = ? AND rel_type = ?", hostResource.ID, projectionContainsRelType).
-		Delete(&types.EdgeV2{}).Error; err != nil {
-		if isMissingProjectionTableError(err) {
-			return nil
-		}
-		return err
-	}
-
-	if err := tx.Create(&types.EdgeV2{
-		FromID:  moduleResource.ID,
-		ToID:    hostResource.ID,
-		RelType: projectionContainsRelType,
-		Data:    map[string]any{},
-	}).Error; err != nil {
-		return err
-	}
-
-	spec := cloneProjectionSpec(hostResource.Spec)
-	spec["business_id"] = fmt.Sprintf("%d", module.BusinessID)
-	spec["module_id"] = fmt.Sprintf("%d", module.ID)
-	spec["set_id"] = fmt.Sprintf("%d", module.SetID)
-	spec["in_idle_pool"] = module.IsDefault
-	delete(spec, "in_resource_pool")
-	delete(spec, "directory_id")
-
-	encodedSpec, err := marshalProjectionSpec(spec)
-	if err != nil {
-		return err
-	}
-	return tx.Model(&types.ResourceV2{}).
-		Where("id = ?", hostResource.ID).
-		Update("spec", encodedSpec).Error
-}
-
-func (s *service) findProjectionModuleByRef(tx *gorm.DB, refID string) (*types.ResourceV2, error) {
-	var item types.ResourceV2
-	query := tx.Where("type_name = ?", string(types.NodeTypeModule)).
-		Where("deleted_at IS NULL")
-	if tx.Dialector.Name() == "sqlite" {
-		query = query.Where("json_extract(spec, '$.ref_id') = ?", refID)
-	} else {
-		query = query.Where("spec ->> 'ref_id' = ?", refID)
-	}
-	if err := query.First(&item).Error; err != nil {
-		return nil, err
-	}
-	return &item, nil
-}
-
-func (s *service) ensureProjectionHostResource(tx *gorm.DB, hostID uuid.UUID) (*types.ResourceV2, error) {
-	hostResource, err := s.findProjectionHostByRef(tx, hostID.String())
-	if err == nil {
-		return hostResource, nil
-	}
-	if err != gorm.ErrRecordNotFound {
-		return nil, err
-	}
-
-	var host types.Host
-	if err := tx.Where("id = ?", hostID).First(&host).Error; err != nil {
-		return nil, fmt.Errorf("主机投影不存在且主机记录不存在")
-	}
-
-	spec := map[string]any{
-		"ref_id":       host.ID.String(),
-		"primary_ip":   host.PrimaryIP,
-		"status":       host.Status,
-		"hostname":     host.HostName,
-		"in_idle_pool": false,
-	}
-	if host.CloudAreaID != nil {
-		spec["cloud_area_id"] = host.CloudAreaID.String()
-		var cloudArea types.CloudArea
-		if err := tx.Where("id = ?", *host.CloudAreaID).First(&cloudArea).Error; err == nil {
-			spec["cloud_area_name"] = cloudArea.Name
-		}
-	}
-
-	item := &types.ResourceV2{
-		ID:       uuid.NewString(),
-		TypeName: string(types.NodeTypeHost),
-		Name:     host.HostName,
-		Spec:     spec,
-		Status:   map[string]any{},
-		Labels:   map[string]any{},
-	}
-	if err := tx.Create(item).Error; err != nil {
-		return nil, err
-	}
-	return item, nil
-}
-
-func (s *service) detachProjectionHostFromTopology(tx *gorm.DB, hostID uuid.UUID, directoryID uint64) error {
-	hostResource, err := s.findProjectionHostByRef(tx, hostID.String())
-	if err != nil {
-		if err == gorm.ErrRecordNotFound || isMissingProjectionTableError(err) {
-			return nil
-		}
-		return err
-	}
-
-	if err := tx.Where("to_id = ? AND rel_type = ?", hostResource.ID, projectionContainsRelType).
-		Delete(&types.EdgeV2{}).Error; err != nil {
-		if isMissingProjectionTableError(err) {
-			return nil
-		}
-		return err
-	}
-
-	spec := cloneProjectionSpec(hostResource.Spec)
-	for _, key := range []string{
-		"business_id",
-		"module_id",
-		"set_id",
-		"bk_biz_id",
-		"bk_module_id",
-		"bk_set_id",
-	} {
-		delete(spec, key)
-	}
-	spec["in_idle_pool"] = false
-	spec["in_resource_pool"] = true
-	spec["directory_id"] = directoryID
-
-	encodedSpec, err := marshalProjectionSpec(spec)
-	if err != nil {
-		return err
-	}
-	return tx.Model(&types.ResourceV2{}).
-		Where("id = ?", hostResource.ID).
-		Update("spec", encodedSpec).Error
-}
-
-func (s *service) findProjectionHostByRef(tx *gorm.DB, refID string) (*types.ResourceV2, error) {
-	var item types.ResourceV2
-	query := tx.Where("type_name = ?", string(types.NodeTypeHost)).
-		Where("deleted_at IS NULL")
-	if tx.Dialector.Name() == "sqlite" {
-		query = query.Where("json_extract(spec, '$.ref_id') = ?", refID)
-	} else {
-		query = query.Where("spec ->> 'ref_id' = ?", refID)
-	}
-	if err := query.First(&item).Error; err != nil {
-		return nil, err
-	}
-	return &item, nil
-}
-
-func cloneProjectionSpec(input map[string]any) map[string]any {
-	output := make(map[string]any, len(input)+2)
-	for key, value := range input {
-		output[key] = value
-	}
-	return output
-}
-
-func marshalProjectionSpec(input map[string]any) (datatypes.JSON, error) {
-	data, err := json.Marshal(input)
-	if err != nil {
-		return nil, err
-	}
-	return datatypes.JSON(data), nil
-}
-
-func isMissingProjectionTableError(err error) bool {
-	if err == nil {
-		return false
-	}
-
-	message := strings.ToLower(err.Error())
-	return strings.Contains(message, "no such table") || strings.Contains(message, "does not exist")
+	// 回收到资源池经统一归属通道（删业务模块归属 + 增资源池归属，原子；I2 互斥）。
+	return s.reclaimViaMembership(ctx, req, reclaimedBy)
 }
 
 func (s *service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error) {
-	var poolHost types.ResourcePoolHost
-	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).First(&poolHost).Error; err == nil {
-		return &types.ResourcePoolHostLifecycle{
-			HostID:         hostID.String(),
-			ResourceStatus: types.ResourceStatusPooled,
-			DirectoryID:    poolHost.DirectoryID,
-			AllowedActions: []string{"allocate", "move"},
-		}, nil
-	} else if err != nil && err != gorm.ErrRecordNotFound {
+	// 读切换：主机生命周期状态读 host_node_memberships（pool_directory→在池；biz_module→已分配）。
+	var memberships []types.HostNodeMembership
+	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).Find(&memberships).Error; err != nil {
 		return nil, err
 	}
 
-	var bizRelations []types.HostBusinessRelation
-	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).Find(&bizRelations).Error; err != nil {
-		return nil, err
-	}
-
-	var moduleRelations []types.HostModuleRelation
-	if err := s.db.WithContext(ctx).Where("host_id = ?", hostID).Find(&moduleRelations).Error; err != nil {
-		return nil, err
-	}
-
-	if len(bizRelations) > 0 || len(moduleRelations) > 0 {
-		businessIDs := make([]string, 0, len(bizRelations))
-		for _, item := range bizRelations {
-			businessIDs = append(businessIDs, fmt.Sprintf("%d", item.BusinessID))
+	// 资源池归属优先（I2 互斥下两者不会并存，仍以池为先与旧逻辑一致）
+	for _, m := range memberships {
+		if m.NodeKind == types.NodeKindPoolDirectory {
+			return &types.ResourcePoolHostLifecycle{
+				HostID:         hostID.String(),
+				ResourceStatus: types.ResourceStatusPooled,
+				DirectoryID:    m.NodeID,
+				AllowedActions: []string{"allocate", "move"},
+			}, nil
 		}
+	}
 
-		moduleIDs := make([]uint64, 0, len(moduleRelations))
-		for _, item := range moduleRelations {
-			moduleIDs = append(moduleIDs, item.ModuleID)
+	// 业务模块归属：node_id 即 module_id，冗余列 business_id 去重
+	bizSeen := make(map[uint64]struct{})
+	businessIDs := make([]string, 0)
+	moduleIDs := make([]uint64, 0)
+	for _, m := range memberships {
+		if m.NodeKind != types.NodeKindBizModule {
+			continue
 		}
+		moduleIDs = append(moduleIDs, m.NodeID)
+		if m.BusinessID != nil {
+			if _, ok := bizSeen[*m.BusinessID]; !ok {
+				bizSeen[*m.BusinessID] = struct{}{}
+				businessIDs = append(businessIDs, fmt.Sprintf("%d", *m.BusinessID))
+			}
+		}
+	}
 
+	if len(moduleIDs) > 0 || len(businessIDs) > 0 {
 		return &types.ResourcePoolHostLifecycle{
 			HostID:         hostID.String(),
 			ResourceStatus: types.ResourceStatusAllocated,

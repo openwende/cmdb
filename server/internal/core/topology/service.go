@@ -392,44 +392,8 @@ func (s *service) TransferHosts(ctx context.Context, req *types.TransferHostsReq
 
 // TransferHostsToPool 将主机转移到资源池（空闲机池）
 func (s *service) TransferHostsToPool(ctx context.Context, hostIDs []uuid.UUID) (*types.BatchOperationResult, error) {
-	// 阶段 1：注入统一归属通道后，转回资源池经 HostMembershipService
-	// （修 R2 主机蒸发：删模块/业务关系 + 写 resource_pool_hosts，原子）。
-	if s.hms != nil {
-		return s.transferToPoolViaMembership(ctx, hostIDs)
-	}
-
-	result := &types.BatchOperationResult{
-		Total:  len(hostIDs),
-		Errors: make([]string, 0),
-	}
-
-	for _, hostID := range hostIDs {
-		err := s.db.Transaction(func(tx *gorm.DB) error {
-			var hostCount int64
-			if err := tx.Model(&types.Host{}).
-				Where("id = ? AND deleted_at IS NULL", hostID).
-				Count(&hostCount).Error; err != nil {
-				return err
-			}
-			if hostCount == 0 {
-				return fmt.Errorf("主机不存在")
-			}
-
-			if err := tx.Where("host_id = ?", hostID).Delete(&types.HostModuleRelation{}).Error; err != nil {
-				return err
-			}
-			return tx.Where("host_id = ?", hostID).Delete(&types.HostBusinessRelation{}).Error
-		})
-
-		if err != nil {
-			result.Failed++
-			result.Errors = append(result.Errors, fmt.Sprintf("主机 %s: %s", hostID, err.Error()))
-		} else {
-			result.Successful++
-		}
-	}
-
-	return result, nil
+	// 转回资源池经统一归属通道（hms.Move 到默认目录：删业务模块归属 + 增资源池归属，原子；修 R2 主机蒸发）。
+	return s.transferToPoolViaMembership(ctx, hostIDs)
 }
 
 // transferToPoolViaMembership 经统一归属通道把主机转回资源池默认目录（阶段 1，修 R2）。

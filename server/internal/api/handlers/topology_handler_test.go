@@ -141,6 +141,21 @@ func setupTopologyHandlerTestDB(t *testing.T) *gorm.DB {
 			imported_by TEXT,
 			remark TEXT
 		)`,
+		`CREATE TABLE resource_directories (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			parent_id INTEGER,
+			name TEXT NOT NULL,
+			description TEXT,
+			path TEXT,
+			level INTEGER,
+			sort_order INTEGER,
+			is_default BOOLEAN,
+			created_by TEXT,
+			updated_by TEXT,
+			created_at DATETIME,
+			updated_at DATETIME,
+			deleted_at DATETIME
+		)`,
 		`CREATE TABLE model_groups (
 			id TEXT PRIMARY KEY,
 			name TEXT NOT NULL UNIQUE,
@@ -754,8 +769,8 @@ func TestTopologyHandler_TransferHosts_PersistsToLegacyTables(t *testing.T) {
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules；注入带 mirror 的 hms 使旧表仍被写（本用例断言旧表）
-	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil, host_membership.WithLegacyMirror())))
+	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules（只写 host_node_memberships）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil)))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 
@@ -803,17 +818,12 @@ func TestTopologyHandler_TransferHosts_PersistsToLegacyTables(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Contains(t, resp.Body.String(), `"successful":1`)
 
-	var moduleRelationCount int64
-	require.NoError(t, db.Model(&types.HostModuleRelation{}).
-		Where("host_id = ? AND module_id = ?", hostID, module.ID).
-		Count(&moduleRelationCount).Error)
-	require.EqualValues(t, 1, moduleRelationCount)
-
-	var businessRelationCount int64
-	require.NoError(t, db.Model(&types.HostBusinessRelation{}).
-		Where("host_id = ? AND business_id = ?", hostID, bizID).
-		Count(&businessRelationCount).Error)
-	require.EqualValues(t, 1, businessRelationCount)
+	// 归属落新表 host_node_memberships(biz_module)
+	var m types.HostNodeMembership
+	require.NoError(t, db.Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindBizModule).First(&m).Error)
+	require.EqualValues(t, module.ID, m.NodeID)
+	require.NotNil(t, m.BusinessID)
+	require.EqualValues(t, bizID, *m.BusinessID)
 }
 
 func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
@@ -821,8 +831,8 @@ func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules；注入带 mirror 的 hms 使旧表仍被写（本用例断言旧表）
-	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil, host_membership.WithLegacyMirror())))
+	// 写收敛(阶段2)：TransferHosts 走 hms.MoveBetweenModules（只写 host_node_memberships）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil)))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 
@@ -861,10 +871,11 @@ func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}).Error)
-	require.NoError(t, db.Create(&types.HostModuleRelation{
-		HostID:    hostID,
-		ModuleID:  sourceModule.ID,
-		CreatedAt: now,
+	// 主机当前在源业务模块（新表 host_node_memberships）
+	srcBiz := bizID
+	require.NoError(t, db.Create(&types.HostNodeMembership{
+		HostID: hostID, NodeKind: types.NodeKindBizModule, NodeID: sourceModule.ID,
+		BusinessID: &srcBiz, RelationType: types.HostMembershipRelMemberOf,
 	}).Error)
 
 	router := gin.New()
@@ -884,17 +895,18 @@ func TestTopologyHandler_TransferHosts_MovesHostFromSourceModule(t *testing.T) {
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Contains(t, resp.Body.String(), `"successful":1`)
 
-	var sourceRelationCount int64
-	require.NoError(t, db.Model(&types.HostModuleRelation{}).
-		Where("host_id = ? AND module_id = ?", hostID, sourceModule.ID).
-		Count(&sourceRelationCount).Error)
-	require.EqualValues(t, 0, sourceRelationCount)
+	// 源模块归属已删、目标模块归属已增（新表 host_node_memberships）
+	var sourceCount int64
+	require.NoError(t, db.Model(&types.HostNodeMembership{}).
+		Where("host_id = ? AND node_kind = ? AND node_id = ?", hostID, types.NodeKindBizModule, sourceModule.ID).
+		Count(&sourceCount).Error)
+	require.EqualValues(t, 0, sourceCount)
 
-	var targetRelationCount int64
-	require.NoError(t, db.Model(&types.HostModuleRelation{}).
-		Where("host_id = ? AND module_id = ?", hostID, targetModule.ID).
-		Count(&targetRelationCount).Error)
-	require.EqualValues(t, 1, targetRelationCount)
+	var targetCount int64
+	require.NoError(t, db.Model(&types.HostNodeMembership{}).
+		Where("host_id = ? AND node_kind = ? AND node_id = ?", hostID, types.NodeKindBizModule, targetModule.ID).
+		Count(&targetCount).Error)
+	require.EqualValues(t, 1, targetCount)
 }
 
 func TestTopologyHandler_TransferHostsToPool_PersistsToLegacyTables(t *testing.T) {
@@ -902,13 +914,16 @@ func TestTopologyHandler_TransferHostsToPool_PersistsToLegacyTables(t *testing.T
 
 	db := setupTopologyHandlerTestDB(t)
 	mainlineSvc := mainline.NewService(db)
-	service := topology.NewService(db, mainlineSvc)
+	// 写收敛(阶段2)：TransferHostsToPool 走 hms.Move 到默认资源目录（只写 host_node_memberships）
+	service := topology.NewService(db, mainlineSvc, topology.WithHostMembership(host_membership.NewService(db, nil)))
 	aggregate := topology.NewAggregateService(db, service, mainlineSvc)
 	handler := NewTopologyHandler(service, aggregate)
 
 	bizID := seedTopologyHandlerBusiness(t, db, "legacy-pool-biz")
 	hostID := uuid.New()
 	now := time.Now().UTC()
+	// 默认资源目录（transferToPoolViaMembership 把主机移回此目录）
+	require.NoError(t, db.Exec(`INSERT INTO resource_directories (id, name, path, level, sort_order, is_default, created_at, updated_at) VALUES (1, 'default', '/default', 1, 0, TRUE, ?, ?)`, now, now).Error)
 	set := types.Set{
 		BusinessID: bizID,
 		Name:       "legacy-pool-set",
@@ -933,15 +948,11 @@ func TestTopologyHandler_TransferHostsToPool_PersistsToLegacyTables(t *testing.T
 		CreatedAt: now,
 		UpdatedAt: now,
 	}).Error)
-	require.NoError(t, db.Create(&types.HostModuleRelation{
-		HostID:    hostID,
-		ModuleID:  module.ID,
-		CreatedAt: now,
-	}).Error)
-	require.NoError(t, db.Create(&types.HostBusinessRelation{
-		HostID:     hostID,
-		BusinessID: bizID,
-		CreatedAt:  now,
+	// 主机当前在业务模块（新表 host_node_memberships）
+	poolBiz := bizID
+	require.NoError(t, db.Create(&types.HostNodeMembership{
+		HostID: hostID, NodeKind: types.NodeKindBizModule, NodeID: module.ID,
+		BusinessID: &poolBiz, RelationType: types.HostMembershipRelMemberOf,
 	}).Error)
 
 	router := gin.New()
@@ -959,17 +970,18 @@ func TestTopologyHandler_TransferHostsToPool_PersistsToLegacyTables(t *testing.T
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Contains(t, resp.Body.String(), `"successful":1`)
 
-	var moduleRelationCount int64
-	require.NoError(t, db.Model(&types.HostModuleRelation{}).
-		Where("host_id = ?", hostID).
-		Count(&moduleRelationCount).Error)
-	require.EqualValues(t, 0, moduleRelationCount)
+	// 回收到资源池：新表只剩 pool_directory 行，业务模块归属已清
+	var bizCount int64
+	require.NoError(t, db.Model(&types.HostNodeMembership{}).
+		Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindBizModule).
+		Count(&bizCount).Error)
+	require.EqualValues(t, 0, bizCount)
 
-	var businessRelationCount int64
-	require.NoError(t, db.Model(&types.HostBusinessRelation{}).
-		Where("host_id = ?", hostID).
-		Count(&businessRelationCount).Error)
-	require.EqualValues(t, 0, businessRelationCount)
+	var poolCount int64
+	require.NoError(t, db.Model(&types.HostNodeMembership{}).
+		Where("host_id = ? AND node_kind = ?", hostID, types.NodeKindPoolDirectory).
+		Count(&poolCount).Error)
+	require.EqualValues(t, 1, poolCount)
 }
 
 func TestTopologyHandler_UpdateModule_PersistsServiceCategoryID(t *testing.T) {
