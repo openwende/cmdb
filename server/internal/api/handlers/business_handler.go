@@ -273,15 +273,9 @@ func (h *BusinessHandler) ListBusinessSets(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"data": gin.H{
-			"items":  businessSets,
-			"total":  total,
-			"limit":  limit,
-			"offset": offset,
-		},
-	})
+	// R8：business-sets 列表收口为统一响应规范 {code,data:{items,pagination}}（对齐 ListBusinesses）。
+	// 消费端 BusinessStore 只读 data.items（标准 data 中保留），旧 success/total/limit/offset 移除。
+	response.List(c, businessSets, offset/limit+1, limit, int64(total))
 }
 
 // UpdateBusinessSet handles updating a business set

@@ -311,3 +311,44 @@ func TestDeleteBusiness(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 	})
 }
+
+// TestListBusinessSets 锁定 R8 契约：业务集列表返回统一 envelope
+// {code:0,data:{items,pagination:{page,page_size,total}}}，旧 success/limit/offset 已移除。
+func TestListBusinessSets(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := new(MockService)
+	handler := NewBusinessHandler(mockService)
+	router := gin.Default()
+	router.GET("/business-sets", handler.ListBusinessSets)
+
+	sets := []types.BusinessSet{
+		{ID: uuid.New(), Name: "set-a"},
+		{ID: uuid.New(), Name: "set-b"},
+	}
+	// 默认分页 limit=20 offset=0。
+	mockService.On("ListBusinessSets", mock.Anything, mock.Anything, 20, 0).Return(sets, 2, nil)
+
+	req, _ := http.NewRequest(http.MethodGet, "/business-sets", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	var resp map[string]interface{}
+	assert.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	assert.Equal(t, float64(0), resp["code"])
+	assert.Nil(t, resp["success"]) // 旧包裹键已移除
+
+	data, ok := resp["data"].(map[string]interface{})
+	assert.True(t, ok)
+	items, ok := data["items"].([]interface{})
+	assert.True(t, ok)
+	assert.Len(t, items, 2)
+
+	pagination, ok := data["pagination"].(map[string]interface{})
+	assert.True(t, ok)
+	assert.Equal(t, float64(1), pagination["page"])
+	assert.Equal(t, float64(20), pagination["page_size"])
+	assert.Equal(t, float64(2), pagination["total"])
+}
