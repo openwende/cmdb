@@ -48,8 +48,6 @@ func RegisterHostRoutes(router *gin.Engine, db *gorm.DB) {
 			hosts.GET("/:id", hostHandler.GetHost)
 			hosts.PUT("/:id", hostHandler.UpdateHost)
 			hosts.PUT("/:id/custom-fields", hostHandler.UpdateHostCustomFields)
-			hosts.PUT("/:id/assign", hostHandler.AssignToBusiness)   // 新增：分配到业务
-			hosts.PUT("/:id/reclaim", hostHandler.ReclaimToPool)     // 新增：回收到资源池
 			hosts.DELETE("/:id", hostHandler.DeleteHost)
 		}
 	}

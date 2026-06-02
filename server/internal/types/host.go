@@ -124,11 +124,6 @@ type UpdateHostCustomFieldsRequest struct {
 	CustomFields map[string]interface{} `json:"custom_fields" validate:"required"`
 }
 
-// AssignHostToBusinessRequest 分配主机到业务请求
-type AssignHostToBusinessRequest struct {
-	BusinessID uint64 `json:"business_id" validate:"required"`
-}
-
 // BatchImportHostsRequest 批量导入主机请求
 type BatchImportHostsRequest struct {
 	Hosts               []CreateHostRequest `json:"hosts" validate:"required,min=1,dive"`

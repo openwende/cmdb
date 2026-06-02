@@ -23,8 +23,6 @@ type HostRepository interface {
 	ListHosts(ctx context.Context, tenantID uuid.UUID, params *types.HostQueryParams) ([]types.Host, int64, error)
 	UpdateHost(ctx context.Context, id uuid.UUID, req *types.UpdateHostRequest, updatedBy *uuid.UUID) (*types.Host, error)
 	UpdateCustomFields(ctx context.Context, id uuid.UUID, customFields map[string]interface{}, updatedBy *uuid.UUID) (*types.Host, error)
-	AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error
-	ReclaimToPool(ctx context.Context, id uuid.UUID) error
 	MarkAsDestroyed(ctx context.Context, id uuid.UUID) error
 	DeleteHost(ctx context.Context, id uuid.UUID) error
 	CheckIPConflict(ctx context.Context, cloudAreaID *uuid.UUID, primaryIP string, excludeHostID *uuid.UUID) (bool, error)
@@ -401,46 +399,6 @@ func (r *hostRepository) DeleteHost(ctx context.Context, id uuid.UUID) error {
 	}
 
 	return nil
-}
-
-// AssignToBusiness 分配主机到业务
-func (r *hostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var count int64
-		if err := tx.Model(&types.Host{}).
-			Where("id = ? AND deleted_at IS NULL", id).
-			Count(&count).Error; err != nil {
-			return err
-		}
-		if count == 0 {
-			return errors.New("host not found")
-		}
-
-		rel := &types.HostBusinessRelation{
-			HostID:     id,
-			BusinessID: businessID,
-		}
-		return tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error
-	})
-}
-
-// ReclaimToPool 回收主机到资源池
-func (r *hostRepository) ReclaimToPool(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		var count int64
-		if err := tx.Model(&types.Host{}).
-			Where("id = ? AND deleted_at IS NULL", id).
-			Count(&count).Error; err != nil {
-			return err
-		}
-		if count == 0 {
-			return errors.New("host not found")
-		}
-		if err := tx.Where("host_id = ?", id).Delete(&types.HostModuleRelation{}).Error; err != nil {
-			return err
-		}
-		return tx.Where("host_id = ?", id).Delete(&types.HostBusinessRelation{}).Error
-	})
 }
 
 // CheckIPConflict 检查IP冲突（按云区域隔离，类似蓝鲸的 bk_cloud_id + bk_host_innerip）

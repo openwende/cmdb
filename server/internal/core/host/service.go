@@ -435,28 +435,6 @@ func (s *Service) validateUpdateHostRequest(ctx context.Context, hostID uuid.UUI
 	return nil
 }
 
-// AssignToBusiness 分配主机到业务
-func (s *Service) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
-	// 检查主机是否存在
-	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
-		return err
-	}
-
-	// TODO: 检查业务是否存在
-
-	return s.hostRepo.AssignToBusiness(ctx, id, businessID)
-}
-
-// ReclaimToPool 回收主机到资源池
-func (s *Service) ReclaimToPool(ctx context.Context, id uuid.UUID) error {
-	// 检查主机是否存在
-	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
-		return err
-	}
-
-	return s.hostRepo.ReclaimToPool(ctx, id)
-}
-
 // HostStatistics 主机维度聚合统计（os_type / 业务 / 管控区域），供运营概览分布图（R4）。
 func (s *Service) HostStatistics(ctx context.Context) (*types.HostStatistics, error) {
 	return s.hostRepo.HostStatistics(ctx)

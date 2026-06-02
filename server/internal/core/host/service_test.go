@@ -2,7 +2,6 @@ package host
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -72,16 +71,6 @@ func (m *MockHostRepository) UpdateCustomFields(ctx context.Context, id uuid.UUI
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*types.Host), args.Error(1)
-}
-
-func (m *MockHostRepository) AssignToBusiness(ctx context.Context, id uuid.UUID, businessID uint64) error {
-	args := m.Called(ctx, id, businessID)
-	return args.Error(0)
-}
-
-func (m *MockHostRepository) ReclaimToPool(ctx context.Context, id uuid.UUID) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
 }
 
 func (m *MockHostRepository) MarkAsDestroyed(ctx context.Context, id uuid.UUID) error {
@@ -358,80 +347,5 @@ func TestBatchImportHosts_SkipErrors(t *testing.T) {
 	mockHostRepo.AssertExpectations(t)
 }
 
-// 测试分配主机到业务
-func TestAssignToBusiness(t *testing.T) {
-	mockHostRepo := new(MockHostRepository)
-	mockCloudAreaRepo := new(MockCloudAreaRepository)
-	service := NewService(mockHostRepo, mockCloudAreaRepo)
-
-	ctx := context.Background()
-	hostID := uuid.New()
-	businessID := uint64(1001)
-
-	existingHost := &types.Host{
-		ID:         hostID,
-		HostName:   "test-host",
-		BusinessID: nil, // 当前在资源池
-	}
-
-	// Mock 期望调用
-	mockHostRepo.On("GetHost", ctx, hostID).Return(existingHost, nil)
-	mockHostRepo.On("AssignToBusiness", ctx, hostID, businessID).Return(nil)
-
-	// 执行测试
-	err := service.AssignToBusiness(ctx, hostID, businessID)
-
-	// 验证
-	assert.NoError(t, err)
-	mockHostRepo.AssertExpectations(t)
-}
-
-// 测试回收主机到资源池
-func TestReclaimToPool(t *testing.T) {
-	mockHostRepo := new(MockHostRepository)
-	mockCloudAreaRepo := new(MockCloudAreaRepository)
-	service := NewService(mockHostRepo, mockCloudAreaRepo)
-
-	ctx := context.Background()
-	hostID := uuid.New()
-	businessID := int64(1001)
-
-	existingHost := &types.Host{
-		ID:         hostID,
-		HostName:   "test-host",
-		BusinessID: &businessID, // 当前分配给业务
-	}
-
-	// Mock 期望调用
-	mockHostRepo.On("GetHost", ctx, hostID).Return(existingHost, nil)
-	mockHostRepo.On("ReclaimToPool", ctx, hostID).Return(nil)
-
-	// 执行测试
-	err := service.ReclaimToPool(ctx, hostID)
-
-	// 验证
-	assert.NoError(t, err)
-	mockHostRepo.AssertExpectations(t)
-}
-
-// 测试主机不存在的情况
-func TestAssignToBusiness_HostNotFound(t *testing.T) {
-	mockHostRepo := new(MockHostRepository)
-	mockCloudAreaRepo := new(MockCloudAreaRepository)
-	service := NewService(mockHostRepo, mockCloudAreaRepo)
-
-	ctx := context.Background()
-	hostID := uuid.New()
-	businessID := uint64(9999)
-
-	// Mock 主机不存在
-	mockHostRepo.On("GetHost", ctx, hostID).Return(nil, errors.New("host not found"))
-
-	// 执行测试
-	err := service.AssignToBusiness(ctx, hostID, businessID)
-
-	// 验证
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "host not found")
-	mockHostRepo.AssertExpectations(t)
-}
+// 注：host 级 AssignToBusiness/ReclaimToPool 已废弃删除（阶段2，前端未用、绕过 hms），相关测试随之移除。
+// 主机归属流转改由 resource-pool/topology 端点经 HostMembershipService 完成。

@@ -73,14 +73,6 @@ func (f *fakeHostRepo) UpdateCustomFields(context.Context, uuid.UUID, map[string
 	return nil, nil
 }
 
-func (f *fakeHostRepo) AssignToBusiness(context.Context, uuid.UUID, uint64) error {
-	return nil
-}
-
-func (f *fakeHostRepo) ReclaimToPool(context.Context, uuid.UUID) error {
-	return nil
-}
-
 func (f *fakeHostRepo) MarkAsDestroyed(context.Context, uuid.UUID) error {
 	return nil
 }
