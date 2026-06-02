@@ -133,10 +133,14 @@ func (h *HostHandler) GetHost(c *gin.Context) {
 // @Param page_size query int false "每页数量" default(20)
 // @Success 200 {object} types.HostListResponse
 // @Router /api/v1/hosts [get]
+//
+// 采用统一响应规范（R8）：response.List → {"code":0,"data":{"items":[...],
+// "pagination":{"page","page_size","total"}}}（HostListResponse 仅描述 items 载荷形状，
+// 实际响应为标准 envelope，详见 docs/API_RESPONSE_STANDARD.md）。
 func (h *HostHandler) ListHosts(c *gin.Context) {
 	var params types.HostQueryParams
 	if err := c.ShouldBindQuery(&params); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -152,16 +156,11 @@ func (h *HostHandler) ListHosts(c *gin.Context) {
 
 	hosts, total, err := h.service.ListHosts(c.Request.Context(), tenantID, &params)
 	if err != nil {
-		c.JSON(apperrors.HTTPStatus(err), gin.H{"error": err.Error()})
+		response.Error(c, apperrors.HTTPStatus(err), err.Error())
 		return
 	}
 
-	c.JSON(http.StatusOK, types.HostListResponse{
-		Total:    int(total),
-		Page:     params.Page,
-		PageSize: params.PageSize,
-		Hosts:    hosts,
-	})
+	response.List(c, hosts, params.Page, params.PageSize, total)
 }
 
 // UpdateHost 更新主机

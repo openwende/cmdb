@@ -181,6 +181,21 @@ func TestHostHandler_ListHostsUsesDefaultTenant(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, resp.Code)
 	require.Equal(t, systemTenantUUID, hostRepo.listTenantID)
+
+	// R8：列表响应为统一 envelope {"code":0,"data":{"items":[...],"pagination":{...}}}。
+	var envelope struct {
+		Code int `json:"code"`
+		Data struct {
+			Items      []types.Host       `json:"items"`
+			Pagination response.Pagination `json:"pagination"`
+		} `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(resp.Body.Bytes(), &envelope))
+	require.Equal(t, response.CodeOK, envelope.Code)
+	require.Len(t, envelope.Data.Items, 1)
+	require.Equal(t, 1, envelope.Data.Pagination.Page)
+	require.Equal(t, 20, envelope.Data.Pagination.PageSize)
+	require.Equal(t, int64(20), envelope.Data.Pagination.Total)
 }
 
 // TestHostHandler_BatchImportPartialFailureReturns200Envelope 锁定 R8 契约：
