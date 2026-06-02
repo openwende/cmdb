@@ -14,6 +14,12 @@ export interface BusinessListResponse {
   limit: number;
   offset: number;
   total: number;
+  // R8 统一响应规范的标准分页字段（过渡期与 limit/offset/total 并存，逐步迁移到这里）
+  pagination?: {
+    page: number;
+    page_size: number;
+    total: number;
+  };
 }
 
 /**

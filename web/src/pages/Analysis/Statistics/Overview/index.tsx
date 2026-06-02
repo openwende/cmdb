@@ -66,7 +66,9 @@ const Overview: React.FC = () => {
       ]);
 
       const businessTotal =
-        businessResult.status === 'fulfilled' ? businessResult.value?.data?.total ?? 0 : 0;
+        businessResult.status === 'fulfilled'
+          ? businessResult.value?.data?.pagination?.total ?? businessResult.value?.data?.total ?? 0
+          : 0;
       const hostTotal =
         hostResult.status === 'fulfilled' ? (hostResult.value as any)?.total ?? 0 : 0;
       const models = modelResult.status === 'fulfilled' ? modelResult.value : [];
