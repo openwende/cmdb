@@ -51,8 +51,7 @@ type Module struct {
 	DeletedAt         gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
 
 	// 关联
-	Set   *Set   `gorm:"foreignKey:SetID" json:"set,omitempty"`
-	Hosts []Host `gorm:"many2many:host_module_relations;joinForeignKey:ModuleID;joinReferences:HostID" json:"hosts,omitempty"`
+	Set *Set `gorm:"foreignKey:SetID" json:"set,omitempty"`
 
 	// 统计（非持久化）
 	HostCount int `gorm:"-" json:"host_count,omitempty"`

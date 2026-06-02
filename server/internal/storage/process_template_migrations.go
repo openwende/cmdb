@@ -43,22 +43,13 @@ func MigrateProcessAndTemplates(db *gorm.DB) error {
 		return err
 	}
 
-	// 8. 资源池主机表
-	if err := db.AutoMigrate(&types.ResourcePoolHost{}); err != nil {
-		return err
-	}
-
-	// 9. 更新 modules 表添加 service_template_id 字段
+	// 8. 更新 modules 表添加 service_template_id 字段
+	//（资源池主机 / 主机-业务-模块 关系已于阶段2-S4 退役，归属统一在 host_node_memberships）
 	if err := db.AutoMigrate(&types.Module{}); err != nil {
 		return err
 	}
 
-	// 10. 主机与业务/模块多对多关系表
-	if err := db.AutoMigrate(&types.HostBusinessRelation{}, &types.HostModuleRelation{}); err != nil {
-		return err
-	}
-
-	// 11. 创建默认资源目录
+	// 9. 创建默认资源目录
 	if err := createDefaultResourceDirectory(db); err != nil {
 		return err
 	}
@@ -268,14 +259,6 @@ func runtimeResourceSupportDDL(dialect string) []string {
 			`CREATE INDEX IF NOT EXISTS idx_resource_directories_parent_id ON resource_directories (parent_id)`,
 			`CREATE INDEX IF NOT EXISTS idx_resource_directories_path ON resource_directories (path)`,
 			`CREATE INDEX IF NOT EXISTS idx_resource_directories_default ON resource_directories (is_default)`,
-			`CREATE TABLE IF NOT EXISTS resource_pool_hosts (
-				host_id TEXT PRIMARY KEY,
-				directory_id INTEGER NOT NULL,
-				imported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-				imported_by TEXT,
-				remark TEXT
-			)`,
-			`CREATE INDEX IF NOT EXISTS idx_resource_pool_hosts_directory_id ON resource_pool_hosts (directory_id)`,
 		}
 	}
 
@@ -298,14 +281,6 @@ func runtimeResourceSupportDDL(dialect string) []string {
 		`CREATE INDEX IF NOT EXISTS idx_resource_directories_parent_id ON resource_directories (parent_id)`,
 		`CREATE INDEX IF NOT EXISTS idx_resource_directories_path ON resource_directories (path)`,
 		`CREATE INDEX IF NOT EXISTS idx_resource_directories_default ON resource_directories (is_default)`,
-		`CREATE TABLE IF NOT EXISTS resource_pool_hosts (
-			host_id UUID PRIMARY KEY,
-			directory_id BIGINT NOT NULL,
-			imported_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			imported_by VARCHAR(100),
-			remark VARCHAR(500)
-		)`,
-		`CREATE INDEX IF NOT EXISTS idx_resource_pool_hosts_directory_id ON resource_pool_hosts (directory_id)`,
 	}
 }
 

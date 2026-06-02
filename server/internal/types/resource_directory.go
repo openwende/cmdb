@@ -39,23 +39,8 @@ func (ResourceDirectory) TableName() string {
 	return "resource_directories"
 }
 
-// ResourcePoolHost 资源池主机
-// 未分配到业务的主机，存放在资源目录中
-type ResourcePoolHost struct {
-	HostID      uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
-	DirectoryID uint64    `gorm:"index;not null;comment:所在资源目录ID" json:"directory_id"`
-	ImportedAt  time.Time `gorm:"comment:导入时间" json:"imported_at"`
-	ImportedBy  string    `gorm:"size:100;comment:导入人" json:"imported_by"`
-	Remark      string    `gorm:"size:500;comment:备注" json:"remark"`
-
-	// 关联
-	Host      *Host              `gorm:"foreignKey:HostID" json:"host,omitempty"`
-	Directory *ResourceDirectory `gorm:"foreignKey:DirectoryID" json:"directory,omitempty"`
-}
-
-func (ResourcePoolHost) TableName() string {
-	return "resource_pool_hosts"
-}
+// 注：ResourcePoolHost 已于阶段2-S4 退役（资源池归属统一在 host_node_memberships 的
+// pool_directory 行，见 docs/P1-host-membership-convergence.md）。
 
 // ========== 请求/响应结构 ==========
 

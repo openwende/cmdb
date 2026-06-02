@@ -320,10 +320,9 @@ func TestMigrateRuntimeResourceSupportTablesCreatesDefaultDirectory(t *testing.T
 		t.Fatalf("seed default resource directory: %v", err)
 	}
 
-	for _, table := range []string{"resource_directories", "resource_pool_hosts"} {
-		if !db.Migrator().HasTable(table) {
-			t.Fatalf("expected table %s to exist", table)
-		}
+	// 注：resource_pool_hosts 已于阶段2-S4 退役（资源池归属在 host_node_memberships）
+	if !db.Migrator().HasTable("resource_directories") {
+		t.Fatalf("expected table resource_directories to exist")
 	}
 
 	type defaultDirectory struct {

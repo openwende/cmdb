@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -71,22 +70,8 @@ func (r *hostRepository) CreateHost(ctx context.Context, tenantID uuid.UUID, req
 		UpdatedAt:       time.Now(),
 	}
 
-	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(host).Error; err != nil {
-			return err
-		}
-		if req.BusinessID != nil {
-			rel := &types.HostBusinessRelation{
-				HostID:     host.ID,
-				BusinessID: *req.BusinessID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
+	// 主机创建即入资源池目录由上层(导入流程)经 HostMembershipService 处理；此处只落 host 本体。
+	if err := r.db.WithContext(ctx).Create(host).Error; err != nil {
 		return nil, err
 	}
 
@@ -300,24 +285,10 @@ func (r *hostRepository) UpdateHost(ctx context.Context, id uuid.UUID, req *type
 		updates["custom_fields"] = req.CustomFields
 	}
 
-	// 执行更新
-	if err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&types.Host{}).
-			Where("id = ?", id).
-			Updates(updates).Error; err != nil {
-			return err
-		}
-		if req.BusinessID != nil {
-			rel := &types.HostBusinessRelation{
-				HostID:     id,
-				BusinessID: *req.BusinessID,
-			}
-			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(rel).Error; err != nil {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
+	// 执行更新（业务归属变更经 HostMembershipService，不在此落）
+	if err := r.db.WithContext(ctx).Model(&types.Host{}).
+		Where("id = ?", id).
+		Updates(updates).Error; err != nil {
 		return nil, err
 	}
 

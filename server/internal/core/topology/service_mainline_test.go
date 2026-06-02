@@ -418,8 +418,7 @@ func TestModuleChildrenReturnHostsFromRelations(t *testing.T) {
 		"primary_ip": "10.0.0.1",
 		"status":     "running",
 	}).Error)
-	require.NoError(t, db.Create(&types.HostModuleRelation{HostID: hostID, ModuleID: module.ID}).Error)
-	// 读切换(里程碑2)：节点子项改读 host_node_memberships(biz_module)，补该主机的业务模块归属行
+	// 节点子项读 host_node_memberships(biz_module)：补该主机的业务模块归属行
 	bid, sid := bizID, setNode.ID
 	require.NoError(t, db.Create(&types.HostNodeMembership{
 		HostID: hostID, NodeKind: types.NodeKindBizModule, NodeID: module.ID,

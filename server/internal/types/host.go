@@ -171,24 +171,5 @@ type HostListResponse struct {
 	Hosts    []Host `json:"hosts"`
 }
 
-// HostBusinessRelation 主机-业务多对多关联
-type HostBusinessRelation struct {
-	HostID     uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
-	BusinessID uint64    `gorm:"primaryKey;comment:业务ID" json:"business_id"`
-	CreatedAt  time.Time `json:"created_at"`
-}
-
-func (HostBusinessRelation) TableName() string {
-	return "host_business_relations"
-}
-
-// HostModuleRelation 主机-模块多对多关联
-type HostModuleRelation struct {
-	HostID    uuid.UUID `gorm:"type:uuid;primaryKey;comment:主机ID" json:"host_id"`
-	ModuleID  uint64    `gorm:"primaryKey;comment:模块ID" json:"module_id"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-func (HostModuleRelation) TableName() string {
-	return "host_module_relations"
-}
+// 注：HostBusinessRelation / HostModuleRelation 已于阶段2-S4 退役（host 归属统一在
+// host_node_memberships，见 docs/P1-host-membership-convergence.md）。
