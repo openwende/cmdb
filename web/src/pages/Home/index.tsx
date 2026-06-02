@@ -42,7 +42,9 @@ const Home: React.FC = () => {
 
         const resolvedModels = modelData.status === 'fulfilled' ? modelData.value : [];
         const resolvedBizTotal =
-          bizResponse.status === 'fulfilled' ? (bizResponse.value?.data?.total ?? 0) : 0;
+          bizResponse.status === 'fulfilled'
+            ? (bizResponse.value?.data?.pagination?.total ?? bizResponse.value?.data?.total ?? 0)
+            : 0;
 
         setModels(resolvedModels);
         setStats({

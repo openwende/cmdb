@@ -118,7 +118,7 @@ const BusinessList: React.FC = () => {
         (item: BusinessDetail) => item.lifecycle !== LIFECYCLE.OFFLINE,
       );
       setBusinessList(activeBusinesses);
-      setBusinessCount(data.total);
+      setBusinessCount(data.pagination?.total ?? data.total);
     } catch (error) {
       console.error(error);
       setFetchError(error instanceof Error ? error.message : t('common.loadFailed'));
