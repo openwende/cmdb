@@ -173,7 +173,10 @@ const AddHostModal: React.FC<Props> = ({
       setFullTreeData([]);
     }
 
-    const hosts = (((hostResponse as any)?.hosts || []) as any[]).map((item) => ({
+    // R8 统一响应：主机列表为 {code,data:{items,pagination}}，读 data.items；
+    // 回退旧扁平 hosts（迁移过渡期兼容）。
+    const hosts = ((((hostResponse as any)?.data?.items ?? (hostResponse as any)?.hosts) ||
+      []) as any[]).map((item) => ({
       bk_host_id: item.id,
       bk_host_innerip: item.primary_ip || '',
       bk_host_innerip_v6: '',

@@ -69,8 +69,14 @@ const Overview: React.FC = () => {
         businessResult.status === 'fulfilled'
           ? businessResult.value?.data?.pagination?.total ?? businessResult.value?.data?.total ?? 0
           : 0;
+      // R8 统一响应：主机列表为 {code,data:{items,pagination}}，读 pagination.total；
+      // 回退旧扁平 total（迁移过渡期兼容）。
       const hostTotal =
-        hostResult.status === 'fulfilled' ? (hostResult.value as any)?.total ?? 0 : 0;
+        hostResult.status === 'fulfilled'
+          ? (hostResult.value as any)?.data?.pagination?.total ??
+            (hostResult.value as any)?.total ??
+            0
+          : 0;
       const models = modelResult.status === 'fulfilled' ? modelResult.value : [];
       const dynamicModels =
         dynamicModelResult.status === 'fulfilled' ? dynamicModelResult.value : [];
