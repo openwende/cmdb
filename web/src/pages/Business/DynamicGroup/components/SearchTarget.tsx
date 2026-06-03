@@ -33,11 +33,6 @@ const SearchTarget: React.FC<SearchTargetProps> = ({
       name: t('business.dynamicGroupForm.searchTarget.host.name'),
       desc: t('business.dynamicGroupForm.searchTarget.host.desc'),
     },
-    {
-      id: BUILTIN_MODELS.SET,
-      name: t('business.dynamicGroupForm.searchTarget.object.name'),
-      desc: t('business.dynamicGroupForm.searchTarget.object.desc'),
-    },
   ];
   const handleChange = (e: RadioChangeEvent) => {
     const newValue = e.target.value as BUILTIN_MODELS;

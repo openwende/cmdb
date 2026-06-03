@@ -1000,33 +1000,6 @@ export const dynamicGroupList = {
             ],
           },
         ],
-        variable_condition: [
-          {
-            bk_obj_id: 'host',
-            condition: [
-              {
-                field: 'bk_disk',
-                operator: '$eq',
-                value: 1,
-              },
-              {
-                field: 'bk_addressing',
-                operator: '$in',
-                value: ['static'],
-              },
-              {
-                field: 'bk_created_by',
-                operator: '$in',
-                value: ['bk-cmdb'],
-              },
-              {
-                field: 'bk_cloud_zone',
-                operator: '$in',
-                value: ['shanghai'],
-              },
-            ],
-          },
-        ],
       },
       create_user: 'bk-cmdb',
       modify_user: 'bk-cmdb',
@@ -1051,7 +1024,6 @@ export const dynamicGroupList = {
             ],
           },
         ],
-        variable_condition: [],
       },
       create_user: 'admin',
       modify_user: 'admin',
@@ -1099,33 +1071,6 @@ export const dynamicGroupList = {
                 },
               ],
             },
-          },
-        ],
-        variable_condition: [
-          {
-            bk_obj_id: 'host',
-            condition: [
-              {
-                field: 'bk_comment',
-                operator: '$regex',
-                value: '是的好的你的我的',
-              },
-              {
-                field: 'bk_state',
-                operator: '$nin',
-                value: ['备用机', '开发中[需告警]'],
-              },
-              {
-                field: 'bk_agent_id',
-                operator: '$regex',
-                value: 'testid',
-              },
-              {
-                field: 'bk_addressing',
-                operator: '$nin',
-                value: ['dynamic'],
-              },
-            ],
           },
         ],
       },

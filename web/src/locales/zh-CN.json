@@ -829,6 +829,7 @@
       },
       "sections": {
         "basicInfo": "基础信息",
+        "conditions": "条件",
         "resultPreview": "结果预览"
       },
       "form": {

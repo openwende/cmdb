@@ -5,7 +5,6 @@ import {
   TreeData,
   Property,
   Condition,
-  ConditionType,
   DynamicGroupCondition,
   DynamicGroupConditionGroup,
   OperatorType,
@@ -59,18 +58,6 @@ export const createServiceTemplateProperty = (t: TFunction): Property => {
     bk_asst_obj_id: '',
     _is_inject_: true,
   };
-};
-
-/**
- * Get the translated condition name
- * @param conditionType - The condition type enum value
- * @param t - The translation function
- * @returns The translated condition name
- */
-export const getConditionName = (conditionType: ConditionType, t: TFunction): string => {
-  return conditionType === ConditionType.IMMUTABLE
-    ? t('business.dynamicGroupForm.conditionNames.immutable')
-    : t('business.dynamicGroupForm.conditionNames.variable');
 };
 
 /**
@@ -743,11 +730,10 @@ export const updatePropertySelect = (
  * Transform the conditions object into the format required for dynamic group creation.
  *
  * @param conditions The conditions object that users have set
- * @returns An object containing two arrays: condition (immutable conditions) and variable_condition (variable conditions)
+ * @returns An object containing the condition array grouped by object id
  */
 export const formatDynamicConditions = (conditions: Record<string, Condition>) => {
   const conditionMap: Record<string, DynamicGroupConditionGroup> = {};
-  const variableConditionMap: Record<string, DynamicGroupConditionGroup> = {};
 
   Object.values(conditions).forEach((cond) => {
     const { property, operator, value } = cond;
@@ -760,34 +746,20 @@ export const formatDynamicConditions = (conditions: Record<string, Condition>) =
       value,
     };
 
-    if (property.conditionType === ConditionType.IMMUTABLE) {
-      // immutable conditions
-      if (!conditionMap[objId]) {
-        conditionMap[objId] = {
-          bk_obj_id: objId,
-          condition: [],
-        };
-      }
-      conditionMap[objId].condition.push(conditionItem);
-    } else {
-      // variable conditions
-      if (!variableConditionMap[objId]) {
-        variableConditionMap[objId] = {
-          bk_obj_id: objId,
-          condition: [],
-        };
-      }
-      variableConditionMap[objId].condition.push(conditionItem);
+    if (!conditionMap[objId]) {
+      conditionMap[objId] = {
+        bk_obj_id: objId,
+        condition: [],
+      };
     }
+    conditionMap[objId].condition.push(conditionItem);
   });
 
   // transform the map to an array
   const conditionArray = Object.values(conditionMap);
-  const variableConditionArray = Object.values(variableConditionMap);
 
   return {
     condition: conditionArray,
-    variable_condition: variableConditionArray,
   };
 };
 
@@ -809,13 +781,11 @@ export const isValidCondition = (value: any): boolean => {
 /**
  * Process condition groups and extract properties with conditions
  * @param conditionGroups - Array of condition groups from API
- * @param conditionType - The type of condition (VARIABLE or IMMUTABLE)
  * @param propertyMap - Map of object ID to properties
  * @returns Object containing selectedProperties and storageConditions
  */
 export const processConditionGroups = (
   conditionGroups: DynamicGroupConditionGroup[],
-  conditionType: ConditionType,
   propertyMap: Record<string, Property[]>,
 ): {
   selectedProperties: Property[];
@@ -863,7 +833,6 @@ export const processConditionGroups = (
           if (!rangePropertiesAdded.has(propertyKey) && !processedPropertyIds.has(property.id)) {
             const propertyWithType = {
               ...property,
-              conditionType,
             };
 
             selectedProperties.push(propertyWithType);
@@ -888,7 +857,6 @@ export const processConditionGroups = (
           if (!processedPropertyIds.has(property.id)) {
             const propertyWithType = {
               ...property,
-              conditionType,
             };
 
             selectedProperties.push(propertyWithType);
@@ -916,7 +884,6 @@ export const processConditionGroups = (
         if (property && !processedPropertyIds.has(property.id)) {
           const propertyWithType = {
             ...property,
-            conditionType,
           };
 
           selectedProperties.push(propertyWithType);

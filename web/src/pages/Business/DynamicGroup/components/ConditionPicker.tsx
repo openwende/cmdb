@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { Button, Popover, Input, Checkbox, Tooltip } from 'antd';
+import { Button, Popover, Input, Checkbox } from 'antd';
 import { PlusCircleOutlined, SearchOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { ObjectMainLine, PropertyMap, Property, ConditionType } from '../../Types';
-import { getConditionName } from '../../utils';
+import { ObjectMainLine, PropertyMap, Property } from '../../Types';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import './style.css';
 
@@ -14,7 +13,6 @@ interface ConditionPickerProps {
   selected: Property[];
   propertyMap: PropertyMap;
   models: readonly ObjectMainLine[];
-  conditionType: ConditionType;
   onPropertyChange: (properties: Property[]) => void;
 }
 
@@ -25,7 +23,6 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
   propertyMap,
   disabled = false,
   models = [],
-  conditionType,
   onPropertyChange,
 }) => {
   const { t } = useTranslation();
@@ -33,29 +30,9 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
   const [searchText, setSearchText] = useState('');
   const addText = text || t('business.dynamicGroupForm.conditionPicker.addText');
 
-  // Check if a property is selected in other condition types
-  const isSelectedInOtherType = (property: Property) => {
-    return selected.some(
-      (p: Property) => p.id === property.id && p.conditionType !== conditionType,
-    );
-  };
-
-  // Check if a property is selected in current condition type
-  const isSelectedInCurrentType = (property: Property) => {
-    return selected.some(
-      (p: Property) => p.id === property.id && p.conditionType === conditionType,
-    );
-  };
-
-  const getTooltipText = (property: Property) => {
-    const otherProperty = selected.find(
-      (p: Property) => p.id === property.id && p.conditionType !== conditionType,
-    );
-    if (otherProperty) {
-      const typeName = getConditionName(otherProperty.conditionType!, t);
-      return t('business.dynamicGroupForm.conditionPicker.alreadyAdded', { typeName });
-    }
-    return '';
+  // Check if a property is already selected
+  const isSelected = (property: Property) => {
+    return selected.some((p: Property) => p.id === property.id);
   };
 
   const filteredPropertyMap = useMemo(() => {
@@ -76,52 +53,39 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
   }, [propertyMap, searchText]);
 
   const handlePropertySelect = (property: Property) => {
-    // Don't allow selection if property is already selected in other condition type
-    if (isSelectedInOtherType(property)) {
-      return;
-    }
-
-    const isSelected = isSelectedInCurrentType(property);
-    if (isSelected) {
+    if (isSelected(property)) {
       // Remove property
       onPropertyChange(selected.filter((p: Property) => p.id !== property.id));
     } else {
-      // Add property with conditionType
-      const propertyWithConditionType = { ...property, conditionType };
-      onPropertyChange([...selected, propertyWithConditionType]);
+      // Add property
+      onPropertyChange([...selected, { ...property }]);
     }
   };
 
   const handleCategorySelectAll = (modelId: string, checked: boolean) => {
     const modelProperties = filteredPropertyMap[modelId] || [];
-    // Filter out properties that are already selected in other condition types
-    const availableProperties = modelProperties.filter((p) => !isSelectedInOtherType(p));
 
     if (checked) {
-      // Add all unselected available properties from this category with conditionType
-      const newProperties = availableProperties
-        .filter((p: Property) => !isSelectedInCurrentType(p))
-        .map((property: Property) => ({ ...property, conditionType }));
+      // Add all unselected properties from this category
+      const newProperties = modelProperties
+        .filter((p: Property) => !isSelected(p))
+        .map((property: Property) => ({ ...property }));
       onPropertyChange([...selected, ...newProperties]);
     } else {
       // Remove all selected properties from this category
-      const modelPropertyIds = availableProperties.map((p: Property) => p.id);
+      const modelPropertyIds = modelProperties.map((p: Property) => p.id);
       onPropertyChange(selected.filter((p: Property) => !modelPropertyIds.includes(p.id)));
     }
   };
 
   const getCategorySelectState = (modelId: string) => {
     const modelProperties = filteredPropertyMap[modelId] || [];
-    // Only consider properties that are not disabled (not selected in other condition types)
-    const availableProperties = modelProperties.filter((p) => !isSelectedInOtherType(p));
-    const selectedCount = availableProperties.filter((p: Property) =>
-      isSelectedInCurrentType(p),
-    ).length;
+    const selectedCount = modelProperties.filter((p: Property) => isSelected(p)).length;
 
-    if (selectedCount === 0 || availableProperties.length === 0) {
+    if (selectedCount === 0 || modelProperties.length === 0) {
       return { checked: false, indeterminate: false };
     }
-    if (selectedCount === availableProperties.length) {
+    if (selectedCount === modelProperties.length) {
       return { checked: true, indeterminate: false };
     }
     return { checked: false, indeterminate: true };
@@ -157,27 +121,17 @@ const ConditionPicker: React.FC<ConditionPickerProps> = ({
             {/* Property section */}
             <div className="properties-grid">
               {properties.map((property) => {
-                const isSelected = isSelectedInCurrentType(property);
-                const isDisabled = isSelectedInOtherType(property);
-                const tooltipText = getTooltipText(property);
+                const selectedItem = isSelected(property);
 
-                const propertyItem = (
+                return (
                   <div
                     key={property.id}
-                    className={`property-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
-                    onClick={() => !isDisabled && handlePropertySelect(property)}
+                    className={`property-item ${selectedItem ? 'selected' : ''}`}
+                    onClick={() => handlePropertySelect(property)}
                   >
                     <span className="property-name">{property.bk_property_name}</span>
-                    {isSelected && <CheckOutlined className="check-icon" />}
+                    {selectedItem && <CheckOutlined className="check-icon" />}
                   </div>
-                );
-
-                return isDisabled ? (
-                  <Tooltip key={property.id} title={tooltipText}>
-                    {propertyItem}
-                  </Tooltip>
-                ) : (
-                  propertyItem
                 );
               })}
             </div>

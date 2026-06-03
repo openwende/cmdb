@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Property, ConditionType, OperatorType } from '../../Types';
+import { Property, OperatorType } from '../../Types';
 import { QUERY_OPERATOR, PROPERTY_TYPES } from '../../constants';
 import DynamicComponent from '@/components/Business/FormComponents/DynamicComponent';
 import { usePropertyInfo } from '../../hooks/usePropertyInfo';
@@ -28,7 +28,6 @@ const UNSUPPORTED_OPERATORS = [QUERY_OPERATOR.CONTAINS, QUERY_OPERATOR.LIKE] as 
 interface ComponentProps {
   bizId: number | string;
   property: Property;
-  conditionType: ConditionType;
   operator: OperatorType;
   value: any;
   onChange: (value: any) => void;
@@ -38,7 +37,6 @@ interface ComponentProps {
 const FormComponent: React.FC<ComponentProps> = ({
   bizId,
   property,
-  conditionType,
   operator,
   value,
   onChange,
@@ -69,17 +67,11 @@ const FormComponent: React.FC<ComponentProps> = ({
   }, [propertyType, operator, bizId]);
 
   const placeholder = useMemo(() => {
-    const name =
-      conditionType === ConditionType.IMMUTABLE
-        ? t('business.dynamicGroupForm.formComponent.placeholders.immutableValue')
-        : t('business.dynamicGroupForm.formComponent.placeholders.variableValue');
     if (SELECT_TYPES.includes(propertyType as PROPERTY_TYPES)) {
-      return conditionType === ConditionType.IMMUTABLE
-        ? t('business.dynamicGroupForm.formComponent.placeholders.immutableSelect')
-        : t('business.dynamicGroupForm.formComponent.placeholders.variableSelect');
+      return t('business.dynamicGroupForm.formComponent.placeholders.immutableSelect');
     }
-    return name;
-  }, [property, conditionType, t]);
+    return t('business.dynamicGroupForm.formComponent.placeholders.immutableValue');
+  }, [property, t]);
 
   return (
     <DynamicComponent

@@ -1,12 +1,11 @@
 import React, { useMemo, useEffect, useState } from 'react';
-import { Tooltip } from 'antd';
-import { CloseOutlined, SwapOutlined } from '@ant-design/icons';
+import { CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import FormOperatorSelector from './OperatorSelector';
 import FormComponent from './FormComponent';
-import { ConditionType, Property, Condition, ObjectMainLine, OperatorType } from '../../Types';
+import { Property, Condition, ObjectMainLine, OperatorType } from '../../Types';
 import { QUERY_OPERATOR, DEFAULT_CONDITIONS_DATA, PROPERTY_TYPES } from '../../constants';
-import { isValidCondition, getConditionName } from '../../utils';
+import { isValidCondition } from '../../utils';
 import './style.css';
 
 const WITHOUT_OPERATOR = [
@@ -16,10 +15,6 @@ const WITHOUT_OPERATOR = [
   PROPERTY_TYPES.SERVICE_TEMPLATE,
 ];
 
-const EXCHANGE_TYPE = {
-  [ConditionType.VARIABLE]: ConditionType.IMMUTABLE,
-  [ConditionType.IMMUTABLE]: ConditionType.VARIABLE,
-};
 const SUPPORTED_OPERATORS = [
   QUERY_OPERATOR.LIKE,
   QUERY_OPERATOR.CONTAINS,
@@ -29,7 +24,6 @@ const SUPPORTED_OPERATORS = [
 type DefaultMapKey = keyof typeof DEFAULT_CONDITIONS_DATA;
 interface ListProps {
   bizId: number | string;
-  conditionType: ConditionType;
   models: readonly ObjectMainLine[];
   selectedProperties: Property[];
   conditions: Record<string, Condition>;
@@ -37,14 +31,12 @@ interface ListProps {
   errors: Set<number>;
   disabled?: boolean;
   onRemove: (property: Property) => void;
-  onToggle: (property: Property, newConditionType: ConditionType) => void;
   onConditionChange: (condition: Record<string, Condition>) => void;
   onUpdateErrors: (propertyId: number, hasError: boolean) => void;
 }
 
 const PropertyList: React.FC<ListProps> = ({
   bizId,
-  conditionType,
   models,
   selectedProperties,
   conditions,
@@ -52,18 +44,13 @@ const PropertyList: React.FC<ListProps> = ({
   errors,
   disabled = false,
   onRemove,
-  onToggle,
   onConditionChange,
   onUpdateErrors,
 }) => {
   const { t } = useTranslation();
   const [hoveredProperty, setHoveredProperty] = useState<number | null>(null);
 
-  const properties = useMemo(() => {
-    return selectedProperties.filter((property) => {
-      return property.conditionType === conditionType;
-    });
-  }, [selectedProperties, conditionType]);
+  const properties = selectedProperties;
 
   const modelMap = useMemo(() => {
     const map: Record<string, ObjectMainLine> = {};
@@ -93,7 +80,7 @@ const PropertyList: React.FC<ListProps> = ({
       if (stored) {
         newCondition[property.id] = {
           ...stored,
-          property: { ...stored.property, conditionType: property.conditionType },
+          property: { ...stored.property },
         };
       } else {
         newCondition[property.id] = {
@@ -172,16 +159,6 @@ const PropertyList: React.FC<ListProps> = ({
             <div className="item-label">{getPropertyLabel(property)}</div>
             {!disabled && hoveredProperty === property.id && (
               <div className="item-actions">
-                <Tooltip
-                  title={t('business.dynamicGroupForm.propertyList.toggleTooltip', {
-                    typeName: getConditionName(EXCHANGE_TYPE[conditionType], t),
-                  })}
-                >
-                  <SwapOutlined
-                    className="item-toggle"
-                    onClick={() => onToggle(property, EXCHANGE_TYPE[conditionType])}
-                  />
-                </Tooltip>
                 <CloseOutlined className="item-remove" onClick={() => onRemove(property)} />
               </div>
             )}
@@ -201,7 +178,6 @@ const PropertyList: React.FC<ListProps> = ({
             <div className="item-value">
               <FormComponent
                 property={property}
-                conditionType={conditionType}
                 operator={conditions[property.id]?.operator}
                 value={conditions[property.id]?.value}
                 disabled={disabled}

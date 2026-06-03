@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Drawer, Form, Input, Button, Space, Collapse, Tooltip, Popconfirm } from 'antd';
+import { Drawer, Form, Input, Button, Space, Collapse, Popconfirm } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { message } from 'antd';
 import {
@@ -7,7 +7,6 @@ import {
   ObjectMainLine,
   PropertyMap,
   Property,
-  ConditionType,
   Condition,
 } from '../../Types';
 import { availableModelIds, BUILTIN_MODELS } from '../../constants';
@@ -16,7 +15,6 @@ import {
   formatDynamicConditions,
   isValidCondition,
   processConditionGroups,
-  getConditionName,
 } from '../../utils';
 import SearchTarget from './SearchTarget';
 import ConditionPicker from './ConditionPicker';
@@ -87,19 +85,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
   const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
   const initialPreviewDoneRef = useRef(false);
   const disabled = mode === FormMode.PREVIEW;
-
-  const conditionTypes = [
-    {
-      key: ConditionType.VARIABLE,
-      title: getConditionName(ConditionType.VARIABLE, t),
-      desc: t('business.dynamicGroupForm.conditionTypes.variable.desc'),
-    },
-    {
-      key: ConditionType.IMMUTABLE,
-      title: getConditionName(ConditionType.IMMUTABLE, t),
-      desc: t('business.dynamicGroupForm.conditionTypes.immutable.desc'),
-    },
-  ];
 
   useEffect(() => {
     void loadMeta();
@@ -176,29 +161,10 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
     const newSelectedProperties: Property[] = [];
     const initialConditions: Record<string, Condition> = {};
 
-    // Process immutable conditions
-    const immutableResult = processConditionGroups(
-      data.info?.condition || [],
-      ConditionType.IMMUTABLE,
-      propertyMap,
-    );
-    // Process variable conditions
-    const variableResult = processConditionGroups(
-      data.info?.variable_condition || [],
-      ConditionType.VARIABLE,
-      propertyMap,
-    );
+    const result = processConditionGroups(data.info?.condition || [], propertyMap);
 
-    // Combine results
-    newSelectedProperties.push(
-      ...immutableResult.selectedProperties,
-      ...variableResult.selectedProperties,
-    );
-    Object.assign(
-      initialConditions,
-      immutableResult.storageConditions,
-      variableResult.storageConditions,
-    );
+    newSelectedProperties.push(...result.selectedProperties);
+    Object.assign(initialConditions, result.storageConditions);
 
     setSelectedProperties(newSelectedProperties);
     setStorageConditions(initialConditions);
@@ -225,45 +191,6 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
 
     setConditions(newConditions);
     setStorageConditions(newStorageConditions);
-  };
-
-  const handleToggleProperty = (property: Property, newConditionType: ConditionType) => {
-    // Set the new condition type
-    const updatedProperty = { ...property, conditionType: newConditionType };
-
-    // Update selectedProperties - remove old and add updated
-    setSelectedProperties((prev) => {
-      const filtered = prev.filter((p) => p.id !== property.id);
-      return [...filtered, updatedProperty];
-    });
-
-    // Update conditions to reflect the new condition type
-    setConditions((prev) => {
-      if (prev[property.id]) {
-        return {
-          ...prev,
-          [property.id]: {
-            ...prev[property.id],
-            property: updatedProperty,
-          },
-        };
-      }
-      return prev;
-    });
-
-    // Update storageConditions to reflect the new condition type
-    setStorageConditions((prev) => {
-      if (prev[property.id]) {
-        return {
-          ...prev,
-          [property.id]: {
-            ...prev[property.id],
-            property: updatedProperty,
-          },
-        };
-      }
-      return prev;
-    });
   };
 
   const handleConditionChange = (newCondition: Record<string, Condition>) => {
@@ -322,14 +249,13 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         return;
       }
 
-      const { condition, variable_condition } = formatDynamicConditions(conditions);
+      const { condition } = formatDynamicConditions(conditions);
 
       const formData: DynamicGroupFormData = {
         name: values.groupName,
         bk_obj_id: values.groupObject,
         target_model_uid: values.groupObject,
         condition,
-        variable_condition,
       };
 
       if (mode === FormMode.EDIT && initialData?.id) {
@@ -370,13 +296,12 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
         return;
       }
 
-      const { condition, variable_condition } = formatDynamicConditions(conditions);
+      const { condition } = formatDynamicConditions(conditions);
 
       const previewPayload = {
         bk_obj_id: form.getFieldValue('groupObject') || groupObject,
         target_model_uid: form.getFieldValue('groupObject') || groupObject,
         condition,
-        variable_condition,
         limit: 100,
       };
 
@@ -497,49 +422,43 @@ const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
                 />
               </Form.Item>
 
-              {conditionTypes.map((conditionType) => (
-                <Collapse
-                  ghost
-                  key={conditionType.key}
-                  defaultActiveKey={[conditionType.key]}
-                  items={[
-                    {
-                      key: conditionType.key,
-                      label: (
-                        <Tooltip title={conditionType.desc} styles={{ root: { maxWidth: 'none' } }}>
-                          <span className="condition-title">{conditionType.title}</span>
-                        </Tooltip>
-                      ),
-                      extra: (
-                        <ConditionPicker
-                          propertyMap={propertyMap!}
-                          models={availableModels}
-                          selected={selectedProperties}
-                          conditionType={conditionType.key}
-                          disabled={disabled}
-                          onPropertyChange={handlePropertyChange}
-                        />
-                      ),
-                      children: (
-                        <PropertyList
-                          bizId={currentBusiness?.id || ''}
-                          conditionType={conditionType.key}
-                          models={availableModels}
-                          selectedProperties={selectedProperties}
-                          conditions={conditions}
-                          storageConditions={storageConditions}
-                          errors={errors}
-                          disabled={disabled}
-                          onRemove={handleRemoveProperty}
-                          onToggle={handleToggleProperty}
-                          onConditionChange={handleConditionChange}
-                          onUpdateErrors={handleErrors}
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              ))}
+              <Collapse
+                ghost
+                defaultActiveKey={['conditions']}
+                items={[
+                  {
+                    key: 'conditions',
+                    label: (
+                      <span className="condition-title">
+                        {t('business.dynamicGroupForm.sections.conditions')}
+                      </span>
+                    ),
+                    extra: (
+                      <ConditionPicker
+                        propertyMap={propertyMap!}
+                        models={availableModels}
+                        selected={selectedProperties}
+                        disabled={disabled}
+                        onPropertyChange={handlePropertyChange}
+                      />
+                    ),
+                    children: (
+                      <PropertyList
+                        bizId={currentBusiness?.id || ''}
+                        models={availableModels}
+                        selectedProperties={selectedProperties}
+                        conditions={conditions}
+                        storageConditions={storageConditions}
+                        errors={errors}
+                        disabled={disabled}
+                        onRemove={handleRemoveProperty}
+                        onConditionChange={handleConditionChange}
+                        onUpdateErrors={handleErrors}
+                      />
+                    ),
+                  },
+                ]}
+              />
             </Form>
           </div>
 

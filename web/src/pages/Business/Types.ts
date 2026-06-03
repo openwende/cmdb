@@ -159,15 +159,6 @@ export interface DynamicGroupFormData {
   target_model_uid?: string;
   bk_biz_id?: number;
   condition: DynamicGroupConditionGroup[];
-  variable_condition: DynamicGroupConditionGroup[];
-}
-export interface PropertyCondition {
-  id: string;
-  property: DynamicGroupProperty;
-  operator: string;
-  value: any;
-  conditionType: 'condition' | 'variable_condition';
-  isVariable?: boolean;
 }
 export interface DynamicGroupPreviewData {
   count: number;
@@ -181,10 +172,6 @@ export interface ObjectMainLine {
   bk_next_name: string;
   bk_pre_obj_id: string;
   bk_pre_obj_name: string;
-}
-export enum ConditionType {
-  IMMUTABLE = 'condition',
-  VARIABLE = 'varCondition',
 }
 export interface Property {
   id: number;
@@ -213,7 +200,6 @@ export interface Property {
   _is_inject_?: boolean;
   bk_isapi?: boolean;
   bk_issystem?: boolean;
-  conditionType?: ConditionType;
 }
 export interface PropertyMap {
   [objId: string]: Property[];

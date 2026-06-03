@@ -23,7 +23,6 @@ export interface DynamicGroupConditionGroup {
 
 export interface DynamicGroupRuleInfo {
   condition: DynamicGroupConditionGroup[];
-  variable_condition: DynamicGroupConditionGroup[];
 }
 
 export interface DynamicGroupItem {
@@ -115,7 +114,6 @@ export interface UpsertDynamicGroupPayload {
   bk_obj_id: string;
   target_model_uid?: string;
   condition: DynamicGroupConditionGroup[];
-  variable_condition: DynamicGroupConditionGroup[];
   description?: string;
 }
 
@@ -123,6 +121,5 @@ export interface PreviewDynamicGroupPayload {
   bk_obj_id: string;
   target_model_uid?: string;
   condition: DynamicGroupConditionGroup[];
-  variable_condition: DynamicGroupConditionGroup[];
   limit?: number;
 }

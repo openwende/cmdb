@@ -829,6 +829,7 @@
       },
       "sections": {
         "basicInfo": "Basic info",
+        "conditions": "Conditions",
         "resultPreview": "Result preview"
       },
       "form": {
