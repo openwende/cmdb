@@ -6,8 +6,6 @@ import {
   CreateModelPayload,
   ModelAttribute,
   ModelGroup,
-  ListModelInstancesParams,
-  ListModelInstancesResponse,
   DynamicModelDefinition,
   ModelDefinition,
   ModelDetailResponse,
@@ -49,13 +47,6 @@ export const createModelAttribute = (
   data: CreateModelAttributePayload,
 ): Promise<ModelAttribute> => {
   return axios.post(`${URLS.models}/${name}/attributes`, data);
-};
-
-export const listModelInstances = (
-  name: string,
-  params: ListModelInstancesParams,
-): Promise<ListModelInstancesResponse> => {
-  return axios.get(`${URLS.models}/${name}/instances`, { params });
 };
 
 export const createModelInstance = (

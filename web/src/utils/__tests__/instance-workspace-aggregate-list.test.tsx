@@ -8,21 +8,12 @@ const {
   mockResetInstanceScene,
   mockLoadInstanceCapabilities,
   mockResetInstanceCapabilities,
-  listModelInstances,
   listAggregateInstances,
 } = vi.hoisted(() => ({
   mockOpenInstance: vi.fn(async () => {}),
   mockResetInstanceScene: vi.fn(),
   mockLoadInstanceCapabilities: vi.fn(async () => {}),
   mockResetInstanceCapabilities: vi.fn(),
-  listModelInstances: vi.fn(async () => ({
-    data: [],
-    meta: {
-      total: 0,
-      page: 1,
-      page_size: 20,
-    },
-  })),
   listAggregateInstances: vi.fn(async () => ({
     code: 0,
     data: {
@@ -122,7 +113,6 @@ vi.mock('antd', () => {
 });
 
 vi.mock('@/api', () => ({
-  listModelInstances,
   listAggregateInstances,
   createModelInstance: vi.fn(async () => ({})),
   listModelInstanceRelations: vi.fn(async () => ({ code: 0, data: { items: [] } })),

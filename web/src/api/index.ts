@@ -26,7 +26,6 @@ export {
   createModel,
   createModelGroup,
   createModelAttribute,
-  listModelInstances,
   createModelInstance,
 } from './services/model';
 

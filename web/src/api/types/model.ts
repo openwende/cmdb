@@ -114,20 +114,6 @@ export interface ModelInstance {
   model_name?: string;
 }
 
-export interface ListModelInstancesParams {
-  page: number;
-  page_size: number;
-}
-
-export interface ListModelInstancesResponse {
-  // R8：后端收口为统一分页 envelope（旧为 {data:[],meta}）。
-  code: number;
-  data: {
-    items: ModelInstance[];
-    pagination: { page: number; page_size: number; total: number };
-  };
-}
-
 export interface CreateModelInstancePayload {
   properties: Record<string, unknown>;
   business_id?: number;
