@@ -85,9 +85,12 @@ export interface ListDynamicGroupsResponse {
   code: number;
   data: {
     items: DynamicGroupItem[];
-    total: number;
-    limit: number;
-    offset: number;
+    // R8：后端已收口为标准分页 envelope。
+    pagination?: { page: number; page_size: number; total: number };
+    /** @deprecated 旧扁平分页字段，后端已移到 pagination，保留仅为过渡兼容 */
+    total?: number;
+    limit?: number;
+    offset?: number;
   };
 }
 

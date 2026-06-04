@@ -146,7 +146,8 @@ const DynamicGroup: React.FC = () => {
         ...params,
       });
       setGroupList(response.data.items || []);
-      setGroupCount(response.data.total || 0);
+      // R8：后端收口为标准分页 envelope（pagination.total）；?? 链回退旧扁平 total 作过渡兼容。
+      setGroupCount(response.data.pagination?.total ?? response.data.total ?? 0);
     } catch (error) {
       console.error(error);
       setGroupList([]);
