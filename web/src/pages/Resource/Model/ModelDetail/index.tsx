@@ -663,8 +663,9 @@ const ModelDetail: React.FC = () => {
         page,
         page_size: pageSize,
       });
-      setInstances(response.data || []);
-      setTotal(response.meta?.total || 0);
+      // R8：后端收口为 {code,data:{items,pagination}}；?. 链在旧 {data:[],meta} 下优雅降级为空，不崩。
+      setInstances(response.data?.items || []);
+      setTotal(response.data?.pagination?.total || 0);
     } catch (error) {
       console.error(error);
       message.error(t('resource.model.messages.loadInstancesFailed'));

@@ -120,11 +120,11 @@ export interface ListModelInstancesParams {
 }
 
 export interface ListModelInstancesResponse {
-  data: ModelInstance[];
-  meta: {
-    total: number;
-    page: number;
-    page_size: number;
+  // R8：后端收口为统一分页 envelope（旧为 {data:[],meta}）。
+  code: number;
+  data: {
+    items: ModelInstance[];
+    pagination: { page: number; page_size: number; total: number };
   };
 }
 
