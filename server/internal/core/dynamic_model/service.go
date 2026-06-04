@@ -15,8 +15,8 @@ import (
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
-// Service 动态模型服务接口
-type Service interface {
+// ModelSchemaService 管理动态模型与其属性的 schema（模型 CRUD + 属性 CRUD）。
+type ModelSchemaService interface {
 	// 模型 CRUD
 	CreateModel(ctx context.Context, model *types.DynamicModel) error
 	ListModels(ctx context.Context) ([]types.DynamicModel, error)
@@ -29,15 +29,20 @@ type Service interface {
 	ListAttributes(ctx context.Context, modelUID string) ([]types.DynamicAttribute, error)
 	UpdateAttribute(ctx context.Context, modelUID, fieldUID string, updates map[string]interface{}) error
 	DeleteAttribute(ctx context.Context, modelUID, fieldUID string) error
+}
 
-	// 实例操作
+// InstanceService 管理动态模型实例的增删改查与视图。
+type InstanceService interface {
 	UpsertInstance(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}, auditCtx *AuditContext) (uint64, error)
 	GetInstance(ctx context.Context, resourceID uint64) (*types.Resource, error)
 	ListInstances(ctx context.Context, modelUID string, filters map[string]interface{}, page, pageSize int) ([]types.Resource, int64, error)
 	DeleteInstance(ctx context.Context, resourceID uint64, auditCtx *AuditContext) error
 	GetInstanceView(ctx context.Context, modelUID string, resourceID uint64) (*types.DynamicModelInstanceView, error)
 	GetResourceHistoryView(ctx context.Context, modelUID string, resourceID uint64, page, pageSize int) ([]types.ResourceHistoryView, int64, error)
+}
 
+// RelationService 管理实例关联、关联类型与模型间关联定义。
+type RelationService interface {
 	// 关联操作
 	CreateRelation(ctx context.Context, sourceID, targetID uint64, associationUID string) error
 	DeleteRelation(ctx context.Context, relationID uint64) error
@@ -56,20 +61,27 @@ type Service interface {
 	UpdateModelAssociation(ctx context.Context, sourceModelUID string, id uint64, updates map[string]interface{}) (*types.DynamicModelAssociation, error)
 	DeleteModelAssociation(ctx context.Context, sourceModelUID string, id uint64) error
 	GetAvailableRelations(ctx context.Context, sourceModelUID string) (map[string]interface{}, error)
+}
 
-	// 唯一规则
+// UniqueRuleService 管理唯一校验规则与其底层索引同步。
+type UniqueRuleService interface {
 	EnsureLegacyUniqueRules(ctx context.Context, modelUID string) error
 	ListUniqueRules(ctx context.Context, modelUID string) ([]types.UniqueRuleDetail, error)
 	CreateUniqueRule(ctx context.Context, rule *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error)
 	UpdateUniqueRule(ctx context.Context, modelUID string, ruleID uint64, updates *types.ModelUniqueRule, fields []string) (*types.UniqueRuleDetail, error)
 	DeleteUniqueRule(ctx context.Context, modelUID string, ruleID uint64) error
 	ValidateUnique(ctx context.Context, modelUID string, resourceID *uint64, data map[string]interface{}) ([]types.UniqueRuleViolation, error)
-
-	// 索引同步
 	SyncUniqueIndexes(ctx context.Context) error
+}
 
-	// 底层 DB 访问（供适配器使用）
-	DB() *gorm.DB
+// Service 动态模型服务接口：组合上面按域拆分的 4 个小接口，保持向后兼容
+// （现有调用方依赖整个 Service 不受影响；新调用方可按需只依赖所需窄接口）。
+// 单个 service 实现满足全部小接口。
+type Service interface {
+	ModelSchemaService
+	InstanceService
+	RelationService
+	UniqueRuleService
 }
 
 // service 动态模型服务实现
@@ -86,11 +98,6 @@ func NewService(db *gorm.DB) Service {
 		attrCache:  NewAttributeCache(db),
 		modelCache: NewModelCache(db),
 	}
-}
-
-// DB 返回数据库连接（用于适配器等需要直接访问的场景）
-func (s *service) DB() *gorm.DB {
-	return s.db
 }
 
 // isValidFieldName 校验字段名是否安全（防止 SQL 注入）
