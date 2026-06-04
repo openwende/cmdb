@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/cloud_area"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
@@ -123,12 +124,9 @@ func (h *CloudAreaHandler) ListCloudAreas(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"total":       total,
-		"page":        params.Page,
-		"page_size":   params.PageSize,
-		"cloud_areas": cloudAreas,
-	})
+	// R8：云区域列表收口为统一响应规范 {code,data:{items,pagination}}。
+	// 旧扁平字段(total/page/page_size/cloud_areas)无前端消费端（Foreignkey 走 mock，真实调用未启用），故直接替换。
+	response.List(c, cloudAreas, params.Page, params.PageSize, total)
 }
 
 // UpdateCloudArea 更新云区域

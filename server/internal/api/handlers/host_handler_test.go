@@ -91,6 +91,9 @@ func (f *fakeHostRepo) HostStatistics(context.Context) (*types.HostStatistics, e
 
 type fakeCloudAreaRepo struct {
 	defaultArea *types.CloudArea
+	// listAreas/listTotal 供 ListCloudAreas 返回（零值时保持 nil,0 的原行为）。
+	listAreas []types.CloudArea
+	listTotal int64
 }
 
 func (f *fakeCloudAreaRepo) CreateCloudArea(context.Context, uuid.UUID, *types.CreateCloudAreaRequest) (*types.CloudArea, error) {
@@ -110,7 +113,7 @@ func (f *fakeCloudAreaRepo) GetDefaultCloudArea(context.Context) (*types.CloudAr
 }
 
 func (f *fakeCloudAreaRepo) ListCloudAreas(context.Context, uuid.UUID, *types.CloudAreaQueryParams) ([]types.CloudArea, int64, error) {
-	return nil, 0, nil
+	return f.listAreas, f.listTotal, nil
 }
 
 func (f *fakeCloudAreaRepo) UpdateCloudArea(context.Context, uuid.UUID, *types.UpdateCloudAreaRequest) (*types.CloudArea, error) {

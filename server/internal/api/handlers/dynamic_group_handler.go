@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/wend/cmdb-backend/internal/api/response"
 	authn "github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_group"
 	"github.com/wend/cmdb-backend/internal/types"
@@ -42,7 +43,13 @@ func (h *DynamicGroupHandler) List(c *gin.Context) {
 		return
 	}
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit <= 0 {
+		limit = 20
+	}
 	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	if offset < 0 {
+		offset = 0
+	}
 
 	items, total, err := h.service.List(
 		c.Request.Context(),
@@ -57,15 +64,9 @@ func (h *DynamicGroupHandler) List(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{
-		"code": 0,
-		"data": gin.H{
-			"items":  items,
-			"total":  total,
-			"limit":  limit,
-			"offset": offset,
-		},
-	})
+	// R8：动态分组列表收口为统一响应规范 {code,data:{items,pagination}}。
+	// 前端消费端读 data.items（不变）+ data.pagination.total（旧为 data.total，已防御式兼容）。
+	response.List(c, items, offset/limit+1, limit, total)
 }
 
 func (h *DynamicGroupHandler) Get(c *gin.Context) {
