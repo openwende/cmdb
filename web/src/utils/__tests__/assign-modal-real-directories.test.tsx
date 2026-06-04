@@ -33,9 +33,17 @@ vi.mock('@/components/common/BusinessSelector', () => ({
 }));
 
 vi.mock('antd', () => {
-  const Select = ({ children, ...props }: Record<string, any>) => {
-    selectPropsRef.current = props;
-    return <div data-testid="pool-select">{children}</div>;
+  const Select = ({ children, options, ...props }: Record<string, any>) => {
+    selectPropsRef.current = { ...props, options };
+    // AssignModal 用 options prop（非 <Option> children）渲染目录项，mock 需把 options 渲染出来。
+    return (
+      <div data-testid="pool-select">
+        {children}
+        {(options ?? []).map((opt: any) => (
+          <div key={opt.value}>{opt.label}</div>
+        ))}
+      </div>
+    );
   };
   Select.Option = ({ children }: any) => <div>{children}</div>;
 
@@ -45,6 +53,8 @@ vi.mock('antd', () => {
     Typography: {
       Text: ({ children }: any) => <span>{children}</span>,
     },
+    // AssignModal 经 useAppMessage 间接依赖 antd message（App.useApp 失败时回退 staticMessage）。
+    message: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
   };
 });
 

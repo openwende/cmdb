@@ -12,9 +12,9 @@ const { selectPropsRef, loadBusinessData, onChange } = vi.hoisted(() => ({
 
 let mockBusinessList = [
   {
-    id: 'ec47bbff-36a2-43d4-946a-1391601c11ae',
+    id: 2001,
     name: 'ProbeSetBiz',
-    displayId: '2001',
+    type: 'business',
   },
 ];
 
@@ -22,6 +22,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) => key,
   }),
+}));
+
+// BusinessSelector 用 useNavigate（无业务时跳转新建业务），测试需提供 Router 上下文。
+vi.mock('react-router-dom', () => ({
+  useNavigate: () => vi.fn(),
 }));
 
 vi.mock('@/store/BusinessStore', () => ({
@@ -38,7 +43,7 @@ vi.mock('antd', () => {
     selectPropsRef.current = { ...props, onChange: handleChange };
     return (
       <div>
-        <button type="button" onClick={() => handleChange?.('ec47bbff-36a2-43d4-946a-1391601c11ae')}>
+        <button type="button" onClick={() => handleChange?.(2001)}>
           trigger-change
         </button>
         <div data-testid="selector-options">{children}</div>
@@ -56,22 +61,22 @@ describe('common BusinessSelector', () => {
     vi.clearAllMocks();
     mockBusinessList = [
       {
-        id: 'ec47bbff-36a2-43d4-946a-1391601c11ae',
+        id: 2001,
         name: 'ProbeSetBiz',
-        displayId: '2001',
+        type: 'business',
       },
     ];
   });
 
   it('renders business options from BusinessStore instead of resource mock data', async () => {
-    render(<BusinessSelector value="ec47bbff-36a2-43d4-946a-1391601c11ae" onChange={onChange} />);
+    render(<BusinessSelector value={2001} onChange={onChange} />);
 
     expect(screen.getByText('[2001] ProbeSetBiz')).toBeInTheDocument();
     expect(screen.queryByText('[2] 蓝鲸')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByText('trigger-change'));
 
-    expect(onChange).toHaveBeenCalledWith('ec47bbff-36a2-43d4-946a-1391601c11ae');
+    expect(onChange).toHaveBeenCalledWith(2001);
     expect(loadBusinessData).not.toHaveBeenCalled();
   });
 });

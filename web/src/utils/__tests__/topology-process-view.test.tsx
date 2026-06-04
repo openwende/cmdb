@@ -134,6 +134,8 @@ vi.mock('antd', () => {
       error: vi.fn(),
     },
     Popconfirm: ({ children }: any) => <div>{children}</div>,
+    // 进程表空数据初次渲染走 locale.emptyText=<TableEmpty/>，后者用 antd Empty。
+    Empty: ({ description }: any) => <div>{description}</div>,
   };
 });
 

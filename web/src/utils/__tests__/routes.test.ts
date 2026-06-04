@@ -124,7 +124,7 @@ describe('Route Utilities', () => {
     it('should parse business path correctly', () => {
       const result = parseBusinessInfoFromUrl('/business/123/topology');
       expect(result).toEqual({
-        id: '123',
+        id: 123,
         type: BusinessType.Business,
       });
     });
@@ -132,7 +132,7 @@ describe('Route Utilities', () => {
     it('should parse business set path correctly', () => {
       const result = parseBusinessInfoFromUrl('/business-set/456/topology');
       expect(result).toEqual({
-        id: '456',
+        id: 456,
         type: BusinessType.BusinessSet,
       });
     });
@@ -164,17 +164,17 @@ describe('Route Utilities', () => {
   describe('getBusinessIdFromUrl', () => {
     it('should extract business ID correctly', () => {
       const id = getBusinessIdFromUrl('/business/123/topology');
-      expect(id).toBe('123');
+      expect(id).toBe(123);
     });
 
     it('should extract business set ID correctly', () => {
       const id = getBusinessIdFromUrl('/business-set/456/topology');
-      expect(id).toBe('456');
+      expect(id).toBe(456);
     });
 
-    it('should return empty string for invalid paths', () => {
+    it('should return null for invalid paths', () => {
       const id = getBusinessIdFromUrl('/home');
-      expect(id).toBe('');
+      expect(id).toBeNull();
     });
 
     it('should keep UUID business IDs intact', () => {

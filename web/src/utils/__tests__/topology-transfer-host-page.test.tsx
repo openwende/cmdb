@@ -215,7 +215,7 @@ describe('topology transfer host page', () => {
     });
   });
 
-  it('uses the idle-pool api instead of module transfer when confirming idle-pool moves', async () => {
+  it('routes idle-pool moves through module transfer (not transfer-to-pool) to avoid losing hosts', async () => {
     storeState.transferHostType = 'idlePool';
     storeState.targetModules = [
       {
@@ -232,11 +232,13 @@ describe('topology transfer host page', () => {
 
     fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
 
+    // idlePool 现走模块转移（带 target_module_id），而非上交资源池——避免主机从业务拓扑"消失"（b2dd430）。
     await waitFor(() => {
-      expect(transferTopologyHostsToPool).toHaveBeenCalledWith({
+      expect(transferTopologyHosts).toHaveBeenCalledWith({
         host_ids: ['host-1'],
+        target_module_id: 5,
       });
     });
-    expect(transferTopologyHosts).not.toHaveBeenCalled();
+    expect(transferTopologyHostsToPool).not.toHaveBeenCalled();
   });
 });

@@ -153,7 +153,7 @@ describe('topology node info components', () => {
     );
 
     await waitFor(() => {
-      expect(getBusinessDetail).toHaveBeenCalledWith('4');
+      expect(getBusinessDetail).toHaveBeenCalledWith(4);
     });
 
     expect(await screen.findByText('Asia/Shanghai')).toBeInTheDocument();

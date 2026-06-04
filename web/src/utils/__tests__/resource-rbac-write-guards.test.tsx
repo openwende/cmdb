@@ -285,9 +285,8 @@ describe('resource page RBAC write guards', () => {
     });
 
     expect(screen.getByRole('button', { name: 'resource.business.actions.create' })).toBeDisabled();
-    expect(
-      screen.getByRole('button', { name: 'resource.business.actions.batchEdit' }),
-    ).toBeDisabled();
+    // batchEdit 入口已被产品下线（BusinessList 中整段注释，见 0cbac30），viewer 自然看不到。
+    expect(screen.queryByText('resource.business.actions.batchEdit')).not.toBeInTheDocument();
     expect(screen.queryByText('resource.business.actions.archive')).not.toBeInTheDocument();
   });
 
@@ -303,7 +302,7 @@ describe('resource page RBAC write guards', () => {
     expect(
       screen.queryByRole('button', { name: 'resource.host.actions.importHost' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /resource.host.actions.assignTo/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /resource.host.actions.assign/ })).toBeDisabled();
     expect(screen.queryByText('resource.host.actions.more')).not.toBeInTheDocument();
   });
 
