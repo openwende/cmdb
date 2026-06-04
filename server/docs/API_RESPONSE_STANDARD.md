@@ -60,5 +60,9 @@ response.Error(c, http.StatusBadRequest, msg) // {"code":400,"error":msg}       
 >   （`Foreignkey` 走 mock），纯后端替换。
 > - `/:id/dynamic-groups`：旧 `{code,data:{items,total,limit,offset}}` → 标准 pagination；
 >   前端 `DynamicGroup/index.tsx` 改读 `data.pagination?.total ?? data.total`（防御回退）。
-> **剩余**：v2 `resource_graph`（`{success}`）已裁定不扶正、不迁；其余批量端点（processes/instances 的 batch）
-> 若仍 207/裸返回，照 `/hosts/batch` 套路续推。
+> - `/models/:name/instances/batch`：旧裸 `{count,ids}`+201 → `response.Created`（`{code,data:{count,ids}}`+201）；
+>   全成功/全失败语义保留 201，前端零消费此端点。`/processes/batch` 早已是 `{code,data}`。
+> - `/models/:name/instances`（实例列表）：旧 `{data:[],meta:{total,page,page_size}}` → `response.List`；
+>   无活前端消费端（唯一引用方 `ModelDetail` 是未路由死代码；活实例 tab 走另一端点 `/v1/instances` aggregate，早已标准）。
+>   死代码读法 + 类型一并改标准形状以保持类型一致。
+> **剩余**：v2 `resource_graph`（`{success}`）已裁定不扶正、不迁。R8 的 list/batch 存量端点（除 v2）已全部收口。

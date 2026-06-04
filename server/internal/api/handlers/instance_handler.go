@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/wend/cmdb-backend/internal/api/response"
 	"github.com/wend/cmdb-backend/internal/core/instance"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -62,7 +63,9 @@ func (h *InstanceHandler) BatchCreateInstances(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	// R8：批量创建实例收口为统一响应规范 {code,data:{count,ids}}（HTTP 201）。
+	// 全成功/全失败语义（err 即 400），无部分失败，故保留 Created 语义。前端零消费此端点。
+	response.Created(c, gin.H{
 		"count": len(instances),
 		"ids":   extractIDs(instances),
 	})
@@ -111,12 +114,7 @@ func (h *InstanceHandler) ListInstances(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data": instances,
-		"meta": gin.H{
-			"total":     total,
-			"page":      page,
-			"page_size": pageSize,
-		},
-	})
+	// R8：实例列表收口为统一响应规范 {code,data:{items,pagination}}（旧为 {data,meta}）。
+	// 唯一消费端 ModelDetail 改读 data.items / data.pagination.total（防御回退旧 data/meta）。
+	response.List(c, instances, page, pageSize, total)
 }
