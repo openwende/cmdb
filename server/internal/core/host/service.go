@@ -200,7 +200,7 @@ func (s *Service) BatchImportHosts(ctx context.Context, tenantID uuid.UUID, req 
 			BusinessID:      nil, // 主机建到资源池(无业务)；业务归属经 HostMembershipService(host_node_memberships)
 			HostName:        hostReq.HostName,
 			PrimaryIP:       hostReq.PrimaryIP,
-			IPAddresses:     hostReq.IPAddresses,
+			IPAddresses:     types.StringArray(hostReq.IPAddresses),
 			CloudVendor:     hostReq.CloudVendor,
 			CloudInstanceID: hostReq.CloudInstanceID,
 			CloudRegion:     hostReq.CloudRegion,

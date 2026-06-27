@@ -84,7 +84,7 @@ func (r *businessRepository) UpdateBusiness(ctx context.Context, business *types
 			"lifecycle":   business.Lifecycle,
 			"timezone":    business.Timezone,
 			"language":    business.Language,
-			"maintainers": pq.Array(business.Maintainers),
+			"maintainers": business.Maintainers,
 		})
 	if result.Error != nil {
 		return apperrors.InternalError("update business", result.Error)

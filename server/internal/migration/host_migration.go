@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
@@ -309,7 +308,7 @@ func (m *HostMigration) migrateOneHost(ctx context.Context, host *types.Host) er
 
 	// IP地址列表 - 使用 PostgreSQL 数组类型
 	if len(host.IPAddresses) > 0 {
-		data["ip_addresses"] = pq.StringArray(host.IPAddresses)
+		data["ip_addresses"] = host.IPAddresses
 	}
 
 	// 云平台信息

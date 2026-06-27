@@ -38,9 +38,9 @@ type Host struct {
 	BusinessID *int64 `json:"business_id,omitempty" db:"business_id"`
 
 	// 核心字段
-	HostName    string   `json:"host_name" db:"host_name"`
-	PrimaryIP   string   `json:"primary_ip" db:"primary_ip"` // INET type in DB
-	IPAddresses []string `json:"ip_addresses,omitempty" db:"ip_addresses" gorm:"type:inet[]"`
+	HostName    string      `json:"host_name" db:"host_name"`
+	PrimaryIP   string      `json:"primary_ip" db:"primary_ip"` // INET type in DB
+	IPAddresses StringArray `json:"ip_addresses,omitempty" db:"ip_addresses" gorm:"type:inet[]"`
 
 	// 云平台相关（可选，手动导入时可为空）
 	CloudVendor     *string `json:"cloud_vendor,omitempty" db:"cloud_vendor"`

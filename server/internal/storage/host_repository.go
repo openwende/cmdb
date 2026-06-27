@@ -52,7 +52,7 @@ func (r *hostRepository) CreateHost(ctx context.Context, tenantID uuid.UUID, req
 		CloudAreaID:     req.CloudAreaID,
 		HostName:        req.HostName,
 		PrimaryIP:       req.PrimaryIP,
-		IPAddresses:     req.IPAddresses,
+		IPAddresses:     types.StringArray(req.IPAddresses),
 		CloudVendor:     req.CloudVendor,
 		CloudInstanceID: req.CloudInstanceID,
 		CloudRegion:     req.CloudRegion,
@@ -261,7 +261,7 @@ func (r *hostRepository) UpdateHost(ctx context.Context, id uuid.UUID, req *type
 		updates["primary_ip"] = *req.PrimaryIP
 	}
 	if req.IPAddresses != nil {
-		updates["ip_addresses"] = *req.IPAddresses
+		updates["ip_addresses"] = types.StringArray(*req.IPAddresses)
 	}
 	if req.CPU != nil {
 		updates["cpu"] = *req.CPU

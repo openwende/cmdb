@@ -237,5 +237,5 @@ func (Instance) TableName() string {
 type StringArray []string
 
 func (a *StringArray) Scan(src interface{}) error {
-	return pq.Array(a).Scan(src)
+	return (*pq.StringArray)(a).Scan(src)
 }

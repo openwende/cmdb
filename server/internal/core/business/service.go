@@ -96,7 +96,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		Lifecycle:   lifecycle,
 		Timezone:    timezone,
 		Language:    language,
-		Maintainers: []uuid.UUID{},
+		Maintainers: types.UUIDArray{},
 		IsBuiltIn:   false,
 	}
 
@@ -196,7 +196,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID string, id uint64
 		business.Language = *req.Language
 	}
 	if req.Maintainers != nil {
-		business.Maintainers = *req.Maintainers
+		business.Maintainers = types.UUIDArray(*req.Maintainers)
 	}
 
 	err = s.businessRepo.UpdateBusiness(ctx, business)
@@ -326,7 +326,7 @@ func (s *service) CreateBusinessSet(ctx context.Context, req *types.CreateBusine
 		Identifier:  identifier,
 		Description: req.Description,
 		Scope:       &scope,
-		Maintainers: []uuid.UUID{},
+		Maintainers: types.UUIDArray{},
 	}
 
 	// Ensure the business exists
@@ -389,7 +389,7 @@ func (s *service) UpdateBusinessSet(ctx context.Context, tenantID, id string, re
 		businessSet.Scope = req.Scope
 	}
 	if req.Maintainers != nil {
-		businessSet.Maintainers = *req.Maintainers
+		businessSet.Maintainers = types.UUIDArray(*req.Maintainers)
 	}
 
 	err = s.businessSetRepo.UpdateBusinessSet(ctx, businessSet)

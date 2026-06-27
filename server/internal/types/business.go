@@ -14,21 +14,21 @@ const (
 
 // Business 业务实体 - Aligned with the database schema
 type Business struct {
-	ID          uint64      `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
-	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time  `json:"-" db:"deleted_at"` // Use pointer for nullable fields
-	CreatedBy   *uuid.UUID  `json:"created_by" db:"created_by"`
-	UpdatedBy   *uuid.UUID  `json:"updated_by" db:"updated_by"`
-	TenantID    uuid.UUID   `json:"tenant_id" db:"tenant_id"`
-	Name        string      `json:"name" db:"name"`
-	Identifier  string      `json:"identifier" db:"identifier"`
-	Description *string     `json:"description" db:"description"`
-	Lifecycle   string      `json:"lifecycle" db:"lifecycle"`
-	Timezone    string      `json:"timezone" db:"timezone"`
-	Language    string      `json:"language" db:"language"`
-	Maintainers []uuid.UUID `json:"maintainers" db:"maintainers" gorm:"type:uuid[]"`
-	IsBuiltIn   bool        `json:"is_built_in" db:"is_built_in"`
+	ID          uint64     `json:"id" db:"id" gorm:"primaryKey;autoIncrement"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt   *time.Time `json:"-" db:"deleted_at"` // Use pointer for nullable fields
+	CreatedBy   *uuid.UUID `json:"created_by" db:"created_by"`
+	UpdatedBy   *uuid.UUID `json:"updated_by" db:"updated_by"`
+	TenantID    uuid.UUID  `json:"tenant_id" db:"tenant_id"`
+	Name        string     `json:"name" db:"name"`
+	Identifier  string     `json:"identifier" db:"identifier"`
+	Description *string    `json:"description" db:"description"`
+	Lifecycle   string     `json:"lifecycle" db:"lifecycle"`
+	Timezone    string     `json:"timezone" db:"timezone"`
+	Language    string     `json:"language" db:"language"`
+	Maintainers UUIDArray  `json:"maintainers" db:"maintainers" gorm:"type:uuid[]"`
+	IsBuiltIn   bool       `json:"is_built_in" db:"is_built_in"`
 
 	// Personnel roles (transient, populated from business_personnel table)
 	Sres       []string `json:"sres,omitempty" gorm:"-"`
@@ -68,7 +68,7 @@ type UpdateBusinessRequest struct {
 type BusinessPersonnel struct {
 	ID         uuid.UUID `db:"id" json:"id" gorm:"primaryKey;type:uuid"`
 	CreatedAt  time.Time `db:"created_at" json:"created_at"`
-	BusinessID uint64   `db:"business_id" json:"business_id"`
+	BusinessID uint64    `db:"business_id" json:"business_id"`
 	// Optional user reference (if you have users table); keep identity fallback for PoC
 	UserID   *uuid.UUID `db:"user_id" json:"user_id,omitempty"`
 	Identity string     `db:"identity" json:"identity"` // email/username
@@ -77,26 +77,26 @@ type BusinessPersonnel struct {
 
 // BusinessSet 业务集实体 - Aligned with the database schema
 type BusinessSet struct {
-	ID          uuid.UUID   `json:"id" db:"id"`
-	CreatedAt   time.Time   `json:"created_at" db:"created_at"`
-	UpdatedAt   time.Time   `json:"updated_at" db:"updated_at"`
-	DeletedAt   *time.Time  `json:"-" db:"deleted_at"`
-	CreatedBy   *uuid.UUID  `json:"created_by" db:"created_by"`
-	UpdatedBy   *uuid.UUID  `json:"updated_by" db:"updated_by"`
-	TenantID    uuid.UUID   `json:"tenant_id" db:"tenant_id"`
-	Name        string      `json:"name" db:"name"`
-	Identifier  string      `json:"identifier" db:"identifier"`
-	Description *string     `json:"description" db:"description"`
-	Scope       *string     `json:"scope" db:"scope"` // JSONB in DB, handle as string for now
-	Maintainers []uuid.UUID `json:"maintainers" db:"maintainers" gorm:"type:uuid[]"`
+	ID          uuid.UUID  `json:"id" db:"id"`
+	CreatedAt   time.Time  `json:"created_at" db:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at" db:"updated_at"`
+	DeletedAt   *time.Time `json:"-" db:"deleted_at"`
+	CreatedBy   *uuid.UUID `json:"created_by" db:"created_by"`
+	UpdatedBy   *uuid.UUID `json:"updated_by" db:"updated_by"`
+	TenantID    uuid.UUID  `json:"tenant_id" db:"tenant_id"`
+	Name        string     `json:"name" db:"name"`
+	Identifier  string     `json:"identifier" db:"identifier"`
+	Description *string    `json:"description" db:"description"`
+	Scope       *string    `json:"scope" db:"scope"` // JSONB in DB, handle as string for now
+	Maintainers UUIDArray  `json:"maintainers" db:"maintainers" gorm:"type:uuid[]"`
 }
 
 // CreateBusinessSetRequest - Aligned with the database schema
 type CreateBusinessSetRequest struct {
-	Name        string    `json:"name" validate:"required"`
-	Description *string   `json:"description"`
-	Identifier  string    `json:"identifier"`
-	BusinessID  uint64   `json:"business_id" validate:"required"` // To associate with a business
+	Name        string  `json:"name" validate:"required"`
+	Description *string `json:"description"`
+	Identifier  string  `json:"identifier"`
+	BusinessID  uint64  `json:"business_id" validate:"required"` // To associate with a business
 }
 
 // BusinessSetMember is the link between a business and a business set
@@ -104,7 +104,7 @@ type BusinessSetMember struct {
 	ID            uuid.UUID `db:"id"`
 	CreatedAt     time.Time `db:"created_at"`
 	BusinessSetID uuid.UUID `db:"business_set_id"`
-	BusinessID    uint64     `db:"business_id"`
+	BusinessID    uint64    `db:"business_id"`
 }
 
 // UpdateBusinessSetRequest - For updating business set information

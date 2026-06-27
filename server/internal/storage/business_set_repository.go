@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"github.com/wend/cmdb-backend/internal/types"
 	"github.com/wend/cmdb-backend/pkg/apperrors"
 
-	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -34,7 +34,6 @@ func NewBusinessSetRepository(db *gorm.DB) BusinessSetRepository {
 }
 
 func (r *businessSetRepository) CreateBusinessSet(ctx context.Context, businessSet *types.BusinessSet) error {
-	// Postgres only: use pq.Array
 	err := r.db.WithContext(ctx).Table("business_sets").Create(map[string]interface{}{
 		"id":          businessSet.ID,
 		"created_at":  businessSet.CreatedAt,
@@ -44,7 +43,7 @@ func (r *businessSetRepository) CreateBusinessSet(ctx context.Context, businessS
 		"identifier":  businessSet.Identifier,
 		"description": businessSet.Description,
 		"scope":       businessSet.Scope,
-		"maintainers": pq.Array(businessSet.Maintainers),
+		"maintainers": businessSet.Maintainers,
 	}).Error
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
@@ -75,7 +74,7 @@ func (r *businessSetRepository) CreateBusinessSetWithMember(ctx context.Context,
 			"identifier":  businessSet.Identifier,
 			"description": businessSet.Description,
 			"scope":       businessSet.Scope,
-			"maintainers": pq.Array(businessSet.Maintainers),
+			"maintainers": businessSet.Maintainers,
 		}).Error; err != nil {
 			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 				return apperrors.AlreadyExistsError("business set", businessSet.Identifier)
@@ -142,7 +141,7 @@ func (r *businessSetRepository) UpdateBusinessSet(ctx context.Context, businessS
 			"name":        businessSet.Name,
 			"description": businessSet.Description,
 			"scope":       businessSet.Scope,
-			"maintainers": pq.Array(businessSet.Maintainers),
+			"maintainers": businessSet.Maintainers,
 		})
 
 	if result.Error != nil {
