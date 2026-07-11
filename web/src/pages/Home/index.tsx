@@ -16,6 +16,7 @@ import dayjs from 'dayjs';
 import { listModels, getBusinessList } from '@/api';
 import { ModelDefinition } from '@/api/types/model';
 import { useAuthStore } from '@/store/AuthStore';
+import PageLoading from '@/components/common/PageLoading';
 import './style.css';
 
 interface DashStats {
@@ -135,7 +136,7 @@ const Home: React.FC = () => {
   };
 
   if (loading) {
-    return null;
+    return <PageLoading />;
   }
 
   return (

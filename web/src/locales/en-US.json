@@ -123,7 +123,7 @@
     "noMatch": "No matching personnel",
     "noData": "No data",
     "notSet": "Not set",
-    "loading": "",
+    "loading": "Loading...",
     "message": {
       "createSuccess": "Created successfully",
       "createFailed": "Failed to create",

@@ -1,6 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Navigate } from 'react-router-dom';
 import ErrorBoundary from '../components/common/ErrorBoundary';
+import PageLoading from '../components/common/PageLoading';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import {
   NavigationItem,
@@ -75,7 +76,7 @@ const withSuspense = (Component: React.LazyExoticComponent<any>) => {
       : Math.random().toString(36).substring(7);
   return (
     <ErrorBoundary key={errorBoundaryKey}>
-      <Suspense fallback={null}>
+      <Suspense fallback={<PageLoading />}>
         <Component />
       </Suspense>
     </ErrorBoundary>

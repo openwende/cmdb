@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/AuthStore';
 import { LOGIN_PATH } from '@/constants/auth';
+import PageLoading from '@/components/common/PageLoading';
 
 interface ProtectedRouteProps {
   requiredRoles?: string[];
@@ -17,7 +18,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ requiredRoles, children
   }, [initialize]);
 
   if (loading || !initialized) {
-    return null;
+    return <PageLoading fullScreen />;
   }
 
   if (!token || !user) {
