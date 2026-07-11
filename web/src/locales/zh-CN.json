@@ -188,6 +188,9 @@
       "subtitle": "统一管理基础设施与应用资源的配置信息，实现全链路可视化与变更可追溯。",
       "defaultAccount": "默认账号：admin / admin123456，editor / editor123456，viewer / viewer123456",
       "submit": "登录",
+      "or": "或",
+      "demoLogin": "一键体验（admin）",
+      "demoLoginTip": "使用管理员账号快速进入，适合演示与试用，无需手动输入密码。",
       "fields": {
         "username": "用户名",
         "password": "密码"

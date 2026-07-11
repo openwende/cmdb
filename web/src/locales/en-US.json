@@ -188,6 +188,9 @@
       "subtitle": "Unified configuration management for infrastructure and application resources — with full traceability and visibility across your stack.",
       "defaultAccount": "Default accounts: admin / admin123456, editor / editor123456, viewer / viewer123456",
       "submit": "Sign in",
+      "or": "or",
+      "demoLogin": "Try as admin",
+      "demoLoginTip": "Sign in with the admin demo account for a quick walkthrough — no password entry needed.",
       "fields": {
         "username": "Username",
         "password": "Password"

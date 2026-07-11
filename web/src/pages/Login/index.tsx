@@ -1,7 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Form, Input, Typography } from 'antd';
+import { Alert, Button, Card, Divider, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  DEMO_ADMIN_PASSWORD,
+  DEMO_ADMIN_USERNAME,
+  isDemoLoginEnabled,
+} from '@/constants/auth';
 import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 
@@ -9,12 +14,19 @@ type LoginLocationState = {
   from?: string;
 };
 
+type LoginFormValues = {
+  username: string;
+  password: string;
+};
+
 const LoginPage: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const [form] = Form.useForm<LoginFormValues>();
   const { login, initialize, initialized, loading, token, user } = useAuthStore();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const demoLoginEnabled = useMemo(() => isDemoLoginEnabled(), []);
 
   const redirectTarget = useMemo(() => {
     const state = location.state as LoginLocationState | null;
@@ -33,10 +45,10 @@ const LoginPage: React.FC = () => {
     }
   }, [initialized, navigate, redirectTarget, token, user]);
 
-  const handleFinish = async (values: { username: string; password: string }) => {
+  const authenticate = async (username: string, password: string) => {
     setErrorMessage(null);
     try {
-      await login(values.username, values.password);
+      await login(username, password);
       navigate(redirectTarget, { replace: true });
     } catch (error: any) {
       // Always use i18n for auth errors; backend error strings are not localized
@@ -47,6 +59,18 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleFinish = async (values: LoginFormValues) => {
+    await authenticate(values.username, values.password);
+  };
+
+  const handleDemoLogin = async () => {
+    form.setFieldsValue({
+      username: DEMO_ADMIN_USERNAME,
+      password: DEMO_ADMIN_PASSWORD,
+    });
+    await authenticate(DEMO_ADMIN_USERNAME, DEMO_ADMIN_PASSWORD);
+  };
+
   return (
     <div className="login-page">
       <div className="login-page__shell">
@@ -54,10 +78,28 @@ const LoginPage: React.FC = () => {
           <span className="login-page__eyebrow">{t('common.layout.platformName')}</span>
           <Typography.Title level={1}>{t('auth.login.title')}</Typography.Title>
           <Typography.Paragraph>{t('auth.login.subtitle')}</Typography.Paragraph>
+          {demoLoginEnabled ? (
+            <Typography.Paragraph className="login-page__hint">
+              {t('auth.login.defaultAccount')}
+            </Typography.Paragraph>
+          ) : null}
         </div>
 
         <Card className="login-page__card" variant="borderless">
-          <Form layout="vertical" onFinish={handleFinish} autoComplete="off">
+          <Form
+            form={form}
+            layout="vertical"
+            onFinish={handleFinish}
+            autoComplete="off"
+            initialValues={
+              demoLoginEnabled
+                ? {
+                    username: DEMO_ADMIN_USERNAME,
+                    password: DEMO_ADMIN_PASSWORD,
+                  }
+                : undefined
+            }
+          >
             <Form.Item
               label={t('auth.login.fields.username')}
               name="username"
@@ -81,6 +123,20 @@ const LoginPage: React.FC = () => {
             <Button type="primary" htmlType="submit" block loading={loading}>
               {t('auth.login.submit')}
             </Button>
+
+            {demoLoginEnabled ? (
+              <>
+                <Divider plain className="login-page__divider">
+                  {t('auth.login.or')}
+                </Divider>
+                <Button block loading={loading} onClick={() => void handleDemoLogin()}>
+                  {t('auth.login.demoLogin')}
+                </Button>
+                <Typography.Paragraph type="secondary" className="login-page__demo-tip">
+                  {t('auth.login.demoLoginTip')}
+                </Typography.Paragraph>
+              </>
+            ) : null}
           </Form>
         </Card>
       </div>

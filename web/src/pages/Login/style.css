@@ -70,6 +70,19 @@
   margin-bottom: 16px;
 }
 
+.login-page__divider {
+  margin: 20px 0 16px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.login-page__demo-tip {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 @media (max-width: 900px) {
   .login-page__shell {
     grid-template-columns: 1fr;

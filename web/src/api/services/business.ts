@@ -286,6 +286,45 @@ export const listHostProcessesWithStatus = async (
   return axios.get(`/v1/hosts/${encodeURIComponent(hostId)}/processes`);
 };
 
+export interface TopologySetItem {
+  id: number;
+  business_id: number;
+  name: string;
+  description?: string;
+  env_type?: string;
+  sort_order?: number;
+  is_default?: boolean;
+}
+
+export interface TopologyModuleItem {
+  id: number;
+  set_id: number;
+  business_id: number;
+  name: string;
+  description?: string;
+  service_type?: string;
+  sort_order?: number;
+  is_default?: boolean;
+}
+
+/** List sets under a business: GET /v1/topology/sets?business_id= */
+export const listTopologySets = async (
+  businessId: number | string,
+): Promise<{ code: number; data: TopologySetItem[]; message?: string }> => {
+  return axios.get('/v1/topology/sets', {
+    params: { business_id: businessId },
+  });
+};
+
+/** List modules under a business (or set): GET /v1/topology/modules?business_id= */
+export const listTopologyModules = async (
+  businessId: number | string,
+): Promise<{ code: number; data: TopologyModuleItem[]; message?: string }> => {
+  return axios.get('/v1/topology/modules', {
+    params: { business_id: businessId },
+  });
+};
+
 export const createTopologySet = async (payload: CreateTopologySetPayload) => {
   return axios.post('/v1/topology/sets', payload);
 };

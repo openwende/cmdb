@@ -45,13 +45,13 @@ const FormComponent: React.FC<ComponentProps> = ({
   const { t } = useTranslation();
   const { propertyType, options, isSetName, isModuleName } = usePropertyInfo(property);
 
-  // Component type determination
+  // Component type determination: set/module name use remote ObjName select (except free-text ops)
   const componentType = useMemo(() => {
     if ((isSetName || isModuleName) && !UNSUPPORTED_OPERATORS.includes(operator)) {
       return PROPERTY_TYPES.OBJNAME;
     }
     return propertyType;
-  }, [operator]);
+  }, [isSetName, isModuleName, operator, propertyType]);
 
   const additionalProps = useMemo(() => {
     const props: { [key: string]: any } = {};
@@ -64,7 +64,7 @@ const FormComponent: React.FC<ComponentProps> = ({
       props.bizId = bizId;
     }
     return props;
-  }, [propertyType, operator, bizId]);
+  }, [propertyType, options, isSetName, isModuleName, bizId]);
 
   const placeholder = useMemo(() => {
     if (SELECT_TYPES.includes(propertyType as PROPERTY_TYPES)) {
