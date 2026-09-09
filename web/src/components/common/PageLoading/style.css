@@ -1,13 +1,20 @@
 .page-loading {
+  position: relative;
+  width: 100%;
+  min-height: 60vh;
+  padding: 48px 24px;
+  box-sizing: border-box;
+}
+
+.page-loading__inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  width: 100%;
-  min-height: 240px;
-  padding: 48px 24px;
-  box-sizing: border-box;
 }
 
 .page-loading--fullscreen {
@@ -17,6 +24,10 @@
   min-height: 100vh;
   padding: 0;
   background: var(--color-bg-layout, #f1f5f9);
+}
+
+.page-loading--fullscreen .page-loading__inner {
+  top: 50%;
 }
 
 .page-loading__tip {

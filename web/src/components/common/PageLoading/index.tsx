@@ -25,8 +25,10 @@ const PageLoading: React.FC<PageLoadingProps> = ({ fullScreen = false, tip }) =>
       aria-live="polite"
       aria-busy="true"
     >
-      <Spin size="large" />
-      {loadingTip ? <div className="page-loading__tip">{loadingTip}</div> : null}
+      <div className="page-loading__inner">
+        <Spin size="large" />
+        {loadingTip ? <div className="page-loading__tip">{loadingTip}</div> : null}
+      </div>
     </div>
   );
 };

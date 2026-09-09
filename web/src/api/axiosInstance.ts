@@ -2,8 +2,12 @@ import axios from 'axios';
 import { AUTH_TOKEN_KEY, LOGIN_PATH } from '@/constants/auth';
 
 // --- Environment Variable for Base URL ---
+// Local dev talks to backend on :8080. Production (demo/prod behind nginx)
+// must use same-origin `/api` so the browser does not call the user's localhost.
 const LOCAL_API_URL = 'http://localhost:8080/api';
-const API_BASE_URL = import.meta.env.VITE_API_URL || LOCAL_API_URL;
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? LOCAL_API_URL : '/api');
 
 // --- Create Axios Instance ---
 const axiosInstance = axios.create({
