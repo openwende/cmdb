@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Home from '@/pages/Home';
@@ -84,11 +84,10 @@ describe('home dashboard copy', () => {
   it('replaces placeholder stats with a lightweight workspace summary', async () => {
     render(<Home />);
 
-    await waitFor(() => {
-      expect(listModels).toHaveBeenCalled();
-    });
-
-    expect(screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。')).toBeInTheDocument();
+    expect(
+      await screen.findByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
+    ).toBeInTheDocument();
+    expect(listModels).toHaveBeenCalled();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
     expect(screen.queryAllByText('待接入')).toHaveLength(0);
   });
@@ -96,11 +95,7 @@ describe('home dashboard copy', () => {
   it('focuses the home page on one primary entry and two secondary entries', async () => {
     render(<Home />);
 
-    await waitFor(() => {
-      expect(listModels).toHaveBeenCalled();
-    });
-
-    expect(screen.getByText('创建/选择业务')).toBeInTheDocument();
+    expect(await screen.findByText('创建/选择业务')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '进入资源目录' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: '进入模型管理' })).toBeInTheDocument();
     expect(screen.queryByText('dashboard.quickActions.title')).not.toBeInTheDocument();
@@ -109,11 +104,9 @@ describe('home dashboard copy', () => {
   it('demotes not-yet-connected stats into a lightweight workspace status summary', async () => {
     render(<Home />);
 
-    await waitFor(() => {
-      expect(listModels).toHaveBeenCalled();
-    });
-
-    expect(screen.getByText('主机、业务、实例统计将随着资源图接入逐步开放。')).toBeInTheDocument();
+    expect(
+      await screen.findByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
+    ).toBeInTheDocument();
     expect(screen.queryAllByText('待接入')).toHaveLength(0);
   });
 });
