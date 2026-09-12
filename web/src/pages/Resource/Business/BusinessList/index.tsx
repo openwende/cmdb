@@ -300,9 +300,6 @@ const BusinessList: React.FC = () => {
         }}
       />
 
-      {/* 不要把分页条挂在 loading 上：切换每页条数会重新请求，
-          一旦跟着 loading 卸载再挂载，整条分页就会闪一下。
-          列表在请求期间保留着上一次的数据，所以这里只按有没有数据判断。 */}
       {businessList.length > 0 && (
         <Pagination
           total={businessCount}
