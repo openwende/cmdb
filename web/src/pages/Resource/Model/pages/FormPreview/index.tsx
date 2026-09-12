@@ -23,7 +23,11 @@ const FormPreviewPage: React.FC = () => {
 
           if (attribute.field_type === 'bool') {
             return (
-              <Form.Item key={attribute.id} label={attribute.display_name} extra={options.help_text}>
+              <Form.Item
+                key={attribute.id}
+                label={attribute.display_name}
+                extra={options.help_text}
+              >
                 <Switch disabled />
               </Form.Item>
             );
@@ -31,7 +35,11 @@ const FormPreviewPage: React.FC = () => {
 
           if (attribute.field_type === 'int') {
             return (
-              <Form.Item key={attribute.id} label={attribute.display_name} extra={options.help_text}>
+              <Form.Item
+                key={attribute.id}
+                label={attribute.display_name}
+                extra={options.help_text}
+              >
                 <InputNumber style={{ width: '100%' }} placeholder={options.placeholder} disabled />
               </Form.Item>
             );
@@ -39,7 +47,11 @@ const FormPreviewPage: React.FC = () => {
 
           if (attribute.field_type === 'enum') {
             return (
-              <Form.Item key={attribute.id} label={attribute.display_name} extra={options.help_text}>
+              <Form.Item
+                key={attribute.id}
+                label={attribute.display_name}
+                extra={options.help_text}
+              >
                 <Select
                   disabled
                   placeholder={options.placeholder}

@@ -29,7 +29,9 @@ const GenericNodeInfo: React.FC<Props> = ({ selectedNode }) => {
       items={[
         {
           key: '1',
-          label: <span className="basic-info">{t('business.topology.businessNodeInfo.basicInfo')}</span>,
+          label: (
+            <span className="basic-info">{t('business.topology.businessNodeInfo.basicInfo')}</span>
+          ),
           children: (
             <div className="info-grid">
               <InfoItem label="ID" value={selectedNode.nodeId || selectedNode.key} />

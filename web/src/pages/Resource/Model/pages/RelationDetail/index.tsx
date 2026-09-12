@@ -325,11 +325,7 @@ const RelationDetailPage: React.FC = () => {
             name="target_model_uid"
             rules={[{ required: true, message: t('common.form.rulesMessage') }]}
           >
-            <Select
-              showSearch
-              optionFilterProp="label"
-              options={targetModelOptions}
-            />
+            <Select showSearch optionFilterProp="label" options={targetModelOptions} />
           </Form.Item>
 
           <Form.Item
@@ -380,10 +376,7 @@ const RelationDetailPage: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            label={t('resource.model.relations.fields.description')}
-            name="description"
-          >
+          <Form.Item label={t('resource.model.relations.fields.description')} name="description">
             <Input.TextArea rows={4} />
           </Form.Item>
         </Form>

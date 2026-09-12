@@ -73,16 +73,17 @@ export const getUserManagementErrorMessage = (
   fallback: string,
   t: TFunction,
 ): string => {
-  const backendMessage = (error as ApiErrorLike)?.response?.data?.message
-    || (error as ApiErrorLike)?.response?.data?.error;
+  const backendMessage =
+    (error as ApiErrorLike)?.response?.data?.message ||
+    (error as ApiErrorLike)?.response?.data?.error;
 
   if (!backendMessage) {
     return fallback;
   }
 
   if (
-    backendMessage.includes('Password')
-    && (backendMessage.includes("'min'") || backendMessage.includes("'max'"))
+    backendMessage.includes('Password') &&
+    (backendMessage.includes("'min'") || backendMessage.includes("'max'"))
   ) {
     return getUserPasswordValidationMessage('length', t);
   }

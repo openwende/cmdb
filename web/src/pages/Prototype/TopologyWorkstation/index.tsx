@@ -98,7 +98,13 @@ const mockBusinesses: Business[] = [
       ],
     },
     hosts: {
-      'biz-1-root': generateHosts('hsr', 24, ['匹配服务', '接入网关', '游戏服', '数据库代理', '缓存集群']),
+      'biz-1-root': generateHosts('hsr', 24, [
+        '匹配服务',
+        '接入网关',
+        '游戏服',
+        '数据库代理',
+        '缓存集群',
+      ]),
       'set-online': generateHosts('hsr-ol', 18, ['匹配服务', '接入网关', '游戏服']),
       'set-data': generateHosts('hsr-data', 6, ['数据库代理', '缓存集群']),
       'mod-match': generateHosts('hsr-match', 6, ['匹配服务']),
@@ -113,23 +119,86 @@ const mockBusinesses: Business[] = [
     },
     services: {
       'mod-match': [
-        { id: 'svc-1', name: 'match-engine', port: 8080, processCount: 6, status: 'healthy', module: '匹配服务' },
-        { id: 'svc-2', name: 'match-queue', port: 8081, processCount: 3, status: 'healthy', module: '匹配服务' },
+        {
+          id: 'svc-1',
+          name: 'match-engine',
+          port: 8080,
+          processCount: 6,
+          status: 'healthy',
+          module: '匹配服务',
+        },
+        {
+          id: 'svc-2',
+          name: 'match-queue',
+          port: 8081,
+          processCount: 3,
+          status: 'healthy',
+          module: '匹配服务',
+        },
       ],
       'mod-gateway': [
-        { id: 'svc-3', name: 'api-gateway', port: 443, processCount: 8, status: 'healthy', module: '接入网关' },
-        { id: 'svc-4', name: 'rate-limiter', port: 6379, processCount: 2, status: 'warning', module: '接入网关' },
+        {
+          id: 'svc-3',
+          name: 'api-gateway',
+          port: 443,
+          processCount: 8,
+          status: 'healthy',
+          module: '接入网关',
+        },
+        {
+          id: 'svc-4',
+          name: 'rate-limiter',
+          port: 6379,
+          processCount: 2,
+          status: 'warning',
+          module: '接入网关',
+        },
       ],
       'mod-gamesvr': [
-        { id: 'svc-5', name: 'game-server', port: 9001, processCount: 16, status: 'healthy', module: '游戏服' },
-        { id: 'svc-6', name: 'scene-manager', port: 9002, processCount: 4, status: 'healthy', module: '游戏服' },
+        {
+          id: 'svc-5',
+          name: 'game-server',
+          port: 9001,
+          processCount: 16,
+          status: 'healthy',
+          module: '游戏服',
+        },
+        {
+          id: 'svc-6',
+          name: 'scene-manager',
+          port: 9002,
+          processCount: 4,
+          status: 'healthy',
+          module: '游戏服',
+        },
       ],
       'mod-dbproxy': [
-        { id: 'svc-7', name: 'db-proxy', port: 3306, processCount: 3, status: 'healthy', module: '数据库代理' },
+        {
+          id: 'svc-7',
+          name: 'db-proxy',
+          port: 3306,
+          processCount: 3,
+          status: 'healthy',
+          module: '数据库代理',
+        },
       ],
       'mod-cache': [
-        { id: 'svc-8', name: 'redis-cluster', port: 6380, processCount: 6, status: 'healthy', module: '缓存集群' },
-        { id: 'svc-9', name: 'cache-proxy', port: 6381, processCount: 2, status: 'warning', module: '缓存集群' },
+        {
+          id: 'svc-8',
+          name: 'redis-cluster',
+          port: 6380,
+          processCount: 6,
+          status: 'healthy',
+          module: '缓存集群',
+        },
+        {
+          id: 'svc-9',
+          name: 'cache-proxy',
+          port: 6381,
+          processCount: 2,
+          status: 'warning',
+          module: '缓存集群',
+        },
       ],
     },
   },
@@ -181,7 +250,13 @@ const mockBusinesses: Business[] = [
       ],
     },
     hosts: {
-      'biz-2-root': generateHosts('gs', 15, ['发布集群', '制品同步', '灰度验证', '监控中心', '日志采集']),
+      'biz-2-root': generateHosts('gs', 15, [
+        '发布集群',
+        '制品同步',
+        '灰度验证',
+        '监控中心',
+        '日志采集',
+      ]),
       'set-global': generateHosts('gs-global', 10, ['发布集群', '制品同步', '灰度验证']),
       'set-infra': generateHosts('gs-infra', 5, ['监控中心', '日志采集']),
       'mod-release': generateHosts('gs-rel', 4, ['发布集群']),
@@ -213,9 +288,7 @@ const mockBusinesses: Business[] = [
           name: '空闲机池',
           type: 'idle',
           hostCount: 0,
-          children: [
-            { id: 'idle-free-3', name: '空闲机', type: 'module', hostCount: 0 },
-          ],
+          children: [{ id: 'idle-free-3', name: '空闲机', type: 'module', hostCount: 0 }],
         },
         {
           id: 'set-zzz-core',
@@ -242,7 +315,15 @@ const mockBusinesses: Business[] = [
 ];
 
 function generateHosts(prefix: string, count: number, modules: string[]): HostItem[] {
-  const statuses: HostItem['status'][] = ['running', 'running', 'running', 'running', 'stopped', 'warmup', 'unreachable'];
+  const statuses: HostItem['status'][] = [
+    'running',
+    'running',
+    'running',
+    'running',
+    'stopped',
+    'warmup',
+    'unreachable',
+  ];
   const oses = ['CentOS 7.9', 'Ubuntu 22.04', 'Rocky Linux 8'];
   const agents = ['正常', '正常', '正常', '异常', '未安装'];
 
@@ -265,10 +346,15 @@ function generateHosts(prefix: string, count: number, modules: string[]): HostIt
    ═══════════════════════════════════════════════ */
 
 const nodeTypeConfig: Record<string, { color: string; bg: string; label: string; icon: string }> = {
-  business: { color: 'oklch(0.39 0.07 245)',  bg: 'oklch(0.955 0.020 245)', label: '业务', icon: '◆' },
-  set:      { color: 'oklch(0.42 0.12 160)',  bg: 'oklch(0.960 0.025 160)', label: '集群', icon: '■' },
-  module:   { color: 'oklch(0.56 0.14 54)',   bg: 'oklch(0.970 0.030 80)',  label: '模块', icon: '●' },
-  idle:     { color: 'oklch(0.62 0.020 245)', bg: 'oklch(0.975 0.008 80)',  label: '系统', icon: '○' },
+  business: {
+    color: 'oklch(0.39 0.07 245)',
+    bg: 'oklch(0.955 0.020 245)',
+    label: '业务',
+    icon: '◆',
+  },
+  set: { color: 'oklch(0.42 0.12 160)', bg: 'oklch(0.960 0.025 160)', label: '集群', icon: '■' },
+  module: { color: 'oklch(0.56 0.14 54)', bg: 'oklch(0.970 0.030 80)', label: '模块', icon: '●' },
+  idle: { color: 'oklch(0.62 0.020 245)', bg: 'oklch(0.975 0.008 80)', label: '系统', icon: '○' },
 };
 
 const NodeTypeBadge: React.FC<{ type: string; size?: 'sm' | 'md' }> = ({ type, size = 'sm' }) => {
@@ -286,16 +372,19 @@ const NodeTypeBadge: React.FC<{ type: string; size?: 'sm' | 'md' }> = ({ type, s
 
 const StatusDot: React.FC<{ status: string }> = ({ status }) => {
   const colorMap: Record<string, string> = {
-    running:     'oklch(0.42 0.12 160)',
-    healthy:     'oklch(0.42 0.12 160)',
-    stopped:     'oklch(0.72 0.020 245)',
+    running: 'oklch(0.42 0.12 160)',
+    healthy: 'oklch(0.42 0.12 160)',
+    stopped: 'oklch(0.72 0.020 245)',
     unreachable: 'oklch(0.52 0.18 22)',
-    warmup:      'oklch(0.65 0.14 54)',
-    warning:     'oklch(0.65 0.14 54)',
-    error:       'oklch(0.52 0.18 22)',
+    warmup: 'oklch(0.65 0.14 54)',
+    warning: 'oklch(0.65 0.14 54)',
+    error: 'oklch(0.52 0.18 22)',
   };
   return (
-    <span className="tw-status-dot" style={{ '--dot-color': colorMap[status] || '#94a3b8' } as React.CSSProperties}>
+    <span
+      className="tw-status-dot"
+      style={{ '--dot-color': colorMap[status] || '#94a3b8' } as React.CSSProperties}
+    >
       <span className="tw-status-dot__circle" />
       {status}
     </span>
@@ -330,10 +419,15 @@ const TreeNode: React.FC<{
         type="button"
         aria-selected={isSelected}
       >
-        {isSelected && <span className="tw-tree-node__indicator" style={{ background: cfg.color }} />}
+        {isSelected && (
+          <span className="tw-tree-node__indicator" style={{ background: cfg.color }} />
+        )}
         <span
           className="tw-tree-node__chevron"
-          onClick={(e) => { e.stopPropagation(); if (hasChildren) onToggle(node.id); }}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (hasChildren) onToggle(node.id);
+          }}
           style={{ opacity: hasChildren ? 1 : 0, cursor: hasChildren ? 'pointer' : 'default' }}
           role="button"
           aria-label={isExpanded ? '折叠' : '展开'}
@@ -524,9 +618,7 @@ const TopologyWorkstationPrototype: React.FC = () => {
     const filterNode = (node: TopoNode): TopoNode | null => {
       if (node.name.toLowerCase().includes(kw)) return node;
       if (node.children) {
-        const filtered = node.children
-          .map(filterNode)
-          .filter(Boolean) as TopoNode[];
+        const filtered = node.children.map(filterNode).filter(Boolean) as TopoNode[];
         if (filtered.length > 0) {
           return { ...node, children: filtered };
         }
@@ -570,7 +662,11 @@ const TopologyWorkstationPrototype: React.FC = () => {
                     <div className="tw-biz-header__id">{currentBiz.bizId}</div>
                   </div>
                 </div>
-                <span className={`tw-biz-header__arrow ${bizSwitcherOpen ? 'tw-biz-header__arrow--open' : ''}`}>▾</span>
+                <span
+                  className={`tw-biz-header__arrow ${bizSwitcherOpen ? 'tw-biz-header__arrow--open' : ''}`}
+                >
+                  ▾
+                </span>
               </button>
               <div className="tw-biz-header__stats">
                 <span>{currentBiz.setCount} 集群</span>
@@ -583,8 +679,17 @@ const TopologyWorkstationPrototype: React.FC = () => {
               {bizSwitcherOpen && (
                 <div className="tw-biz-switcher">
                   <div className="tw-biz-switcher__search">
-                    <svg className="tw-biz-switcher__search-icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <circle cx="7" cy="7" r="5" /><path d="M11 11l3.5 3.5" />
+                    <svg
+                      className="tw-biz-switcher__search-icon"
+                      viewBox="0 0 16 16"
+                      width="14"
+                      height="14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <circle cx="7" cy="7" r="5" />
+                      <path d="M11 11l3.5 3.5" />
                     </svg>
                     <input
                       type="text"
@@ -597,22 +702,22 @@ const TopologyWorkstationPrototype: React.FC = () => {
                   {filteredBusinesses.some((b) => b.recentlyUsed) && (
                     <div className="tw-biz-switcher__group">
                       <span className="tw-biz-switcher__group-label">最近使用</span>
-                      {filteredBusinesses.filter((b) => b.recentlyUsed).map((b) => (
-                        <button
-                          key={b.id}
-                          className={`tw-biz-switcher__item ${b.id === currentBiz.id ? 'tw-biz-switcher__item--active' : ''}`}
-                          onClick={() => handleBizSwitch(b.id)}
-                          type="button"
-                        >
-                          <div className="tw-biz-switcher__item-info">
-                            <span className="tw-biz-switcher__item-name">{b.name}</span>
-                            <span className="tw-biz-switcher__item-id">{b.bizId}</span>
-                          </div>
-                          <span className="tw-biz-switcher__item-meta">
-                            {b.hostCount} 主机
-                          </span>
-                        </button>
-                      ))}
+                      {filteredBusinesses
+                        .filter((b) => b.recentlyUsed)
+                        .map((b) => (
+                          <button
+                            key={b.id}
+                            className={`tw-biz-switcher__item ${b.id === currentBiz.id ? 'tw-biz-switcher__item--active' : ''}`}
+                            onClick={() => handleBizSwitch(b.id)}
+                            type="button"
+                          >
+                            <div className="tw-biz-switcher__item-info">
+                              <span className="tw-biz-switcher__item-name">{b.name}</span>
+                              <span className="tw-biz-switcher__item-id">{b.bizId}</span>
+                            </div>
+                            <span className="tw-biz-switcher__item-meta">{b.hostCount} 主机</span>
+                          </button>
+                        ))}
                     </div>
                   )}
                   <div className="tw-biz-switcher__group">
@@ -645,8 +750,17 @@ const TopologyWorkstationPrototype: React.FC = () => {
 
             {/* Tree Search */}
             <div className="tw-tree-search">
-              <svg className="tw-tree-search__icon" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="7" cy="7" r="5" /><path d="M11 11l3.5 3.5" />
+              <svg
+                className="tw-tree-search__icon"
+                viewBox="0 0 16 16"
+                width="14"
+                height="14"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <circle cx="7" cy="7" r="5" />
+                <path d="M11 11l3.5 3.5" />
               </svg>
               <input
                 type="text"
@@ -696,7 +810,11 @@ const TopologyWorkstationPrototype: React.FC = () => {
                 {breadcrumb.map((seg, i) => (
                   <React.Fragment key={i}>
                     {i > 0 && <span className="tw-context-strip__sep">›</span>}
-                    <span className={i === breadcrumb.length - 1 ? 'tw-context-strip__crumb--current' : ''}>
+                    <span
+                      className={
+                        i === breadcrumb.length - 1 ? 'tw-context-strip__crumb--current' : ''
+                      }
+                    >
                       {seg}
                     </span>
                   </React.Fragment>
@@ -704,9 +822,7 @@ const TopologyWorkstationPrototype: React.FC = () => {
               </nav>
             </>
           ) : (
-            <div className="tw-context-strip__empty">
-              请在左侧选择拓扑节点
-            </div>
+            <div className="tw-context-strip__empty">请在左侧选择拓扑节点</div>
           )}
         </div>
 
@@ -750,8 +866,16 @@ const TopologyWorkstationPrototype: React.FC = () => {
                 {activeTab === 'hostList' && (
                   <>
                     <div className="tw-tab-toolbar__search">
-                      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <circle cx="7" cy="7" r="5" /><path d="M11 11l3.5 3.5" />
+                      <svg
+                        viewBox="0 0 16 16"
+                        width="14"
+                        height="14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                      >
+                        <circle cx="7" cy="7" r="5" />
+                        <path d="M11 11l3.5 3.5" />
                       </svg>
                       <input
                         type="text"
@@ -824,7 +948,9 @@ const TopologyWorkstationPrototype: React.FC = () => {
                           {filteredHosts.map((host) => (
                             <tr
                               key={host.id}
-                              className={selectedHostIds.includes(host.id) ? 'tw-table__row--selected' : ''}
+                              className={
+                                selectedHostIds.includes(host.id) ? 'tw-table__row--selected' : ''
+                              }
                             >
                               <td className="tw-table__check">
                                 <input
@@ -837,14 +963,20 @@ const TopologyWorkstationPrototype: React.FC = () => {
                               <td className="tw-table__name">{host.name}</td>
                               <td className="tw-table__mono">{host.ip}</td>
                               <td>{host.os}</td>
-                              <td className="tw-table__mono">{host.cpuCount}C / {host.memGB}G</td>
+                              <td className="tw-table__mono">
+                                {host.cpuCount}C / {host.memGB}G
+                              </td>
                               <td>{host.module}</td>
                               <td>
-                                <span className={`tw-agent-badge tw-agent-badge--${host.agent === '正常' ? 'ok' : host.agent === '异常' ? 'err' : 'none'}`}>
+                                <span
+                                  className={`tw-agent-badge tw-agent-badge--${host.agent === '正常' ? 'ok' : host.agent === '异常' ? 'err' : 'none'}`}
+                                >
                                   {host.agent}
                                 </span>
                               </td>
-                              <td><StatusDot status={host.status} /></td>
+                              <td>
+                                <StatusDot status={host.status} />
+                              </td>
                               <td className="tw-table__muted">{host.updatedAt}</td>
                             </tr>
                           ))}
@@ -858,9 +990,13 @@ const TopologyWorkstationPrototype: React.FC = () => {
                           {hostSearchValue && ` · 当前筛选 ${filteredHosts.length} 条`}
                         </span>
                         <div className="tw-pagination__controls">
-                          <button type="button" disabled>‹</button>
+                          <button type="button" disabled>
+                            ‹
+                          </button>
                           <span className="tw-pagination__page tw-pagination__page--active">1</span>
-                          {currentHosts.length > 10 && <span className="tw-pagination__page">2</span>}
+                          {currentHosts.length > 10 && (
+                            <span className="tw-pagination__page">2</span>
+                          )}
                           <button type="button">›</button>
                         </div>
                       </div>
@@ -869,12 +1005,15 @@ const TopologyWorkstationPrototype: React.FC = () => {
                     /* Empty: Module without hosts */
                     <div className="tw-empty-state">
                       <div className="tw-empty-state__icon">🖥️</div>
-                      <h3 className="tw-empty-state__title">当前{selectedNode.type === 'module' ? '模块' : '节点'}暂无主机</h3>
-                      <p className="tw-empty-state__desc">
-                        可以通过"新增主机"或"转移"添加
-                      </p>
+                      <h3 className="tw-empty-state__title">
+                        当前{selectedNode.type === 'module' ? '模块' : '节点'}暂无主机
+                      </h3>
+                      <p className="tw-empty-state__desc">可以通过"新增主机"或"转移"添加</p>
                       {selectedNode.type === 'module' && (
-                        <button className="tw-btn tw-btn--primary tw-empty-state__action" type="button">
+                        <button
+                          className="tw-btn tw-btn--primary tw-empty-state__action"
+                          type="button"
+                        >
                           <span>+</span> 新增主机
                         </button>
                       )}
@@ -884,9 +1023,7 @@ const TopologyWorkstationPrototype: React.FC = () => {
                     <div className="tw-empty-state">
                       <div className="tw-empty-state__icon">🔍</div>
                       <h3 className="tw-empty-state__title">未找到匹配的主机</h3>
-                      <p className="tw-empty-state__desc">
-                        尝试修改搜索关键词，或清除筛选条件
-                      </p>
+                      <p className="tw-empty-state__desc">尝试修改搜索关键词，或清除筛选条件</p>
                       <button
                         className="tw-btn tw-btn--secondary tw-empty-state__action"
                         onClick={() => setHostSearchValue('')}
@@ -920,7 +1057,9 @@ const TopologyWorkstationPrototype: React.FC = () => {
                               <td className="tw-table__mono">{svc.port}</td>
                               <td>{svc.processCount}</td>
                               <td>{svc.module}</td>
-                              <td><StatusDot status={svc.status} /></td>
+                              <td>
+                                <StatusDot status={svc.status} />
+                              </td>
                             </tr>
                           ))}
                         </tbody>
@@ -930,9 +1069,7 @@ const TopologyWorkstationPrototype: React.FC = () => {
                     <div className="tw-empty-state">
                       <div className="tw-empty-state__icon">⚙️</div>
                       <h3 className="tw-empty-state__title">当前节点暂无服务实例</h3>
-                      <p className="tw-empty-state__desc">
-                        选择一个包含服务实例的模块节点
-                      </p>
+                      <p className="tw-empty-state__desc">选择一个包含服务实例的模块节点</p>
                     </div>
                   )}
                 </>
@@ -949,7 +1086,9 @@ const TopologyWorkstationPrototype: React.FC = () => {
                       </div>
                       <div className="tw-node-info__field">
                         <span className="tw-node-info__label">节点类型</span>
-                        <span className="tw-node-info__value"><NodeTypeBadge type={selectedNode.type} /></span>
+                        <span className="tw-node-info__value">
+                          <NodeTypeBadge type={selectedNode.type} />
+                        </span>
                       </div>
                       <div className="tw-node-info__field">
                         <span className="tw-node-info__label">所属业务</span>
@@ -1013,11 +1152,24 @@ const TopologyWorkstationPrototype: React.FC = () => {
               已选择 <strong>{selectedHostIds.length}</strong> 台主机
             </div>
             <div className="tw-fab__actions">
-              <button className="tw-fab__btn tw-fab__btn--outline" type="button">转移到...</button>
-              <button className="tw-fab__btn tw-fab__btn--outline" type="button">追加到</button>
-              <button className="tw-fab__btn tw-fab__btn--outline tw-fab__btn--danger" type="button">移除</button>
-              <button className="tw-fab__btn tw-fab__btn--text" type="button">复制</button>
-              <button className="tw-fab__btn tw-fab__btn--text" type="button">更多 ▾</button>
+              <button className="tw-fab__btn tw-fab__btn--outline" type="button">
+                转移到...
+              </button>
+              <button className="tw-fab__btn tw-fab__btn--outline" type="button">
+                追加到
+              </button>
+              <button
+                className="tw-fab__btn tw-fab__btn--outline tw-fab__btn--danger"
+                type="button"
+              >
+                移除
+              </button>
+              <button className="tw-fab__btn tw-fab__btn--text" type="button">
+                复制
+              </button>
+              <button className="tw-fab__btn tw-fab__btn--text" type="button">
+                更多 ▾
+              </button>
             </div>
             <button
               className="tw-fab__close"

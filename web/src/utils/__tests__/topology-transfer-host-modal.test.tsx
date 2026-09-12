@@ -83,7 +83,9 @@ vi.mock('antd', () => ({
   },
   List: ({ dataSource, renderItem, locale }: any) => (
     <div>
-      {dataSource.length === 0 ? locale?.emptyText : dataSource.map((item: any) => renderItem(item))}
+      {dataSource.length === 0
+        ? locale?.emptyText
+        : dataSource.map((item: any) => renderItem(item))}
     </div>
   ),
   Button: ({ children, onClick, disabled }: any) => (
@@ -124,7 +126,10 @@ vi.mock('@/components/common/EmptySearchResult', () => ({
 vi.mock('@/pages/Business/BusinessTopology/components/TopologyTree', () => ({
   default: ({ treeData }: any) => {
     const flatten = (nodes: any[]): string[] =>
-      nodes.flatMap((node) => [String(node.title), ...(node.children ? flatten(node.children) : [])]);
+      nodes.flatMap((node) => [
+        String(node.title),
+        ...(node.children ? flatten(node.children) : []),
+      ]);
 
     return (
       <div>

@@ -54,6 +54,8 @@ describe('user management password validation', () => {
     await expect(customRule?.validator?.({}, '123456', () => undefined)).rejects.toThrow(
       '密码长度需为 8-128 个字符',
     );
-    await expect(customRule?.validator?.({}, 'newpass123', () => undefined)).resolves.toBeUndefined();
+    await expect(
+      customRule?.validator?.({}, 'newpass123', () => undefined),
+    ).resolves.toBeUndefined();
   });
 });

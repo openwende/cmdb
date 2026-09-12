@@ -35,10 +35,14 @@ const BasicInfoPage: React.FC = () => {
           {detailModel.description || '--'}
         </Descriptions.Item>
         <Descriptions.Item label={t('resource.model.fields.createdAt')}>
-          {detailModel.created_at ? dayjs(detailModel.created_at).format('YYYY-MM-DD HH:mm:ss') : '--'}
+          {detailModel.created_at
+            ? dayjs(detailModel.created_at).format('YYYY-MM-DD HH:mm:ss')
+            : '--'}
         </Descriptions.Item>
         <Descriptions.Item label={t('resource.model.fields.updatedAt')}>
-          {detailModel.updated_at ? dayjs(detailModel.updated_at).format('YYYY-MM-DD HH:mm:ss') : '--'}
+          {detailModel.updated_at
+            ? dayjs(detailModel.updated_at).format('YYYY-MM-DD HH:mm:ss')
+            : '--'}
         </Descriptions.Item>
       </Descriptions>
     </div>

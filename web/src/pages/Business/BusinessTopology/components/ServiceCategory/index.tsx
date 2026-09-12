@@ -2,10 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Cascader } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { getBusinessIdFromUrl } from '@/utils/routes';
-import {
-  listServiceCategories,
-  ServiceCategoryRecord,
-} from '@/api/services/business';
+import { listServiceCategories, ServiceCategoryRecord } from '@/api/services/business';
 
 interface ServiceCategoryProps {
   value?: number[];

@@ -101,7 +101,6 @@ const withBoundary = (Component: React.ComponentType) => (
   </ErrorBoundary>
 );
 
-
 export const routes: NavigationItem[] = [
   {
     name: 'routes.home',

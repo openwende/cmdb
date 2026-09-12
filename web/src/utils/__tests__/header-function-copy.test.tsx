@@ -12,11 +12,11 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'common.layout.help': '帮助',
           'common.layout.login': '登录',
           'common.layout.logout': '退出登录',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));

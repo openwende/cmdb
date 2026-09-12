@@ -198,7 +198,9 @@ describe('instance workspace aggregate list', () => {
 
     expect(await screen.findByText('SmokeSet3')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'resource.model.actions.viewInstanceDetail' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'resource.model.actions.viewInstanceDetail' }),
+    );
 
     await waitFor(() => {
       expect(mockOpenInstance).toHaveBeenCalledWith('set:2');

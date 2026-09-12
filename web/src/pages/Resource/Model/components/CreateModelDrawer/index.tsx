@@ -1,5 +1,16 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Collapse, Drawer, Form, Input, InputNumber, Select, Space, Switch } from 'antd';
+import {
+  Alert,
+  Button,
+  Collapse,
+  Drawer,
+  Form,
+  Input,
+  InputNumber,
+  Select,
+  Space,
+  Switch,
+} from 'antd';
 import { useTranslation } from 'react-i18next';
 import { CreateModelPayload, ModelDefinition, ModelGroup } from '@/api/types/model';
 
@@ -11,7 +22,13 @@ interface Props {
   onSubmit: (payload: CreateModelPayload) => Promise<void>;
 }
 
-const CreateModelDrawer: React.FC<Props> = ({ visible, parentModels, groups, onClose, onSubmit }) => {
+const CreateModelDrawer: React.FC<Props> = ({
+  visible,
+  parentModels,
+  groups,
+  onClose,
+  onSubmit,
+}) => {
   const { t } = useTranslation();
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
@@ -85,53 +102,53 @@ const CreateModelDrawer: React.FC<Props> = ({ visible, parentModels, groups, onC
         <div className="model-page">
           <div className="model-page-note">{t('resource.model.helper.modelBasics')}</div>
 
-        <Form.Item
-          label={t('resource.model.fields.name')}
-          name="name"
-          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
-        >
-          <Input placeholder={t('resource.model.placeholders.name')} />
-        </Form.Item>
+          <Form.Item
+            label={t('resource.model.fields.name')}
+            name="name"
+            rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+          >
+            <Input placeholder={t('resource.model.placeholders.name')} />
+          </Form.Item>
 
-        <Form.Item
-          label={t('resource.model.fields.displayName')}
-          name="display_name"
-          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
-        >
-          <Input placeholder={t('resource.model.placeholders.displayName')} />
-        </Form.Item>
+          <Form.Item
+            label={t('resource.model.fields.displayName')}
+            name="display_name"
+            rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+          >
+            <Input placeholder={t('resource.model.placeholders.displayName')} />
+          </Form.Item>
 
-        <Form.Item
-          label={t('resource.model.fields.classification')}
-          name="classification"
-          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
-        >
-          <Select
-            options={[
-              { value: 'business', label: t('resource.model.options.classification.business') },
-              { value: 'resource', label: t('resource.model.options.classification.resource') },
-            ]}
-          />
-        </Form.Item>
+          <Form.Item
+            label={t('resource.model.fields.classification')}
+            name="classification"
+            rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+          >
+            <Select
+              options={[
+                { value: 'business', label: t('resource.model.options.classification.business') },
+                { value: 'resource', label: t('resource.model.options.classification.resource') },
+              ]}
+            />
+          </Form.Item>
 
-        <Form.Item label={t('resource.model.fields.group')} name="group_id">
-          <Select
-            allowClear
-            placeholder={t('resource.model.placeholders.group')}
-            options={groups.map((group) => ({
-              value: group.id,
-              label: `${group.display_name} (${group.name})`,
-            }))}
-          />
-        </Form.Item>
+          <Form.Item label={t('resource.model.fields.group')} name="group_id">
+            <Select
+              allowClear
+              placeholder={t('resource.model.placeholders.group')}
+              options={groups.map((group) => ({
+                value: group.id,
+                label: `${group.display_name} (${group.name})`,
+              }))}
+            />
+          </Form.Item>
 
-        <Form.Item label={t('resource.model.fields.icon')} name="icon">
-          <Input placeholder={t('resource.model.placeholders.icon')} />
-        </Form.Item>
+          <Form.Item label={t('resource.model.fields.icon')} name="icon">
+            <Input placeholder={t('resource.model.placeholders.icon')} />
+          </Form.Item>
 
-        <Form.Item label={t('resource.model.fields.description')} name="description">
-          <Input.TextArea rows={3} placeholder={t('resource.model.placeholders.description')} />
-        </Form.Item>
+          <Form.Item label={t('resource.model.fields.description')} name="description">
+            <Input.TextArea rows={3} placeholder={t('resource.model.placeholders.description')} />
+          </Form.Item>
 
           <Collapse
             items={[
@@ -164,7 +181,10 @@ const CreateModelDrawer: React.FC<Props> = ({ visible, parentModels, groups, onC
                         >
                           <Select
                             options={[
-                              { value: 'business', label: t('resource.model.options.scope.business') },
+                              {
+                                value: 'business',
+                                label: t('resource.model.options.scope.business'),
+                              },
                               { value: 'global', label: t('resource.model.options.scope.global') },
                             ]}
                           />

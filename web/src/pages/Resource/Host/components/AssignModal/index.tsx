@@ -131,11 +131,7 @@ const AssignModal: React.FC<AssignModalProps> = ({
         </Typography.Text>
 
         {assignType === AssignType.Biz ? (
-          <BusinessSelector
-            value={selected}
-            onChange={setSelected}
-            allowClear={false}
-          />
+          <BusinessSelector value={selected} onChange={setSelected} allowClear={false} />
         ) : (
           <Select
             showSearch
@@ -145,7 +141,9 @@ const AssignModal: React.FC<AssignModalProps> = ({
             placeholder={t('host.assign.modal.placeholder.pool')}
             options={directoryOptions}
             filterOption={(input, option) =>
-              String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              String(option?.label ?? '')
+                .toLowerCase()
+                .includes(input.toLowerCase())
             }
           />
         )}

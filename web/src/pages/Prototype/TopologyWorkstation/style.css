@@ -6,60 +6,60 @@
 /* ─── Design tokens ─── */
 .tw-prototype {
   /* Backgrounds — warm parchment family */
-  --tw-bg:            oklch(0.965 0.010 80);
-  --tw-bg-nav:        oklch(0.985 0.006 80);
-  --tw-surface:       oklch(1.000 0.002 80);
-  --tw-surface-alt:   oklch(0.975 0.008 80);
-  --tw-surface-deep:  oklch(0.960 0.012 80);
+  --tw-bg: oklch(0.965 0.01 80);
+  --tw-bg-nav: oklch(0.985 0.006 80);
+  --tw-surface: oklch(1 0.002 80);
+  --tw-surface-alt: oklch(0.975 0.008 80);
+  --tw-surface-deep: oklch(0.96 0.012 80);
 
   /* Borders — warm-tinted */
-  --tw-border:        oklch(0.880 0.012 80);
-  --tw-border-light:  oklch(0.920 0.008 80);
+  --tw-border: oklch(0.88 0.012 80);
+  --tw-border-light: oklch(0.92 0.008 80);
 
   /* Text — navy-tinted grays */
-  --tw-text-1:  oklch(0.220 0.025 245);
-  --tw-text-2:  oklch(0.400 0.030 245);
-  --tw-text-3:  oklch(0.580 0.025 245);
-  --tw-text-4:  oklch(0.730 0.018 245);
+  --tw-text-1: oklch(0.22 0.025 245);
+  --tw-text-2: oklch(0.4 0.03 245);
+  --tw-text-3: oklch(0.58 0.025 245);
+  --tw-text-4: oklch(0.73 0.018 245);
 
   /* Primary — navy */
-  --tw-navy:          oklch(0.39 0.07 245);
-  --tw-navy-hover:    oklch(0.34 0.08 245);
-  --tw-navy-bg:       oklch(0.955 0.020 245);
-  --tw-navy-bg-deep:  oklch(0.930 0.030 245);
+  --tw-navy: oklch(0.39 0.07 245);
+  --tw-navy-hover: oklch(0.34 0.08 245);
+  --tw-navy-bg: oklch(0.955 0.02 245);
+  --tw-navy-bg-deep: oklch(0.93 0.03 245);
 
   /* Accent — amber (for primary CTAs) */
-  --tw-amber:         oklch(0.69 0.14 54);
-  --tw-amber-hover:   oklch(0.63 0.15 54);
-  --tw-amber-bg:      oklch(0.970 0.030 80);
+  --tw-amber: oklch(0.69 0.14 54);
+  --tw-amber-hover: oklch(0.63 0.15 54);
+  --tw-amber-bg: oklch(0.97 0.03 80);
 
   /* Danger */
-  --tw-danger:        oklch(0.52 0.18 22);
-  --tw-danger-bg:     oklch(0.970 0.025 22);
+  --tw-danger: oklch(0.52 0.18 22);
+  --tw-danger-bg: oklch(0.97 0.025 22);
 
   /* Node type colors */
-  --tw-node-biz:  oklch(0.39 0.07 245);
-  --tw-node-set:  oklch(0.42 0.12 160);
-  --tw-node-mod:  oklch(0.56 0.14 54);
-  --tw-node-idle: oklch(0.62 0.020 245);
+  --tw-node-biz: oklch(0.39 0.07 245);
+  --tw-node-set: oklch(0.42 0.12 160);
+  --tw-node-mod: oklch(0.56 0.14 54);
+  --tw-node-idle: oklch(0.62 0.02 245);
 
   /* Shadows — warm-tinted */
-  --tw-shadow-sm:  0 1px 4px oklch(0.30 0.04 80 / 0.06);
-  --tw-shadow-md:  0 4px 16px oklch(0.30 0.04 80 / 0.09);
-  --tw-shadow-lg:  0 8px 32px oklch(0.30 0.04 80 / 0.12);
-  --tw-shadow-fab: 0 -4px 24px oklch(0.30 0.04 80 / 0.14);
-  --tw-shadow-dropdown: 0 8px 40px oklch(0.30 0.04 80 / 0.16);
+  --tw-shadow-sm: 0 1px 4px oklch(0.3 0.04 80 / 0.06);
+  --tw-shadow-md: 0 4px 16px oklch(0.3 0.04 80 / 0.09);
+  --tw-shadow-lg: 0 8px 32px oklch(0.3 0.04 80 / 0.12);
+  --tw-shadow-fab: 0 -4px 24px oklch(0.3 0.04 80 / 0.14);
+  --tw-shadow-dropdown: 0 8px 40px oklch(0.3 0.04 80 / 0.16);
 
   /* Typography */
-  --tw-font-ui:      'Söhne', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --tw-font-serif:   'Canela', 'Iowan Old Style', 'Palatino Linotype', 'Songti SC', serif;
+  --tw-font-ui: 'Söhne', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --tw-font-serif: 'Canela', 'Iowan Old Style', 'Palatino Linotype', 'Songti SC', serif;
 
   /* Layout */
-  --tw-nav-width:           300px;
+  --tw-nav-width: 300px;
   --tw-nav-collapsed-width: 48px;
-  --tw-context-height:      54px;
-  --tw-tab-height:          44px;
-  --tw-fab-height:          54px;
+  --tw-context-height: 54px;
+  --tw-tab-height: 44px;
+  --tw-fab-height: 54px;
 
   display: flex;
   height: 100%;
@@ -83,8 +83,9 @@
   flex-direction: column;
   background: var(--tw-bg-nav);
   border-right: 1px solid var(--tw-border);
-  transition: width 200ms cubic-bezier(0.4, 0, 0.2, 1),
-              min-width 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 200ms cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 200ms cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 2;
 }
@@ -255,8 +256,14 @@
 }
 
 @keyframes tw-slide-down {
-  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .tw-biz-switcher__search {
@@ -400,12 +407,14 @@
   border: 1px solid var(--tw-border);
   border-radius: 8px;
   background: var(--tw-surface);
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .tw-tree-search:focus-within {
   border-color: var(--tw-navy);
-  box-shadow: 0 0 0 3px oklch(0.39 0.07 245 / 0.10);
+  box-shadow: 0 0 0 3px oklch(0.39 0.07 245 / 0.1);
 }
 
 .tw-tree-search__icon {
@@ -698,12 +707,14 @@
   border-radius: 7px;
   background: var(--tw-surface-alt);
   width: 220px;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .tw-tab-toolbar__search:focus-within {
   border-color: var(--tw-navy);
-  box-shadow: 0 0 0 3px oklch(0.39 0.07 245 / 0.10);
+  box-shadow: 0 0 0 3px oklch(0.39 0.07 245 / 0.1);
   background: var(--tw-surface);
 }
 
@@ -883,7 +894,7 @@
   padding-right: 0 !important;
 }
 
-.tw-table__check input[type="checkbox"] {
+.tw-table__check input[type='checkbox'] {
   width: 15px;
   height: 15px;
   accent-color: var(--tw-navy);
@@ -918,12 +929,12 @@
 }
 
 .tw-agent-badge--ok {
-  background: oklch(0.42 0.12 160 / 0.10);
+  background: oklch(0.42 0.12 160 / 0.1);
   color: oklch(0.35 0.12 160);
 }
 
 .tw-agent-badge--err {
-  background: oklch(0.52 0.18 22 / 0.10);
+  background: oklch(0.52 0.18 22 / 0.1);
   color: oklch(0.45 0.18 22);
 }
 
@@ -1165,8 +1176,14 @@
 }
 
 @keyframes tw-fab-slide-up {
-  from { transform: translateY(100%); opacity: 0; }
-  to   { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .tw-fab__count {
@@ -1304,7 +1321,9 @@
 @media (max-width: 767px) {
   .tw-topo-nav {
     position: absolute;
-    top: 0; left: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
     z-index: 20;
     box-shadow: var(--tw-shadow-lg);
   }

@@ -49,7 +49,12 @@ const PageContainer: React.FC<PageContainerProps> = ({
               className="page-container__breadcrumb"
               items={breadcrumb.map((item) => ({
                 title: item.path ? (
-                  <Button type="link" size="small" style={{ padding: 0 }} onClick={() => navigate(item.path!)}>
+                  <Button
+                    type="link"
+                    size="small"
+                    style={{ padding: 0 }}
+                    onClick={() => navigate(item.path!)}
+                  >
                     {item.title}
                   </Button>
                 ) : (
@@ -60,9 +65,7 @@ const PageContainer: React.FC<PageContainerProps> = ({
           )}
           <div className="page-container__title-row">
             <div className="page-container__title-area">
-              {onBack && (
-                <ArrowLeftOutlined className="page-container__back" onClick={onBack} />
-              )}
+              {onBack && <ArrowLeftOutlined className="page-container__back" onClick={onBack} />}
               {title && <h1 className="page-container__title">{title}</h1>}
             </div>
             {extra && <Space className="page-container__extra">{extra}</Space>}

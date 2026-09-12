@@ -171,7 +171,9 @@ const UniqueRulesPage: React.FC = () => {
       render: (value: string, record) => (
         <Space wrap>
           <span>{value}</span>
-          {record.is_default ? <Tag color="gold">{t('resource.model.uniques.tags.default')}</Tag> : null}
+          {record.is_default ? (
+            <Tag color="gold">{t('resource.model.uniques.tags.default')}</Tag>
+          ) : null}
           {record.is_auxiliary ? (
             <Tag color="blue">{t('resource.model.uniques.tags.auxiliary')}</Tag>
           ) : (
@@ -332,11 +334,11 @@ const UniqueRulesPage: React.FC = () => {
             />
           </Form.Item>
 
-          <Form.Item
-            label={t('resource.model.uniques.fields.description')}
-            name="description"
-          >
-            <Input.TextArea rows={3} placeholder={t('resource.model.uniques.placeholders.description')} />
+          <Form.Item label={t('resource.model.uniques.fields.description')} name="description">
+            <Input.TextArea
+              rows={3}
+              placeholder={t('resource.model.uniques.placeholders.description')}
+            />
           </Form.Item>
 
           <div className="switch-row">

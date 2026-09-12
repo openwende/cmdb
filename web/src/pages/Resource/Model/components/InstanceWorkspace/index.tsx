@@ -27,9 +27,7 @@ import {
   listModelInstanceRelations,
 } from '@/api';
 import { CreateModelInstancePayload } from '@/api/types/model';
-import {
-  AggregateInstanceListItem,
-} from '@/api/services/modelInstance';
+import { AggregateInstanceListItem } from '@/api/services/modelInstance';
 import {
   InstanceHistoryItem,
   InstanceRelationItem,
@@ -185,7 +183,11 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     }
   };
 
-  const loadInstanceHistory = async (instanceID: string | number, currentPage = historyPage, currentPageSize = historyPageSize) => {
+  const loadInstanceHistory = async (
+    instanceID: string | number,
+    currentPage = historyPage,
+    currentPageSize = historyPageSize,
+  ) => {
     try {
       setHistoryLoading(true);
       const response = await listModelInstanceHistory(detailModel.name, instanceID, {
@@ -251,7 +253,14 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     if (drawerTab === 'topology') {
       loadInstanceTopology(getInstanceIdentifier(selectedInstance));
     }
-  }, [drawerVisible, drawerTab, selectedInstance?.instance_key, historyPage, historyPageSize, detailModel.name]);
+  }, [
+    drawerVisible,
+    drawerTab,
+    selectedInstance?.instance_key,
+    historyPage,
+    historyPageSize,
+    detailModel.name,
+  ]);
 
   const openInstanceDrawer = (
     record: AggregateInstanceListItem,
@@ -453,9 +462,7 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
       title: t('resource.model.columns.changedFields'),
       dataIndex: 'changed_fields',
       render: (value?: string[]) =>
-        value && value.length > 0
-          ? value.map((field) => <Tag key={field}>{field}</Tag>)
-          : '--',
+        value && value.length > 0 ? value.map((field) => <Tag key={field}>{field}</Tag>) : '--',
     },
     {
       title: t('resource.model.columns.operator'),
@@ -520,7 +527,8 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     {
       title: t('resource.model.columns.sourceTarget'),
       key: 'sourceTarget',
-      render: (_value, record) => `${record.source_model_uid}#${record.source_id} -> ${record.target_model_uid}#${record.target_id}`,
+      render: (_value, record) =>
+        `${record.source_model_uid}#${record.source_id} -> ${record.target_model_uid}#${record.target_id}`,
     },
   ];
 
@@ -528,13 +536,20 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
     ? `${getInstanceName(selectedInstance)} (${getInstanceIdentifier(selectedInstance)})`
     : t('resource.model.tabs.instances');
 
-  const relationDefinitionOptions = (instanceRelationDetail?.constraints?.associations || []).map((definition) => ({
-    label: `${modelDisplayNameMap.get(definition.target_model_uid) || definition.target_model_uid} / ${definition.association_uid} / ${definition.mapping}`,
-    value: buildRelationDefinitionKey(definition),
-  }));
+  const relationDefinitionOptions = (instanceRelationDetail?.constraints?.associations || []).map(
+    (definition) => ({
+      label: `${modelDisplayNameMap.get(definition.target_model_uid) || definition.target_model_uid} / ${definition.association_uid} / ${definition.mapping}`,
+      value: buildRelationDefinitionKey(definition),
+    }),
+  );
 
   const targetInstanceOptions = relationCapabilities
-    .filter((item) => buildRelationDefinitionKey(item as { target_model_uid: string; association_uid: string }) === selectedRelationDefinitionKey)
+    .filter(
+      (item) =>
+        buildRelationDefinitionKey(
+          item as { target_model_uid: string; association_uid: string },
+        ) === selectedRelationDefinitionKey,
+    )
     .filter((item) => item.relation_allowed !== false)
     .map((item) => ({
       label: `${item.name || item.resource_id} (${item.resource_id})`,
@@ -625,17 +640,19 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                 ) : instanceDetail ? (
                   <Space direction="vertical" size="large" style={{ width: '100%' }}>
                     <Descriptions bordered column={2}>
-                      <Descriptions.Item label="Key">{instanceDetail.instance_key}</Descriptions.Item>
+                      <Descriptions.Item label="Key">
+                        {instanceDetail.instance_key}
+                      </Descriptions.Item>
                       <Descriptions.Item label={t('resource.model.fields.name')}>
                         {typeof instanceDetail.properties?.name === 'string'
                           ? instanceDetail.properties.name
                           : '--'}
                       </Descriptions.Item>
                       <Descriptions.Item label={t('resource.model.columns.modelName')}>
-                        {instanceDetail.model?.display_name
-                          || modelDisplayNameMap.get(instanceDetail.model?.model_uid || '')
-                          || instanceDetail.model?.model_uid
-                          || '--'}
+                        {instanceDetail.model?.display_name ||
+                          modelDisplayNameMap.get(instanceDetail.model?.model_uid || '') ||
+                          instanceDetail.model?.model_uid ||
+                          '--'}
                       </Descriptions.Item>
                       <Descriptions.Item label="Model UID">
                         {instanceDetail.model?.model_uid || '--'}
@@ -660,7 +677,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                     </Descriptions>
 
                     <div>
-                      <div className="model-page-note">{t('resource.model.tabs.instanceDetail')}</div>
+                      <div className="model-page-note">
+                        {t('resource.model.tabs.instanceDetail')}
+                      </div>
                       {renderJSONPreview(instanceDetail.properties || {})}
                     </div>
 
@@ -684,9 +703,15 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                       message={t('resource.model.helper.instanceRelationsPage')}
                     />
                     <div className="model-page-toolbar">
-                      <div className="model-page-note">{t('resource.model.helper.instanceRelationCreate')}</div>
+                      <div className="model-page-note">
+                        {t('resource.model.helper.instanceRelationCreate')}
+                      </div>
                       <div className="model-page-actions">
-                        <Button onClick={() => loadInstanceRelations(getInstanceIdentifier(selectedInstance))}>
+                        <Button
+                          onClick={() =>
+                            loadInstanceRelations(getInstanceIdentifier(selectedInstance))
+                          }
+                        >
                           {t('resource.model.actions.refresh')}
                         </Button>
                       </div>
@@ -731,7 +756,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         expandedRowRender: (record) => renderJSONPreview(record.properties || {}),
                       }}
                       locale={{
-                        emptyText: <Empty description={t('resource.model.empty.noInstanceRelations')} />,
+                        emptyText: (
+                          <Empty description={t('resource.model.empty.noInstanceRelations')} />
+                        ),
                       }}
                     />
                   </Space>
@@ -768,7 +795,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         ),
                       }}
                       locale={{
-                        emptyText: <Empty description={t('resource.model.empty.noInstanceHistory')} />,
+                        emptyText: (
+                          <Empty description={t('resource.model.empty.noInstanceHistory')} />
+                        ),
                       }}
                     />
                     <Pagination
@@ -811,7 +840,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         expandedRowRender: (record) => renderJSONPreview(record.configs || {}),
                       }}
                       locale={{
-                        emptyText: <Empty description={t('resource.model.empty.noInstanceTopology')} />,
+                        emptyText: (
+                          <Empty description={t('resource.model.empty.noInstanceTopology')} />
+                        ),
                       }}
                     />
                     <Table
@@ -823,7 +854,9 @@ const InstanceWorkspace: React.FC<InstanceWorkspaceProps> = ({
                         expandedRowRender: (record) => renderJSONPreview(record.properties || {}),
                       }}
                       locale={{
-                        emptyText: <Empty description={t('resource.model.empty.noInstanceTopology')} />,
+                        emptyText: (
+                          <Empty description={t('resource.model.empty.noInstanceTopology')} />
+                        ),
                       }}
                     />
                   </Space>

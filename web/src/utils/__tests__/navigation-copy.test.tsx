@@ -26,7 +26,7 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'routes.home': '首页',
           'routes.business': '业务',
           'routes.businessTopology': '业务拓扑',
@@ -43,7 +43,7 @@ vi.mock('react-i18next', () => ({
           'routes.host': '主机资源',
           'routes.auditLogs': '操作审计',
           'routes.operations': '运营概览',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));

@@ -183,10 +183,11 @@ const CreateAttributeDrawer: React.FC<Props> = ({
           ) : fieldType === 'enum' ? (
             <Select
               allowClear
-              options={(String(enumValuesText || '')
-                .split(/\n|,/)
-                .map((item) => item.trim())
-                .filter(Boolean) || []
+              options={(
+                String(enumValuesText || '')
+                  .split(/\n|,/)
+                  .map((item) => item.trim())
+                  .filter(Boolean) || []
               ).map((item) => ({ value: item, label: item }))}
             />
           ) : (

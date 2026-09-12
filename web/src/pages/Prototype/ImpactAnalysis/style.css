@@ -26,8 +26,7 @@
     radial-gradient(circle at 96% 8%, rgba(185, 28, 28, 0.07), transparent 26%),
     linear-gradient(180deg, rgba(247, 244, 237, 0.99), rgba(238, 234, 225, 0.99));
   color: var(--ink);
-  font-family:
-    'Söhne', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  font-family: 'Söhne', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   position: relative;
   overflow: hidden;
 }
@@ -771,7 +770,9 @@
 }
 
 @keyframes ia-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -959,16 +960,34 @@
   font-size: 12px;
 }
 
-.ia-type-icon--sm { font-size: 12px; }
-.ia-type-icon--md { font-size: 22px; }
+.ia-type-icon--sm {
+  font-size: 12px;
+}
+.ia-type-icon--md {
+  font-size: 22px;
+}
 
-.ia-type-icon--host      { color: #4f46e5; }
-.ia-type-icon--database  { color: #0369a1; }
-.ia-type-icon--cache     { color: #0891b2; }
-.ia-type-icon--app       { color: #16a34a; }
-.ia-type-icon--network   { color: #64748b; }
-.ia-type-icon--workload  { color: #7c3aed; }
-.ia-type-icon--business  { color: #b45309; }
+.ia-type-icon--host {
+  color: #4f46e5;
+}
+.ia-type-icon--database {
+  color: #0369a1;
+}
+.ia-type-icon--cache {
+  color: #0891b2;
+}
+.ia-type-icon--app {
+  color: #16a34a;
+}
+.ia-type-icon--network {
+  color: #64748b;
+}
+.ia-type-icon--workload {
+  color: #7c3aed;
+}
+.ia-type-icon--business {
+  color: #b45309;
+}
 
 /* Buttons */
 .ia-btn {

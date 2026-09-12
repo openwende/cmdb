@@ -20,13 +20,7 @@
     radial-gradient(circle at 100% 0%, rgba(193, 113, 58, 0.14), transparent 24%),
     linear-gradient(180deg, rgba(247, 244, 237, 0.98), rgba(238, 234, 225, 0.98));
   color: var(--ink);
-  font-family:
-    'Söhne',
-    'Avenir Next',
-    'Segoe UI',
-    'PingFang SC',
-    'Hiragino Sans GB',
-    sans-serif;
+  font-family: 'Söhne', 'Avenir Next', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
   position: relative;
   overflow: hidden;
 }
@@ -84,12 +78,7 @@
 .cmdb-next__identity-copy h1,
 .cmdb-next__hero-copy h2,
 .cmdb-next__focus-intro h3 {
-  font-family:
-    'Canela',
-    'Iowan Old Style',
-    'Palatino Linotype',
-    'Songti SC',
-    serif;
+  font-family: 'Canela', 'Iowan Old Style', 'Palatino Linotype', 'Songti SC', serif;
   color: var(--ink-strong);
 }
 
@@ -270,12 +259,7 @@
 
 .cmdb-topology-proto__intro h2 {
   margin: 0;
-  font-family:
-    'Canela',
-    'Iowan Old Style',
-    'Palatino Linotype',
-    'Songti SC',
-    serif;
+  font-family: 'Canela', 'Iowan Old Style', 'Palatino Linotype', 'Songti SC', serif;
   font-size: clamp(2rem, 3.2vw, 3.2rem);
   line-height: 0.98;
   letter-spacing: -0.04em;
@@ -733,11 +717,7 @@
 }
 
 .cmdb-topology-proto__mono {
-  font-family:
-    'SFMono-Regular',
-    Consolas,
-    'Liberation Mono',
-    monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   font-weight: 600;
 }
 

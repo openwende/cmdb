@@ -53,6 +53,7 @@
 ### 1.4 交互效率视角：高频操作成本不低
 
 **一次完整操作的点击路径：**
+
 1. 切业务：点 sidebar selector → 选业务 → 等 tree 刷新 → 选节点（4 步）
 2. 转移主机：在 tree 选节点 → 勾选主机 → 点"转移到"→ 选目标 → 确认（5 步，跨越整个屏幕宽度）
 3. 查看节点信息：选树节点 → 点"节点信息"tab → 等加载（3 步，但 tab 切换会失去列表筛选状态）
@@ -66,17 +67,20 @@
 ### 方向 A：控制台工作台（Console Workstation）
 
 **核心特征：**
+
 - 页面上半部分是一条重量级的 **上下文横条**（Context Bar），包含：当前业务（可切换）+ breadcrumb 路径 + 关键统计数字
 - 左侧 tree 作为 **导航抽屉**（可收起），和 sidebar 合并为一个统一的导航面板
 - 右侧工作区去掉 panel header，由 Context Bar 完全承担上下文表达
 - 工具栏做成 **工具面板**，按操作分组
 
 **适合理由：**
+
 - 业务切换和节点路径在同一条横线上，视觉锚点极强
 - 适合 "横向宽屏 + 多任务" 的桌面端运维场景
 - 统计数字天然适合 CMDB 场景（主机数 / 模块数 / 异常数）
 
 **风险和取舍：**
+
 - Context Bar 占据高度较多（~60-80px），在 ≤1080p 屏幕上压缩内容区
 - 业务切换和 tree 导航放在不同层级，交互模式变化大
 - 改动量大：需要同时重构 Sidebar + Header + TopologyView + BusinessTree
@@ -86,17 +90,20 @@
 ### 方向 B：资源运营面板（Operations Dashboard）
 
 **核心特征：**
+
 - 整体走 **面板分区** 风格：每个区域是一个有明确边界的面板（Panel）
 - 树 panel 有自己的标题栏（显示业务名+切换按钮），工作区 panel 有自己的标题栏（显示当前节点+操作）
 - Tab 下沉到工作区内部，toolbar 按语义分组并使用 icon button
 - 底部有一条 **状态栏**（Status Bar），显示选中数、当前筛选条件
 
 **适合理由：**
+
 - 各区域职责清晰，学习成本低
 - 对现有代码结构改动最小（主要是加包装 + 调样式）
 - 天然适合多 tab 场景（主机列表 / 服务实例 / 节点信息各自独立面板）
 
 **风险和取舍：**
+
 - 面板边界过多可能让页面看起来"分裂"，缺乏整体感
 - 状态栏占底部空间
 - 如果不处理好面板间距和阴影，容易变成"卡片拼贴"风格
@@ -106,6 +113,7 @@
 ### 方向 C：专业拓扑操作台（Topology Workstation）
 
 **核心特征：**
+
 - 业务切换做成树区域的 **头部下拉**——树的最上方就是当前业务名，点击即切换。树和业务在信息架构上合并为一个整体："业务拓扑导航"
 - 右侧工作区上方是一条 **轻量上下文条**（Node Context Strip），只显示"节点名称 + 节点类型 badge + 路径 breadcrumb"——不做大块 header，而是做精准的上下文锚点
 - Tab 栏和 toolbar **合并为一行**：左边是 tab 切换，右边是当前 tab 对应的操作组
@@ -113,12 +121,14 @@
 - 批量操作独立为 **底部浮现操作条**（Floating Action Bar），选中行后从底部滑出
 
 **适合理由：**
+
 - 专为"左树右表 + 高频切换节点 + 高频批量操作"的 CMDB 场景定制
 - 业务和拓扑在认知上是一体的（"我在看 XX 业务的拓扑"），放在一起最自然
 - 底部操作条只在选中时出现，平时不占空间，兼顾信息密度和操作效率
 - tab/toolbar 合并后节省一行高度，表格区域更大
 
 **风险和取舍：**
+
 - 底部浮现操作条需要处理和 pagination 的位置关系
 - 业务切换放在树区域意味着需要重构 `BusinessSelector` 的挂载位置
 - Tab + toolbar 合并行需要处理窄屏溢出
@@ -160,6 +170,7 @@
 ```
 
 **关键结构决策：**
+
 - Sidebar menu 保持不变，仍然负责全局导航（首页/业务/模型/资源/分析）
 - 拓扑树从"页面级裸组件"升级为"带头部的独立导航面板"
 - 右侧工作区取消独立的 panel header 区域，改为紧凑的 Node Context Strip
@@ -187,12 +198,14 @@
 ```
 
 **理由：**
+
 1. **认知一致性**：用户看到树时，第一个信息应该是"这是哪个业务的树"，业务名作为树的标题在"意义上游"
 2. **操作就近性**：切换业务后树会刷新，把触发器和结果放在相同区域，用户不需要跨越屏幕
 3. **空间效率**：利用了树区域顶部原本只有搜索框的空间，不额外占高度
 4. **适配友好**：在窄屏/移动端，树变成抽屉时，业务切换自然包含在抽屉中
 
 **切换组件设计细节：**
+
 - 默认显示业务名 + 业务 ID（小字灰色）
 - 点击展开一个 Popover/Dropdown，包含搜索 + 分组列表（业务 / 业务集）
 - 最近使用的业务置顶
@@ -285,6 +298,7 @@
 ```
 
 **左侧 Tab 区域：**
+
 - 保持三个 tab 不变：主机列表 / 服务实例 / 节点信息
 - 使用 Ant Design Tabs 的 `type="line"` 样式
 - Tab item 增加小号计数 badge（如：主机列表 · 12）
@@ -292,19 +306,23 @@
 **右侧 Toolbar 区域（按 Tab 动态变化）：**
 
 当 Tab = 主机列表 时：
+
 ```
 🔍 搜索IP/主机名...     ⊕ 新增主机
 ```
+
 - 搜索框：紧凑尺寸，240px 宽度，带清除按钮
 - 新增主机：primary 按钮，只在模块节点时可用
 - 只保留 **搜索 + 主操作**，其他操作下沉
 
 当 Tab = 服务实例 时：
+
 ```
 🔍 搜索...  [实例|进程]  ☐ 全部展开    ⊕ 新增
 ```
 
 当 Tab = 节点信息 时：
+
 ```
 （无 toolbar，直接展示信息）
 ```
@@ -326,6 +344,7 @@
 ```
 
 **设计细节：**
+
 - **位置**：固定在工作区底部（不是全屏底部），`position: sticky; bottom: 0`
 - **出现动画**：从底部 slide up + fade in，200ms
 - **背景**：`var(--color-bg-elevated)` + `box-shadow: 0 -2px 8px rgba(0,0,0,0.08)` + 上边框
@@ -339,6 +358,7 @@
 
 > [!IMPORTANT]
 > Floating Action Bar 和 Pagination 的位置关系：
+>
 > - Pagination 始终固定在表格下方
 > - FAB 出现时覆盖在 Pagination 上方（z-index 更高）
 > - FAB 消失后 Pagination 重新可见
@@ -358,6 +378,7 @@
 │                                       │
 └────────────────────────────────────────┘
 ```
+
 - 居中显示，图标 + 标题 + 说明
 - 背景使用 `var(--color-bg-layout)` 区分
 
@@ -373,6 +394,7 @@
 │                                       │
 └────────────────────────────────────────┘
 ```
+
 - 有行动按钮，引导创建
 
 #### 模块无主机
@@ -436,32 +458,32 @@
 
 ### 4.1 组件拆分建议
 
-| 新组件 | 路径建议 | 说明 |
-|--------|---------|------|
-| `TopoNavigator` | `BusinessTopology/TopoNavigator/` | 替代 BusinessTree，包含 BusinessHeader + Search + Tree |
-| `BusinessSwitcher` | `BusinessTopology/TopoNavigator/BusinessSwitcher/` | 从 `BusinessSelector` 的逻辑中提取，改为 Popover 触发 |
-| `NodeContextStrip` | `BusinessTopology/NodeContextStrip/` | 替代 `topology-panel__header` |
-| `TabToolbar` | `BusinessTopology/TabToolbar/` | Tab + 右侧 Toolbar 的合并组件 |
-| `FloatingActionBar` | `BusinessTopology/FloatingActionBar/` | 底部浮现操作条 |
-| `NodeTypeBadge` | `components/common/NodeTypeBadge/` | 节点类型标签（业务、集群、模块等） |
+| 新组件              | 路径建议                                           | 说明                                                   |
+| ------------------- | -------------------------------------------------- | ------------------------------------------------------ |
+| `TopoNavigator`     | `BusinessTopology/TopoNavigator/`                  | 替代 BusinessTree，包含 BusinessHeader + Search + Tree |
+| `BusinessSwitcher`  | `BusinessTopology/TopoNavigator/BusinessSwitcher/` | 从 `BusinessSelector` 的逻辑中提取，改为 Popover 触发  |
+| `NodeContextStrip`  | `BusinessTopology/NodeContextStrip/`               | 替代 `topology-panel__header`                          |
+| `TabToolbar`        | `BusinessTopology/TabToolbar/`                     | Tab + 右侧 Toolbar 的合并组件                          |
+| `FloatingActionBar` | `BusinessTopology/FloatingActionBar/`              | 底部浮现操作条                                         |
+| `NodeTypeBadge`     | `components/common/NodeTypeBadge/`                 | 节点类型标签（业务、集群、模块等）                     |
 
 ### 4.2 保留现有逻辑、只重构 UI 的区域
 
-| 区域 | 说明 |
-|------|------|
-| `TopologyTree` 组件的交互逻辑 | 节点选中、展开、hover 创建按钮、搜索过滤——这些逻辑保持不变，只调 `renderTitle` 的渲染方式 |
-| `HostList` 的数据逻辑 | `fetchNodeHosts`、`adaptTopologyHost`、分页、选中——保持不变，只重构 JSX 结构和样式 |
-| `BusinessSelector` 的 store 层 | `useBusinessStore` 的 `loadBusinessData`、`getBusinessById`、`setCurrentBusiness` 完全保持 |
-| `ServiceInstance`、`NodeInfo` | 保持现有逻辑，只统一包装容器和 toolbar 样式 |
-| 所有 Modal（AddHostModal / TransferHostModal / ReleaseHostModal / CreateNodeModal） | 完全保持不变 |
+| 区域                                                                                | 说明                                                                                       |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `TopologyTree` 组件的交互逻辑                                                       | 节点选中、展开、hover 创建按钮、搜索过滤——这些逻辑保持不变，只调 `renderTitle` 的渲染方式  |
+| `HostList` 的数据逻辑                                                               | `fetchNodeHosts`、`adaptTopologyHost`、分页、选中——保持不变，只重构 JSX 结构和样式         |
+| `BusinessSelector` 的 store 层                                                      | `useBusinessStore` 的 `loadBusinessData`、`getBusinessById`、`setCurrentBusiness` 完全保持 |
+| `ServiceInstance`、`NodeInfo`                                                       | 保持现有逻辑，只统一包装容器和 toolbar 样式                                                |
+| 所有 Modal（AddHostModal / TransferHostModal / ReleaseHostModal / CreateNodeModal） | 完全保持不变                                                                               |
 
 ### 4.3 需要谨慎改动的交互
 
-| 改动 | 风险 | 建议 |
-|------|------|------|
-| `BusinessSelector` 从 Sidebar 移到 Tree 头部 | Sidebar 中有 `isBusinessRelated` 判断，移出后需要同步调整 Sidebar 渲染逻辑 | 先在 `TopoNavigator` 中新建 `BusinessSwitcher`，然后再从 Sidebar 移除旧的 |
-| Toolbar 按钮从常驻改为 Floating Bar | 涉及 `handleMenuClick`、所有 Dropdown 的挂载位置变化 | 先让 Floating Bar 渲染，保持相同的 onClick handler 引用 |
-| Tab + Toolbar 合并 | Tabs 的 `tabBarExtraContent` prop 可以原生支持，但搜索框位置变化可能影响 `searchValue` 的 focus 行为 | 使用 Ant Design Tabs 的 `tabBarExtraContent={{ right: <Toolbar /> }}` |
+| 改动                                         | 风险                                                                                                 | 建议                                                                      |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `BusinessSelector` 从 Sidebar 移到 Tree 头部 | Sidebar 中有 `isBusinessRelated` 判断，移出后需要同步调整 Sidebar 渲染逻辑                           | 先在 `TopoNavigator` 中新建 `BusinessSwitcher`，然后再从 Sidebar 移除旧的 |
+| Toolbar 按钮从常驻改为 Floating Bar          | 涉及 `handleMenuClick`、所有 Dropdown 的挂载位置变化                                                 | 先让 Floating Bar 渲染，保持相同的 onClick handler 引用                   |
+| Tab + Toolbar 合并                           | Tabs 的 `tabBarExtraContent` prop 可以原生支持，但搜索框位置变化可能影响 `searchValue` 的 focus 行为 | 使用 Ant Design Tabs 的 `tabBarExtraContent={{ right: <Toolbar /> }}`     |
 
 ### 4.4 推荐的重构顺序
 

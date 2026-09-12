@@ -462,7 +462,9 @@ export const batchSearchObjectAttribute = async ({
 }: BatchSearchOptions): Promise<PropertyMap> => {
   try {
     const entries = await Promise.all(
-      params.bk_obj_id.$in.map(async (objId) => [objId, await searchObjectAttribute(objId)] as const),
+      params.bk_obj_id.$in.map(
+        async (objId) => [objId, await searchObjectAttribute(objId)] as const,
+      ),
     );
 
     const result = entries.reduce<PropertyMap>((acc, [objId, properties]) => {

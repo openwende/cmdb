@@ -75,7 +75,7 @@ vi.mock('antd', () => {
 
   const renderCell = (column: any, record: any) => {
     const value = getValue(record, column.dataIndex);
-    return column.render ? column.render(value, record) : value ?? '--';
+    return column.render ? column.render(value, record) : (value ?? '--');
   };
 
   return {
@@ -178,9 +178,7 @@ describe('business topology process view', () => {
       expect(getProcess).toHaveBeenCalledWith(11);
     });
 
-    expect(
-      screen.getByText((content) => content.includes('loaded from api')),
-    ).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('loaded from api'))).toBeInTheDocument();
     expect(screen.getByText('10.1.1.10')).toBeInTheDocument();
     expect(screen.getByText('8080')).toBeInTheDocument();
   });

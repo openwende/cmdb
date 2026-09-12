@@ -7,9 +7,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'common.notSet': '未设置',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));

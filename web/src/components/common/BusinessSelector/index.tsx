@@ -60,7 +60,9 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
     if (!initialized) {
       return (
         <div style={{ padding: '12px', textAlign: 'center' }}>
-          <div style={{ color: '#999', marginBottom: 8 }}>{t('business.messages.loadBusinessFailed')}</div>
+          <div style={{ color: '#999', marginBottom: 8 }}>
+            {t('business.messages.loadBusinessFailed')}
+          </div>
           <Button size="small" icon={<ReloadOutlined />} onClick={() => loadBusinessData(true)}>
             {t('business.entryRedirect.retry')}
           </Button>
@@ -70,12 +72,19 @@ const BusinessSelector: React.FC<BusinessSelectorProps> = ({
     if (businessList.length === 0) {
       return (
         <div style={{ padding: '12px', textAlign: 'center' }}>
-          <div style={{ color: '#999', marginBottom: 8 }}>{t('business.messages.noBusinessData')}</div>
+          <div style={{ color: '#999', marginBottom: 8 }}>
+            {t('business.messages.noBusinessData')}
+          </div>
           <Space>
             <Button size="small" icon={<ReloadOutlined />} onClick={() => loadBusinessData(true)}>
               {t('business.entryRedirect.retry')}
             </Button>
-            <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => navigate('/resource/business')}>
+            <Button
+              size="small"
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => navigate('/resource/business')}
+            >
               {t('common.components.businessSelector.createBusiness')}
             </Button>
           </Space>

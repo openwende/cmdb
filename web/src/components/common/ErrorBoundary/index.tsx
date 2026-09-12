@@ -33,7 +33,10 @@ class ErrorBoundaryClass extends React.Component<ErrorBoundaryProps, ErrorBounda
         <Result
           status="error"
           title={t?.('common.errors.boundary.title') ?? 'Something went wrong'}
-          subTitle={t?.('common.errors.boundary.subtitle') ?? 'An unexpected error occurred. Please try again.'}
+          subTitle={
+            t?.('common.errors.boundary.subtitle') ??
+            'An unexpected error occurred. Please try again.'
+          }
           extra={
             <Button type="primary" onClick={this.handleReset}>
               {t?.('common.errors.boundary.retry') ?? 'Try Again'}

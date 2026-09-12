@@ -2,11 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Divider, Form, Input, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  DEMO_ADMIN_PASSWORD,
-  DEMO_ADMIN_USERNAME,
-  isDemoLoginEnabled,
-} from '@/constants/auth';
+import { DEMO_ADMIN_PASSWORD, DEMO_ADMIN_USERNAME, isDemoLoginEnabled } from '@/constants/auth';
 import { useAuthStore } from '@/store/AuthStore';
 import './style.css';
 

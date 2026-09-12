@@ -10,10 +10,7 @@ const TableEmpty: React.FC<TableEmptyProps> = ({ description }) => {
   const { t } = useTranslation();
 
   return (
-    <Empty
-      image={Empty.PRESENTED_IMAGE_SIMPLE}
-      description={description ?? t('common.noData')}
-    />
+    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={description ?? t('common.noData')} />
   );
 };
 

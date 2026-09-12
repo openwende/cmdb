@@ -6,7 +6,6 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { ProcessItem } from '../../TransferHost';
 import ConfirmModal from '@/components/common/ConfirmModal';
 
-
 const protocolOptions = ['TCP', 'UDP', 'TCP6', 'UDP6'];
 
 interface Props {
@@ -27,7 +26,9 @@ export interface ListenInfo {
 }
 
 export const normalizeListenIpOptions = (options: Array<string | undefined>): string[] =>
-  Array.from(new Set(options.map((item) => item?.trim()).filter((item): item is string => Boolean(item))));
+  Array.from(
+    new Set(options.map((item) => item?.trim()).filter((item): item is string => Boolean(item))),
+  );
 
 const AddProcessModal: React.FC<Props> = ({
   visible,
@@ -265,319 +266,376 @@ const AddProcessModal: React.FC<Props> = ({
         <div className="process-content">
           <Form form={form} layout="vertical" onValuesChange={handleFormChange}>
             {/* Basic Info */}
-            <Collapse defaultActiveKey={['basic']} ghost items={[{ key: 'basic', label: t('business.topology.addProcessModal.sections.basicInfo'), children: (<>
-                <div className="form-row">
-                  <Form.Item
-                    name="processName"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.processName')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.processName')}
+            <Collapse
+              defaultActiveKey={['basic']}
+              ghost
+              items={[
+                {
+                  key: 'basic',
+                  label: t('business.topology.addProcessModal.sections.basicInfo'),
+                  children: (
+                    <>
+                      <div className="form-row">
+                        <Form.Item
+                          name="processName"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.processName')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.processName')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    rules={[{ required: true, message: t('common.form.rulesMessage') }]}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.processName')}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="processAlias"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.processAlias')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.processAlias')}
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.processName',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="processAlias"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.processAlias')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.processAlias')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          rules={[{ required: true, message: t('common.form.rulesMessage') }]}
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    rules={[{ required: true, message: t('common.form.rulesMessage') }]}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.processAlias')}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="startupParams"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.startupParams')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.startupParams')}
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.processAlias',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="startupParams"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.startupParams')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.startupParams')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    style={{ flex: 1 }}
-                  >
-                    <Input.TextArea
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.startupParams',
-                      )}
-                      rows={3}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="description"
-                    label={t('business.topology.addProcessModal.fields.description')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input.TextArea
-                      placeholder={t('business.topology.addProcessModal.placeholders.description')}
-                      rows={3}
-                    />
-                  </Form.Item>
-                </div>
-            </>)}]}/>
+                          <Input.TextArea
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.startupParams',
+                            )}
+                            rows={3}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="description"
+                          label={t('business.topology.addProcessModal.fields.description')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input.TextArea
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.description',
+                            )}
+                            rows={3}
+                          />
+                        </Form.Item>
+                      </div>
+                    </>
+                  ),
+                },
+              ]}
+            />
 
             {/* Listen Info */}
-            <Collapse defaultActiveKey={['listen']} ghost items={[{ key: 'listen', label: t('business.topology.addProcessModal.sections.listenInfo'), children: (<>
-                <div className="listen-content">
-                  <Table
-                    dataSource={listenInfoList}
-                    columns={listenInfoColumns}
-                    pagination={false}
-                    rowKey="id"
-                    size="small"
-                    locale={{ emptyText: null }}
-                  />
-                  {listenInfoList.length === 0 && (
-                    <div className="add-button">
-                      <Button type="link" onClick={handleAddListenInfo}>
-                        + {t('business.topology.addProcessModal.buttons.addImmediately')}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-            </>)}]}/>
+            <Collapse
+              defaultActiveKey={['listen']}
+              ghost
+              items={[
+                {
+                  key: 'listen',
+                  label: t('business.topology.addProcessModal.sections.listenInfo'),
+                  children: (
+                    <>
+                      <div className="listen-content">
+                        <Table
+                          dataSource={listenInfoList}
+                          columns={listenInfoColumns}
+                          pagination={false}
+                          rowKey="id"
+                          size="small"
+                          locale={{ emptyText: null }}
+                        />
+                        {listenInfoList.length === 0 && (
+                          <div className="add-button">
+                            <Button type="link" onClick={handleAddListenInfo}>
+                              + {t('business.topology.addProcessModal.buttons.addImmediately')}
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  ),
+                },
+              ]}
+            />
 
             {/* Process Management Info */}
-            <Collapse ghost items={[{ key: 'processManagement', label: t('business.topology.addProcessModal.sections.processManagementInfo'), children: (<>
-                <div className="form-row">
-                  <Form.Item
-                    name="workPath"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.workPath')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.workPath')}
+            <Collapse
+              ghost
+              items={[
+                {
+                  key: 'processManagement',
+                  label: t('business.topology.addProcessModal.sections.processManagementInfo'),
+                  children: (
+                    <>
+                      <div className="form-row">
+                        <Form.Item
+                          name="workPath"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.workPath')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.workPath')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.workPath')}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="pidFile"
-                    label={t('business.topology.addProcessModal.fields.pidFile')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.pidFile')}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="startUser"
-                    label={t('business.topology.addProcessModal.fields.startUser')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.startUser')}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="startCount"
-                    label={t('business.topology.addProcessModal.fields.startCount')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      type="number"
-                      placeholder={t('business.topology.addProcessModal.placeholders.startCount')}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="priority"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.priority')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.priority')}
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.workPath',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="pidFile"
+                          label={t('business.topology.addProcessModal.fields.pidFile')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.pidFile',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="startUser"
+                          label={t('business.topology.addProcessModal.fields.startUser')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.startUser',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="startCount"
+                          label={t('business.topology.addProcessModal.fields.startCount')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            type="number"
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.startCount',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="priority"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.priority')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.priority')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.priority')}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="startCommand"
-                    label={t('business.topology.addProcessModal.fields.startCommand')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.startCommand')}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="stopCommand"
-                    label={t('business.topology.addProcessModal.fields.stopCommand')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t('business.topology.addProcessModal.placeholders.stopCommand')}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="restartCommand"
-                    label={t('business.topology.addProcessModal.fields.restartCommand')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.restartCommand',
-                      )}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="forceStopCommand"
-                    label={t('business.topology.addProcessModal.fields.forceStopCommand')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.forceStopCommand',
-                      )}
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="reloadCommand"
-                    label={t('business.topology.addProcessModal.fields.reloadCommand')}
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.reloadCommand',
-                      )}
-                    />
-                  </Form.Item>
-                </div>
-                <div className="form-row">
-                  <Form.Item
-                    name="startWaitTime"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.startWaitTime')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.startWaitTime')}
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.priority',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="startCommand"
+                          label={t('business.topology.addProcessModal.fields.startCommand')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.startCommand',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="stopCommand"
+                          label={t('business.topology.addProcessModal.fields.stopCommand')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.stopCommand',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="restartCommand"
+                          label={t('business.topology.addProcessModal.fields.restartCommand')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.restartCommand',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="forceStopCommand"
+                          label={t('business.topology.addProcessModal.fields.forceStopCommand')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.forceStopCommand',
+                            )}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="reloadCommand"
+                          label={t('business.topology.addProcessModal.fields.reloadCommand')}
+                          style={{ flex: 1 }}
+                        >
+                          <Input
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.reloadCommand',
+                            )}
+                          />
+                        </Form.Item>
+                      </div>
+                      <div className="form-row">
+                        <Form.Item
+                          name="startWaitTime"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.startWaitTime')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t('business.topology.addProcessModal.tooltips.startWaitTime')}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      type="number"
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.startWaitTime',
-                      )}
-                      suffix="s"
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    name="operationTimeout"
-                    label={
-                      <span>
-                        {t('business.topology.addProcessModal.fields.operationTimeout')}
-                        <Tooltip
-                          title={
-                            <span style={{ whiteSpace: 'nowrap' }}>
-                              {t('business.topology.addProcessModal.tooltips.operationTimeout')}
+                          <Input
+                            type="number"
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.startWaitTime',
+                            )}
+                            suffix="s"
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="operationTimeout"
+                          label={
+                            <span>
+                              {t('business.topology.addProcessModal.fields.operationTimeout')}
+                              <Tooltip
+                                title={
+                                  <span style={{ whiteSpace: 'nowrap' }}>
+                                    {t(
+                                      'business.topology.addProcessModal.tooltips.operationTimeout',
+                                    )}
+                                  </span>
+                                }
+                                styles={{ root: { maxWidth: 'none' } }}
+                                className="label-tip"
+                              >
+                                <InfoCircleOutlined />
+                              </Tooltip>
                             </span>
                           }
-                          styles={{ root: { maxWidth: 'none' } }}
-                          className="label-tip"
+                          style={{ flex: 1 }}
                         >
-                          <InfoCircleOutlined />
-                        </Tooltip>
-                      </span>
-                    }
-                    style={{ flex: 1 }}
-                  >
-                    <Input
-                      type="number"
-                      placeholder={t(
-                        'business.topology.addProcessModal.placeholders.operationTimeout',
-                      )}
-                      suffix="s"
-                    />
-                  </Form.Item>
-                </div>
-            </>)}]}/>
+                          <Input
+                            type="number"
+                            placeholder={t(
+                              'business.topology.addProcessModal.placeholders.operationTimeout',
+                            )}
+                            suffix="s"
+                          />
+                        </Form.Item>
+                      </div>
+                    </>
+                  ),
+                },
+              ]}
+            />
           </Form>
         </div>
       </Drawer>

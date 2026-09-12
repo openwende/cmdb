@@ -91,24 +91,18 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'business.topology.tree.create.helper.modelDriven':
             '会根据当前节点自动筛选允许创建的子节点类型，并按表单 schema 生成创建表单。',
           'business.topology.tree.create.fields.childModel': '子节点类型',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));
 
 vi.mock('antd', () => {
   const FormComponent = ({ children }: { children?: any }) => <form>{children}</form>;
-  FormComponent.Item = ({
-    children,
-    label,
-  }: {
-    children?: any;
-    label?: any;
-  }) => (
+  FormComponent.Item = ({ children, label }: { children?: any; label?: any }) => (
     <div>
       {label ? <div>{label}</div> : null}
       {children}
@@ -220,7 +214,9 @@ describe('topology create node modal', () => {
     });
 
     expect(
-      screen.getByText('会根据当前节点自动筛选允许创建的子节点类型，并按表单 schema 生成创建表单。'),
+      screen.getByText(
+        '会根据当前节点自动筛选允许创建的子节点类型，并按表单 schema 生成创建表单。',
+      ),
     ).toBeInTheDocument();
     expect(screen.getByText('子节点类型')).toBeInTheDocument();
     expect(mockedStores.loadMainlineModels).not.toHaveBeenCalled();

@@ -139,11 +139,7 @@ const sections: SectionDefinition[] = [
           ['字段冲突', '在治理中心做来源仲裁'],
           ['高风险变更', '进入影响分析确认 blast radius'],
         ],
-        timeline: [
-          '资源问题进入治理中心',
-          '拓扑问题回到业务拓扑工作区',
-          '变更风险跳转到影响分析',
-        ],
+        timeline: ['资源问题进入治理中心', '拓扑问题回到业务拓扑工作区', '变更风险跳转到影响分析'],
       },
     ],
     commandDeck: [
@@ -201,7 +197,8 @@ const sections: SectionDefinition[] = [
         key: 'resource',
         label: '资源视角',
         headline: '资源、服务、详情、变更要在同一工作区里切换。',
-        summary: '树只负责定位节点，真正的浏览和操作应该落在统一工作区，而不是分散到多个弹窗与跳转页。',
+        summary:
+          '树只负责定位节点，真正的浏览和操作应该落在统一工作区，而不是分散到多个弹窗与跳转页。',
         callout: '这里的中心不是“主机列表”，而是“当前节点的完整操作上下文”。',
         evidenceTitle: '当前节点工作区',
         evidenceRows: [
@@ -219,7 +216,8 @@ const sections: SectionDefinition[] = [
         key: 'change',
         label: '变更视角',
         headline: '变更窗口与依赖提示一起出现，而不是散落在工单里。',
-        summary: '当用户准备做节点级操作时，拓扑页应直接展示最近变更、依赖提醒和建议动作，而不是只给一个树和一个列表。',
+        summary:
+          '当用户准备做节点级操作时，拓扑页应直接展示最近变更、依赖提醒和建议动作，而不是只给一个树和一个列表。',
         callout: '拓扑页天然是“操作前确认”的入口，应当承担部分影响分析职责。',
         evidenceTitle: '变更上下文',
         evidenceRows: [
@@ -250,8 +248,7 @@ const sections: SectionDefinition[] = [
     label: '资源目录',
     eyebrow: 'Cross-Type Search',
     title: '跨类型搜索，不再按系统分仓找资源。',
-    description:
-      '真正的资源目录不是“主机页的升级版”，而是跨资源类型的统一搜索和详情系统。',
+    description: '真正的资源目录不是“主机页的升级版”，而是跨资源类型的统一搜索和详情系统。',
     icon: <DatabaseOutlined />,
     sectionLabel: '搜索 host:10.0.1.100',
     primaryLabel: '搜索 host:10.0.1.100',
@@ -315,11 +312,7 @@ const sections: SectionDefinition[] = [
           ['依赖关系', 'gateway-public depends_on game-server'],
           ['管理关系', 'host managed_by 华北区 / 数据服务'],
         ],
-        timeline: [
-          '先读归属与承载',
-          '再展开依赖路径',
-          '需要时转到 blast radius 做全局分析',
-        ],
+        timeline: ['先读归属与承载', '再展开依赖路径', '需要时转到 blast radius 做全局分析'],
       },
     ],
     commandDeck: [
@@ -363,7 +356,8 @@ const sections: SectionDefinition[] = [
         key: 'workspace',
         label: '工作区',
         headline: '页面先回答上下文，再承接动作。',
-        summary: '业务切换、节点路径、资源范围和操作入口放到一张统一工作台里，避免用户在树、标题和弹窗之间来回找状态。',
+        summary:
+          '业务切换、节点路径、资源范围和操作入口放到一张统一工作台里，避免用户在树、标题和弹窗之间来回找状态。',
         callout: '拓扑页的价值不在树本身，而在节点上下文如何转化为操作效率。',
         evidenceTitle: '原型关注点',
         evidenceRows: [
@@ -371,12 +365,7 @@ const sections: SectionDefinition[] = [
           ['节点上下文', '业务 / 路径 / 节点 / 统计同时出现'],
           ['操作分层', '默认态与选择态明确切换'],
         ],
-        timeline: [
-          '切换业务',
-          '选中节点',
-          '查看主机',
-          '进入批量操作',
-        ],
+        timeline: ['切换业务', '选中节点', '查看主机', '进入批量操作'],
       },
     ],
     commandDeck: [
@@ -442,11 +431,7 @@ const sections: SectionDefinition[] = [
           ['规格', '16C64G / 32C128G / c7.large'],
           ['状态', '空闲 / 待分配 / 待回收 / 不可用'],
         ],
-        timeline: [
-          '先看库存分布',
-          '再筛选待分配与待回收',
-          '最后做批量动作',
-        ],
+        timeline: ['先看库存分布', '再筛选待分配与待回收', '最后做批量动作'],
       },
       {
         key: 'allocation',
@@ -460,11 +445,7 @@ const sections: SectionDefinition[] = [
           ['回收到资源池', '保留归属历史与最近责任人'],
           ['标记不可用', '避免故障库存再次进入分配链路'],
         ],
-        timeline: [
-          '批量选中库存',
-          '执行分配或回收',
-          '同步业务拓扑与历史记录',
-        ],
+        timeline: ['批量选中库存', '执行分配或回收', '同步业务拓扑与历史记录'],
       },
     ],
     commandDeck: [
@@ -483,8 +464,7 @@ const sections: SectionDefinition[] = [
     label: '影响分析',
     eyebrow: 'Blast Radius',
     title: '变更前先看影响，不再靠经验口口相传。',
-    description:
-      '高保真影响分析页把对象输入、风险摘要、依赖路径和建议动作整合到一张决策面板里。',
+    description: '高保真影响分析页把对象输入、风险摘要、依赖路径和建议动作整合到一张决策面板里。',
     icon: <BranchesOutlined />,
     sectionLabel: '变更对象 / host:10.0.1.100',
     primaryLabel: '分析 host:10.0.1.100',
@@ -530,11 +510,7 @@ const sections: SectionDefinition[] = [
           ['影响服务', 'MySQL 主库 / Redis / account-service'],
           ['建议窗口', '凌晨 02:00-04:00'],
         ],
-        timeline: [
-          '先确认影响范围',
-          '再展开依赖证据',
-          '最后生成执行建议',
-        ],
+        timeline: ['先确认影响范围', '再展开依赖证据', '最后生成执行建议'],
       },
       {
         key: 'path',
@@ -548,11 +524,7 @@ const sections: SectionDefinition[] = [
           ['mysql -> business', 'account-db-primary belongs_to 王者荣耀'],
           ['host -> redis', 'host 同时承载 redis:cache-east-1'],
         ],
-        timeline: [
-          '按受控边类型展开路径',
-          '过滤无关归档关系',
-          '导出为变更前检查报告',
-        ],
+        timeline: ['按受控边类型展开路径', '过滤无关归档关系', '导出为变更前检查报告'],
       },
     ],
     commandDeck: [
@@ -618,11 +590,7 @@ const sections: SectionDefinition[] = [
           ['标记已知差异', '允许临时白名单，不污染主数据'],
           ['回填归属', '将孤儿资源送回业务拓扑或资源池'],
         ],
-        timeline: [
-          '先按风险排序',
-          '再做人工仲裁',
-          '最后把结果回写到目录和拓扑',
-        ],
+        timeline: ['先按风险排序', '再做人工仲裁', '最后把结果回写到目录和拓扑'],
       },
       {
         key: 'trust',
@@ -636,11 +604,7 @@ const sections: SectionDefinition[] = [
           ['更新时间', '最近同步 6 分钟前'],
           ['字段冲突', 'CPU 核数 agent=16 / cloud=32'],
         ],
-        timeline: [
-          '展示可信度来源',
-          '突出最近冲突字段',
-          '支持快速标记已知差异',
-        ],
+        timeline: ['展示可信度来源', '突出最近冲突字段', '支持快速标记已知差异'],
       },
     ],
     commandDeck: [
@@ -706,11 +670,7 @@ const sections: SectionDefinition[] = [
           ['投影配置', 'topology / directory / impact / governance'],
           ['来源策略', 'manual / agent / cloud-sync / k8s'],
         ],
-        timeline: [
-          '定义类型',
-          '配置关系和投影',
-          '开放给目录和拓扑消费',
-        ],
+        timeline: ['定义类型', '配置关系和投影', '开放给目录和拓扑消费'],
       },
       {
         key: 'rules',
@@ -724,11 +684,7 @@ const sections: SectionDefinition[] = [
           ['runs_on', '用于承载关系与影响分析'],
           ['depends_on', '用于依赖链与 blast radius'],
         ],
-        timeline: [
-          '定义关系类型',
-          '绑定到投影语义',
-          '供查询层、权限层、AI 共用',
-        ],
+        timeline: ['定义关系类型', '绑定到投影语义', '供查询层、权限层、AI 共用'],
       },
     ],
     commandDeck: [
@@ -943,8 +899,8 @@ const TopologyWorkspacePrototype: React.FC = () => {
   const [selectedHostIds, setSelectedHostIds] = useState<string[]>([]);
 
   const currentBusiness =
-    topologyWorkspaceBusinesses.find((business) => business.id === activeBusinessId)
-    || topologyWorkspaceBusinesses[0];
+    topologyWorkspaceBusinesses.find((business) => business.id === activeBusinessId) ||
+    topologyWorkspaceBusinesses[0];
 
   const selectableNodes = currentBusiness.nodes.filter((node) => node.type !== 'business');
 
@@ -958,7 +914,9 @@ const TopologyWorkspacePrototype: React.FC = () => {
   const visibleBusinesses = topologyWorkspaceBusinesses.filter((business) => {
     const keyword = businessSearch.trim().toLowerCase();
     if (!keyword) return true;
-    return [business.label, business.displayId].some((value) => value.toLowerCase().includes(keyword));
+    return [business.label, business.displayId].some((value) =>
+      value.toLowerCase().includes(keyword),
+    );
   });
 
   const visibleNodes = currentBusiness.nodes.filter((node) => {
@@ -974,9 +932,7 @@ const TopologyWorkspacePrototype: React.FC = () => {
     }
 
     return currentNode.hosts.filter((host) =>
-      [host.hostname, host.ip, host.os].some((value) =>
-        value.toLowerCase().includes(keyword),
-      ),
+      [host.hostname, host.ip, host.os].some((value) => value.toLowerCase().includes(keyword)),
     );
   }, [currentNode.hosts, searchValue]);
 
@@ -1038,7 +994,8 @@ const TopologyWorkspacePrototype: React.FC = () => {
         <p className="cmdb-next__eyebrow">Operational Workspace Prototype</p>
         <h2>把业务拓扑改造成真正的操作台。</h2>
         <p>
-          参考 HTML 原型稿重构为三段式工作界面：左侧全局导航、业务拓扑导航面板、右侧节点工作区，并以浮动批量操作栏接住真实操作节奏。
+          参考 HTML
+          原型稿重构为三段式工作界面：左侧全局导航、业务拓扑导航面板、右侧节点工作区，并以浮动批量操作栏接住真实操作节奏。
         </p>
       </section>
 
@@ -1222,7 +1179,10 @@ const TopologyWorkspacePrototype: React.FC = () => {
                 placeholder="搜索 IP / 主机名..."
                 aria-label="搜索主机"
               />
-              <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--primary">
+              <button
+                type="button"
+                className="cmdb-topology-proto__btn cmdb-topology-proto__btn--primary"
+              >
                 ⊕ 新增主机
               </button>
             </div>
@@ -1232,7 +1192,11 @@ const TopologyWorkspacePrototype: React.FC = () => {
             <div className="cmdb-topology-proto__table-container">
               {filteredHosts.length > 0 ? (
                 <div className="cmdb-topology-proto__table-shell">
-                  <div className="cmdb-topology-proto__table" role="table" aria-label="主机工作台表格">
+                  <div
+                    className="cmdb-topology-proto__table"
+                    role="table"
+                    aria-label="主机工作台表格"
+                  >
                     <div className="cmdb-topology-proto__table-row cmdb-topology-proto__table-row--head">
                       <div className="cmdb-topology-proto__cell cmdb-topology-proto__cell--check">
                         <input
@@ -1263,7 +1227,9 @@ const TopologyWorkspacePrototype: React.FC = () => {
                       <div
                         key={host.id}
                         className={`cmdb-topology-proto__table-row${
-                          selectedHostIds.includes(host.id) ? ' cmdb-topology-proto__table-row--selected' : ''
+                          selectedHostIds.includes(host.id)
+                            ? ' cmdb-topology-proto__table-row--selected'
+                            : ''
                         }`}
                       >
                         <div className="cmdb-topology-proto__cell cmdb-topology-proto__cell--check">
@@ -1274,7 +1240,9 @@ const TopologyWorkspacePrototype: React.FC = () => {
                             aria-label={`选择主机 ${host.hostname}`}
                           />
                         </div>
-                        <div className="cmdb-topology-proto__cell cmdb-topology-proto__mono">{host.ip}</div>
+                        <div className="cmdb-topology-proto__cell cmdb-topology-proto__mono">
+                          {host.ip}
+                        </div>
                         <div className="cmdb-topology-proto__cell">{host.hostname}</div>
                         <div className="cmdb-topology-proto__cell">
                           <span className="cmdb-topology-proto__status">
@@ -1290,7 +1258,10 @@ const TopologyWorkspacePrototype: React.FC = () => {
                         </div>
                         <div className="cmdb-topology-proto__cell">{host.os}</div>
                         <div className="cmdb-topology-proto__cell">
-                          <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text">
+                          <button
+                            type="button"
+                            className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text"
+                          >
                             详情
                           </button>
                         </div>
@@ -1323,18 +1294,32 @@ const TopologyWorkspacePrototype: React.FC = () => {
           {selectionCount > 0 ? (
             <div className="cmdb-topology-proto__fab-wrapper cmdb-topology-proto__fab-wrapper--visible">
               <div className="cmdb-topology-proto__fab">
-                <span className="cmdb-topology-proto__fab-count">已选择 {selectionCount} 项主机</span>
+                <span className="cmdb-topology-proto__fab-count">
+                  已选择 {selectionCount} 项主机
+                </span>
                 <span className="cmdb-topology-proto__fab-divider" />
-                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline">
+                <button
+                  type="button"
+                  className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline"
+                >
                   转移到...
                 </button>
-                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline">
+                <button
+                  type="button"
+                  className="cmdb-topology-proto__btn cmdb-topology-proto__btn--outline"
+                >
                   追加到目标
                 </button>
-                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--danger">
+                <button
+                  type="button"
+                  className="cmdb-topology-proto__btn cmdb-topology-proto__btn--danger"
+                >
                   从模块移除
                 </button>
-                <button type="button" className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text">
+                <button
+                  type="button"
+                  className="cmdb-topology-proto__btn cmdb-topology-proto__btn--text"
+                >
                   复制 IP
                 </button>
                 <button
@@ -1372,8 +1357,8 @@ const CmdbNextPrototype: React.FC = () => {
   const selectedSurface =
     currentSection.surfaces.find((item) => item.id === activeSurface) || currentSection.surfaces[0];
   const selectedPerspective =
-    currentSection.perspectives.find((item) => item.key === activePerspective)
-    || currentSection.perspectives[0];
+    currentSection.perspectives.find((item) => item.key === activePerspective) ||
+    currentSection.perspectives[0];
 
   return (
     <div className="cmdb-next">
@@ -1384,9 +1369,7 @@ const CmdbNextPrototype: React.FC = () => {
           <div className="cmdb-next__identity-copy">
             <p className="cmdb-next__eyebrow">Next-Gen CMDB Prototype</p>
             <h1>面向运维任务，而不是面向底层模型。</h1>
-            <p>
-              这是一套高保真交互原型，用来讨论下一代 CMDB 的产品表达，而不是替换现有系统。
-            </p>
+            <p>这是一套高保真交互原型，用来讨论下一代 CMDB 的产品表达，而不是替换现有系统。</p>
           </div>
         </div>
 

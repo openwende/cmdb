@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Select, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
-import {
-  getResourceDirectoryTree,
-  ResourceDirectoryTreeNode,
-} from '@/api/services/business';
+import { getResourceDirectoryTree, ResourceDirectoryTreeNode } from '@/api/services/business';
 import './style.css';
 
 interface ReleaseHostModalProps {

@@ -3,82 +3,76 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Instance from '@/pages/Business/BusinessTopology/ServiceInstance/Instance';
 
-const {
-  t,
-  listProcesses,
-  getModuleProcessSummary,
-  getProcess,
-  openInstance,
-  storeState,
-} = vi.hoisted(() => ({
-  t: (key: string) => key,
-  listProcesses: vi.fn(async () => ({
-    code: 0,
-    data: {
-      items: [
-        {
-          id: 11,
-          process_name: 'real-process',
-          description: 'instance drawer from api',
-          bind_info: [{ ip: '10.1.1.10', port: '8080', protocol: 'TCP', enable: true }],
-          created_at: '2026-04-03T11:00:00Z',
-          updated_at: '2026-04-03T12:00:00Z',
-          process_template: {
-            id: 21,
-            name: 'real-process',
-            start_param_regex: '--serve',
+const { t, listProcesses, getModuleProcessSummary, getProcess, openInstance, storeState } =
+  vi.hoisted(() => ({
+    t: (key: string) => key,
+    listProcesses: vi.fn(async () => ({
+      code: 0,
+      data: {
+        items: [
+          {
+            id: 11,
+            process_name: 'real-process',
+            description: 'instance drawer from api',
+            bind_info: [{ ip: '10.1.1.10', port: '8080', protocol: 'TCP', enable: true }],
+            created_at: '2026-04-03T11:00:00Z',
+            updated_at: '2026-04-03T12:00:00Z',
+            process_template: {
+              id: 21,
+              name: 'real-process',
+              start_param_regex: '--serve',
+            },
           },
+        ],
+        pagination: {
+          page: 1,
+          page_size: 20,
+          total: 1,
         },
-      ],
-      pagination: {
-        page: 1,
-        page_size: 20,
-        total: 1,
       },
-    },
-  })),
-  getModuleProcessSummary: vi.fn(async () => ({
-    code: 0,
-    data: {
-      total: 2,
-      running: 1,
-      stopped: 1,
-      unknown: 0,
-    },
-  })),
-  getProcess: vi.fn(async (id: number) => ({
-    code: 0,
-    data: {
-      id,
-      process_name: 'real-process',
-      description: 'instance drawer from api',
-      bind_info: [{ ip: '10.1.1.10', port: '8080', protocol: 'TCP', enable: true }],
-      created_at: '2026-04-03T11:00:00Z',
-      updated_at: '2026-04-03T12:00:00Z',
-      process_template: {
-        id: 21,
-        name: 'real-process',
-        start_param_regex: '--serve',
+    })),
+    getModuleProcessSummary: vi.fn(async () => ({
+      code: 0,
+      data: {
+        total: 2,
+        running: 1,
+        stopped: 1,
+        unknown: 0,
       },
-    },
-  })),
-  openInstance: vi.fn(async () => undefined),
-  storeState: {
-    detail: {
-      instance_key: 'module:3',
-      properties: { name: 'SmokeModule-1773163733771' },
-      binding_context: {
-        business_id: 'biz-1',
+    })),
+    getProcess: vi.fn(async (id: number) => ({
+      code: 0,
+      data: {
+        id,
+        process_name: 'real-process',
+        description: 'instance drawer from api',
+        bind_info: [{ ip: '10.1.1.10', port: '8080', protocol: 'TCP', enable: true }],
+        created_at: '2026-04-03T11:00:00Z',
+        updated_at: '2026-04-03T12:00:00Z',
+        process_template: {
+          id: 21,
+          name: 'real-process',
+          start_param_regex: '--serve',
+        },
       },
-      relation_summary: {
-        total: 0,
-        items: [],
+    })),
+    openInstance: vi.fn(async () => undefined),
+    storeState: {
+      detail: {
+        instance_key: 'module:3',
+        properties: { name: 'SmokeModule-1773163733771' },
+        binding_context: {
+          business_id: 'biz-1',
+        },
+        relation_summary: {
+          total: 0,
+          items: [],
+        },
       },
+      loading: false,
+      error: null,
     },
-    loading: false,
-    error: null,
-  },
-}));
+  }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
@@ -118,7 +112,7 @@ vi.mock('antd', () => {
 
   const renderCell = (column: any, record: any) => {
     const value = getValue(record, column.dataIndex);
-    return column.render ? column.render(value, record) : value ?? '--';
+    return column.render ? column.render(value, record) : (value ?? '--');
   };
 
   const Form = ({ children }: any) => <form>{children}</form>;

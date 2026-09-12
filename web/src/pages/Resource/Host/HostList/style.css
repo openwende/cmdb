@@ -108,7 +108,9 @@
   }
 
   @keyframes host-spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .host-mobile-card {

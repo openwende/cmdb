@@ -281,7 +281,9 @@ describe('resource page RBAC write guards', () => {
     render(<BusinessList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'resource.business.actions.create' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'resource.business.actions.create' }),
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByRole('button', { name: 'resource.business.actions.create' })).toBeDisabled();
@@ -310,7 +312,9 @@ describe('resource page RBAC write guards', () => {
     render(<ModelList />);
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'resource.model.actions.create' })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: 'resource.model.actions.create' }),
+      ).toBeInTheDocument();
     });
 
     expect(screen.getByRole('button', { name: 'resource.model.actions.create' })).toBeDisabled();

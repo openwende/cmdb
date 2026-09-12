@@ -173,7 +173,13 @@ const GroupsPage: React.FC = () => {
         </div>
       </div>
 
-      <Table rowKey="id" loading={loading} dataSource={groups} columns={columns} pagination={false} />
+      <Table
+        rowKey="id"
+        loading={loading}
+        dataSource={groups}
+        columns={columns}
+        pagination={false}
+      />
 
       <CreateGroupDrawer
         visible={drawerVisible}

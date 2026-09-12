@@ -10,9 +10,9 @@ vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key: string) =>
       (
-        {
+        ({
           'common.layout.platformName': '配置平台',
-        } as Record<string, string>
+        }) as Record<string, string>
       )[key] || key,
   }),
 }));

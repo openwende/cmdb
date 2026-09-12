@@ -46,7 +46,9 @@
   background: transparent;
   padding: 0;
   cursor: pointer;
-  transition: opacity var(--transition-fast), color var(--transition-fast);
+  transition:
+    opacity var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .header-logo:hover {

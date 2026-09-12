@@ -4,12 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const { mockNavigate, mockStoreState } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockStoreState: {
-    currentBusiness: null as
-      | {
-          id: string;
-          type: 'business' | 'businessSet';
-        }
-      | null,
+    currentBusiness: null as {
+      id: string;
+      type: 'business' | 'businessSet';
+    } | null,
     businessList: [] as Array<{ id: string }>,
     businessSetList: [] as Array<{ id: string }>,
     initialized: true,

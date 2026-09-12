@@ -5,8 +5,7 @@ import { useDirectoryStore } from '@/store/DirectoryStore';
 import './style.css';
 
 const HostPage: React.FC = () => {
-  const selectedId =
-    useDirectoryStore((state) => state.activeDirectoryId) || unmodifiableDirIds[0];
+  const selectedId = useDirectoryStore((state) => state.activeDirectoryId) || unmodifiableDirIds[0];
   const setSelectedId = useDirectoryStore((state) => state.setActiveDirectory);
 
   return (

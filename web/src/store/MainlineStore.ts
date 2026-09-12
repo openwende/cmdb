@@ -38,8 +38,9 @@ export const useMainlineStore = create<MainlineStoreState>((set, get) => ({
     }
 
     return get()
-      .mainlineModels
-      .filter((model) => model.parent_model_uid === parentUID && model.uid !== 'host')
+      .mainlineModels.filter(
+        (model) => model.parent_model_uid === parentUID && model.uid !== 'host',
+      )
       .sort((left, right) => {
         const leftLevel = left.level || 0;
         const rightLevel = right.level || 0;

@@ -246,7 +246,7 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
             label: (
               <span className="basic-info">{t('business.topology.businessNodeInfo.roles')}</span>
             ),
-            children: (
+            children:
               roleFields.length > 0 ? (
                 <div className="info-grid">
                   {roleFields.map((field) => (
@@ -257,8 +257,7 @@ const BusinessNodeInfo: React.FC<Props> = ({ selectedNode }) => {
                 <div className="info-empty">
                   {t('business.topology.businessNodeInfo.rolesEmpty')}
                 </div>
-              )
-            ),
+              ),
           },
         ]}
       />

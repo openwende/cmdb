@@ -8,7 +8,9 @@ const ModelGlobalTopology: React.FC = () => {
   const { t } = useTranslation();
 
   return (
-    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+    >
       <Result
         status="info"
         title={t('resource.model.topologyPending.title')}

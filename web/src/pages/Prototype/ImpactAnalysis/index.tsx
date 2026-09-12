@@ -81,15 +81,40 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       suggestedWindow: '凌晨 02:00–04:00',
     },
     impactedBusinesses: [
-      { name: '王者荣耀', bizId: 'BIZ-2014', severity: 'critical', desc: '核心数据库主库依赖此主机，全服认证链路受影响' },
+      {
+        name: '王者荣耀',
+        bizId: 'BIZ-2014',
+        severity: 'critical',
+        desc: '核心数据库主库依赖此主机，全服认证链路受影响',
+      },
       { name: '原神', bizId: 'BIZ-2048', severity: 'medium', desc: '缓存集群节点之一，可降级运行' },
     ],
     impactedServices: [
-      { name: 'mysql:account-db-primary', type: 'database', severity: 'critical', desc: '主库单点，无自动 failover' },
-      { name: 'redis:cache-east-1', type: 'cache', severity: 'medium', desc: '集群节点，其余节点可承接' },
-      { name: 'account-service', type: 'app', severity: 'high', desc: '直接依赖 account-db，认证链路断路' },
+      {
+        name: 'mysql:account-db-primary',
+        type: 'database',
+        severity: 'critical',
+        desc: '主库单点，无自动 failover',
+      },
+      {
+        name: 'redis:cache-east-1',
+        type: 'cache',
+        severity: 'medium',
+        desc: '集群节点，其余节点可承接',
+      },
+      {
+        name: 'account-service',
+        type: 'app',
+        severity: 'high',
+        desc: '直接依赖 account-db，认证链路断路',
+      },
       { name: 'matchmaker', type: 'app', severity: 'low', desc: '间接依赖，有降级备案' },
-      { name: 'gateway-public', type: 'network', severity: 'low', desc: '部分流量受影响，短暂降级' },
+      {
+        name: 'gateway-public',
+        type: 'network',
+        severity: 'low',
+        desc: '部分流量受影响，短暂降级',
+      },
     ],
     depTree: {
       id: 'root-host',
@@ -150,10 +175,30 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       ],
     },
     suggestions: [
-      { order: 1, action: '确认主从复制状态', detail: '登录数据库确认 slave 延迟 < 1s，再推进下一步', urgent: true },
-      { order: 2, action: '提前执行主从切换', detail: '将 account-db-replica 提升为主库，提前联系 DBA', urgent: true },
-      { order: 3, action: '通知业务方值班', detail: '王者荣耀 + 原神值班同步变更计划和影响窗口', urgent: false },
-      { order: 4, action: '确认变更窗口', detail: '建议凌晨 02:00–04:00 避开日活高峰', urgent: false },
+      {
+        order: 1,
+        action: '确认主从复制状态',
+        detail: '登录数据库确认 slave 延迟 < 1s，再推进下一步',
+        urgent: true,
+      },
+      {
+        order: 2,
+        action: '提前执行主从切换',
+        detail: '将 account-db-replica 提升为主库，提前联系 DBA',
+        urgent: true,
+      },
+      {
+        order: 3,
+        action: '通知业务方值班',
+        detail: '王者荣耀 + 原神值班同步变更计划和影响窗口',
+        urgent: false,
+      },
+      {
+        order: 4,
+        action: '确认变更窗口',
+        detail: '建议凌晨 02:00–04:00 避开日活高峰',
+        urgent: false,
+      },
     ],
   },
   {
@@ -171,7 +216,12 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       suggestedWindow: '凌晨 03:00–05:00',
     },
     impactedBusinesses: [
-      { name: '王者荣耀', bizId: 'BIZ-2014', severity: 'critical', desc: '全服账号认证依赖此主库，核心单点' },
+      {
+        name: '王者荣耀',
+        bizId: 'BIZ-2014',
+        severity: 'critical',
+        desc: '全服账号认证依赖此主库，核心单点',
+      },
     ],
     impactedServices: [
       { name: 'account-service', type: 'app', severity: 'critical', desc: '直接依赖，认证链路' },
@@ -227,10 +277,30 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       ],
     },
     suggestions: [
-      { order: 1, action: '检查副本延迟', detail: 'SHOW SLAVE STATUS 确认 Seconds_Behind_Master = 0', urgent: true },
-      { order: 2, action: '关闭写入开关', detail: '在业务层关闭写入，避免主从切换期间数据不一致', urgent: true },
-      { order: 3, action: '提升副本为主库', detail: '在 RDS 控制台完成 failover 操作，预计 30 秒', urgent: false },
-      { order: 4, action: '验证应用连接', detail: '确认 account-service 已切换到新主库连接串', urgent: false },
+      {
+        order: 1,
+        action: '检查副本延迟',
+        detail: 'SHOW SLAVE STATUS 确认 Seconds_Behind_Master = 0',
+        urgent: true,
+      },
+      {
+        order: 2,
+        action: '关闭写入开关',
+        detail: '在业务层关闭写入，避免主从切换期间数据不一致',
+        urgent: true,
+      },
+      {
+        order: 3,
+        action: '提升副本为主库',
+        detail: '在 RDS 控制台完成 failover 操作，预计 30 秒',
+        urgent: false,
+      },
+      {
+        order: 4,
+        action: '验证应用连接',
+        detail: '确认 account-service 已切换到新主库连接串',
+        urgent: false,
+      },
     ],
   },
   {
@@ -247,11 +317,26 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       suggestedWindow: '凌晨 01:00–03:00',
     },
     impactedBusinesses: [
-      { name: '崩坏：星穹铁道', bizId: 'BIZ-3001', severity: 'medium', desc: '核心战斗服务，重启期间有 30s 不可用' },
+      {
+        name: '崩坏：星穹铁道',
+        bizId: 'BIZ-3001',
+        severity: 'medium',
+        desc: '核心战斗服务，重启期间有 30s 不可用',
+      },
     ],
     impactedServices: [
-      { name: 'scene-manager', type: 'app', severity: 'medium', desc: '场景管理服务依赖游戏服 RPC' },
-      { name: 'match-engine', type: 'app', severity: 'low', desc: '匹配完成后推送给游戏服，有重试' },
+      {
+        name: 'scene-manager',
+        type: 'app',
+        severity: 'medium',
+        desc: '场景管理服务依赖游戏服 RPC',
+      },
+      {
+        name: 'match-engine',
+        type: 'app',
+        severity: 'low',
+        desc: '匹配完成后推送给游戏服，有重试',
+      },
     ],
     depTree: {
       id: 'root-k8s',
@@ -292,9 +377,24 @@ const ANALYSIS_OBJECTS: AnalysisObject[] = [
       ],
     },
     suggestions: [
-      { order: 1, action: '确认 Pod 滚动更新策略', detail: 'maxUnavailable=1，rolling update 期间最多 1 个 pod 不可用', urgent: false },
-      { order: 2, action: '通知场景管理服务', detail: '预告重启窗口，scene-manager 需启用缓存缓冲', urgent: false },
-      { order: 3, action: '监控 match-engine 队列积压', detail: '重启期间观察队列深度，超 200 需暂停匹配', urgent: false },
+      {
+        order: 1,
+        action: '确认 Pod 滚动更新策略',
+        detail: 'maxUnavailable=1，rolling update 期间最多 1 个 pod 不可用',
+        urgent: false,
+      },
+      {
+        order: 2,
+        action: '通知场景管理服务',
+        detail: '预告重启窗口，scene-manager 需启用缓存缓冲',
+        urgent: false,
+      },
+      {
+        order: 3,
+        action: '监控 match-engine 队列积压',
+        detail: '重启期间观察队列深度，超 200 需暂停匹配',
+        urgent: false,
+      },
     ],
   },
 ];
@@ -333,9 +433,7 @@ const RiskBadge: React.FC<{ level: RiskLevel }> = ({ level }) => {
 const TypeIcon: React.FC<{ type: ResourceType; size?: 'sm' | 'md' }> = ({ type, size = 'sm' }) => {
   const cfg = TYPE_CONFIG[type];
   return (
-    <span className={`ia-type-icon ia-type-icon--${size} ia-type-icon--${type}`}>
-      {cfg.icon}
-    </span>
+    <span className={`ia-type-icon ia-type-icon--${size} ia-type-icon--${type}`}>{cfg.icon}</span>
   );
 };
 
@@ -369,10 +467,10 @@ const DepTreeNode: React.FC<{
         role={hasChildren ? 'button' : undefined}
         tabIndex={hasChildren ? 0 : undefined}
       >
-        {hasChildren && (
-          <span className="ia-dep-node__chevron">{isExpanded ? '▾' : '▸'}</span>
+        {hasChildren && <span className="ia-dep-node__chevron">{isExpanded ? '▾' : '▸'}</span>}
+        {!hasChildren && (
+          <span className="ia-dep-node__bullet" style={{ background: riskCfg.dot }} />
         )}
-        {!hasChildren && <span className="ia-dep-node__bullet" style={{ background: riskCfg.dot }} />}
         <TypeIcon type={node.type} />
         <span className="ia-dep-node__name">{node.name}</span>
         <RiskBadge level={node.severity} />
@@ -417,20 +515,23 @@ const ImpactAnalysisPrototype: React.FC = () => {
   );
 
   // Fake analysis loading on object switch
-  const handleSelectObject = useCallback((id: string) => {
-    if (id === selectedId) return;
-    setAnalysing(true);
-    setSelectedId(id);
-    // Reset dep tree expansion to first two levels
-    const obj = ANALYSIS_OBJECTS.find((o) => o.id === id);
-    if (obj) {
-      const ids = new Set<string>([obj.depTree.id]);
-      obj.depTree.children.forEach((c) => ids.add(c.id));
-      setExpandedDepIds(ids);
-    }
-    setCenterView('summary');
-    setTimeout(() => setAnalysing(false), 680);
-  }, [selectedId]);
+  const handleSelectObject = useCallback(
+    (id: string) => {
+      if (id === selectedId) return;
+      setAnalysing(true);
+      setSelectedId(id);
+      // Reset dep tree expansion to first two levels
+      const obj = ANALYSIS_OBJECTS.find((o) => o.id === id);
+      if (obj) {
+        const ids = new Set<string>([obj.depTree.id]);
+        obj.depTree.children.forEach((c) => ids.add(c.id));
+        setExpandedDepIds(ids);
+      }
+      setCenterView('summary');
+      setTimeout(() => setAnalysing(false), 680);
+    },
+    [selectedId],
+  );
 
   const handleDepToggle = useCallback((id: string) => {
     setExpandedDepIds((prev) => {
@@ -497,7 +598,6 @@ const ImpactAnalysisPrototype: React.FC = () => {
 
       {/* ══════ Three-column Shell ══════ */}
       <div className="ia-proto__shell">
-
         {/* ─── Left: Object Rail ─── */}
         <aside className="ia-object-rail" aria-label="分析对象列表">
           <div className="ia-object-rail__head">
@@ -506,8 +606,17 @@ const ImpactAnalysisPrototype: React.FC = () => {
           </div>
 
           <div className="ia-object-rail__search">
-            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
-              <circle cx="7" cy="7" r="5" /><path d="M11 11l3.5 3.5" />
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              aria-hidden
+            >
+              <circle cx="7" cy="7" r="5" />
+              <path d="M11 11l3.5 3.5" />
             </svg>
             <input
               ref={searchRef}
@@ -574,8 +683,12 @@ const ImpactAnalysisPrototype: React.FC = () => {
         </aside>
 
         {/* ─── Center: Analysis Surface ─── */}
-        <main className={`ia-analysis-surface ${analysing ? 'ia-analysis-surface--loading' : ''}`} aria-label="影响分析主视图" aria-live="polite" aria-busy={analysing}>
-
+        <main
+          className={`ia-analysis-surface ${analysing ? 'ia-analysis-surface--loading' : ''}`}
+          aria-label="影响分析主视图"
+          aria-live="polite"
+          aria-busy={analysing}
+        >
           {/* Object Context Strip */}
           <div className="ia-context-strip">
             <div className="ia-context-strip__left">
@@ -598,7 +711,9 @@ const ImpactAnalysisPrototype: React.FC = () => {
           <div className="ia-risk-strip">
             <div className="ia-risk-strip__stat">
               <span>影响业务</span>
-              <strong style={{ color: riskCfg.color }}>{selectedObject.riskSummary.affectedBusinesses}</strong>
+              <strong style={{ color: riskCfg.color }}>
+                {selectedObject.riskSummary.affectedBusinesses}
+              </strong>
               <p>个业务系统</p>
             </div>
             <div className="ia-risk-strip__divider" />
@@ -610,13 +725,17 @@ const ImpactAnalysisPrototype: React.FC = () => {
             <div className="ia-risk-strip__divider" />
             <div className="ia-risk-strip__stat">
               <span>高风险路径</span>
-              <strong style={{ color: RISK_CONFIG.high.color }}>{selectedObject.riskSummary.highRiskPaths}</strong>
+              <strong style={{ color: RISK_CONFIG.high.color }}>
+                {selectedObject.riskSummary.highRiskPaths}
+              </strong>
               <p>条需确认</p>
             </div>
             <div className="ia-risk-strip__divider" />
             <div className="ia-risk-strip__stat ia-risk-strip__stat--wide">
               <span>建议操作窗口</span>
-              <strong className="ia-risk-strip__window-val">{selectedObject.riskSummary.suggestedWindow}</strong>
+              <strong className="ia-risk-strip__window-val">
+                {selectedObject.riskSummary.suggestedWindow}
+              </strong>
               <p>基于业务活动分布</p>
             </div>
           </div>
@@ -648,7 +767,10 @@ const ImpactAnalysisPrototype: React.FC = () => {
               <div className="ia-layer-filter" role="group" aria-label="过滤层级">
                 {(['all', 'business', 'service', 'infra'] as LayerFilter[]).map((layer) => {
                   const labels: Record<LayerFilter, string> = {
-                    all: '全部', business: '业务层', service: '服务层', infra: '基础设施',
+                    all: '全部',
+                    business: '业务层',
+                    service: '服务层',
+                    infra: '基础设施',
                   };
                   return (
                     <button
@@ -674,7 +796,11 @@ const ImpactAnalysisPrototype: React.FC = () => {
                   {selectedObject.impactedBusinesses.map((biz) => {
                     const cfg = RISK_CONFIG[biz.severity];
                     return (
-                      <div key={biz.bizId} className="ia-biz-card" style={{ '--accent': cfg.dot } as React.CSSProperties}>
+                      <div
+                        key={biz.bizId}
+                        className="ia-biz-card"
+                        style={{ '--accent': cfg.dot } as React.CSSProperties}
+                      >
                         <div className="ia-biz-card__head">
                           <TypeIcon type="business" />
                           <strong>{biz.name}</strong>
@@ -692,7 +818,9 @@ const ImpactAnalysisPrototype: React.FC = () => {
                 <h4 className="ia-summary__section-title">
                   影响服务
                   {layerFilter !== 'all' && (
-                    <span className="ia-summary__filter-tag">{filteredServices.length} / {selectedObject.impactedServices.length}</span>
+                    <span className="ia-summary__filter-tag">
+                      {filteredServices.length} / {selectedObject.impactedServices.length}
+                    </span>
                   )}
                 </h4>
                 <div className="ia-service-table">
@@ -702,20 +830,20 @@ const ImpactAnalysisPrototype: React.FC = () => {
                     <span>风险</span>
                     <span>影响说明</span>
                   </div>
-                  {filteredServices.length > 0 ? filteredServices.map((svc) => (
-                    <div key={svc.name} className="ia-service-table__row">
-                      <strong>{svc.name}</strong>
-                      <span className="ia-service-table__type">
-                        <TypeIcon type={svc.type} />
-                        {TYPE_CONFIG[svc.type].label}
-                      </span>
-                      <RiskBadge level={svc.severity} />
-                      <span>{svc.desc}</span>
-                    </div>
-                  )) : (
-                    <div className="ia-service-table__empty">
-                      当前筛选层级下无影响服务
-                    </div>
+                  {filteredServices.length > 0 ? (
+                    filteredServices.map((svc) => (
+                      <div key={svc.name} className="ia-service-table__row">
+                        <strong>{svc.name}</strong>
+                        <span className="ia-service-table__type">
+                          <TypeIcon type={svc.type} />
+                          {TYPE_CONFIG[svc.type].label}
+                        </span>
+                        <RiskBadge level={svc.severity} />
+                        <span>{svc.desc}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="ia-service-table__empty">当前筛选层级下无影响服务</div>
                   )}
                 </div>
               </div>
@@ -787,7 +915,10 @@ const ImpactAnalysisPrototype: React.FC = () => {
 
           <div className="ia-action-rail__suggestions">
             {selectedObject.suggestions.map((s) => (
-              <div key={s.order} className={`ia-suggestion ${s.urgent ? 'ia-suggestion--urgent' : ''}`}>
+              <div
+                key={s.order}
+                className={`ia-suggestion ${s.urgent ? 'ia-suggestion--urgent' : ''}`}
+              >
                 <div className="ia-suggestion__order">{s.order}</div>
                 <div className="ia-suggestion__body">
                   <strong>{s.action}</strong>

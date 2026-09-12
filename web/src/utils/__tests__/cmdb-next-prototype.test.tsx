@@ -95,7 +95,9 @@ describe('cmdb next prototype', () => {
     await user.click(screen.getByRole('button', { name: /切换到业务 原神\/全球发布/ }));
 
     expect(screen.getAllByText('原神/全球发布').length).toBeGreaterThan(0);
-    expect(screen.getByLabelText(/当前节点路径 原神\/全球发布 \/ 发布系统 \/ 发布集群/)).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/当前节点路径 原神\/全球发布 \/ 发布系统 \/ 发布集群/),
+    ).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /切换到节点 跨区缓冲池/ }));
     expect(screen.getByRole('heading', { name: '跨区缓冲池' })).toBeInTheDocument();

@@ -180,7 +180,9 @@ const ModuleNodeInfo: React.FC<Props> = ({ selectedNode, onTopologyChanged }) =>
           ? values.bkBakOperator.join(',')
           : values.bkBakOperator,
         service_category_id:
-          nextServiceCategoryId != null ? String(nextServiceCategoryId) : current.service_category_id,
+          nextServiceCategoryId != null
+            ? String(nextServiceCategoryId)
+            : current.service_category_id,
       }));
       message.success(t('business.topology.moduleNodeInfo.saveSuccess'));
       setIsEditing(false);

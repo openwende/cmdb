@@ -12,10 +12,7 @@ const authState = vi.hoisted(() => ({
 }));
 
 vi.mock('@/store/AuthStore', () => ({
-  useAuthStore: (selector: any) =>
-    selector
-      ? selector(authState)
-      : authState,
+  useAuthStore: (selector: any) => (selector ? selector(authState) : authState),
 }));
 
 describe('ProtectedRoute', () => {
