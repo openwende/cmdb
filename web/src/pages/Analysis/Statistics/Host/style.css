@@ -1,0 +1,17 @@
+.host-statistics {
+  padding: 0;
+
+  .ant-row {
+    /* margin: 0; */
+  }
+
+  /* .ant-col {
+    &:first-child {
+      padding-left: 0;
+    }
+
+    &:last-child {
+      padding-right: 0;
+    }
+  } */
+}

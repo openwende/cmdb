@@ -1,0 +1,12 @@
+.form-field-item .item-header {
+  display: flex;
+  align-items: flex-start;
+}
+
+.form-field-item .checkbox {
+  margin-right: 10px;
+}
+
+.form-field-item .select-input {
+  width: 100%;
+}

@@ -1,0 +1,48 @@
+/* Language component styles */
+.language-container {
+  display: flex;
+  align-items: center;
+
+  .language-button {
+    color: var(--color-header-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    transition: color var(--transition-fast);
+
+    &:hover {
+      color: var(--color-header-text) !important;
+    }
+
+    .language-label {
+      width: 12px;
+      font-size: 10px;
+      margin-top: 6px;
+    }
+  }
+}
+
+.header-auth-button {
+  border: none;
+  background: transparent;
+  color: var(--color-header-text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  font: inherit;
+  height: auto;
+  transition: color var(--transition-fast);
+}
+
+.header-auth-button:hover,
+.header-auth-button:focus-visible {
+  color: var(--color-header-text) !important;
+  background: transparent !important;
+}
+
+.header-auth-trigger {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

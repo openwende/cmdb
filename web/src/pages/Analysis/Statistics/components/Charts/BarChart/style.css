@@ -1,0 +1,14 @@
+.bar-chart-container {
+  width: 100%;
+  height: 100%;
+}
+
+.chart-loading,
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}

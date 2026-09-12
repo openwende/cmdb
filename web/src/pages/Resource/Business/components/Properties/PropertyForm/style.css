@@ -1,0 +1,83 @@
+.form-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  min-width: 800px;
+
+  .form-item {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 8px;
+    min-height: 32px;
+    width: 100%;
+    min-width: 0;
+
+    .form-item-content {
+      display: flex;
+      align-items: center;
+      min-height: 32px;
+    }
+
+    .item-label {
+      line-height: 32px;
+      overflow: hidden;
+      padding: 0 8px 0 36px;
+      position: relative;
+      text-align: right;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      width: 260px;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .label-content {
+        display: inline-block;
+        cursor: pointer;
+
+        &:hover {
+          color: var(--color-primary);
+        }
+      }
+    }
+
+    .item-value-container {
+      flex: 1;
+      margin: 0 0 0 4px;
+      max-width: 288px;
+
+      .item-value {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+
+        .copy-icon {
+          margin-left: 8px;
+          color: var(--color-primary);
+          cursor: pointer;
+          opacity: 0;
+          transition: opacity 0.2s;
+        }
+
+        &:hover .copy-icon {
+          opacity: 1;
+        }
+      }
+
+      .error-message {
+        color: var(--color-error);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+    }
+
+    .form-item-error {
+      color: var(--color-error);
+      font-size: 12px;
+      line-height: 1.4;
+      margin-top: 4px;
+      margin-left: 264px;
+      max-width: 288px;
+    }
+  }
+}

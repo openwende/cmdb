@@ -1,0 +1,90 @@
+.process-drawer {
+  width: 900px;
+
+  .footer-wrapper {
+    display: flex;
+    gap: 8px;
+  }
+
+  .process-content {
+    .ant-collapse-header {
+      font-weight: 700;
+    }
+
+    .ant-collapse-arrow {
+      font-weight: 700;
+    }
+
+    .listen-content {
+      border: 1px solid var(--color-border);
+      border-radius: 2px;
+
+      .ant-table-placeholder {
+        display: none;
+      }
+
+      .add-button {
+        font-size: 12px;
+        line-height: 42px;
+        text-align: center;
+
+        .ant-btn-link {
+          color: var(--color-primary);
+
+          &:hover,
+          &:focus-visible {
+            color: var(--color-primary-hover);
+          }
+        }
+      }
+
+      .ant-btn {
+        padding-left: 0;
+      }
+
+      .ant-btn-link.listen-action-add {
+        color: var(--color-primary);
+
+        &:hover,
+        &:focus-visible {
+          color: var(--color-primary-hover);
+        }
+      }
+
+      .ant-btn-link.listen-action-delete {
+        color: var(--color-error);
+
+        &:hover,
+        &:focus-visible {
+          color: #b91c1c;
+        }
+      }
+
+      .ant-switch {
+        background: var(--color-text-quaternary);
+
+        &:hover:not(.ant-switch-disabled) {
+          background: var(--color-text-tertiary);
+        }
+
+        &.ant-switch-checked {
+          background: var(--color-primary);
+
+          &:hover:not(.ant-switch-disabled) {
+            background: var(--color-primary-hover);
+          }
+        }
+      }
+    }
+
+    .label-tip {
+      margin-left: 4px;
+      color: var(--color-text-quaternary);
+    }
+
+    .form-row {
+      display: flex;
+      gap: 54px;
+    }
+  }
+}

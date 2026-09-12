@@ -1,0 +1,23 @@
+.delete-history-wrapper {
+  padding: 16px;
+  margin: 0 0 16px;
+  background-color: var(--color-bg-container);
+
+  .operation-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    & > * {
+      width: 260px;
+    }
+  }
+
+  .ant-table-wrapper {
+    margin-bottom: 16px;
+  }
+
+  .delete-list {
+    margin-top: 15px;
+  }
+}

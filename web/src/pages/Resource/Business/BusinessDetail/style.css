@@ -1,0 +1,26 @@
+.business-detail {
+  margin: 0 0 16px;
+  padding: 8px 20px 20px;
+  background: var(--color-bg-container);
+
+  /* Loading state styles */
+  &.loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+  }
+
+  /* Error state styles */
+  &.error-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+
+    .error-message {
+      font-size: 16px;
+      color: var(--color-text-tertiary);
+    }
+  }
+}

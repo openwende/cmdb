@@ -1,0 +1,43 @@
+.properties-collapse {
+  .ant-collapse-header-text {
+    font-weight: bold;
+  }
+}
+
+.properties-loading,
+.properties-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+  padding: 20px;
+}
+
+.error-message {
+  color: var(--color-text-tertiary);
+  font-size: 14px;
+}
+
+.properties-actions {
+  margin-top: 24px;
+
+  .actions-divider {
+    width: calc(100% - 32px);
+    height: 1px;
+    background-color: var(--color-border-secondary);
+    margin-bottom: 16px;
+    margin-left: 16px;
+  }
+
+  .actions-content {
+    display: flex;
+    justify-content: flex-start;
+    padding: 0 16px;
+  }
+}
+
+.editing-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

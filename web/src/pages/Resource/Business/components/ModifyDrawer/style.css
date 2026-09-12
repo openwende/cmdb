@@ -1,0 +1,41 @@
+.modify-drawer {
+  .ant-collapse-arrow {
+    font-weight: 700;
+  }
+
+  .ant-collapse-header-text {
+    font-weight: 700;
+  }
+
+  .ant-checkbox-wrapper {
+    align-self: flex-start;
+    margin-right: 8px;
+  }
+
+  .ant-form-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+  }
+
+  .button-container {
+    text-align: left;
+    margin-left: 16px;
+  }
+
+  .submit-button {
+    margin-right: 8px;
+  }
+}
+
+/* --- Mobile (< 768px) --- */
+@media (max-width: 767px) {
+  .modify-drawer .form-grid {
+    grid-template-columns: 1fr;
+  }
+}

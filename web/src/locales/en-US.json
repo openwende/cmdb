@@ -1,0 +1,1976 @@
+{
+  "routes": {
+    "home": "Home",
+    "business": "Business",
+    "businessTopology": "Business Topology",
+    "transferHost": "Transfer Host",
+    "serviceTemplate": "Service Template",
+    "dynamicGroup": "Dynamic Group",
+    "businessSet": "Business Set",
+    "businessSetTopology": "Topology Workspace",
+    "modelManagement": "Resource Types",
+    "modelOverview": "Type Overview",
+    "modelGroups": "Type Groups",
+    "modelTopology": "Relationship Topology",
+    "resource": "Resource Directory",
+    "resourceContent": "Resource Content",
+    "project": "Project",
+    "resourceBusiness": "Business List",
+    "resourceModel": "Resource Types",
+    "businessDetail": "Business Detail",
+    "modelDetail": "Type Detail",
+    "archivedBusiness": "Archived Business",
+    "host": "Host Resources",
+    "deleteHistory": "Deletion History",
+    "analysis": "Audit & Analysis",
+    "userManagement": "User Management",
+    "userList": "Accounts",
+    "auditLogs": "Audit",
+    "operations": "Operations Overview",
+    "notFound": "404"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "welcome": "Welcome to Configuration Platform",
+    "subtitle": "Unified management of infrastructure and application resources",
+    "stats": {
+      "businesses": "Businesses",
+      "models": "Resource Types",
+      "instances": "Instances",
+      "hosts": "Hosts",
+      "pending": "Pending",
+      "auditToday": "Audits Today",
+      "auditTodaySuffix": "",
+      "systemHealth": "System Health"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "createModel": "Create Resource Type",
+      "importHost": "Import Hosts",
+      "viewTopology": "View Topology",
+      "auditLog": "Audit Logs",
+      "createModelDesc": "Define a new resource type",
+      "importHostDesc": "Batch import host resources",
+      "viewTopologyDesc": "View business topology",
+      "auditLogDesc": "View operation audit logs"
+    },
+    "recentModels": {
+      "title": "Recently Updated Resource Types",
+      "viewAll": "View All",
+      "attributes": "attributes",
+      "noModels": "No resource types yet",
+      "updatedAt": "Updated {{time}}"
+    },
+    "workspace": {
+      "connectedModels_one": "{{count}} resource type connected",
+      "connectedModels_other": "{{count}} resource types connected",
+      "pendingSummary": "Host, business, and instance metrics will open up as the resource graph comes online.",
+      "primaryCta": "Open Business Topology",
+      "primaryCtaNoBusiness": "Create or Select Business",
+      "primaryDesc": "Enter the main workflow from the business tree and continue into nodes, hosts, and change entry points.",
+      "primaryDescNoBusiness": "No business exists yet. Start from the business list to create or select one.",
+      "secondary": {
+        "resources": "Open Resource Directory",
+        "resourcesDesc": "Inspect hosts and infrastructure resources, then continue onboarding the inventory.",
+        "models": "Open Resource Types",
+        "modelsDesc": "Maintain resource types and schemas to extend the platform."
+      }
+    },
+    "onboarding": {
+      "title": "Getting Started",
+      "noBusiness": {
+        "title": "Create your first business",
+        "desc": "A business is the top-level organizational unit for configuration management. All resources and topology belong to a business.",
+        "action": "Create Business",
+        "viewerDesc": "No business data available. Please contact an administrator to create a business."
+      },
+      "noModel": {
+        "title": "Define resource types",
+        "desc": "Resource types define the data structures you want to manage, such as hosts, containers, domains, etc.",
+        "action": "Create Resource Type"
+      },
+      "readyImport": {
+        "title": "Import host resources",
+        "desc": "Businesses and resource types are ready. You can now start importing hosts and other actual resources.",
+        "action": "Open Resource Directory"
+      }
+    }
+  },
+  "common": {
+    "layout": {
+      "platformName": "Configuration Platform",
+      "help": "Help",
+      "login": "Sign in",
+      "logout": "Sign out",
+      "expandSidebar": "Expand sidebar",
+      "collapseSidebar": "Collapse sidebar",
+      "primaryNavigation": "Modules",
+      "sectionNavigation": "Current page"
+    },
+    "rename": "Rename",
+    "delete": "Delete",
+    "edit": "Edit",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "next": "Next",
+    "previous": "Previous",
+    "confirmLeave": "Confirm to leave current page?",
+    "unsavedChanges": "Unsaved changes will be lost",
+    "pleaseEnter": "Please enter ",
+    "pleaseSelect": "Please select",
+    "noMatch": "No matching personnel",
+    "noData": "No data",
+    "notSet": "Not set",
+    "loading": "Loading...",
+    "message": {
+      "createSuccess": "Created successfully",
+      "createFailed": "Failed to create",
+      "updateSuccess": "Updated successfully",
+      "updateFailed": "Failed to update",
+      "copySuccess": "Copied successfully"
+    },
+    "form": {
+      "rulesMessage": "This field is required"
+    },
+    "errors": {
+      "requestFailed": "Request failed. Please try again later.",
+      "networkError": "Network connection failed. Please check your network.",
+      "unauthorized": "Session expired. Please log in again.",
+      "notFound": "The requested resource does not exist",
+      "serverError": "Internal server error. Please try again later.",
+      "boundary": {
+        "title": "Something went wrong",
+        "subtitle": "An unexpected error occurred. Please try again.",
+        "retry": "Try Again"
+      }
+    },
+    "components": {
+      "businessSelector": {
+        "createBusiness": "Create business",
+        "placeholder": "Please select business or business set",
+        "selectBusiness": "Please select business",
+        "businessGroup": "Business",
+        "businessSetGroup": "Business set"
+      },
+      "formComponents": {
+        "noMatchData": "No matching data",
+        "noMatchPersonnel": "No matching personnel",
+        "componentTypeNotFound": "Component type {{type}} does not exist"
+      },
+      "confirmModal": {
+        "confirm": "Confirm",
+        "cancel": "Cancel"
+      },
+      "emptySearchResult": {
+        "title": "Search results are empty",
+        "description": "You can try adjusting keywords or",
+        "clearFilter": "Clear filter conditions"
+      },
+      "pagination": {
+        "total": "Total {{total}} items"
+      },
+      "deleteHistory": {
+        "columns": {
+          "updateTime": "Update time",
+          "operatorAccount": "Operator account"
+        },
+        "placeholder": {
+          "searchIp": "Please enter IP"
+        }
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in to the workspace",
+      "subtitle": "Unified configuration management for infrastructure and application resources — with full traceability and visibility across your stack.",
+      "defaultAccount": "Default accounts: admin / admin123456, editor / editor123456, viewer / viewer123456",
+      "submit": "Sign in",
+      "or": "or",
+      "demoLogin": "Try as admin",
+      "demoLoginTip": "Sign in with the admin demo account for a quick walkthrough — no password entry needed.",
+      "fields": {
+        "username": "Username",
+        "password": "Password"
+      },
+      "placeholders": {
+        "username": "Enter username",
+        "password": "Enter password"
+      },
+      "messages": {
+        "invalidCredentials": "Invalid username or password"
+      }
+    },
+    "userManagement": {
+      "entry": "Users",
+      "title": "User Management",
+      "subtitle": "Manage in-app accounts, fixed roles, and account status. This version keeps the role model intentionally small: admin / editor / viewer.",
+      "actions": {
+        "create": "Create User",
+        "edit": "Edit User",
+        "resetPassword": "Reset Password"
+      },
+      "fields": {
+        "username": "Username",
+        "displayName": "Display Name",
+        "password": "Password",
+        "role": "Role",
+        "status": "Status"
+      },
+      "columns": {
+        "username": "Username",
+        "displayName": "Display Name",
+        "role": "Role",
+        "status": "Status",
+        "lastLoginAt": "Last Login",
+        "updatedAt": "Updated At",
+        "actions": "Actions"
+      },
+      "placeholders": {
+        "username": "Enter username",
+        "displayName": "Enter display name",
+        "password": "Enter new password"
+      },
+      "roles": {
+        "admin": "Administrator",
+        "editor": "Editor",
+        "viewer": "Viewer"
+      },
+      "status": {
+        "active": "Active",
+        "disabled": "Disabled"
+      },
+      "messages": {
+        "loadFailed": "Failed to load users",
+        "passwordResetSuccess": "Password reset successfully"
+      },
+      "validation": {
+        "passwordLength": "Password must be {{min}}-{{max}} characters",
+        "passwordNoOuterSpaces": "Password cannot start or end with spaces"
+      }
+    }
+  },
+  "business": {
+    "messages": {
+      "noBusinessData": "No business data available. Please create a business first.",
+      "noBusinessRedirect": "No businesses yet. Please create one first.",
+      "loadBusinessFailed": "Failed to load business data"
+    },
+    "topology": {
+      "tabs": {
+        "hostList": "Host List",
+        "serviceInstance": "Service Instance",
+        "nodeInfo": "Node Info"
+      },
+      "workspace": {
+        "business": "Current business",
+        "currentNode": "Current node",
+        "noBusiness": "Select business",
+        "noNode": "Select a node from the tree first",
+        "module": "Module",
+        "cluster": "Cluster",
+        "idlePool": "Idle pool",
+        "selectNode": "Select a node from the tree on the left. The panel on the right will switch to that node's hosts, services, and details.",
+        "hostList": "Inspect hosts under the current node and launch add, transfer, or release actions from here.",
+        "serviceInstance": "Inspect service instances under the current node and continue into instance or process views.",
+        "nodeInfo": "Inspect the current node's key details to confirm ownership, status, and maintenance context."
+      },
+      "hostList": {
+        "columns": {
+          "moduleName": "Module name",
+          "clusterName": "Cluster name"
+        },
+        "transfer": {
+          "hostPoolTip": "Hosts must be in idle pool to allow transfer to host pool",
+          "otherBusinessTip": "Hosts must be in idle pool to allow transfer to other business"
+        },
+        "menus": {
+          "businessModule": "Business module",
+          "currentModule": "Current module",
+          "exportSelected": "Export selected",
+          "exportAll": "Export all",
+          "importExcel": "Import excel update"
+        },
+        "empty": {
+          "noModuleCreated": "No modules created for this cluster yet",
+          "createNow": "Create now",
+          "noHostsInModule": "No hosts in this module. Add hosts or assign from another module.",
+          "selectModuleFirst": "Select a module node in the topology tree to view hosts"
+        },
+        "buttons": {
+          "add": "Add",
+          "edit": "Edit",
+          "transferTo": "Transfer to",
+          "appendTo": "Append to",
+          "removeFrom": "Remove from",
+          "copy": "Copy",
+          "more": "More"
+        },
+        "tooltips": {
+          "onlyModuleCanAdd": "Can only add under business module"
+        },
+        "search": {
+          "placeholder": "Please enter IP or asset number"
+        },
+        "pagination": {
+          "selected": "Selected",
+          "items": "items",
+          "total": "{{count}} hosts in scope"
+        },
+        "floating": {
+          "selectedCount": "Selected {{count}} hosts"
+        }
+      },
+      "addHostModal": {
+        "columns": {
+          "innerIP": "Private IP",
+          "innerIPv6": "Private IPv6",
+          "cloudArea": "Cloud area"
+        },
+        "unassigned": "Unassigned",
+        "messages": {
+          "pleaseInputIP": "Please enter IP",
+          "addSuccess": "Successfully added {{count}} hosts",
+          "noNewHosts": "No new hosts to add",
+          "copySuccess": "Copied successfully",
+          "copyFailed": "Copy failed",
+          "ipIncorrectOrNotExists": "IP is incorrect or host does not exist",
+          "noHostSelected": "No host selected"
+        },
+        "placeholders": {
+          "pleaseInput": "Please enter",
+          "searchTopologyNode": "Search topology node",
+          "inputIPNewline": "Please enter IP, separated by newlines"
+        },
+        "buttons": {
+          "addToList": "Add to list",
+          "cancel": "Cancel",
+          "confirm": "Confirm",
+          "nextStep": "Next step"
+        },
+        "tabs": {
+          "staticTopology": "Static topology",
+          "customInput": "Custom input",
+          "resultPreview": "Result preview"
+        },
+        "menu": {
+          "copyIP": "Copy IP",
+          "removeAll": "Remove all"
+        },
+        "labels": {
+          "selectedCount": "Selected {{count}} hosts"
+        },
+        "titles": {
+          "selectHost": "Select host",
+          "addHostToModule": "Add host to module"
+        }
+      },
+      "tree": {
+        "search": "Please enter keyword",
+        "loadError": "Failed to load topology tree",
+        "noData": "No topology data available",
+        "create": {
+          "form": {
+            "label1": "Cluster template",
+            "placeholder1": "Please select cluster template",
+            "noContent": "No options",
+            "createSetTemplate": "Create cluster template",
+            "label2": "Cluster name",
+            "placeholder2": "Please enter cluster name, use newlines to separate for batch creation",
+            "label3": "Service template",
+            "placeholder3": "Please select service template",
+            "createServiceTemplate": "Create service template",
+            "label4": "Module name",
+            "tooltip4": "Module name must be consistent with service template name",
+            "placeholder4": "Please enter module name",
+            "label5": "Service category",
+            "placeholder5": "Please select service category"
+          },
+          "setTitle": "Create cluster",
+          "moduleTitle": "Create module",
+          "dynamicTitle": "Create topology node",
+          "templateMode": "Create from template",
+          "directMode": "Create directly",
+          "selected": "Selected",
+          "fields": {
+            "childModel": "Child node type",
+            "name": "Name",
+            "envType": "Environment type",
+            "serviceType": "Service type"
+          },
+          "placeholders": {
+            "name": "Enter name",
+            "envType": "Select environment type",
+            "serviceType": "Select service type"
+          },
+          "helper": {
+            "modelDriven": "Available child node types are filtered from the current node, and the create form is generated from the schema.",
+            "schemaDriven": "Built-in topology nodes now read the business form schema first instead of relying on hardcoded frontend fields."
+          },
+          "messages": {
+            "loadModelsFailed": "Failed to load creatable resource types",
+            "loadModelDetailFailed": "Failed to load type detail",
+            "createFailed": "Failed to create topology node"
+          },
+          "empty": {
+            "noChildModels": "No child node types can be created under this node"
+          }
+        }
+      },
+      "copyMenu": {
+        "ipv4": "Private IPv4",
+        "ipv6": "Private IPv6",
+        "cloudIdGroup": "Cloud area ID:IP",
+        "cloudIdIPv4": "Cloud area ID:IPv4",
+        "cloudIdIPv6": "Cloud area ID:IPv6",
+        "cloudIdIPIPv4First": "Cloud area ID:IP(IPv4 first)",
+        "cloudIdIPIPv6First": "Cloud area ID:IP(IPv6 first)",
+        "cloudRegion": "Cloud area",
+        "moduleName": "Module name",
+        "setName": "Cluster name"
+      },
+      "transferMenu": {
+        "idlePool": "Idle pool",
+        "businessModule": "Business module",
+        "hostPool": "Host pool",
+        "otherBusiness": "Other business"
+      },
+      "transferHostModal": {
+        "titles": {
+          "idlePool": "Transfer host to idle pool",
+          "businessModule": "Transfer host to business module",
+          "otherBusiness": "Transfer host to other business",
+          "appendToBusiness": "Append host to business module"
+        },
+        "objectNames": {
+          "business": "Business",
+          "cluster": "Cluster",
+          "module": "Module"
+        },
+        "tooltips": {
+          "selectModuleFirst": "Please select business module first",
+          "hostModuleUnchanged": "Host module has not changed"
+        },
+        "buttons": {
+          "confirm": "Confirm",
+          "nextStep": "Next step",
+          "cancel": "Cancel",
+          "clear": "Clear"
+        },
+        "placeholders": {
+          "selectBusiness": "Please select business",
+          "searchKeyword": "Please enter keyword"
+        },
+        "empty": {
+          "selectBusinessFirst": "Please select business first",
+          "noModuleSelected": "No module selected"
+        },
+        "preview": {
+          "title": "Result preview",
+          "selectedText": "Selected",
+          "moduleCountSuffix": "modules"
+        }
+      },
+      "releaseHostModal": {
+        "title": "Confirm return to host pool",
+        "confirmMessagePrefix": "Confirm to transfer",
+        "confirmMessageSuffix": "idle hosts to host pool?",
+        "warning": "Ensure the service is stopped or the host is powered off",
+        "selectDirectory": "Return to directory"
+      },
+      "transferHost": {
+        "columns": {
+          "processName": "Process name",
+          "processAlias": "Process alias",
+          "startupParams": "Startup parameters",
+          "bindInfo": "Bind info",
+          "action": "Action",
+          "serviceInstance": "Service instance",
+          "belongingModule": "Belonging module",
+          "cloudArea": "Cloud area"
+        },
+        "tips": {
+          "addInstanceTip": "After transferring hosts to target module, if the target module has service template configured, corresponding service instances will be added",
+          "deleteInstanceTip": "When removing from current module, host service instance information will also be deleted",
+          "moveToIdleTip": "When host only belongs to current module, it will be placed in idle pool after removal"
+        },
+        "status": {
+          "noProcessAdded": "(No process added)"
+        },
+        "buttons": {
+          "addProcess": "Add process",
+          "confirmChange": "Confirm change"
+        },
+        "actions": {
+          "moveToIdle": "Hosts moved to idle pool"
+        },
+        "confirmDelete": {
+          "title": "Confirm to delete this process?"
+        },
+        "messages": {
+          "noChangeInfo": "Target module is the same as source module, no change information",
+          "transferSuccess": "Host transfer succeeded",
+          "transferFailed": "Host transfer failed"
+        },
+        "tabs": {
+          "deleteServiceInstance": "Delete service instance",
+          "moveToIdleHost": "Move to idle host",
+          "addServiceInstance": "Add service instance"
+        },
+        "labels": {
+          "selectedHosts": "Selected hosts",
+          "units": "units",
+          "transferTo": "Transfer to",
+          "changeConfirmation": "Confirm Changes"
+        }
+      },
+      "serviceInstance": {
+        "menu": {
+          "batchDelete": "Batch delete",
+          "copyIP": "Copy IP",
+          "editLabel": "Edit label"
+        },
+        "messages": {
+          "batchDelete": "Batch delete function",
+          "copyIP": "Copy IP function",
+          "editLabel": "Edit label function",
+          "searchKeyword": "Search: {{keyword}}"
+        },
+        "buttons": {
+          "add": "Add",
+          "edit": "Edit",
+          "delete": "Delete",
+          "instanceOperation": "Instance operation"
+        },
+        "views": {
+          "instance": "Instance",
+          "process": "Process"
+        },
+        "controls": {
+          "expandAll": "Expand all",
+          "searchPlaceholder": "Please enter keyword"
+        },
+        "empty": {
+          "nonBusinessModule": "Non-business module, no service instances, please select business module to view"
+        },
+        "instance": {
+          "columns": {
+            "instanceName": "Instance name",
+            "processCount": "Process count",
+            "labels": "Labels",
+            "action": "Action",
+            "processName": "Process name",
+            "processStart": "Process start",
+            "startupParams": "Startup parameters",
+            "bindInfo": "Bind info"
+          },
+          "actions": {
+            "addProcess": "Add process",
+            "clone": "Clone"
+          },
+          "messages": {
+            "instanceNameUpdateSuccess": "Instance name updated successfully",
+            "labelSaveSuccess": "Label saved successfully",
+            "cloneInstanceInfo": "Clone instance function",
+            "deleteInstanceSuccess": "Instance deleted successfully",
+            "deleteProcessSuccess": "Process deleted successfully"
+          },
+          "modal": {
+            "editLabel": "Edit label"
+          },
+          "form": {
+            "placeholders": {
+              "key": "Key",
+              "value": "Value"
+            }
+          },
+          "drawer": {
+            "viewProcess": "View process",
+            "addProcess": "Add process",
+            "editProcess": "Edit process"
+          },
+          "pagination": {
+            "selected": "Selected",
+            "items": "items"
+          },
+          "confirm": {
+            "deleteInstance": "Confirm to delete this instance?",
+            "deleteProcess": "Confirm to delete this process?"
+          }
+        },
+        "process": {
+          "columns": {
+            "processAlias": "Process alias",
+            "instanceCount": "Instance count",
+            "serviceInstance": "Service instance",
+            "processName": "Process name",
+            "startupParams": "Startup parameters",
+            "bindInfo": "Bind info",
+            "action": "Action"
+          },
+          "sections": {
+            "basicInfo": "Basic info",
+            "listenInfo": "Listen info"
+          },
+          "form": {
+            "processName": "Process name",
+            "processAlias": "Process alias",
+            "startupParams": "Startup parameters",
+            "description": "Description",
+            "placeholders": {
+              "startupParams": "Please enter startup parameters",
+              "description": "Please enter description"
+            }
+          },
+          "messages": {
+            "deleteSuccess": "Process deleted successfully",
+            "deleteAction": "Delete process:"
+          },
+          "drawer": {
+            "viewTitle": "View process",
+            "editTitle": "Edit process"
+          },
+          "table": {
+            "noData": "No data"
+          },
+          "pagination": {
+            "selected": "Selected",
+            "items": "items"
+          },
+          "fields": {
+            "createTime": "Create time",
+            "creator": "Creator",
+            "updateTime": "Update time",
+            "description": "Description"
+          },
+          "confirm": {
+            "deleteProcess": "Confirm to delete this process?"
+          }
+        }
+      },
+      "moduleNodeInfo": {
+        "deleteSuccess": "Module node deleted successfully",
+        "deleteFailed": "Failed to delete module node",
+        "saveSuccess": "Saved successfully",
+        "serviceCategory": "Service category",
+        "basicInfo": "Basic info",
+        "moduleName": "Module name",
+        "moduleNamePlaceholder": "Please enter module name",
+        "moduleType": "Module type",
+        "moduleTypePlaceholder": "Please select module type",
+        "moduleTypeOptions": {
+          "normal": "Normal",
+          "database": "Database"
+        },
+        "mainOperator": "Main operator",
+        "mainOperatorPlaceholder": "Please enter main operator",
+        "backupOperator": "Backup operator",
+        "backupOperatorPlaceholder": "Please enter backup operator",
+        "confirmDeleteTitle": "Confirm to delete module?",
+        "serviceTemplate": "Service template",
+        "none": "None",
+        "hostAttributeAutoApply": "Host attribute auto apply",
+        "notEnabled": "Not enabled",
+        "createTime": "Create time",
+        "creator": "Creator",
+        "updateTime": "Update time",
+        "updater": "Updater",
+        "deleteNode": "Delete node"
+      },
+      "setNodeInfo": {
+        "deleteSuccess": "Set node deleted successfully",
+        "deleteFailed": "Failed to delete set node",
+        "saveSuccess": "Saved successfully",
+        "basicInfo": "Basic info",
+        "setName": "Set name",
+        "setNamePlaceholder": "Please enter set name",
+        "setDescription": "Set description",
+        "setDescriptionPlaceholder": "Please enter set description",
+        "environmentType": "Env type",
+        "environmentTypePlaceholder": "Please select environment type",
+        "environment": {
+          "test": "Test",
+          "experience": "Experience",
+          "production": "Production"
+        },
+        "serviceStatus": "Service status",
+        "serviceStatusPlaceholder": "Please select service status",
+        "status": {
+          "open": "Open",
+          "closed": "Closed"
+        },
+        "designCapacity": "Design capacity",
+        "designCapacityPlaceholder": "Please enter design capacity",
+        "remarks": "Remarks",
+        "remarksPlaceholder": "Please enter remarks",
+        "confirmDeleteTitle": "Confirm to delete set?",
+        "clusterTemplate": "Cluster template",
+        "none": "None",
+        "createTime": "Create time",
+        "creator": "Creator",
+        "updateTime": "Update time",
+        "updater": "Updater",
+        "deleteNode": "Delete node"
+      },
+      "businessNodeInfo": {
+        "basicInfo": "Basic info",
+        "businessName": "Business name",
+        "createTime": "Create time",
+        "creator": "Creator",
+        "updateTime": "Update time",
+        "updater": "Updater",
+        "lifecycle": "Lifecycle",
+        "online": "Online",
+        "testing": "Testing",
+        "timezone": "Timezone",
+        "language": "Language",
+        "chinese": "Chinese",
+        "english": "English",
+        "roles": "Roles",
+        "rolesEmpty": "Role information has not been filled in yet",
+        "maintainer": "Maintainer",
+        "productor": "Product manager",
+        "tester": "Tester",
+        "developer": "Developer",
+        "operator": "Operator"
+      },
+      "idleNodeInfo": {
+        "alertMessage": "Container cluster nodes (Node) without any running Pods will be classified as \"Empty Pod nodes\"",
+        "nodeName": "Node name"
+      },
+      "addProcessModal": {
+        "title": "Add process",
+        "buttons": {
+          "submit": "Submit",
+          "cancel": "Cancel",
+          "add": "Add",
+          "delete": "Delete",
+          "addImmediately": "Add immediately"
+        },
+        "sections": {
+          "basicInfo": "Basic info",
+          "listenInfo": "Listen info",
+          "processManagementInfo": "Process management info"
+        },
+        "fields": {
+          "processName": "Process name",
+          "processAlias": "Process alias",
+          "startupParams": "Startup parameters",
+          "description": "Description",
+          "workPath": "Work path",
+          "pidFile": "PID file path",
+          "startUser": "Start user",
+          "startCount": "Start count",
+          "priority": "Start priority",
+          "startCommand": "Start command",
+          "stopCommand": "Stop command",
+          "restartCommand": "Restart command",
+          "forceStopCommand": "Force stop command",
+          "reloadCommand": "Process reload command",
+          "startWaitTime": "Start wait time",
+          "operationTimeout": "Operation timeout"
+        },
+        "placeholders": {
+          "processName": "Please enter process name",
+          "processAlias": "Please enter process alias",
+          "startupParams": "Please enter startup parameters",
+          "description": "Please enter description",
+          "workPath": "Please enter work path",
+          "pidFile": "Please enter PID file path",
+          "startUser": "Please enter start user",
+          "startCount": "Please enter start count",
+          "priority": "Please enter start priority",
+          "startCommand": "Please enter start command",
+          "stopCommand": "Please enter stop command",
+          "restartCommand": "Please enter restart command",
+          "forceStopCommand": "Please enter force stop command",
+          "reloadCommand": "Please enter process reload command",
+          "startWaitTime": "Please enter start wait time",
+          "operationTimeout": "Please enter operation timeout",
+          "selectOrInputIP": "Please select or enter IP",
+          "inputPort": "Please enter port",
+          "selectProtocol": "Please select protocol"
+        },
+        "tooltips": {
+          "processName": "Name of the process after startup, used to check if the process is alive. For example: \"./application\"",
+          "processAlias": "Alias of the process for easy identification, for example: \"Proxy service\"",
+          "startupParams": "Program startup parameters used to uniquely identify a process, for example: -cp zookeeper",
+          "workPath": "Working path for executing process start/stop operations",
+          "priority": "Batch process startup is sorted by priority from small to large, stop process is in reverse order. Priority value range supports input [-100 ~ 10000]",
+          "startWaitTime": "After executing the start command, how long to wait before checking PID alive status",
+          "operationTimeout": "Timeout for command execution"
+        },
+        "confirmModal": {
+          "title": "Confirm to leave current page?",
+          "description": "Unsaved changes will be lost"
+        },
+        "columns": {
+          "actions": "Actions"
+        },
+        "titles": {
+          "edit": "Edit process",
+          "add": "Add process"
+        }
+      }
+    },
+    "dynamicGroupForm": {
+      "conditionTypes": {
+        "variable": {
+          "title": "Variable condition",
+          "desc": "When using dynamic grouping, operators and condition values can be modified"
+        },
+        "immutable": {
+          "title": "Locked condition",
+          "desc": "When using dynamic grouping, conditions and condition values cannot be modified"
+        }
+      },
+      "conditionNames": {
+        "immutable": "Locked condition",
+        "variable": "Variable condition"
+      },
+      "sections": {
+        "basicInfo": "Basic info",
+        "conditions": "Conditions",
+        "resultPreview": "Result preview"
+      },
+      "form": {
+        "groupName": {
+          "label": "Group name",
+          "placeholder": "Please enter group name"
+        },
+        "groupObject": {
+          "label": "Query object"
+        }
+      },
+      "searchTarget": {
+        "host": {
+          "name": "Host",
+          "desc": "Target is host list"
+        },
+        "set": {
+          "name": "Cluster",
+          "desc": "Target is cluster list"
+        },
+        "object": {
+          "name": "Object",
+          "desc": "Target is object list"
+        }
+      },
+      "conditionPicker": {
+        "addText": "Add",
+        "searchPlaceholder": "Please enter field name or unique identifier",
+        "selectAll": "Select all",
+        "alreadyAdded": "Already added in {{typeName}}",
+        "serviceTemplate": "Service template"
+      },
+      "propertyList": {
+        "toggleTooltip": "Switch to {{typeName}}",
+        "requiredFieldError": "This field is required"
+      },
+      "queryOperatorDesc": {
+        "eq": "Equal",
+        "ne": "Not equal",
+        "lt": "Less than",
+        "gt": "Greater than",
+        "in": "Exact",
+        "nin": "Exact",
+        "range": "Range",
+        "lte": "Less than or equal",
+        "gte": "Greater than or equal",
+        "like": "Fuzzy",
+        "contains": "Match (case insensitive)",
+        "containsCs": "Match (case sensitive)"
+      },
+      "formComponent": {
+        "placeholders": {
+          "immutableValue": "Please enter condition value",
+          "immutableSelect": "Please select condition value",
+          "variableValue": "Please enter default value",
+          "variableSelect": "Please select default value"
+        }
+      },
+      "previewResult": {
+        "title": "Result preview",
+        "updateTime": "(Generated time: {{time}})",
+        "refresh": "Refresh",
+        "emptyTip": "Please set group conditions on the left first",
+        "columns": {
+          "internalIPv4": "Private IPv4",
+          "region": "Cloud area",
+          "cloudVendor": "Cloud host status",
+          "cloudVendorID": "Cloud instance ID",
+          "cloudBusiness": "Cloud vendor",
+          "createTime": "Create time",
+          "creator": "Creator"
+        }
+      },
+      "buttons": {
+        "edit": "Edit",
+        "submit": "Submit",
+        "preview": "Preview",
+        "clearConditions": "Clear conditions"
+      },
+      "confirm": {
+        "clearConditions": "Confirm to clear current group conditions?",
+        "toggleConfirm": "Confirm to switch?",
+        "toggleDescription": "Content will be cleared, confirm to switch?",
+        "leaveConfirm": "Confirm to leave current page?",
+        "leaveDescription": "Unsaved changes will be lost"
+      }
+    },
+    "dynamicGroup": {
+      "searchFields": {
+        "id": "ID",
+        "name": "Group name",
+        "bkObjId": "Query object",
+        "modifyUser": "Modifier"
+      },
+      "columns": {
+        "name": "Group name",
+        "bkObjId": "Query object",
+        "createUser": "Creator",
+        "createTime": "Create time",
+        "modifyUser": "Modifier",
+        "lastTime": "Modify time",
+        "action": "Action"
+      },
+      "actions": {
+        "preview": "Preview",
+        "create": "Create"
+      },
+      "titles": {
+        "preview": "Dynamic Group Details",
+        "edit": "Edit Dynamic Group",
+        "create": "Create Dynamic Group"
+      },
+      "searchPlaceholder": "Please enter {{field}}",
+      "messages": {
+        "loadFailed": "Failed to load dynamic groups",
+        "loadMetaFailed": "Failed to load dynamic group metadata",
+        "createFailed": "Failed to create dynamic group",
+        "updateFailed": "Failed to update dynamic group",
+        "previewFailed": "Failed to preview dynamic group",
+        "deleteSuccess": "Deleted successfully",
+        "deleteFailed": "Failed to delete dynamic group",
+        "noBusinessSelected": "Please select a business first"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete",
+        "deleteDescription": "Confirm to delete \"{{name}}\" group?"
+      },
+      "alert": {
+        "message": "Dynamic grouping currently only provides operation conditions for host documents. In the editing SaaS, you can access its resources, including tasks, monitoring configurations, etc.",
+        "linkText": "View details"
+      },
+      "objectTypes": {
+        "host": "Host",
+        "set": "Object"
+      }
+    },
+    "entryRedirect": {
+      "errorTitle": "Failed to load business data",
+      "errorSubTitle": "Unable to fetch business list. Please check your network and try again.",
+      "retry": "Retry",
+      "goToBusinessList": "Go to Business Management"
+    }
+  },
+  "resource": {
+    "model": {
+      "columns": {
+        "displayName": "Display name",
+        "name": "Type identifier",
+        "modelName": "Resource Type",
+        "classification": "Classification",
+        "group": "Group",
+        "groupName": "Group name",
+        "groupDisplayName": "Group display name",
+        "groupModelCount": "Type count",
+        "icon": "Icon",
+        "mainline": "Mainline",
+        "scope": "Scope",
+        "level": "Level",
+        "updatedAt": "Updated at",
+        "actions": "Actions",
+        "builtIn": "Built-in",
+        "instanceName": "Instance name",
+        "business": "Business",
+        "createdAt": "Created at",
+        "changeType": "Change type",
+        "changedFields": "Changed fields",
+        "operator": "Operator",
+        "clientIp": "Client IP",
+        "relationDirection": "Direction",
+        "relationLabel": "Relation label",
+        "relatedInstance": "Related instance",
+        "depth": "Depth",
+        "path": "Path",
+        "sourceTarget": "Source/Target",
+        "attributeDisplayName": "Attribute display name",
+        "attributeName": "Attribute name",
+        "attributeType": "Attribute type",
+        "attributeRequired": "Required",
+        "attributeUnique": "Unique",
+        "attributeEditable": "Editable",
+        "attributeSortOrder": "Sort order",
+        "attributeOptions": "Options"
+      },
+      "actions": {
+        "create": "Create resource type",
+        "createGroup": "Create group",
+        "manageGroups": "Manage groups",
+        "refresh": "Refresh",
+        "viewDetail": "View detail",
+        "viewInstances": "View instances",
+        "viewInstanceDetail": "View detail",
+        "viewInstanceRelations": "View relations",
+        "viewInstanceHistory": "View history",
+        "createInstance": "Create instance",
+        "createInstanceRelation": "Create relation",
+        "createAttribute": "Create attribute",
+        "createRelation": "Create relation",
+        "editRelation": "Edit relation",
+        "createUniqueRule": "Create unique rule",
+        "editUniqueRule": "Edit unique rule"
+      },
+      "fields": {
+        "name": "Type identifier",
+        "displayName": "Display name",
+        "classification": "Classification",
+        "group": "Group",
+        "groupName": "Group name",
+        "groupDisplayName": "Group display name",
+        "icon": "Icon",
+        "description": "Description",
+        "isMainline": "Mainline",
+        "mainlineScope": "Mainline scope",
+        "mainlineLevel": "Mainline level",
+        "parentModel": "Parent mainline type",
+        "builtIn": "Built-in",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "healthStatus": "Health status",
+        "lastCheckTime": "Last check time",
+        "business": "Business",
+        "parentNode": "Parent node",
+        "instanceName": "Instance name",
+        "sortOrder": "Sort order",
+        "propertiesJson": "Properties JSON",
+        "attributeDisplayName": "Attribute display name",
+        "attributeName": "Attribute name",
+        "attributeType": "Attribute type",
+        "attributeRequired": "Required",
+        "attributeUnique": "Unique",
+        "attributeEditable": "Editable",
+        "defaultValue": "Default value",
+        "placeholder": "Placeholder",
+        "helpText": "Help text",
+        "enumValues": "Enum values"
+      },
+      "placeholders": {
+        "search": "Search by type identifier, display name, or classification",
+        "name": "Enter type identifier, e.g. rack",
+        "displayName": "Enter display name",
+        "group": "Select a type group",
+        "groupName": "Enter group key, e.g. database_assets",
+        "groupDisplayName": "Enter group display name",
+        "icon": "Enter icon name, e.g. rack",
+        "description": "Enter description",
+        "parentModel": "Select parent mainline type",
+        "business": "Select business",
+        "parentNode": "Select parent node",
+        "instanceName": "Enter instance name",
+        "relationDefinition": "Select relation definition",
+        "targetInstance": "Select target instance",
+        "propertiesJson": "Enter JSON, e.g. {\"name\":\"rack-a\"}",
+        "attributeDisplayName": "Enter attribute display name",
+        "attributeName": "Enter attribute name, e.g. rack_code",
+        "enumValues": "One value per line, commas also supported",
+        "defaultValue": "Enter default value",
+        "placeholder": "Enter form placeholder",
+        "helpText": "Enter field guidance"
+      },
+      "sections": {
+        "attributes": "Attributes",
+        "advanced": "Advanced settings",
+        "modelGroups": "Type groups",
+        "modelOverview": "Type overview"
+      },
+      "topologyPending": {
+        "title": "Global relationship topology is not available yet",
+        "subtitle": "Relationship topology is still being built. You can maintain resource types and groups now, or open business topology to inspect connected nodes.",
+        "backOverview": "Back to type overview",
+        "viewGroups": "View type groups",
+        "viewBusinessTopology": "Open business topology"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "basic": "Basic info",
+        "attributes": "Attributes",
+        "fields": "Field designer",
+        "uniques": "Unique rules",
+        "preview": "Form preview",
+        "instances": "Instances",
+        "instanceDetail": "Instance detail",
+        "instanceRelations": "Instance relations",
+        "instanceHistory": "Instance history",
+        "instanceTopology": "Instance topology",
+        "relations": "Relations",
+        "history": "History",
+        "importExport": "Import / Export",
+        "groups": "Groups",
+        "templates": "Templates"
+      },
+      "groups": {
+        "all": "All resource types",
+        "mainline": "Mainline types",
+        "business": "Business types",
+        "resource": "Resource types",
+        "builtin": "Built-in types"
+      },
+      "options": {
+        "classification": {
+          "business": "Business type",
+          "resource": "Resource type"
+        },
+        "scope": {
+          "business": "Business",
+          "global": "Global",
+          "none": "None"
+        },
+        "boolean": {
+          "yes": "Yes",
+          "no": "No"
+        },
+        "fieldType": {
+          "string": "Text",
+          "int": "Number",
+          "bool": "Boolean",
+          "enum": "Enum"
+        }
+      },
+      "messages": {
+        "loadFailed": "Failed to load resource types",
+        "createFailed": "Failed to create resource type",
+        "loadGroupsFailed": "Failed to load type groups",
+        "createGroupFailed": "Failed to create type group",
+        "loadInstancesFailed": "Failed to load instances",
+        "loadInstanceDetailFailed": "Failed to load instance detail",
+        "loadRelationDefinitionsFailed": "Failed to load available instance relations",
+        "loadTargetInstancesFailed": "Failed to load target instances",
+        "loadInstanceRelationsFailed": "Failed to load instance relations",
+        "createInstanceRelationSuccess": "Instance relation created successfully",
+        "createInstanceRelationFailed": "Failed to create instance relation",
+        "deleteInstanceRelationSuccess": "Instance relation deleted successfully",
+        "deleteInstanceRelationFailed": "Failed to delete instance relation",
+        "loadInstanceHistoryFailed": "Failed to load instance history",
+        "loadInstanceTopologyFailed": "Failed to load instance topology",
+        "relationTargetRequired": "Please select a relation definition and a target instance first",
+        "instanceCreateFailed": "Failed to create instance",
+        "attributeCreateFailed": "Failed to create attribute",
+        "loadRelationsFailed": "Failed to load type relations",
+        "createRelationFailed": "Failed to create type relation",
+        "updateRelationFailed": "Failed to update type relation",
+        "deleteRelationSuccess": "Type relation deleted successfully",
+        "deleteRelationFailed": "Failed to delete type relation",
+        "loadUniqueRulesFailed": "Failed to load unique rules",
+        "createUniqueRuleFailed": "Failed to create unique rule",
+        "updateUniqueRuleFailed": "Failed to update unique rule",
+        "deleteUniqueRuleSuccess": "Unique rule deleted successfully",
+        "deleteUniqueRuleFailed": "Failed to delete unique rule",
+        "invalidAttributeName": "Attribute name must start with a lowercase letter and only contain lowercase letters, numbers, and underscores",
+        "invalidJson": "Properties JSON is invalid",
+        "loadParentFailed": "Failed to load parent nodes"
+      },
+      "empty": {
+        "noAttributes": "No attributes defined for this type",
+        "noInstances": "No instances found for this type",
+        "noInstanceDetail": "No instance detail",
+        "noInstanceRelations": "No relations for this instance",
+        "noInstanceHistory": "No history for this instance",
+        "noInstanceTopology": "No topology for this instance",
+        "noRelations": "No relation definitions found for this type",
+        "noUniqueRules": "No unique rules defined for this type",
+        "tabPending": "This section will be connected in a later phase",
+        "noDescription": "No type description"
+      },
+      "unsupported": {
+        "dynamicCapabilityTitle": "This type is not connected to dynamic-model capabilities yet",
+        "uniqueRules": "This type comes from the resource type API, but the backend dynamic-model API cannot resolve it yet. Unique rules are disabled to avoid repeated 404 requests.",
+        "relations": "This type comes from the resource type API, but the backend dynamic-model API cannot resolve it yet. Relation design is disabled to avoid repeated 404 requests."
+      },
+      "helper": {
+        "modelBasics": "Start with object basics first, then enable mainline behavior only when the type really belongs in topology.",
+        "advancedMainline": "Only resource types that should participate in the business mainline topology need mainline settings.",
+        "mainlineNotice": "Mainline types require scope, level, and a parent mainline type. Attaching under module is still not supported in P1.",
+        "propertiesJson": "Use JSON to add arbitrary properties. name / sort_order will be merged automatically.",
+        "parentNodeEmpty": "No eligible parent node was found under this business. Create the parent mainline instance first.",
+        "instanceBusinessScope": "Business-scope mainline instances usually require selecting a business before choosing a parent node.",
+        "instanceListNote": "Instance operations are still type-driven, but they are no longer the primary focus of the type detail view.",
+        "instanceHistoryPage": "Select an instance first, then inspect its history, relations, and topology context.",
+        "instanceRelationsPage": "This tab shows real instance-level relation data rather than type-level relation design.",
+        "instanceRelationCreate": "When creating an instance relation, the available target type and association type are constrained by type relation definitions.",
+        "instanceConfigBlock": "Configuration fields come from instance configs.",
+        "instanceMetricsBlock": "State fields come from instance state.metrics.",
+        "instanceTopologyPage": "Current topology contains {{nodeCount}} nodes and {{edgeCount}} edges.",
+        "enumValues": "Enum values will be used as dropdown options in the instance form.",
+        "instanceFallbackForm": "This type has no custom attributes yet, so the drawer falls back to the basic instance fields.",
+        "attributeDesigner": "Define type attributes first, then let the instance form render from that schema.",
+        "attributeRoadmap": "This round focuses on attribute structure and ordering. Drag layout, field grouping, and composite unique rules come next.",
+        "attributeSortHint": "Fields are currently ordered by sort_order. Drag sorting and field grouping will come in the next phase.",
+        "listOverview": "Resource types are now grouped first. Mainline is treated as one capability of a type, not the only center of the experience.",
+        "groupsPending": "Persistent type groups will be connected after the backend adds storage support. This round only establishes the IA and grouped browsing.",
+        "groupsPage": "Type groups now persist in the backend and can be used to organize both browsing and creation flows.",
+        "previewNotice": "The preview reuses the dynamic instance form mapping so schema changes can be validated immediately.",
+        "relationsPending": "Type relation design is not wired to the frontend yet, so this tab is a placeholder for now.",
+        "relationsDesign": "Type relations define which target types the current type can connect to, along with mapping and delete constraints.",
+        "relationsDesignHint": "This page manages type-level relation design only, not concrete instance-to-instance links.",
+        "relationsListNote": "These definitions directly constrain which instance relations can be created later. Check active usage before deleting.",
+        "historyPending": "This tab will later show type and attribute change history.",
+        "uniquesPending": "Composite unique rules, auxiliary uniqueness, and conflict feedback depend on the next backend validation pass, so this entry is reserved for now.",
+        "uniquesDesign": "Unique rules run before instance writes and prevent duplicate resources from entering the type.",
+        "uniquesDesignHint": "Default rules usually represent the primary identity, while auxiliary rules add business-specific duplicate constraints.",
+        "uniquesListNote": "Updating unique rules changes later create and update behavior. Check existing data for conflicts before editing.",
+        "importExportPending": "This tab will later host type import/export and template capabilities."
+      },
+      "uniques": {
+        "columns": {
+          "name": "Rule name",
+          "fields": "Field combination",
+          "emptyHandling": "Empty handling",
+          "status": "Status",
+          "actions": "Actions"
+        },
+        "fields": {
+          "name": "Rule name",
+          "fields": "Unique fields",
+          "description": "Description",
+          "isDefault": "Default rule",
+          "isAuxiliary": "Auxiliary rule",
+          "enabled": "Enabled",
+          "ignoreIfAllEmpty": "Ignore when all empty"
+        },
+        "placeholders": {
+          "name": "Enter a rule name",
+          "fields": "Select unique fields",
+          "description": "Enter a rule description"
+        },
+        "tags": {
+          "default": "Default",
+          "auxiliary": "Auxiliary",
+          "standard": "Standard"
+        },
+        "status": {
+          "enabled": "Enabled",
+          "disabled": "Disabled"
+        },
+        "options": {
+          "emptyHandling": {
+            "ignore": "Skip when all empty",
+            "validate": "Validate even when all empty"
+          }
+        },
+        "confirmDelete": "Delete this unique rule?"
+      },
+      "relations": {
+        "columns": {
+          "targetModel": "Target type",
+          "associationType": "Association type",
+          "mapping": "Mapping",
+          "onDelete": "On delete",
+          "description": "Description",
+          "actions": "Actions"
+        },
+        "fields": {
+          "targetModel": "Target type",
+          "associationType": "Association type",
+          "mapping": "Mapping",
+          "onDelete": "On delete",
+          "description": "Description",
+          "actions": "Actions"
+        },
+        "options": {
+          "onDelete": {
+            "cascade": "Cascade",
+            "restrict": "Restrict",
+            "set_null": "Set null"
+          }
+        },
+        "confirmDelete": "Delete this type relation?",
+        "confirmDeleteInstanceRelation": "Delete this instance relation?"
+      }
+    },
+    "host": {
+      "tabs": {
+        "unassigned": "Unassigned",
+        "assigned": "Assigned",
+        "all": "All"
+      },
+      "cloudArea": {
+        "direct": "Direct connection area"
+      },
+      "columns": {
+        "id": "ID",
+        "innerIpv4": "Private IPv4",
+        "innerIpv6": "Private IPv6",
+        "cloudArea": "Cloud area",
+        "businessTopology": "Business topology",
+        "cloudHostStatus": "Cloud host status"
+      },
+      "actions": {
+        "importHost": "Import host",
+        "assign": "Assign",
+        "assignTo": "Assign to",
+        "transferTo": "Transfer to",
+        "copy": "Copy",
+        "more": "More"
+      },
+      "aria": {
+        "selectHost": "Select host {{id}}"
+      },
+      "search": {
+        "placeholder": "Please enter IP or asset number"
+      },
+      "tooltips": {
+        "viewDeleteHistory": "View delete history",
+        "onlyHostPoolHosts": "Only host pool hosts can perform this operation",
+        "onlyIdleHostsToHostPool": "Only idle hosts under business can be transferred to host pool",
+        "onlyIdleHostsCrossBusiness": "Only idle hosts under business can be transferred across business",
+        "onlyBusinessHosts": "Only hosts under business can perform this operation"
+      },
+      "messages": {
+        "noCopyContent": "No content to copy",
+        "copySuccess": "Copied successfully",
+        "copyFailed": "Copy failed",
+        "deleteSuccess": "Deleted successfully",
+        "confirmDelete": "Confirm to delete selected hosts?"
+      },
+      "copy": {
+        "id": "ID",
+        "innerIpv4": "Private IPv4",
+        "innerIpv6": "Private IPv6",
+        "cloudAreaIdIp": "Cloud area ID:IP",
+        "cloudAreaIdIpv4": "Cloud area ID:IPv4",
+        "cloudAreaIdIpv6": "Cloud area ID:IPv6",
+        "cloudAreaIdIpIpv4First": "Cloud area ID:IP(IPv4 first)",
+        "cloudAreaIdIpIpv6First": "Cloud area ID:IP(IPv6 first)",
+        "cloudArea": "Cloud area",
+        "topoPath": "Business topology",
+        "cloudHostStatus": "Cloud host status"
+      },
+      "assign": {
+        "businessIdlePool": "Business idle pool",
+        "hostPoolOtherDirectory": "Host pool other directory"
+      },
+      "more": {
+        "delete": "Delete"
+      },
+      "deleteHistory": {
+        "columns": {
+          "updateTime": "Update time",
+          "operationAccount": "Operation account"
+        },
+        "search": {
+          "placeholder": "Please enter IP"
+        }
+      }
+    },
+    "import": {
+      "title": "Import Host",
+      "columns": {
+        "relatedModel": "Related resource type",
+        "uniqueIdentifier": "Unique identifier"
+      },
+      "upload": {
+        "dragText": "Drag files here or",
+        "clickText": "click to upload",
+        "fileHint": "xlsx files within 20M",
+        "downloadTemplate": "Download template"
+      },
+      "steps": {
+        "upload": "Upload file",
+        "configure": "Import configuration",
+        "selectModels": "Select related resource types",
+        "result": "Import result",
+        "importRelatedModels": "Import related type instances"
+      },
+      "actions": {
+        "startImport": "Start import"
+      },
+      "uniqueOptions": {
+        "cloudAreaIpv4": "Cloud area + Private IPv4",
+        "outerIpv4": "Public IPv4",
+        "cloudInstanceVendor": "Cloud instance ID + Cloud vendor",
+        "ipv6CloudArea": "Private IPv6 + Cloud area",
+        "gseAgentId": "GSE Agent ID"
+      },
+      "messages": {
+        "importInfo": "Note: Import editing requires exporting instances to be modified first, then completing editing before import editing operation",
+        "noRelatedModels": "No related resource types, no need to select",
+        "importFailed": "Import failed. Check whether the import file information is correct.",
+        "templateDownloadFailed": "Template download failed. Check that the backend template API is enabled."
+      },
+      "host": {
+        "label": "Host",
+        "modelText": "(Type itself)",
+        "uniqueLabel": "Unique identifier"
+      },
+      "result": {
+        "success": "Import successful",
+        "failed": "Import failed",
+        "close": "Close",
+        "retry": "Retry import"
+      }
+    },
+    "business": {
+      "columns": {
+        "id": "ID",
+        "name": "Business name",
+        "maintainer": "Maintainer",
+        "createdAt": "Created at",
+        "createdBy": "Created by",
+        "updatedAt": "Updated at",
+        "actions": "Actions"
+      },
+      "search": {
+        "fields": {
+          "id": "ID",
+          "name": "Business name",
+          "maintainer": "Maintainer",
+          "createdAt": "Created at",
+          "createdBy": "Created by",
+          "updatedAt": "Updated at"
+        },
+        "placeholder": "Please enter {{field}}",
+        "dateRange": {
+          "startPlaceholder": "Start time",
+          "endPlaceholder": "End time"
+        }
+      },
+      "actions": {
+        "create": "Create",
+        "batchEdit": "Batch edit",
+        "archive": "Archive",
+        "viewDetail": "View detail"
+      },
+      "tooltips": {
+        "viewArchived": "View archived business"
+      },
+      "messages": {
+        "archiveSuccess": "Archived successfully",
+        "confirmArchiveTitle": "Confirm to archive {{name}}",
+        "confirmArchiveDescription": "After archiving, SaaS will not be able to access its resources, including tasks, monitoring configurations, etc. Are you sure you no longer use this business?"
+      },
+      "modify": {
+        "title": {
+          "create": "Create Business",
+          "edit": "Batch Edit Business"
+        },
+        "sections": {
+          "basic": "Basic info",
+          "roles": "Roles"
+        },
+        "fields": {
+          "name": "Business name",
+          "createdAt": "Created at",
+          "createdBy": "Created by",
+          "updatedAt": "Updated at",
+          "updatedBy": "Updated by",
+          "lifecycle": "Lifecycle",
+          "timezone": "Timezone",
+          "language": "Language",
+          "sres": "SRE/Operations",
+          "bizops": "Product managers",
+          "testers": "Testers",
+          "developers": "Developers"
+        },
+        "placeholders": {
+          "name": "Please enter business name",
+          "lifecycle": "Please select lifecycle",
+          "timezone": "Please select timezone",
+          "language": "Please select language"
+        },
+        "options": {
+          "lifecycle": {
+            "testing": "Testing",
+            "online": "Online",
+            "offline": "Offline"
+          },
+          "language": {
+            "chinese": "Chinese",
+            "english": "English"
+          }
+        },
+        "confirmLeave": {
+          "title": "Confirm to leave current page?",
+          "description": "Unsaved changes will be lost"
+        }
+      },
+      "detail": {
+        "tabs": {
+          "attributes": "Attributes"
+        },
+        "property": {
+          "uniqueId": "Unique ID",
+          "fieldName": "Field name",
+          "fieldType": "Field type",
+          "placeholder": "Please enter {{label}}"
+        }
+      },
+      "archived": {
+        "columns": {
+          "id": "ID",
+          "name": "Business name",
+          "maintainer": "Maintainer",
+          "createdAt": "Created at",
+          "createdBy": "Created by",
+          "updatedAt": "Updated at",
+          "updatedBy": "Updated by",
+          "archivedAt": "Archived at",
+          "actions": "Actions"
+        },
+        "actions": {
+          "restore": "Restore",
+          "delete": "Delete"
+        },
+        "messages": {
+          "restoreSuccess": "Restored successfully",
+          "restoreFailed": "Failed to restore",
+          "deleteSuccess": "Deleted successfully",
+          "deleteFailed": "Failed to delete"
+        },
+        "search": {
+          "placeholder": "Please enter business name"
+        },
+        "restoreModal": {
+          "title": "Restore business",
+          "nameLabel": "Business name",
+          "namePlaceholder": "Please enter business name"
+        },
+        "deleteConfirm": {
+          "title": "Confirm to permanently delete this business?",
+          "description": "Once deleted, it cannot be recovered. Please proceed with caution!"
+        }
+      },
+      "topology": {
+        "tabs": {
+          "hostList": "Host list",
+          "serviceInstance": "Service instance"
+        },
+        "hostList": {
+          "columns": {
+            "moduleName": "Module name",
+            "clusterName": "Cluster name"
+          },
+          "transfer": {
+            "hostPoolTip": "Hosts must be in idle pool to allow transfer to host pool",
+            "otherBusinessTip": "Hosts must be in idle pool to allow transfer to other business"
+          },
+          "menus": {
+            "businessModule": "Business module",
+            "currentModule": "Current module",
+            "exportSelected": "Export selected",
+            "exportAll": "Export all",
+            "importExcel": "Import excel update"
+          },
+          "empty": {
+            "noModuleCreated": "No modules created for this cluster yet",
+            "createNow": "Create now"
+          },
+          "buttons": {
+            "add": "Add",
+            "edit": "Edit",
+            "transferTo": "Transfer to",
+            "appendTo": "Append to",
+            "removeFrom": "Remove from",
+            "copy": "Copy",
+            "more": "More"
+          },
+          "tooltips": {
+            "onlyModuleCanAdd": "Can only add under business module"
+          },
+          "search": {
+            "placeholder": "Please enter IP or asset number"
+          },
+          "pagination": {
+            "selected": "Selected",
+            "items": "items"
+          }
+        },
+        "nodeInfo": {
+          "selectNodeMessage": "Please select a node to view details"
+        },
+        "addHostModal": {
+          "columns": {
+            "innerIP": "Private IP",
+            "innerIPv6": "Private IPv6",
+            "cloudArea": "Cloud area"
+          },
+          "unassigned": "Unassigned",
+          "messages": {
+            "pleaseInputIP": "Please enter IP",
+            "addSuccess": "Successfully added {{count}} hosts",
+            "noNewHosts": "No new hosts to add",
+            "copySuccess": "Copied successfully",
+            "copyFailed": "Copy failed",
+            "ipIncorrectOrNotExists": "IP is incorrect or host does not exist",
+            "noHostSelected": "No host selected"
+          },
+          "placeholders": {
+            "pleaseInput": "Please enter",
+            "searchTopologyNode": "Search topology node",
+            "inputIPNewline": "Please enter IP, separated by newlines"
+          },
+          "buttons": {
+            "addToList": "Add to list",
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "nextStep": "Next step"
+          },
+          "tabs": {
+            "staticTopology": "Static topology",
+            "customInput": "Custom input",
+            "resultPreview": "Result preview"
+          },
+          "menu": {
+            "copyIP": "Copy IP",
+            "removeAll": "Remove all"
+          },
+          "labels": {
+            "selectedCount": "Selected {{count}} hosts"
+          },
+          "titles": {
+            "selectHost": "Select host",
+            "addHostToModule": "Add host to module"
+          }
+        }
+      }
+    },
+    "operation": {
+      "title": "Operation Details",
+      "meta": {
+        "business": "Business",
+        "object": "Operation object",
+        "action": "Action",
+        "modelType": "Object category",
+        "instance": "Operation instance",
+        "description": "Operation description",
+        "time": "Operation time",
+        "user": "Operation account"
+      },
+      "values": {
+        "host": "Host",
+        "delete": "Delete",
+        "noBusiness": "--",
+        "deleteDescription": "Delete {{name}}"
+      },
+      "columns": {
+        "attribute": "Attribute",
+        "before": "Before change"
+      },
+      "attributes": {
+        "addressingMethod": "Addressing method",
+        "gseAgentId": "GSE Agent ID",
+        "assetNumber": "Asset number",
+        "backupMaintainer": "Backup maintainer",
+        "cloudHostStatus": "Cloud host status",
+        "cloudArea": "Cloud area",
+        "cloudInstanceId": "Cloud instance ID",
+        "cloudRegion": "Cloud region",
+        "cloudVendor": "Cloud vendor",
+        "cloudZone": "Cloud zone",
+        "remark": "Remark",
+        "cpuLogicalCores": "CPU logical cores",
+        "cpuArchitecture": "CPU architecture",
+        "cpuModel": "CPU model",
+        "createdTime": "Created time",
+        "createdBy": "Created by",
+        "diskCapacity": "Disk capacity (GB)",
+        "innerIpv4": "Private IPv4",
+        "innerIpv6": "Private IPv6",
+        "hostname": "Hostname",
+        "outerIpv4": "Public IPv4",
+        "outerIpv6": "Public IPv6",
+        "isp": "ISP",
+        "innerMac": "Private MAC address",
+        "memoryCapacity": "Memory capacity (MB)",
+        "osBit": "OS bit",
+        "osName": "OS name",
+        "osType": "OS type",
+        "osVersion": "OS version",
+        "outerMac": "Public MAC address",
+        "province": "Province",
+        "warrantyYears": "Warranty years",
+        "slaLevel": "SLA level",
+        "deviceSn": "Device SN",
+        "currentStatus": "Current status",
+        "country": "Country",
+        "updatedTime": "Updated time",
+        "updatedBy": "Updated by",
+        "importTime": "Import time",
+        "importMethod": "Import method",
+        "mainMaintainer": "Main maintainer"
+      }
+    }
+  },
+  "host": {
+    "directory": {
+      "hostPool": "Host Pool",
+      "grouped": "Grouped directory",
+      "add": "Create directory",
+      "input": {
+        "placeholder": "Please enter directory name, press Enter to finish"
+      },
+      "pin": "Pin",
+      "unpin": "Unpin",
+      "message": {
+        "correctName": "Please enter correct directory name",
+        "existName": "Directory name already exists",
+        "addSuccess": "Created successfully",
+        "addFailed": "Failed to create, please try again",
+        "renameSuccess": "Renamed successfully",
+        "renameFailed": "Failed to rename, please try again",
+        "deleteSuccess": "Deleted successfully",
+        "deleteFailed": "Failed to delete, please try again",
+        "pinSuccess": "Pinned",
+        "unpinSuccess": "Unpinned"
+      },
+      "confirm": {
+        "title": "Confirm delete directory",
+        "content": "About to delete directory"
+      }
+    },
+    "assign": {
+      "modal": {
+        "title": {
+          "biz": "Assign to business idle pool",
+          "pool": "Assign to host pool other directory"
+        },
+        "ok": "Confirm",
+        "cancel": "Cancel",
+        "selectedPrefix": "Selected",
+        "selectedSuffix": "hosts",
+        "placeholder": {
+          "biz": "Please select business",
+          "pool": "Please select directory"
+        },
+        "text": {
+          "biz": "Business list",
+          "pool": "Directory list"
+        },
+        "success": "Assigned successfully",
+        "error": "Assignment failed, please try again",
+        "failedDetail": "Assignment failed: {{successful}} succeeded, {{failed}} failed"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "Sorry, the page you visited does not exist.",
+    "backToHome": "Back to home"
+  },
+  "analysis": {
+    "audit": {
+      "tabs": {
+        "host": "Host",
+        "business": "Business",
+        "resource": "Resource"
+      },
+      "filters": {
+        "business": "Business",
+        "operationTarget": "Target",
+        "action": "Action",
+        "time": "Time",
+        "keyword": "Keyword",
+        "timeRange": "Time Range",
+        "actionType": "Action Type",
+        "account": "Account",
+        "instance": "Instance",
+        "host": "Host"
+      },
+      "columns": {
+        "object": "Target",
+        "action": "Action",
+        "business": "Business",
+        "instance": "Instance",
+        "description": "Description",
+        "time": "Time",
+        "account": "Account",
+        "attribute": "Attribute",
+        "before": "Before",
+        "after": "After"
+      },
+      "buttons": {
+        "search": "Search",
+        "reset": "Reset",
+        "expand": "Expand",
+        "collapse": "Collapse"
+      },
+      "placeholders": {
+        "selectOperationTarget": "Please select operation target",
+        "selectOperationTargetFirst": "Please select operation target first",
+        "selectAction": "Please select action",
+        "selectStartDate": "Please select start date",
+        "selectEndDate": "Please select end date",
+        "enterAccount": "Please enter account",
+        "enterId": "Please enter ID",
+        "enterName": "Please enter name",
+        "enterIp": "Please enter IP",
+        "enterIpv6": "Please enter IPv6",
+        "enter": "Please enter"
+      },
+      "operationTargets": {
+        "module": "Module",
+        "cluster": "Cluster",
+        "node": "Node",
+        "serviceInstance": "Service Instance",
+        "dynamicGroup": "Dynamic Group",
+        "business": "Business",
+        "project": "Project"
+      },
+      "actions": {
+        "create": "Create",
+        "update": "Update",
+        "delete": "Delete",
+        "archive": "Archive",
+        "restore": "Restore",
+        "assignToBusiness": "Assign to Business",
+        "returnToPool": "Return to Pool",
+        "transferModule": "Transfer Module"
+      },
+      "accountFilter": {
+        "include": "Include",
+        "exclude": "Exclude"
+      },
+      "instanceFilter": {
+        "name": "Name",
+        "id": "ID",
+        "fuzzy": "Fuzzy"
+      },
+      "detail": {
+        "title": "Operation Details",
+        "business": "Business",
+        "object": "Target",
+        "action": "Action",
+        "modelType": "Object Category",
+        "instance": "Operation Instance",
+        "description": "Description",
+        "time": "Operation Time",
+        "account": "Account"
+      }
+    },
+    "statistics": {
+      "overview": {
+        "businessTotal": "Total Business",
+        "hostTotal": "Total Hosts",
+        "modelTotal": "Total Resource Types",
+        "instanceTotal": "Total Instances",
+        "instanceTooltip": "Excluding business and host types and instances"
+      },
+      "host": {
+        "title": "Host Statistics"
+      },
+      "instance": {
+        "title": "Instance Statistics"
+      },
+      "sampleDataBadge": "Sample data",
+      "sampleDataTip": "Charts currently show sample data and are not connected to live statistics yet.",
+      "sampleDataTipHost": "Distribution charts (OS / business / cloud area) use live statistics; trend and custom charts are still sample data.",
+      "sampleDataTipInstance": "Instance count statistics use live data; change trend and custom charts are still sample data.",
+      "sampleData": {
+        "hostBusiness": {
+          "blueking": "BlueKing",
+          "financeSystem": "Finance System",
+          "officialSiteBusiness": "Official Website",
+          "hrBusiness": "HR Business",
+          "miniProgramBusiness": "Mini Program",
+          "ecommerceChannelSystem": "E-commerce Channel",
+          "hrSystem": "HR System"
+        },
+        "cloudArea": {
+          "unassigned": "Unassigned"
+        },
+        "instanceCategory": {
+          "businessSet": "Business Set",
+          "switch": "Switch",
+          "loadBalance": "Load Balancer",
+          "router": "Router",
+          "firewall": "Firewall",
+          "project": "Project"
+        },
+        "changeType": {
+          "create": "Create",
+          "update": "Update",
+          "delete": "Delete"
+        }
+      },
+      "chart": {
+        "source": {
+          "custom": "Custom",
+          "builtin": "Built-in"
+        },
+        "type": {
+          "pie": "Pie Chart",
+          "bar": "Bar Chart",
+          "line": "Line Chart"
+        },
+        "width": {
+          "half": "50%",
+          "full": "100%"
+        },
+        "loading": "",
+        "noData": "No data",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "unknownType": "Unknown chart type"
+      },
+      "chartNames": {
+        "host": {
+          "osType": "By OS Type",
+          "business": "By Business",
+          "cloudArea": "By Cloud Area",
+          "hostCountTrend": "Host Count Trend"
+        },
+        "instance": {
+          "instanceCount": "Instance Count",
+          "instanceChange": "Instance Change"
+        }
+      },
+      "modal": {
+        "addHostChart": "Add Host Statistics Chart",
+        "addInstanceChart": "Add Instance Statistics Chart",
+        "editChart": "Edit [{{name}}]",
+        "submit": "Submit",
+        "cancel": "Cancel"
+      },
+      "form": {
+        "chartSource": "Chart Source",
+        "selectChart": "Select Chart",
+        "chartName": "Chart Name",
+        "statisticsObject": "Statistics Object",
+        "statisticsDimension": "Statistics Dimension",
+        "chartType": "Chart Type",
+        "chartWidth": "Chart Width",
+        "xAxisCount": "X-Axis Count",
+        "required": "This field is required",
+        "enterChartName": "Please enter chart name",
+        "pleaseSelect": "Please select",
+        "pleaseEnter": "Please enter"
+      },
+      "container": {
+        "moveUpDisabled": "Already at top, cannot move up",
+        "moveDownDisabled": "Already at bottom, cannot move down"
+      },
+      "messages": {
+        "deleteSuccess": "Deleted successfully",
+        "addSuccess": "Added successfully",
+        "editSuccess": "Edited successfully"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm Delete",
+        "deleteContent": "Are you sure you want to delete this chart?"
+      }
+    }
+  }
+}

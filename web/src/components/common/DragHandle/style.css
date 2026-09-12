@@ -1,0 +1,57 @@
+﻿.drag-handle {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 2px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 30;
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s;
+
+  &::before {
+    content: '';
+    position: absolute;
+    right: -3px;
+    top: 0;
+    width: 8px;
+    height: 100%;
+    cursor: col-resize;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--color-border);
+    box-shadow:
+      0 -6px 0 0 var(--color-border),
+      0 -12px 0 0 var(--color-border),
+      0 6px 0 0 var(--color-border),
+      0 12px 0 0 var(--color-border),
+      0 18px 0 0 var(--color-border);
+    transition:
+      background 0.2s,
+      box-shadow 0.2s;
+  }
+
+  &:hover::after,
+  &.active::after {
+    display: none;
+  }
+
+  &:hover,
+  &.active {
+    background: var(--color-primary);
+  }
+
+  &.no-grabber::after {
+    display: none;
+  }
+}
