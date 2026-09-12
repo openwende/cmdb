@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Row, Col } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -15,67 +15,89 @@ import { listDynamicModels, listModels } from '@/api/services/model';
 import { listAggregateInstances } from '@/api/services/modelInstance';
 import './style.css';
 
-// Define icon mapping
-const STATISTICS_ICON_MAP = {
-  biz: <AppstoreOutlined />,
-  host: <DatabaseOutlined />,
-  model: <BlockOutlined />,
-  inst: <ClusterOutlined />,
-};
+type StatisticsId = 'biz' | 'host' | 'model' | 'inst';
 
-// Define color mapping
-const STATISTICS_COLOR_MAP = {
-  biz: '#2563eb',
-  host: '#13c2c2',
-  model: '#52c41a',
-  inst: '#fa8c16',
-};
+// 卡片的静态定义：顺序、图标、主色、名称 key。数量之外的一切都不依赖接口，
+// 这样页面一挂载就能把四张卡片渲染出来，数字先用占位符顶着。
+const STATISTICS_CARDS: {
+  id: StatisticsId;
+  nameKey: string;
+  icon: React.ReactNode;
+  color: string;
+  tooltipKey?: string;
+}[] = [
+  {
+    id: 'biz',
+    nameKey: 'analysis.statistics.overview.businessTotal',
+    icon: <AppstoreOutlined />,
+    color: '#2563eb',
+  },
+  {
+    id: 'host',
+    nameKey: 'analysis.statistics.overview.hostTotal',
+    icon: <DatabaseOutlined />,
+    color: '#13c2c2',
+  },
+  {
+    id: 'model',
+    nameKey: 'analysis.statistics.overview.modelTotal',
+    icon: <BlockOutlined />,
+    color: '#52c41a',
+  },
+  {
+    id: 'inst',
+    nameKey: 'analysis.statistics.overview.instanceTotal',
+    icon: <ClusterOutlined />,
+    color: '#fa8c16',
+    tooltipKey: 'analysis.statistics.overview.instanceTooltip',
+  },
+];
 
 // Define route mapping
 const STATISTICS_ROUTE_MAP = {
   biz: '/resource/business',
   host: '/resource/host',
+  model: '/model/overview',
 };
 
-interface StatisticsData {
-  id: string;
-  name: string;
-  value: number;
-  icon: React.ReactNode;
-  color: string;
-  tooltip?: string;
-}
+// null 表示对应的统计值还没拿到，卡片上显示 “-”
+type StatisticsCounts = Record<StatisticsId, number | null>;
+
+const INITIAL_COUNTS: StatisticsCounts = {
+  biz: null,
+  host: null,
+  model: null,
+  inst: null,
+};
 
 const Overview: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [statisticsData, setStatisticsData] = useState<StatisticsData[]>([]);
+  const [counts, setCounts] = useState<StatisticsCounts>(INITIAL_COUNTS);
 
   useEffect(() => {
     const fetchStatistics = async () => {
-      const [
-        businessResult,
-        hostResult,
-        modelResult,
-        dynamicModelResult,
-      ] = await Promise.allSettled([
-        getBusinessList({ limit: 1, offset: 0 }),
-        getHostList({ params: { page: 1, page_size: 1 } }),
-        listModels(),
-        listDynamicModels(),
-      ]);
+      const [businessResult, hostResult, modelResult, dynamicModelResult] =
+        await Promise.allSettled([
+          getBusinessList({ limit: 1, offset: 0 }),
+          getHostList({ params: { page: 1, page_size: 1 } }),
+          listModels(),
+          listDynamicModels(),
+        ]);
 
       const businessTotal =
         businessResult.status === 'fulfilled'
-          ? businessResult.value?.data?.pagination?.total ?? businessResult.value?.data?.total ?? 0
+          ? (businessResult.value?.data?.pagination?.total ??
+            businessResult.value?.data?.total ??
+            0)
           : 0;
       // R8 统一响应：主机列表为 {code,data:{items,pagination}}，读 pagination.total；
       // 回退旧扁平 total（迁移过渡期兼容）。
       const hostTotal =
         hostResult.status === 'fulfilled'
-          ? (hostResult.value as any)?.data?.pagination?.total ??
+          ? ((hostResult.value as any)?.data?.pagination?.total ??
             (hostResult.value as any)?.total ??
-            0
+            0)
           : 0;
       const models = modelResult.status === 'fulfilled' ? modelResult.value : [];
       const dynamicModels =
@@ -93,43 +115,31 @@ const Overview: React.FC = () => {
         if (result.status !== 'fulfilled') {
           return total;
         }
-        return total + (result.value.data?.pagination?.total || result.value.data?.items?.length || 0);
+        return (
+          total + (result.value.data?.pagination?.total || result.value.data?.items?.length || 0)
+        );
       }, 0);
 
-      const rawStatisticsData = [
-        { id: 'biz', count: businessTotal },
-        { id: 'host', count: hostTotal },
-        { id: 'model', count: models.length },
-        { id: 'inst', count: instanceTotal },
-      ];
-
-    // Define name mapping with i18n
-    const STATISTICS_NAME_MAP = {
-      biz: t('analysis.statistics.overview.businessTotal'),
-      host: t('analysis.statistics.overview.hostTotal'),
-      model: t('analysis.statistics.overview.modelTotal'),
-      inst: t('analysis.statistics.overview.instanceTotal'),
-    };
-
-    // Define tooltip mapping with i18n
-    const STATISTICS_TOOLTIP_MAP = {
-      inst: t('analysis.statistics.overview.instanceTooltip'),
-    };
-
-    // Format data on mount
-      const formattedData = rawStatisticsData.map((item) => ({
-      id: item.id,
-      name: STATISTICS_NAME_MAP[item.id as keyof typeof STATISTICS_NAME_MAP],
-      value: item.count,
-      icon: STATISTICS_ICON_MAP[item.id as keyof typeof STATISTICS_ICON_MAP],
-      color: STATISTICS_COLOR_MAP[item.id as keyof typeof STATISTICS_COLOR_MAP],
-      tooltip: STATISTICS_TOOLTIP_MAP[item.id as keyof typeof STATISTICS_TOOLTIP_MAP],
-    }));
-      setStatisticsData(formattedData);
+      setCounts({
+        biz: businessTotal,
+        host: hostTotal,
+        model: models.length,
+        inst: instanceTotal,
+      });
     };
 
     void fetchStatistics();
-  }, [t]);
+  }, []);
+
+  const cards = useMemo(
+    () =>
+      STATISTICS_CARDS.map((card) => ({
+        ...card,
+        name: t(card.nameKey),
+        tooltip: card.tooltipKey ? t(card.tooltipKey) : undefined,
+      })),
+    [t],
+  );
 
   const handleCardClick = (id: string) => {
     const route = STATISTICS_ROUTE_MAP[id as keyof typeof STATISTICS_ROUTE_MAP];
@@ -147,15 +157,15 @@ const Overview: React.FC = () => {
   return (
     <div className="statistics-overview">
       <Row gutter={[24, 24]}>
-        {statisticsData.map((data, index) => (
-          <Col key={index} xs={24} sm={12} xl={6}>
+        {cards.map((card) => (
+          <Col key={card.id} xs={24} sm={12} xl={6}>
             <StatisticsCard
-              name={data.name}
-              value={data.value}
-              icon={data.icon}
-              color={data.color}
-              tooltip={data.tooltip}
-              onClick={getCardClickHandler(data.id)}
+              name={card.name}
+              value={counts[card.id]}
+              icon={card.icon}
+              color={card.color}
+              tooltip={card.tooltip}
+              onClick={getCardClickHandler(card.id)}
             />
           </Col>
         ))}

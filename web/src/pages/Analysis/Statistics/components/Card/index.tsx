@@ -3,9 +3,13 @@ import { Card as AntdCard, Tooltip } from 'antd';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import './style.css';
 
+/** 数据未返回时卡片上显示的占位符 */
+const PLACEHOLDER_VALUE = '-';
+
 export interface StatisticsCardProps {
   name: string;
-  value: number;
+  /** 统计值；为 null 时表示后端数据还没回来，展示占位符 */
+  value: number | null;
   icon: React.ReactNode;
   color: string;
   tooltip?: string;
@@ -46,7 +50,7 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
         <div className="card-info">
           {nameElement}
           <div className="card-value" style={{ color }}>
-            {value}
+            {value === null ? PLACEHOLDER_VALUE : value}
           </div>
         </div>
         <div className="card-icon" style={{ color }}>
