@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Input, Space, Button, message, Popconfirm, Modal, Form, Empty, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import Pagination from '@/components/common/Pagination';
-import { deleteBusiness, getBusinessList } from '@/api';
+import { deleteBusiness, getBusinessList, updateBusiness } from '@/api';
 import dayjs from 'dayjs';
 import './style.css';
 import { BusinessDetail } from '@/api/types/resource';
@@ -142,21 +142,30 @@ const ArchivedBusiness: React.FC = () => {
   const confirmRestore = () => {
     form
       .validateFields()
-      .then(() => {
-        // API call to restore the business would go here
-        message.success(t('resource.business.archived.messages.restoreSuccess'));
+      .then(async () => {
+        if (!currentBusiness) {
+          return;
+        }
 
-        // Remove the business from the list
-        const updatedList = businessList.filter(
-          (item: BusinessDetail) => item.id !== currentBusiness!.id,
-        );
-        setBusinessList(updatedList);
-        setBusinessCount(businessCount - 1);
+        try {
+          const data = await updateBusiness(currentBusiness.id, {
+            ...currentBusiness,
+            lifecycle: LIFECYCLE.ONLINE,
+          });
 
-        setRestoreModalVisible(false);
-        setCurrentBusiness(null);
+          if (!data.success) {
+            message.error(t('resource.business.archived.messages.restoreFailed'));
+            return;
+          }
 
-        // message.error(t('resource.business.archived.messages.restoreFailed'));
+          message.success(t('resource.business.archived.messages.restoreSuccess'));
+          setRestoreModalVisible(false);
+          setCurrentBusiness(null);
+          await fetchBusinessList();
+        } catch (error) {
+          console.error(error);
+          message.error(t('resource.business.archived.messages.restoreFailed'));
+        }
       })
       .catch((error) => {
         console.error('Validation failed:', error);
