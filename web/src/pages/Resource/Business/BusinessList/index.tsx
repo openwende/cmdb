@@ -300,7 +300,7 @@ const BusinessList: React.FC = () => {
         }}
       />
 
-      {!loading && businessList.length > 0 && (
+      {businessList.length > 0 && (
         <Pagination
           total={businessCount}
           pageSize={pageSize}
