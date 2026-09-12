@@ -3,6 +3,23 @@ import { Navigate } from 'react-router-dom';
 import ErrorBoundary from '../components/common/ErrorBoundary';
 import PageLoading from '../components/common/PageLoading';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+// These are pure layout/pass-through routes (just <Outlet/>, optionally an
+// index <Navigate/>) with no real content or data fetching. Import them
+// eagerly instead of lazily: lazy-loading + Suspense-wrapping every level of
+// a nested route chain caused a "double loading" flash on hard refresh —
+// the parent layout's own Suspense fallback appeared first, then the child
+// leaf route's fallback appeared right after, since neither chunk was
+// cached yet. In-app menu navigation didn't show this because the layout
+// chunk was already resolved from an earlier visit. Eager-importing these
+// collapses each chain down to a single Suspense boundary (the actual leaf
+// page), so only one loading fallback ever appears, on cold load or not.
+import ResourcePage from '../pages/Resource';
+import ResourceBusiness from '../pages/Resource/Business';
+import ResourceHost from '../pages/Resource/Host';
+import ResourceModel from '../pages/Resource/Model';
+import BusinessPage from '../pages/Business';
+import BusinessTopology from '../pages/Business/BusinessTopology';
+import AnalysisPage from '../pages/Analysis';
 import {
   NavigationItem,
   PrimaryNavKey,
@@ -28,15 +45,12 @@ import {
 
 // Lazy load all page components
 const HomePage = lazy(() => import('../pages/Home'));
-const BusinessPage = lazy(() => import('../pages/Business'));
 const BusinessEntryRedirect = lazy(() => import('../pages/Business/EntryRedirect'));
-const BusinessTopology = lazy(() => import('../pages/Business/BusinessTopology'));
 const TopologyView = lazy(() => import('../pages/Business/BusinessTopology/TopologyView'));
 const TransferHost = lazy(() => import('../pages/Business/BusinessTopology/TransferHost'));
 const DynamicGroup = lazy(() => import('../pages/Business/DynamicGroup'));
 
 // Model pages (promoted to top-level)
-const ResourceModel = lazy(() => import('../pages/Resource/Model'));
 const ModelList = lazy(() => import('../pages/Resource/Model/ModelList'));
 const ModelGroups = lazy(() => import('../pages/Resource/Model/pages/Groups'));
 const ModelRelations = lazy(() => import('../pages/Resource/Model/pages/Relations'));
@@ -51,17 +65,13 @@ const ModelRelationDetail = lazy(() => import('../pages/Resource/Model/pages/Rel
 const ModelHistory = lazy(() => import('../pages/Resource/Model/pages/History'));
 
 // Resource pages
-const ResourcePage = lazy(() => import('../pages/Resource'));
-const ResourceBusiness = lazy(() => import('../pages/Resource/Business'));
 const BusinessList = lazy(() => import('../pages/Resource/Business/BusinessList'));
 const BusinessDetail = lazy(() => import('../pages/Resource/Business/BusinessDetail'));
 const ArchivedBusiness = lazy(() => import('../pages/Resource/Business/ArchivedBusiness'));
-const ResourceHost = lazy(() => import('../pages/Resource/Host'));
 const ResourceHostView = lazy(() => import('../pages/Resource/Host/HostView'));
 const ResourceDelHistory = lazy(() => import('../pages/Resource/Host/DeleteHistory'));
 
 // Analysis pages
-const AnalysisPage = lazy(() => import('../pages/Analysis'));
 const AuditLogs = lazy(() => import('../pages/Analysis/Audit'));
 const Statistics = lazy(() => import('../pages/Analysis/Statistics'));
 const UserManagementPage = lazy(() => import('../pages/Admin/Users'));
@@ -82,6 +92,15 @@ const withSuspense = (Component: React.LazyExoticComponent<any>) => {
     </ErrorBoundary>
   );
 };
+
+// Wrap eagerly-imported layout/pass-through components with just an
+// ErrorBoundary — no Suspense needed since there is no chunk to await.
+const withBoundary = (Component: React.ComponentType) => (
+  <ErrorBoundary key={Component.displayName || Component.name}>
+    <Component />
+  </ErrorBoundary>
+);
+
 
 export const routes: NavigationItem[] = [
   {
@@ -107,7 +126,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.business',
     key: 'businessEntity',
     path: '/business/:businessId',
-    element: withSuspense(BusinessPage),
+    element: withBoundary(BusinessPage),
     hideInMenu: true,
     children: [
       {
@@ -120,7 +139,7 @@ export const routes: NavigationItem[] = [
         name: 'routes.businessTopology',
         key: BusinessNavKey.Topology,
         path: 'topology',
-        element: withSuspense(BusinessTopology),
+        element: withBoundary(BusinessTopology),
         icon: <ProfileOutlined />,
         children: [
           {
@@ -151,7 +170,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.businessSet',
     key: PrimaryNavKey.BusinessSet,
     path: '/business-set/:businessSetId',
-    element: withSuspense(BusinessPage),
+    element: withBoundary(BusinessPage),
     hideInMenu: true,
     children: [
       {
@@ -164,7 +183,7 @@ export const routes: NavigationItem[] = [
         name: 'routes.businessSetTopology',
         key: BusinessSetNavKey.Topology,
         path: 'topology',
-        element: withSuspense(BusinessTopology),
+        element: withBoundary(BusinessTopology),
         icon: <ProfileOutlined />,
       },
     ],
@@ -174,7 +193,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.modelManagement',
     key: PrimaryNavKey.Model,
     path: '/model',
-    element: withSuspense(ResourceModel),
+    element: withBoundary(ResourceModel),
     children: [
       {
         key: 'modelIndex',
@@ -272,7 +291,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.resource',
     key: PrimaryNavKey.Resource,
     path: '/resource',
-    element: withSuspense(ResourcePage),
+    element: withBoundary(ResourcePage),
     children: [
       {
         key: 'resourceIndex',
@@ -284,7 +303,7 @@ export const routes: NavigationItem[] = [
         name: 'routes.resourceBusiness',
         key: ResourceKey.Business,
         path: 'business',
-        element: withSuspense(ResourceBusiness),
+        element: withBoundary(ResourceBusiness),
         icon: <AppstoreOutlined />,
         children: [
           {
@@ -313,7 +332,7 @@ export const routes: NavigationItem[] = [
         name: 'routes.host',
         key: ResourceKey.Host,
         path: 'host',
-        element: withSuspense(ResourceHost),
+        element: withBoundary(ResourceHost),
         icon: <DatabaseOutlined />,
         children: [
           {
@@ -337,7 +356,7 @@ export const routes: NavigationItem[] = [
     name: 'routes.analysis',
     key: PrimaryNavKey.Analysis,
     path: '/analysis',
-    element: withSuspense(AnalysisPage),
+    element: withBoundary(AnalysisPage),
     children: [
       {
         key: 'analysisIndex',

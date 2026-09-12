@@ -1,14 +1,17 @@
 .page-loading {
   position: relative;
   width: 100%;
-  min-height: 60vh;
+  /* Fill roughly the visible viewport below the header/breadcrumb so the
+     spinner's 45% offset below lines up with ~45% of the browser window,
+     instead of being anchored near the top of the page. */
+  min-height: calc(100vh - var(--header-height, 52px) - 100px);
   padding: 48px 24px;
   box-sizing: border-box;
 }
 
 .page-loading__inner {
   position: absolute;
-  top: 50%;
+  top: 45%;
   left: 50%;
   transform: translate(-50%, -50%);
   display: flex;

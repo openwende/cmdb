@@ -11,9 +11,15 @@ import './style.css';
 const Login: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, token, initialized, logout } = useAuthStore();
 
   if (!user) {
+    // 刷新时鉴权还没回来（token 仍在、用户信息未到），先什么都不渲染，
+    // 避免头部闪一下“登录”按钮再变回用户名。
+    if (token && !initialized) {
+      return null;
+    }
+
     return (
       <button type="button" className="header-auth-button" onClick={() => navigate(LOGIN_PATH)}>
         {t('common.layout.login')}
