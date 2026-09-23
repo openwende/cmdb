@@ -56,7 +56,7 @@ func NewService(db *gorm.DB, opts ...Option) Service {
 func (s *service) allocateViaMembership(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error) {
 	res, err := s.hms.Move(ctx, req.HostIDs,
 		host_membership.NodeRef{Kind: types.NodeKindBizModule, ID: req.TargetModuleID},
-		host_membership.MoveOptions{Source: types.HostMembershipSourceAllocate, By: "system"})
+		host_membership.MoveOptions{Source: types.HostMembershipSourceAllocate})
 	if err != nil {
 		return nil, err
 	}
@@ -433,7 +433,7 @@ func (s *service) MoveHostsInPool(ctx context.Context, req *types.MoveHostsInPoo
 	// 写收敛（阶段2）：经统一归属通道把主机移到目标资源池目录（Move 删旧 pool 行+增新；mirror 仍写旧表作安全网）。
 	res, err := s.hms.Move(ctx, req.HostIDs,
 		host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: req.TargetDirectoryID},
-		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer, By: "system"})
+		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer})
 	if err != nil {
 		return nil, err
 	}

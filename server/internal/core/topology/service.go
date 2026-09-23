@@ -123,7 +123,7 @@ func (s *service) CreateSet(ctx context.Context, req *types.CreateSetRequest) (*
 	}); err != nil {
 		return nil, err
 	}
-	auditlog.Record(s.db, "set", "create", set.ID, set.BusinessID, set.Name, business.Name)
+	auditlog.Record(ctx, s.db, "set", "create", set.ID, set.BusinessID, set.Name, business.Name)
 	return set, nil
 }
 
@@ -178,7 +178,7 @@ func (s *service) UpdateSet(ctx context.Context, id uint64, req *types.UpdateSet
 		return nil, err
 	}
 
-	auditlog.Record(s.db, "set", "update", updated.ID, updated.BusinessID, updated.Name, "")
+	auditlog.Record(ctx, s.db, "set", "update", updated.ID, updated.BusinessID, updated.Name, "")
 	return s.GetSet(ctx, id)
 }
 
@@ -202,7 +202,7 @@ func (s *service) DeleteSet(ctx context.Context, id uint64) error {
 	}); err != nil {
 		return err
 	}
-	auditlog.Record(s.db, "set", "delete", id, set.BusinessID, set.Name, "")
+	auditlog.Record(ctx, s.db, "set", "delete", id, set.BusinessID, set.Name, "")
 	return nil
 }
 
@@ -234,7 +234,7 @@ func (s *service) CreateModule(ctx context.Context, req *types.CreateModuleReque
 	}); err != nil {
 		return nil, err
 	}
-	auditlog.Record(s.db, "module", "create", module.ID, module.BusinessID, module.Name, "")
+	auditlog.Record(ctx, s.db, "module", "create", module.ID, module.BusinessID, module.Name, "")
 	return module, nil
 }
 
@@ -326,7 +326,7 @@ func (s *service) UpdateModule(ctx context.Context, id uint64, req *types.Update
 		return nil, err
 	}
 
-	auditlog.Record(s.db, "module", "update", updated.ID, updated.BusinessID, updated.Name, "")
+	auditlog.Record(ctx, s.db, "module", "update", updated.ID, updated.BusinessID, updated.Name, "")
 	return s.GetModule(ctx, id)
 }
 
@@ -361,7 +361,7 @@ func (s *service) DeleteModule(ctx context.Context, id uint64) error {
 	}); err != nil {
 		return err
 	}
-	auditlog.Record(s.db, "module", "delete", id, module.BusinessID, module.Name, "")
+	auditlog.Record(ctx, s.db, "module", "delete", id, module.BusinessID, module.Name, "")
 	return nil
 }
 
@@ -378,7 +378,7 @@ func (s *service) TransferHosts(ctx context.Context, req *types.TransferHostsReq
 	// 写收敛（阶段2）：经统一归属通道做业务模块间转移
 	// （删源/空闲模块归属 + 清资源池归属 + 加目标模块，保留其它模块归属；mirror 仍写旧表作安全网）。
 	res, err := s.hms.MoveBetweenModules(ctx, req.HostIDs, req.TargetModuleID, req.SourceModuleID,
-		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer, By: "system"})
+		host_membership.MoveOptions{Source: types.HostMembershipSourceTransfer})
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +404,7 @@ func (s *service) transferToPoolViaMembership(ctx context.Context, hostIDs []uui
 	}
 	res, err := s.hms.Move(ctx, hostIDs,
 		host_membership.NodeRef{Kind: types.NodeKindPoolDirectory, ID: dirID},
-		host_membership.MoveOptions{Source: types.HostMembershipSourceReclaim, By: "system"})
+		host_membership.MoveOptions{Source: types.HostMembershipSourceReclaim})
 	if err != nil {
 		return nil, err
 	}

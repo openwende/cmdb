@@ -24,3 +24,10 @@ func currentUserID(c *gin.Context) *uuid.UUID {
 	id := user.UserID
 	return &id
 }
+
+// requestOperator 返回当前请求的操作人（认证用户名），用于审计与 created_by/updated_by 等
+// 字符串操作人字段。只信任认证中间件写入的身份，不读客户端可伪造的请求头；
+// 取不到时降级为 "system"。
+func requestOperator(c *gin.Context) string {
+	return auth.OperatorFromContext(c.Request.Context())
+}

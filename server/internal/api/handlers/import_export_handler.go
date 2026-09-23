@@ -108,7 +108,7 @@ func (h *ImportExportHandler) UploadAndImport(c *gin.Context) {
 	opts.SkipErrors = c.DefaultQuery("skip_errors", "true") == "true"
 	opts.UpdateExisting = c.DefaultQuery("update_existing", "true") == "true"
 	opts.ValidateOnly = c.DefaultQuery("validate_only", "false") == "true"
-	opts.UserID = c.GetHeader("X-User-ID")
+	opts.UserID = requestOperator(c)
 	opts.ClientIP = c.ClientIP()
 
 	// 4. 执行导入

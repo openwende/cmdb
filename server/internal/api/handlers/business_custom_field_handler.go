@@ -43,7 +43,7 @@ func (h *BusinessCustomFieldHandler) CreateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	group, err := h.service.CreateGroup(c.Request.Context(), businessID, &req, c.GetHeader("X-User-ID"))
+	group, err := h.service.CreateGroup(c.Request.Context(), businessID, &req, requestOperator(c))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -66,7 +66,7 @@ func (h *BusinessCustomFieldHandler) UpdateGroup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	group, err := h.service.UpdateGroup(c.Request.Context(), businessID, groupID, &req, c.GetHeader("X-User-ID"))
+	group, err := h.service.UpdateGroup(c.Request.Context(), businessID, groupID, &req, requestOperator(c))
 	if err != nil {
 		status := http.StatusBadRequest
 		if err == gorm.ErrRecordNotFound {
@@ -105,7 +105,7 @@ func (h *BusinessCustomFieldHandler) CreateField(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	field, err := h.service.CreateField(c.Request.Context(), businessID, &req, c.GetHeader("X-User-ID"))
+	field, err := h.service.CreateField(c.Request.Context(), businessID, &req, requestOperator(c))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -128,7 +128,7 @@ func (h *BusinessCustomFieldHandler) UpdateField(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	field, err := h.service.UpdateField(c.Request.Context(), businessID, fieldID, &req, c.GetHeader("X-User-ID"))
+	field, err := h.service.UpdateField(c.Request.Context(), businessID, fieldID, &req, requestOperator(c))
 	if err != nil {
 		status := http.StatusBadRequest
 		if err == gorm.ErrRecordNotFound {

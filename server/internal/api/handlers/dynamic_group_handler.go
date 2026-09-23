@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/api/response"
-	authn "github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/core/dynamic_group"
 	"github.com/wend/cmdb-backend/internal/types"
 )
@@ -106,7 +105,7 @@ func (h *DynamicGroupHandler) Create(c *gin.Context) {
 		TargetModelUID: firstNonEmpty(req.TargetModelUID, req.BKObjID),
 		Condition:      req.Condition,
 		Description:    req.Description,
-		CreatedBy:      currentOperator(c),
+		CreatedBy:      requestOperator(c),
 	})
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -135,7 +134,7 @@ func (h *DynamicGroupHandler) Update(c *gin.Context) {
 		TargetModelUID: firstNonEmpty(req.TargetModelUID, req.BKObjID),
 		Condition:      req.Condition,
 		Description:    req.Description,
-		UpdatedBy:      currentOperator(c),
+		UpdatedBy:      requestOperator(c),
 	})
 	if err != nil {
 		status := http.StatusBadRequest
@@ -221,11 +220,4 @@ func firstNonEmpty(values ...string) string {
 		}
 	}
 	return ""
-}
-
-func currentOperator(c *gin.Context) string {
-	if user, ok := authn.GetCurrentUser(c); ok && user.Username != "" {
-		return user.Username
-	}
-	return c.GetHeader("X-User-ID")
 }

@@ -47,10 +47,7 @@ func (h *ResourceDirectoryHandler) CreateDirectory(c *gin.Context) {
 		return
 	}
 
-	createdBy := c.GetString("user_id")
-	if createdBy == "" {
-		createdBy = "system"
-	}
+	createdBy := requestOperator(c)
 
 	dir, err := h.service.CreateDirectory(c.Request.Context(), &req, createdBy)
 	if err != nil {
@@ -125,10 +122,7 @@ func (h *ResourceDirectoryHandler) UpdateDirectory(c *gin.Context) {
 		return
 	}
 
-	updatedBy := c.GetString("user_id")
-	if updatedBy == "" {
-		updatedBy = "system"
-	}
+	updatedBy := requestOperator(c)
 
 	dir, err := h.service.UpdateDirectory(c.Request.Context(), id, &req, updatedBy)
 	if err != nil {
@@ -190,10 +184,7 @@ func (h *ResourceDirectoryHandler) ImportHostsToPool(c *gin.Context) {
 		return
 	}
 
-	importedBy := c.GetString("user_id")
-	if importedBy == "" {
-		importedBy = "system"
-	}
+	importedBy := requestOperator(c)
 
 	result, err := h.service.ImportHostsToPool(c.Request.Context(), &req, importedBy)
 	if err != nil {
@@ -249,10 +240,7 @@ func (h *ResourceDirectoryHandler) ReclaimHosts(c *gin.Context) {
 		return
 	}
 
-	reclaimedBy := c.GetString("user_id")
-	if reclaimedBy == "" {
-		reclaimedBy = "system"
-	}
+	reclaimedBy := requestOperator(c)
 
 	result, err := h.service.ReclaimHosts(c.Request.Context(), &req, reclaimedBy)
 	if err != nil {

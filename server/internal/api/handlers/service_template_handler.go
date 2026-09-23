@@ -31,10 +31,7 @@ func (h *ServiceTemplateHandler) CreateServiceTemplate(c *gin.Context) {
 		return
 	}
 
-	createdBy := c.GetString("user_id")
-	if createdBy == "" {
-		createdBy = "system"
-	}
+	createdBy := requestOperator(c)
 
 	template, err := h.service.CreateServiceTemplate(c.Request.Context(), &req, createdBy)
 	if err != nil {
@@ -102,10 +99,7 @@ func (h *ServiceTemplateHandler) UpdateServiceTemplate(c *gin.Context) {
 		return
 	}
 
-	updatedBy := c.GetString("user_id")
-	if updatedBy == "" {
-		updatedBy = "system"
-	}
+	updatedBy := requestOperator(c)
 
 	template, err := h.service.UpdateServiceTemplate(c.Request.Context(), id, &req, updatedBy)
 	if err != nil {
@@ -238,10 +232,7 @@ func (h *ServiceTemplateHandler) CreateSetTemplate(c *gin.Context) {
 		return
 	}
 
-	createdBy := c.GetString("user_id")
-	if createdBy == "" {
-		createdBy = "system"
-	}
+	createdBy := requestOperator(c)
 
 	template, err := h.service.CreateSetTemplate(c.Request.Context(), &req, createdBy)
 	if err != nil {

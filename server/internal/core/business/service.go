@@ -139,7 +139,7 @@ func (s *service) CreateBusiness(ctx context.Context, req *types.CreateBusinessR
 		business.Testers = req.Testers
 		business.Bizops = req.Bizops
 	}
-	auditlog.Record(s.db, "business", "create", business.ID, business.ID, business.Name, business.Name)
+	auditlog.Record(ctx, s.db, "business", "create", business.ID, business.ID, business.Name, business.Name)
 	return business, nil
 }
 
@@ -204,7 +204,7 @@ func (s *service) UpdateBusiness(ctx context.Context, tenantID string, id uint64
 		return nil, err
 	}
 
-	auditlog.Record(s.db, "business", "update", business.ID, business.ID, business.Name, business.Name)
+	auditlog.Record(ctx, s.db, "business", "update", business.ID, business.ID, business.Name, business.Name)
 	return business, nil
 }
 
@@ -223,7 +223,7 @@ func (s *service) DeleteBusiness(ctx context.Context, tenantID string, id uint64
 	if err := s.businessRepo.DeleteBusiness(ctx, tenantID, id); err != nil {
 		return err
 	}
-	auditlog.Record(s.db, "business", "delete", business.ID, business.ID, business.Name, business.Name)
+	auditlog.Record(ctx, s.db, "business", "delete", business.ID, business.ID, business.Name, business.Name)
 	return nil
 }
 

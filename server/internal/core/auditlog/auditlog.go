@@ -6,6 +6,7 @@
 package auditlog
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"time"
@@ -13,15 +14,15 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	"github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
 // Record 尽力写一条 resource_histories（best-effort：审计写失败只吞错、绝不回滚或阻断
 // 已成功的主操作）。应在主操作成功提交后调用。
 //
-// changedBy 暂统一为 "system"——与现有主机归属审计的行为一致（请求级操作人尚未透传到
-// service 层）；后续接入操作人上下文后改为真实用户即可。
-func Record(db *gorm.DB, modelUID, changeType string, resourceID, businessID uint64, resourceName, bizName string) {
+// changedBy 取自请求 context 中的操作人（由认证中间件写入）；无请求级用户时为 "system"。
+func Record(ctx context.Context, db *gorm.DB, modelUID, changeType string, resourceID, businessID uint64, resourceName, bizName string) {
 	if db == nil {
 		return // 无 DB（如单测注入 nil）时跳过，审计不阻断主流程
 	}
@@ -44,7 +45,7 @@ func Record(db *gorm.DB, modelUID, changeType string, resourceID, businessID uin
 		ModelUID:     modelUID,
 		ChangeType:   changeType,
 		AfterData:    afterJSON,
-		ChangedBy:    "system",
+		ChangedBy:    auth.OperatorFromContext(ctx),
 		ChangedAt:    time.Now(),
 		ResourceName: resourceName,
 		BizName:      bizName,

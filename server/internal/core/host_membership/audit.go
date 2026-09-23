@@ -9,6 +9,7 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
+	"github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -71,7 +72,7 @@ func (resourceHistoryAuditRecorder) RecordHostMembershipChange(tx *gorm.DB, host
 		tx.Table("businesses").Select("name").Where("id = ?", bizID).Scan(&bizName)
 	}
 	if by == "" {
-		by = "system"
+		by = auth.SystemOperator
 	}
 
 	return tx.Create(&types.ResourceHistory{

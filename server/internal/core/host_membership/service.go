@@ -21,6 +21,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
+	"github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -39,10 +40,18 @@ type AuditRecorder interface {
 // MoveOptions 归属变更选项。
 type MoveOptions struct {
 	Source string // types.HostMembershipSourceXxx
-	By     string // 操作人
+	By     string // 操作人；为空时取请求 context 中的操作人（auth.OperatorFromContext）
 	// Additive=true：追加归属（保留其它业务模块归属，仅清资源池归属），用于"追加到业务模块"。
 	// Additive=false（默认）：替换归属（主机最终只在 to），用于分配/转移/回收/待回收。
 	Additive bool
+}
+
+// withOperator 未显式指定操作人时，取请求 context 中的操作人，保证审计 changed_by 为真实用户。
+func (o MoveOptions) withOperator(ctx context.Context) MoveOptions {
+	if o.By == "" {
+		o.By = auth.OperatorFromContext(ctx)
+	}
+	return o
 }
 
 // Result 批量操作结果。
@@ -113,6 +122,7 @@ func (s *service) resolveDims(ctx context.Context, node NodeRef) (bizID, setID *
 }
 
 func (s *service) Attach(ctx context.Context, hostIDs []uuid.UUID, node NodeRef, opts MoveOptions) (*Result, error) {
+	opts = opts.withOperator(ctx)
 	if err := validateNode(node); err != nil {
 		return nil, err
 	}
@@ -138,6 +148,7 @@ func (s *service) Attach(ctx context.Context, hostIDs []uuid.UUID, node NodeRef,
 }
 
 func (s *service) Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opts MoveOptions) (*Result, error) {
+	opts = opts.withOperator(ctx)
 	if err := validateNode(to); err != nil {
 		return nil, err
 	}
@@ -196,6 +207,7 @@ func (s *service) Move(ctx context.Context, hostIDs []uuid.UUID, to NodeRef, opt
 }
 
 func (s *service) MoveBetweenModules(ctx context.Context, hostIDs []uuid.UUID, targetModuleID uint64, removeModuleID *uint64, opts MoveOptions) (*Result, error) {
+	opts = opts.withOperator(ctx)
 	to := NodeRef{Kind: types.NodeKindBizModule, ID: targetModuleID}
 	if err := validateNode(to); err != nil {
 		return nil, err

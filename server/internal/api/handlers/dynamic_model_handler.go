@@ -339,8 +339,8 @@ func (h *DynamicModelHandler) CreateUniqueRule(c *gin.Context) {
 		Enabled:          req.Enabled,
 		IgnoreIfAllEmpty: req.IgnoreIfAllEmpty,
 		Description:      req.Description,
-		CreatedBy:        c.GetHeader("X-User-ID"),
-		UpdatedBy:        c.GetHeader("X-User-ID"),
+		CreatedBy:        requestOperator(c),
+		UpdatedBy:        requestOperator(c),
 	}, req.Fields)
 	if err != nil {
 		status := http.StatusBadRequest
@@ -371,7 +371,7 @@ func (h *DynamicModelHandler) UpdateUniqueRule(c *gin.Context) {
 		Enabled:          req.Enabled,
 		IgnoreIfAllEmpty: req.IgnoreIfAllEmpty,
 		Description:      req.Description,
-		UpdatedBy:        c.GetHeader("X-User-ID"),
+		UpdatedBy:        requestOperator(c),
 	}, req.Fields)
 	if err != nil {
 		status := http.StatusBadRequest
@@ -785,7 +785,7 @@ func (h *DynamicModelHandler) UpsertInstance(c *gin.Context) {
 
 	// 构建审计上下文
 	auditCtx := &dynamic_model.AuditContext{
-		UserID:    c.GetHeader("X-User-ID"),
+		UserID:    requestOperator(c),
 		ClientIP:  c.ClientIP(),
 		UserAgent: c.Request.UserAgent(),
 	}
@@ -898,7 +898,7 @@ func (h *DynamicModelHandler) DeleteInstance(c *gin.Context) {
 	}
 
 	auditCtx := &dynamic_model.AuditContext{
-		UserID:    c.GetHeader("X-User-ID"),
+		UserID:    requestOperator(c),
 		ClientIP:  c.ClientIP(),
 		UserAgent: c.Request.UserAgent(),
 	}

@@ -10,6 +10,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
+	"github.com/wend/cmdb-backend/internal/auth"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -285,6 +286,25 @@ func TestMove_WritesHostAudit(t *testing.T) {
 	require.Equal(t, "biz-x", row.BizName)
 	require.Contains(t, row.AfterData, `"business_id":"1000"`)
 	require.Contains(t, row.AfterData, "10.0.0.7")
+}
+
+// 未显式指定 By 时，审计操作人取请求 context 中的认证用户，而不是写死 "system"。
+func TestMove_AuditOperatorFromContext(t *testing.T) {
+	db := setupHMTestDB(t)
+	host := uuid.New()
+	require.NoError(t, db.Exec(`INSERT INTO hosts (id, display_id, primary_ip, host_name) VALUES (?, 8, '10.0.0.8', 'h8')`, host.String()).Error)
+	require.NoError(t, db.Exec(`INSERT INTO businesses (id, name) VALUES (?, 'biz-x')`, testBiz).Error)
+
+	svc := NewService(db, NewResourceHistoryAuditRecorder())
+	ctx := auth.WithOperator(context.Background(), "editor")
+	_, err := svc.Move(ctx, []uuid.UUID{host}, mod(moduleAID),
+		MoveOptions{Source: types.HostMembershipSourceTransfer})
+	require.NoError(t, err)
+
+	var changedBy string
+	require.NoError(t, db.Table("resource_histories").Select("changed_by").
+		Where("resource_id = ?", 8).Scan(&changedBy).Error)
+	require.Equal(t, "editor", changedBy)
 }
 
 // 注：阶段2 已退役 mirror 双写与 SyncFromLegacy，hms 只写新表；原 LegacyMirror/SyncFromLegacy 测试随之移除。

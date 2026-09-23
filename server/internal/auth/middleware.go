@@ -38,11 +38,22 @@ func GetCurrentUser(c *gin.Context) (*CurrentUser, bool) {
 	return user, ok
 }
 
+// setCurrentUser 记录已认证用户：gin 上下文供 handler 读取，请求 context 携带操作人
+// 供 service 层审计读取（见 OperatorFromContext）。
+func setCurrentUser(c *gin.Context, user *CurrentUser) {
+	c.Set(currentUserContextKey, user)
+	operator := user.Username
+	if operator == "" {
+		operator = user.UserID.String()
+	}
+	c.Request = c.Request.WithContext(WithOperator(c.Request.Context(), operator))
+}
+
 func (m *Middleware) OptionalAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user, err := m.authenticate(c)
 		if err == nil && user != nil {
-			c.Set(currentUserContextKey, user)
+			setCurrentUser(c, user)
 		}
 		c.Next()
 	}
@@ -55,7 +66,7 @@ func (m *Middleware) RequireAuthenticated() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
-		c.Set(currentUserContextKey, user)
+		setCurrentUser(c, user)
 		c.Next()
 	}
 }
@@ -70,7 +81,7 @@ func (m *Middleware) RequireWriter() gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 				return
 			}
-			c.Set(currentUserContextKey, user)
+			setCurrentUser(c, user)
 		}
 
 		if !hasRole(user.Roles, types.AuthRoleAdmin, types.AuthRoleEditor) {
@@ -91,7 +102,7 @@ func (m *Middleware) RequireAdmin() gin.HandlerFunc {
 				c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 				return
 			}
-			c.Set(currentUserContextKey, user)
+			setCurrentUser(c, user)
 		}
 
 		if !hasRole(user.Roles, types.AuthRoleAdmin) {
@@ -124,7 +135,7 @@ func (m *Middleware) ProtectAPI() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
-		c.Set(currentUserContextKey, user)
+		setCurrentUser(c, user)
 
 		if path == "/api/v1/auth/me" {
 			c.Next()
