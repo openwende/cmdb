@@ -13,6 +13,7 @@ import (
 	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
 	"github.com/wend/cmdb-backend/internal/core/instance"
 	"github.com/wend/cmdb-backend/internal/core/model"
+	"github.com/wend/cmdb-backend/internal/mcpserver"
 	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/pkg/config"
 )
@@ -210,6 +211,13 @@ func (s *Server) setupRoutes(db *storage.Database) {
 	// Audit APIs
 	// ==========================
 	RegisterAuditRoutes(s.router, db.DB())
+
+	// ==========================
+	// MCP（Agent 工具）
+	// ==========================
+	// 挂在 /api 之外：ProtectAPI 要求 POST 必须是写角色，而 MCP 的只读调用也走 POST；
+	// /mcp 自带 Bearer JWT 校验，任何已登录角色都可调用只读工具。
+	s.router.Any("/mcp", gin.WrapH(mcpserver.NewHandler(db.DB(), authn.NewJWTManager(s.config.Auth.JWT))))
 }
 
 func (s *Server) Run() error {
