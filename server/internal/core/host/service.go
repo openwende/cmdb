@@ -16,14 +16,19 @@ import (
 type Service struct {
 	hostRepo      storage.HostRepository
 	cloudAreaRepo storage.CloudAreaRepository
+	audit         AuditRecorder
 }
 
 // NewService 创建主机服务实例
-func NewService(hostRepo storage.HostRepository, cloudAreaRepo storage.CloudAreaRepository) *Service {
-	return &Service{
+func NewService(hostRepo storage.HostRepository, cloudAreaRepo storage.CloudAreaRepository, opts ...Option) *Service {
+	s := &Service{
 		hostRepo:      hostRepo,
 		cloudAreaRepo: cloudAreaRepo,
 	}
+	for _, o := range opts {
+		o(s)
+	}
+	return s
 }
 
 // CreateHost 创建主机
@@ -62,7 +67,12 @@ func (s *Service) CreateHost(ctx context.Context, tenantID uuid.UUID, req *types
 	}
 
 	// 6. 创建主机
-	return s.hostRepo.CreateHost(ctx, tenantID, req, createdBy)
+	created, err := s.hostRepo.CreateHost(ctx, tenantID, req, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	s.recordChange(ctx, "create", nil, created)
+	return created, nil
 }
 
 // BatchImportHosts 批量导入主机
@@ -226,6 +236,13 @@ func (s *Service) BatchImportHosts(ctx context.Context, tenantID uuid.UUID, req 
 			return result, fmt.Errorf("failed to batch create hosts: %w", err)
 		}
 		result.Successful = len(hostsToCreate)
+		if s.audit != nil {
+			for _, id := range result.CreatedIDs {
+				if created, err := s.hostRepo.GetHost(ctx, id); err == nil {
+					s.recordChange(ctx, "create", nil, created)
+				}
+			}
+		}
 	}
 
 	return result, nil
@@ -248,8 +265,9 @@ func (s *Service) UpdateHost(ctx context.Context, id uuid.UUID, req *types.Updat
 		return nil, apperrors.Wrap(apperrors.ErrInvalidInput, "INVALID_INPUT", err.Error())
 	}
 
-	// 2. 检查主机是否存在
-	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
+	// 2. 检查主机是否存在（同时作为审计的变更前快照）
+	before, err := s.hostRepo.GetHost(ctx, id)
+	if err != nil {
 		return nil, err
 	}
 
@@ -277,35 +295,52 @@ func (s *Service) UpdateHost(ctx context.Context, id uuid.UUID, req *types.Updat
 	}
 
 	// 5. 执行更新
-	return s.hostRepo.UpdateHost(ctx, id, req, updatedBy)
+	updated, err := s.hostRepo.UpdateHost(ctx, id, req, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+	s.recordChange(ctx, "update", before, updated)
+	return updated, nil
 }
 
 // UpdateCustomFields 更新主机自定义字段
 func (s *Service) UpdateCustomFields(ctx context.Context, id uuid.UUID, customFields map[string]interface{}, updatedBy *uuid.UUID) (*types.Host, error) {
-	// 1. 检查主机是否存在
-	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
+	// 1. 检查主机是否存在（同时作为审计的变更前快照）
+	before, err := s.hostRepo.GetHost(ctx, id)
+	if err != nil {
 		return nil, err
 	}
 
 	// 2. 执行更新
-	return s.hostRepo.UpdateCustomFields(ctx, id, customFields, updatedBy)
+	updated, err := s.hostRepo.UpdateCustomFields(ctx, id, customFields, updatedBy)
+	if err != nil {
+		return nil, err
+	}
+	s.recordChange(ctx, "update", before, updated)
+	return updated, nil
 }
 
 // DeleteHost 删除主机（标记删除）
 func (s *Service) DeleteHost(ctx context.Context, id uuid.UUID, markAsDestroyed bool) error {
-	// 1. 检查主机是否存在
-	if _, err := s.hostRepo.GetHost(ctx, id); err != nil {
+	// 1. 检查主机是否存在（同时作为审计的删除前快照）
+	before, err := s.hostRepo.GetHost(ctx, id)
+	if err != nil {
 		return err
 	}
 
 	// 2. 选择删除方式
 	if markAsDestroyed {
 		// 标记为已销毁（保留记录）
-		return s.hostRepo.MarkAsDestroyed(ctx, id)
+		err = s.hostRepo.MarkAsDestroyed(ctx, id)
 	} else {
 		// 软删除
-		return s.hostRepo.DeleteHost(ctx, id)
+		err = s.hostRepo.DeleteHost(ctx, id)
 	}
+	if err != nil {
+		return err
+	}
+	s.recordChange(ctx, "delete", before, nil)
+	return nil
 }
 
 // validateHostRequest 校验主机创建请求

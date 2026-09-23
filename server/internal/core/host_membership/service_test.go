@@ -307,4 +307,32 @@ func TestMove_AuditOperatorFromContext(t *testing.T) {
 	require.Equal(t, "editor", changedBy)
 }
 
+// 归属审计同时落 before/after 位置快照，能直接看出"从哪个模块转到哪个模块"。
+func TestMove_AuditRecordsBeforePlacement(t *testing.T) {
+	db := setupHMTestDB(t)
+	host := uuid.New()
+	require.NoError(t, db.Exec(`INSERT INTO hosts (id, display_id, primary_ip, host_name) VALUES (?, 9, '10.0.0.9', 'h9')`, host.String()).Error)
+	require.NoError(t, db.Exec(`INSERT INTO businesses (id, name) VALUES (?, 'biz-x')`, testBiz).Error)
+
+	svc := NewService(db, NewResourceHistoryAuditRecorder())
+	_, err := svc.Move(context.Background(), []uuid.UUID{host}, mod(moduleAID),
+		MoveOptions{Source: types.HostMembershipSourceAllocate, By: "admin"})
+	require.NoError(t, err)
+	_, err = svc.Move(context.Background(), []uuid.UUID{host}, mod(moduleBID),
+		MoveOptions{Source: types.HostMembershipSourceTransfer, By: "admin"})
+	require.NoError(t, err)
+
+	var row struct {
+		BeforeData string
+		AfterData  string
+	}
+	require.NoError(t, db.Table("resource_histories").Select("before_data, after_data").
+		Where("resource_id = ?", 9).Order("id DESC").Limit(1).Scan(&row).Error)
+	require.Contains(t, row.BeforeData, "module-A")
+	require.NotContains(t, row.BeforeData, "module-B")
+	require.Contains(t, row.AfterData, "module-B")
+	require.Contains(t, row.AfterData, `"source":"transfer"`)
+	require.Contains(t, row.BeforeData, `"business_name":"biz-x"`)
+}
+
 // 注：阶段2 已退役 mirror 双写与 SyncFromLegacy，hms 只写新表；原 LegacyMirror/SyncFromLegacy 测试随之移除。

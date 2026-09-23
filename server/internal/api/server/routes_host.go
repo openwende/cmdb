@@ -17,7 +17,7 @@ func RegisterHostRoutes(router *gin.Engine, db *gorm.DB) {
 	cloudAreaRepo := storage.NewCloudAreaRepository(db)
 
 	// 创建 Service
-	hostService := host.NewService(hostRepo, cloudAreaRepo)
+	hostService := host.NewService(hostRepo, cloudAreaRepo, host.WithAuditRecorder(host.NewResourceHistoryAuditRecorder(db)))
 	cloudAreaService := cloud_area.NewService(cloudAreaRepo)
 
 	// 创建 Handler
