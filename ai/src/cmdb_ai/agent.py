@@ -43,8 +43,13 @@ def build_model(settings: Settings, *, streaming: bool = True) -> ChatDeepSeek:
 
 
 def _retryable(exc: BaseException) -> bool:
-    # 缺少用户身份是确定性错误，重试没有意义
+    # 缺少用户身份、登录过期是确定性错误，重试没有意义
     return isinstance(exc, Exception) and not isinstance(exc, PermissionError)
+
+
+def _tool_failure_message(exc: Exception) -> str:
+    # 替换默认消息：默认消息以 "Please try again." 结尾，模型会照做，换着工具反复重试
+    return f"工具调用失败（已自动重试）：{exc}。不要再换其他工具尝试，直接如实告诉用户。"
 
 
 def build_agent(settings: Settings, tools: list[BaseTool], checkpointer: Checkpointer = None):
@@ -67,6 +72,8 @@ def build_agent(settings: Settings, tools: list[BaseTool], checkpointer: Checkpo
             ),
             ToolCallLimitMiddleware(run_limit=settings.agent_tool_call_limit),
             PlainTextToolResultMiddleware(),
-            ToolRetryMiddleware(max_retries=2, retry_on=_retryable, on_failure="continue"),
+            ToolRetryMiddleware(
+                max_retries=2, retry_on=_retryable, on_failure=_tool_failure_message
+            ),
         ],
     )

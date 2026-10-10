@@ -3,8 +3,13 @@
 工具定义对所有用户相同，只拉取一次；连接配置里不保存任何凭证，每次工具调用由
 `forward_user_jwt` 拦截器从运行时 context 取当前用户的 JWT 放进请求头。
 拿不到用户身份时直接拒绝，绝不会以其他人的身份调用。
+
+`explain_cmdb_errors` 把连接失败、登录过期翻译成模型看得懂的错误：MCP 客户端抛出的是
+嵌套的 ExceptionGroup，字面上只有"unhandled errors in a TaskGroup"，模型分不清
+"服务挂了"和"查无此机"，会换着工具反复尝试。
 """
 
+import httpx
 from langchain_core.tools import BaseTool
 from langchain_mcp_adapters.interceptors import MCPToolCallRequest
 from langchain_mcp_adapters.sessions import StreamableHttpConnection, create_session
@@ -14,6 +19,49 @@ from mcp.types import Tool as MCPTool
 from cmdb_ai.cmdb import UserContext
 
 SERVER_NAME = "cmdb"
+
+
+class CMDBUnavailableError(Exception):
+    """CMDB 暂时连不上或服务端出错，可以重试。"""
+
+
+def _exception_chain(exc: BaseException):
+    """依次展开 ExceptionGroup 和 __cause__：httpx 的异常下面还挂着 httpcore 的异常，
+    只看最底层会错过 httpx 的类型。"""
+    seen = set()
+    stack = [exc]
+    while stack:
+        current = stack.pop()
+        if id(current) in seen:
+            continue
+        seen.add(id(current))
+        yield current
+        if isinstance(current, BaseExceptionGroup):
+            stack.extend(reversed(current.exceptions))
+        if current.__cause__ is not None:
+            stack.append(current.__cause__)
+
+
+async def explain_cmdb_errors(request: MCPToolCallRequest, handler):
+    try:
+        return await handler(request)
+    except (PermissionError, CMDBUnavailableError):
+        raise
+    except Exception as exc:
+        for cause in _exception_chain(exc):
+            if isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code in (
+                401,
+                403,
+            ):
+                # PermissionError 不重试，见 agent._retryable
+                raise PermissionError("登录已失效或没有权限，请用户重新登录后再问") from exc
+            if isinstance(cause, httpx.TransportError) or (
+                isinstance(cause, httpx.HTTPStatusError) and cause.response.status_code >= 500
+            ):
+                raise CMDBUnavailableError(
+                    f"CMDB 服务暂时不可达（{type(cause).__name__}），这不代表查无数据"
+                ) from exc
+        raise
 
 
 async def forward_user_jwt(request: MCPToolCallRequest, handler):
@@ -52,7 +100,7 @@ def to_langchain_tools(url: str, mcp_tools: list[MCPTool]) -> list[BaseTool]:
             None,
             tool,
             connection=connection,
-            tool_interceptors=[forward_user_jwt],
+            tool_interceptors=[explain_cmdb_errors, forward_user_jwt],
             server_name=SERVER_NAME,
         )
         for tool in mcp_tools
