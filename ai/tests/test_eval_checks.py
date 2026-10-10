@@ -38,6 +38,13 @@ def test_include_alternatives_exclude_and_tools():
     ]
 
 
+def test_include_regex_option():
+    case = {"include": [["re:(没有|未)(记录|写明?|说明).{0,4}原因", "note 为空"]]}
+    assert failed(case, "审计中未记录操作原因") == []
+    assert failed(case, "没有写明原因") == []
+    assert failed(case, "原因不明") != []
+
+
 def test_cases_file_is_well_formed():
     cases = yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(encoding="utf-8"))
     ids = [c["id"] for c in cases]

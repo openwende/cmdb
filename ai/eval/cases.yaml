@@ -3,7 +3,7 @@
 #
 # 检查项（全部通过才算这一题通过）：
 #   cite:         回答里必须出现的 ID（record_id / host_id 等，按独立数字匹配）
-#   include:      必须出现的内容；每项可以是字符串，或"任一即可"的字符串列表
+#   include:      必须出现的内容；每项可以是字符串，或"任一即可"的字符串列表；以 re: 开头的按正则匹配
 #   exclude:      不能出现的内容（如把业务名「支付清结算」误写成「支付清算」）
 #   tools:        必须调用过的工具
 #   max_tools:    工具调用次数上限
@@ -15,7 +15,7 @@
   include:
     - liuyang
     - zhangwei
-    - [没有记录原因, 未记录原因, 没有写原因, 没有原因, 未写明原因, note 为空, 没有 note, 无 note, 缺少原因]
+    - ["re:(没有|未)(记录|写明?|说明).{0,4}原因", 没有原因, 缺少原因, note 为空, 没有 note, 无 note]
   tools: [query_host_changes]
   exclude: [支付清算]
 
@@ -138,3 +138,59 @@
   question: 10.99.99.99 这台机器是谁在用？
   include: [[没有找到, 未找到, 查不到, 不存在, 没有查到, 未查到, 没有这台, 里没有, 中没有]]
   exclude: [record_id=]
+
+# ---- 难题（2026-10-10 第二轮优化补充）：模块级历史、时间范围推理、多步追溯、歧义消解
+
+- id: hard-module-history-gateway
+  story: 模块历史
+  question: 9 月份，支付网关模块都有哪些主机转入或转出？
+  cite: [851, 612, 613, 630, 631, 884]
+
+- id: hard-module-history-risk
+  story: 模块历史
+  question: 9 月份，风控服务模块都有哪些主机转入或转出？
+  cite: [612, 851, 854, 859, 886]
+
+- id: hard-time-window-morning
+  story: 时间推理
+  question: 9 月 18 日上午，支付清结算业务发生了哪些归属变更？
+  cite: [628, 629, 630, 631]
+  exclude: [支付清算]
+
+- id: hard-time-window-late-sept
+  story: 时间推理
+  question: zhangwei 在 9 月下旬（21 日到 30 日）做了哪些变更？
+  cite: [627, 904]
+
+- id: hard-this-month
+  story: 时间推理
+  question: zhangwei 这个月做过哪些变更？
+  include: [[10 月, 2026-10], [没有, 未查到, 查不到, 无变更, 0 条]]
+
+- id: hard-multi-hop-mall-gw-01
+  story: 多步追溯
+  question: mall-gw-01 看名字是商城的机器，为什么现在在支付清结算？它是怎么一步步过来的？
+  cite: [709, 727, 866, 885, 886]
+  include: [文德商城, 数据中台]
+
+- id: hard-fault-obs-log-07
+  story: 故障经过
+  question: obs-log-07 九月中旬出了什么故障？谁处理的，前后花了多久？
+  cite: [854, 856, 858, 859]
+  include: [网卡丢包, chenjing, zhangwei]
+
+- id: hard-ambiguous-resolved-by-evidence
+  story: 歧义消解
+  question: pay-db 那台机器的备份是谁关掉的？
+  cite: [627]
+  include: [pay-db-02, zhangwei]
+
+- id: hard-ambiguous-needs-confirmation
+  story: 歧义消解
+  question: 支付网关那台机器的内存是多少？
+  include: [[哪一台, 哪台, 确认, 多台, 7 台, 具体是]]
+
+- id: hard-largest-module
+  story: 拓扑
+  question: 支付清结算的生产集群里，哪个模块的主机最多？有几台？
+  include: [支付数据库, "8"]

@@ -27,6 +27,14 @@ from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT
 EVAL_DIR = Path(__file__).parent
 
 
+def _mentions(answer: str, option: Any) -> bool:
+    """以 re: 开头的按正则匹配（同一个意思有多种说法时用），其余按不区分大小写的子串匹配。"""
+    text = str(option)
+    if text.startswith("re:"):
+        return re.search(text[3:], answer) is not None
+    return text.lower() in answer.lower()
+
+
 def check_case(case: dict[str, Any], answer: str, tool_names: list[str]) -> list[dict[str, Any]]:
     """返回每个检查项的结果：{check, ok}。"""
     results = []
@@ -35,7 +43,7 @@ def check_case(case: dict[str, Any], answer: str, tool_names: list[str]) -> list
         results.append({"check": f"cite {ident}", "ok": ok})
     for item in case.get("include", []):
         options = item if isinstance(item, list) else [item]
-        ok = any(str(o).lower() in answer.lower() for o in options)
+        ok = any(_mentions(answer, o) for o in options)
         results.append({"check": f"include {'|'.join(map(str, options))}", "ok": ok})
     for item in case.get("exclude", []):
         results.append({"check": f"exclude {item}", "ok": str(item) not in answer})
