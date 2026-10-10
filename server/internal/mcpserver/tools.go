@@ -38,6 +38,20 @@ func parseTime(s string) (*time.Time, error) {
 	return nil, fmt.Errorf("时间格式无效 %q，请用 RFC3339 或 YYYY-MM-DD", s)
 }
 
+// parseUntil 解析截止时间。只写日期时包含当天：until=2026-09-22 表示截止到 22 日 23:59:59，
+// 和人说"到 22 日"的意思一致；按 parseTime 解析成 22 日 0 点会把当天整天漏掉。
+func parseUntil(s string) (*time.Time, error) {
+	t, err := parseTime(s)
+	if err != nil || t == nil {
+		return t, err
+	}
+	if _, dateErr := time.ParseInLocation("2006-01-02", s, shanghai); dateErr == nil {
+		end := t.AddDate(0, 0, 1).Add(-time.Nanosecond)
+		return &end, nil
+	}
+	return t, nil
+}
+
 func readOnly(title string) *mcp.ToolAnnotations {
 	return &mcp.ToolAnnotations{Title: title, ReadOnlyHint: true, IdempotentHint: true}
 }
@@ -87,7 +101,7 @@ type changesIn struct {
 	ModuleID   uint64 `json:"module_id,omitempty" jsonschema:"只看变更前或变更后在该模块的记录（模块 ID 来自 get_business_topology 或 search_businesses）；查某个模块的主机转入转出时配合 action=placement_change"`
 	Operator   string `json:"operator,omitempty" jsonschema:"只看该操作人（登录用户名，如 zhangwei）"`
 	Since      string `json:"since,omitempty" jsonschema:"起始时间，RFC3339 或 YYYY-MM-DD（北京时间）"`
-	Until      string `json:"until,omitempty" jsonschema:"截止时间，RFC3339 或 YYYY-MM-DD（北京时间）"`
+	Until      string `json:"until,omitempty" jsonschema:"截止时间（含），RFC3339 或 YYYY-MM-DD（北京时间）；只写日期时包含当天"`
 	Action     string `json:"action,omitempty" jsonschema:"只看某类变更：placement_change（归属变更）、config_change（配置变更）、create、delete"`
 	Keyword    string `json:"keyword,omitempty" jsonschema:"匹配变更前后归属或变更字段，如 故障机、待回收、备份、memory"`
 	Limit      int    `json:"limit,omitempty" jsonschema:"最多返回条数，默认 20，最大 100"`
@@ -162,7 +176,7 @@ func registerTools(s *mcp.Server, q *Query) {
 		if err != nil {
 			return nil, changesOut{}, err
 		}
-		until, err := parseTime(in.Until)
+		until, err := parseUntil(in.Until)
 		if err != nil {
 			return nil, changesOut{}, err
 		}

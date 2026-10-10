@@ -264,6 +264,31 @@ func TestParseTime(t *testing.T) {
 	assert.Equal(t, "2026-09-10T00:00:00+08:00", ts.Format(time.RFC3339))
 	_, err = parseTime("yesterday")
 	assert.Error(t, err)
+
+	// 只写日期的截止时间包含当天
+	end, err := parseUntil("2026-09-22")
+	require.NoError(t, err)
+	assert.Equal(t, "2026-09-22T23:59:59.999999999+08:00", end.Format(time.RFC3339Nano))
+	// 写了具体时间的照原样
+	end, err = parseUntil("2026-09-22T06:00:00+08:00")
+	require.NoError(t, err)
+	assert.Equal(t, "2026-09-22T06:00:00+08:00", end.Format(time.RFC3339))
+	end, err = parseUntil("")
+	require.NoError(t, err)
+	assert.Nil(t, end)
+	_, err = parseUntil("yesterday")
+	assert.Error(t, err)
+}
+
+func TestQueryChanges_UntilDateIncludesThatDay(t *testing.T) {
+	q := NewQuery(setupQueryDB(t))
+	// 记录 3 发生在 9 月 16 日 10:00（北京时间）
+	since, _ := parseTime("2026-09-16")
+	until, _ := parseUntil("2026-09-16")
+	matched, items, err := q.QueryChanges(context.Background(), ChangeFilter{Since: since, Until: until, Limit: 20})
+	require.NoError(t, err)
+	require.Equal(t, 1, matched)
+	assert.Equal(t, uint64(3), items[0].RecordID)
 }
 
 func mustJSON(t *testing.T, v any) map[string]any {
