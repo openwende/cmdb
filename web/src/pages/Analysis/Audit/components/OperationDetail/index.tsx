@@ -1,91 +1,64 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Drawer, Descriptions, Table } from 'antd';
+import { Drawer, Descriptions, Table, Tag } from 'antd';
+import { ArrowRightOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
-import { dynamicGroupCondition } from '@/mock/business';
 import type { OperationDetail } from '@/pages/Analysis/Types';
+import {
+  AUDIT_FLOW_TAG_COLORS,
+  type AuditPropertyRow,
+  buildAuditFlow,
+  buildAuditPropertyRows,
+} from '@/pages/Analysis/auditChange';
 import './style.css';
-
-export interface PropertyItem {
-  id: number;
-  propertyName: string;
-  propertyId: string;
-  before: string;
-  after: string;
-}
 
 export interface OperationDetailProps {
   visible: boolean;
   record: OperationDetail | null;
+  /** 资源池目录 id → 名称，用于流向里的资源池位置 */
+  directoryNames?: Map<number, string>;
   onClose: () => void;
 }
 
-const OperationDetail: React.FC<OperationDetailProps> = ({ visible, record, onClose }) => {
+const EMPTY_DIRECTORY_NAMES = new Map<number, string>();
+
+const OperationDetail: React.FC<OperationDetailProps> = ({
+  visible,
+  record,
+  directoryNames = EMPTY_DIRECTORY_NAMES,
+  onClose,
+}) => {
   const { t } = useTranslation();
   const [detailList, setDetailList] = useState<OperationDetail | null>(null);
-  const [propertyList, setPropertyList] = useState<PropertyItem[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     if (record) {
       // Use the record data directly
       setDetailList(record);
-
-      const propertyList = processPropertyList(record);
-      setPropertyList(propertyList);
+      setIsExpanded(false);
     }
   }, [record]);
 
-  const processPropertyList = (detailList: OperationDetail): PropertyItem[] => {
-    const { preData, curData } = detailList.details;
+  // 流转记录（导入 / 分配 / 转移 / 回收）的前后位置
+  const flow = useMemo(
+    () => (detailList ? buildAuditFlow(detailList.details, directoryNames, t) : null),
+    [detailList, directoryNames, t],
+  );
 
-    return dynamicGroupCondition.map((config) => {
-      const propertyId = config.bk_property_id;
-      const preValue = preData?.[propertyId];
-      const curValue = curData?.[propertyId];
-
-      return {
-        id: config.id,
-        propertyId,
-        propertyName: config.bk_property_name,
-        before: preValue !== undefined ? String(preValue) : '--',
-        after: curValue !== undefined ? String(curValue) : '--',
-      };
-    });
-  };
-
-  // Filtered property list based on isExpanded state
-  const filteredPropertyList = useMemo(() => {
-    // All properties
-    if (!detailList || isExpanded) {
-      return propertyList;
-    }
-
-    // Only changed properties
-    const { preData, curData, updateFields } = detailList.details;
-    const changedFields = new Set<string>();
-
-    if (updateFields) {
-      updateFields.forEach((field) => changedFields.add(field));
-    }
-    if (preData) {
-      Object.keys(preData).forEach((field) => changedFields.add(field));
-    }
-    if (curData) {
-      Object.keys(curData).forEach((field) => changedFields.add(field));
-    }
-
-    // Filter and return only changed properties
-    return propertyList.filter((item) => changedFields.has(item.propertyId));
-  }, [detailList, propertyList, isExpanded]);
+  // 属性表：默认只显示改了的字段，展开后显示快照里的全部字段
+  const filteredPropertyList = useMemo(
+    () => (detailList ? buildAuditPropertyRows(detailList.details, t, isExpanded) : []),
+    [detailList, isExpanded, t],
+  );
 
   // Generate table columns based on detailList
-  const generateColumns = (): ColumnsType<PropertyItem> => {
-    const columns: ColumnsType<PropertyItem> = [
+  const generateColumns = (): ColumnsType<AuditPropertyRow> => {
+    const columns: ColumnsType<AuditPropertyRow> = [
       {
         title: t('analysis.audit.columns.attribute'),
-        dataIndex: 'propertyName',
-        key: 'propertyName',
+        dataIndex: 'label',
+        key: 'label',
       },
     ];
 
@@ -119,13 +92,13 @@ const OperationDetail: React.FC<OperationDetailProps> = ({ visible, record, onCl
 
   // Calculate scroll Y dynamically based on content height
   const calculateScrollY = useMemo(() => {
-    const maxHeight = window.innerHeight - 312;
+    const maxHeight = window.innerHeight - (flow ? 452 : 312);
     // Estimate table content height: header(32px) + rows(32px each) + padding
     const estimatedContentHeight = 32 + filteredPropertyList.length * 32 + 16;
 
     // Only show scroll if content exceeds the max height
-    return estimatedContentHeight > maxHeight ? maxHeight : undefined;
-  }, [filteredPropertyList.length]);
+    return estimatedContentHeight > maxHeight ? Math.max(maxHeight, 160) : undefined;
+  }, [filteredPropertyList.length, flow]);
 
   const descriptionItems = [
     {
@@ -188,12 +161,33 @@ const OperationDetail: React.FC<OperationDetailProps> = ({ visible, record, onCl
           className="description-list"
         />
 
+        {/* Host Move Section */}
+        {flow && (
+          <section className="audit-flow" aria-label={t('analysis.audit.detail.flow')}>
+            <div className="audit-flow__header">
+              <span className="audit-flow__title">{t('analysis.audit.detail.flow')}</span>
+              <Tag color={AUDIT_FLOW_TAG_COLORS[flow.type]}>{flow.label}</Tag>
+            </div>
+            <div className="audit-flow__body">
+              <div className="audit-flow__side">
+                <span className="audit-flow__label">{t('analysis.audit.columns.before')}</span>
+                <span className="audit-flow__location">{flow.from}</span>
+              </div>
+              <ArrowRightOutlined className="audit-flow__arrow" aria-hidden />
+              <div className="audit-flow__side audit-flow__side--after">
+                <span className="audit-flow__label">{t('analysis.audit.columns.after')}</span>
+                <span className="audit-flow__location">{flow.to}</span>
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* Change Details Section */}
         <Table
           columns={generateColumns()}
           dataSource={filteredPropertyList}
           pagination={false}
-          rowKey="id"
+          rowKey="field"
           size="small"
           bordered
           scroll={{ y: calculateScrollY }}

@@ -1,8 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { Table, DatePicker, Input, Select, Empty, Button, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import dayjs from 'dayjs';
 import DetailDrawer from '../components/OperationDetail';
+import ChangeSummary from '../components/ChangeSummary';
+import { useAuditDirectoryNames } from '../hooks/useAuditDirectoryNames';
+import { buildAuditChangeSummary } from '@/pages/Analysis/auditChange';
 import Pagination from '@/components/common/Pagination';
 import { getCommonActions } from '@/pages/Analysis/constants';
 import type { OperationDetail } from '@/pages/Analysis/Types';
@@ -46,6 +49,14 @@ const AuditTable: React.FC<AuditTableProps> = ({
   const [actionType, setActionType] = useState<string | undefined>(undefined);
 
   const actionOptions = getCommonActions(t);
+  const directoryNames = useAuditDirectoryNames(data);
+  const changeSummaries = useMemo(
+    () =>
+      new Map(
+        data.map((record) => [record.id, buildAuditChangeSummary(record, directoryNames, t)]),
+      ),
+    [data, directoryNames, t],
+  );
 
   const handleSearch = useCallback(() => {
     if (onFilter) {
@@ -59,6 +70,16 @@ const AuditTable: React.FC<AuditTableProps> = ({
       });
     }
   }, [searchKeyword, timeRange, actionType, onFilter]);
+
+  const renderMobileChange = (record: OperationDetail) => {
+    const summary = changeSummaries.get(record.id);
+    if (!summary || summary.kind === 'none') return null;
+    return (
+      <span className="audit-mobile-card__change">
+        <ChangeSummary summary={summary} />
+      </span>
+    );
+  };
 
   const handleRowClick = (record: OperationDetail) => {
     setSelectedRecord(record);
@@ -94,6 +115,16 @@ const AuditTable: React.FC<AuditTableProps> = ({
       dataIndex: 'instance',
       key: 'instance',
       width: 200,
+    },
+    {
+      title: t('analysis.audit.columns.change'),
+      key: 'change',
+      width: 320,
+      ellipsis: { showTitle: false },
+      render: (_: unknown, record: OperationDetail) => {
+        const summary = changeSummaries.get(record.id);
+        return summary ? <ChangeSummary summary={summary} /> : '--';
+      },
     },
     {
       title: t('analysis.audit.columns.description'),
@@ -162,7 +193,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
           loading={loading}
           pagination={false}
           rowKey="id"
-          scroll={{ x: 1070 }}
+          scroll={{ x: 1390 }}
           onRow={(record) => ({
             onClick: () => handleRowClick(record),
             style: { cursor: 'pointer' },
@@ -210,6 +241,7 @@ const AuditTable: React.FC<AuditTableProps> = ({
                 <span className="audit-mobile-card__action">{record.action}</span>
               </span>
               <span className="audit-mobile-card__desc">{record.description}</span>
+              {renderMobileChange(record)}
               <span className="audit-mobile-card__grid">
                 <span>
                   <span>{t('analysis.audit.columns.business')}</span>
@@ -245,7 +277,12 @@ const AuditTable: React.FC<AuditTableProps> = ({
         onSizeChange={onSizeChange}
       />
 
-      <DetailDrawer visible={drawerVisible} record={selectedRecord} onClose={handleDrawerClose} />
+      <DetailDrawer
+        visible={drawerVisible}
+        record={selectedRecord}
+        directoryNames={directoryNames}
+        onClose={handleDrawerClose}
+      />
     </div>
   );
 };

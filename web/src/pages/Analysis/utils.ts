@@ -1,6 +1,7 @@
 import { ACTION_LABELS } from '@/pages/Analysis/constants';
 import { AuditTabKey, OperationDetail } from '@/pages/Analysis/Types';
 import dayjs from 'dayjs';
+import { formatAuditTime } from '@/pages/Analysis/auditChange';
 
 export interface AuditQueryFilters {
   business?: number | string;
@@ -148,10 +149,11 @@ export const processDetailList = (detailList: any[]): OperationDetail[] => {
       business: biz_name || '--',
       object: resource_type,
       action: actionName,
+      actionKey: action,
       modelType: operation_detail?.bk_obj_id || resource_type,
       instance: resource_name,
       description: `${actionName}${resource_name}`,
-      time: operation_time,
+      time: formatAuditTime(operation_time),
       account: user,
       details: {
         preData: operation_detail?.details?.pre_data || null,

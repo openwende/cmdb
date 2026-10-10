@@ -9,6 +9,8 @@ export interface OperationDetail {
   business: string;
   object: string;
   action: string;
+  /** 后端原始 action（create / update / delete …），action 是显示文案 */
+  actionKey?: string;
   modelType: string;
   instance: string;
   description: string;

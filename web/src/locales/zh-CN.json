@@ -1799,7 +1799,8 @@
         "account": "操作账号",
         "attribute": "属性",
         "before": "变更前",
-        "after": "变更后"
+        "after": "变更后",
+        "change": "变更内容"
       },
       "buttons": {
         "search": "查询",
@@ -1857,7 +1858,39 @@
         "instance": "操作实例",
         "description": "操作描述",
         "time": "操作时间",
-        "account": "操作账号"
+        "account": "操作账号",
+        "flow": "流向"
+      },
+      "change": {
+        "flowTypes": {
+          "import": "导入资源池",
+          "allocate": "分配到业务",
+          "transfer": "转移",
+          "reclaim": "回收到资源池"
+        },
+        "createHost": "新建主机",
+        "create": "新建",
+        "more": "等 {{count}} 项",
+        "listSeparator": "、",
+        "itemSeparator": "；",
+        "unassigned": "无归属",
+        "resourcePool": "资源池",
+        "directoryFallback": "目录 #{{id}}",
+        "yes": "是",
+        "no": "否",
+        "fields": {
+          "host_name": "主机名",
+          "primary_ip": "主 IP",
+          "ip_addresses": "IP 地址",
+          "status": "状态",
+          "business_name": "业务",
+          "module_names": "模块",
+          "cpu": "CPU（核）",
+          "memory": "内存（MB）",
+          "disk_size": "磁盘（GB）",
+          "os_type": "系统类型",
+          "os_version": "系统版本"
+        }
       }
     },
     "statistics": {

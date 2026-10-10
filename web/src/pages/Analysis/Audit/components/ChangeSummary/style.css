@@ -1,0 +1,18 @@
+.audit-change-summary {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.audit-change-summary__tag {
+  flex-shrink: 0;
+  margin-inline-end: var(--space-sm);
+}
+
+.audit-change-summary__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

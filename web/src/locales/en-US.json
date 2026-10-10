@@ -1799,7 +1799,8 @@
         "account": "Account",
         "attribute": "Attribute",
         "before": "Before",
-        "after": "After"
+        "after": "After",
+        "change": "Changes"
       },
       "buttons": {
         "search": "Search",
@@ -1857,7 +1858,39 @@
         "instance": "Operation Instance",
         "description": "Description",
         "time": "Operation Time",
-        "account": "Account"
+        "account": "Account",
+        "flow": "Host Move"
+      },
+      "change": {
+        "flowTypes": {
+          "import": "Imported to Pool",
+          "allocate": "Assigned to Business",
+          "transfer": "Transferred",
+          "reclaim": "Returned to Pool"
+        },
+        "createHost": "Host created",
+        "create": "Created",
+        "more": "({{count}} fields in total)",
+        "listSeparator": ", ",
+        "itemSeparator": "; ",
+        "unassigned": "Unassigned",
+        "resourcePool": "Resource Pool",
+        "directoryFallback": "Directory #{{id}}",
+        "yes": "Yes",
+        "no": "No",
+        "fields": {
+          "host_name": "Host Name",
+          "primary_ip": "Primary IP",
+          "ip_addresses": "IP Addresses",
+          "status": "Status",
+          "business_name": "Business",
+          "module_names": "Modules",
+          "cpu": "CPU (cores)",
+          "memory": "Memory (MB)",
+          "disk_size": "Disk (GB)",
+          "os_type": "OS Type",
+          "os_version": "OS Version"
+        }
       }
     },
     "statistics": {
