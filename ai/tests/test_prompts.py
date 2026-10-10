@@ -1,6 +1,6 @@
 from datetime import date
 
-from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT, with_current_date
+from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT, SUMMARY_PROMPT, with_current_date
 
 
 def test_current_date_is_appended():
@@ -10,3 +10,8 @@ def test_current_date_is_appended():
 def test_prompt_does_not_leak_eval_answers():
     for leaked in ("612", "613", "支付清结算", "10.20.1.11"):
         assert leaked not in INVESTIGATOR_SYSTEM_PROMPT
+
+
+def test_summary_prompt_keeps_the_messages_marker():
+    # 摘要中间件靠这两个标记插入待压缩的对话
+    assert "\n<messages>\n" in SUMMARY_PROMPT and "{messages}" in SUMMARY_PROMPT
