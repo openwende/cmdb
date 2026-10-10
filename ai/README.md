@@ -70,6 +70,12 @@ uv run python eval/run_eval.py --only s1-why-two-modules # 只跑部分用例
 
 结果写到 `eval/results/`（不提交），包含每题的回答、工具调用、token 和耗时，用于优化前后对比。
 
+同一配置建议跑 3 轮，再按 label 对比（检查项按当前 `cases.yaml` 重新打分，改了规则也不用重跑模型）：
+
+```bash
+uv run python eval/compare.py baseline prompt-v2
+```
+
 ## 代码结构
 
 | 文件 | 内容 |

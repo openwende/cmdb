@@ -136,5 +136,5 @@
 - id: boundary-unknown-host
   story: 边界
   question: 10.99.99.99 这台机器是谁在用？
-  include: [[没有找到, 未找到, 查不到, 不存在, 没有查到, 未查到, 没有这台]]
+  include: [[没有找到, 未找到, 查不到, 不存在, 没有查到, 未查到, 没有这台, 里没有, 中没有]]
   exclude: [record_id=]
