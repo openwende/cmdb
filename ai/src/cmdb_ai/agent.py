@@ -18,7 +18,7 @@ from langgraph.types import Checkpointer
 
 from cmdb_ai.cmdb import UserContext
 from cmdb_ai.config import Settings
-from cmdb_ai.middleware import WrapUpAtLimitMiddleware
+from cmdb_ai.middleware import PlainTextToolResultMiddleware, WrapUpAtLimitMiddleware
 from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT, with_current_date
 
 # 只读取 messages 里这个节点的模型输出；摘要中间件内部的模型调用不推给用户
@@ -66,6 +66,7 @@ def build_agent(settings: Settings, tools: list[BaseTool], checkpointer: Checkpo
                 run_limit=settings.agent_model_call_limit, exit_behavior="end"
             ),
             ToolCallLimitMiddleware(run_limit=settings.agent_tool_call_limit),
+            PlainTextToolResultMiddleware(),
             ToolRetryMiddleware(max_retries=2, retry_on=_retryable, on_failure="continue"),
         ],
     )

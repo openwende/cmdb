@@ -83,7 +83,7 @@ uv run python eval/compare.py baseline prompt-v2
 | `src/cmdb_ai/api.py` | FastAPI 应用、JWT 校验、`/chat` |
 | `src/cmdb_ai/investigator.py` | 懒加载工具、执行一轮对话（接口和评测共用） |
 | `src/cmdb_ai/agent.py` | `create_agent`、DeepSeek 模型、中间件 |
-| `src/cmdb_ai/middleware.py` | 调用次数到上限时基于已有证据收尾 |
+| `src/cmdb_ai/middleware.py` | 调用次数到上限时基于已有证据收尾；工具结果转成纯文本再交给模型 |
 | `src/cmdb_ai/prompts.py` | 系统提示词 |
 | `src/cmdb_ai/mcp_tools.py` | MCP 工具转换、按用户转发 JWT 的拦截器 |
 | `src/cmdb_ai/streaming.py` | v3 流式事件 → SSE 事件，统计 token / 工具调用 |

@@ -1,7 +1,11 @@
 from langchain.agents.middleware import ModelRequest
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, ToolMessage
 
-from cmdb_ai.middleware import WRAP_UP_INSTRUCTION, WrapUpAtLimitMiddleware
+from cmdb_ai.middleware import (
+    WRAP_UP_INSTRUCTION,
+    PlainTextToolResultMiddleware,
+    WrapUpAtLimitMiddleware,
+)
 
 
 def request(calls_made: int) -> ModelRequest:
@@ -35,3 +39,26 @@ async def test_last_call_forbids_tools_and_asks_to_wrap_up():
     assert sent.messages[-1].content == WRAP_UP_INSTRUCTION
     # 收尾要求只加在这次请求上，不改动原请求（也就不会写进会话状态）
     assert len(original.messages) == 1
+
+
+async def test_tool_text_blocks_are_flattened_to_a_string():
+    mw = PlainTextToolResultMiddleware()
+    blocks = ToolMessage(
+        content=[{"type": "text", "text": '{"name":"支付清结算"}'}],
+        tool_call_id="c1",
+        artifact={"structured_content": {}},
+    )
+
+    async def handler(_):
+        return blocks
+
+    out = await mw.awrap_tool_call(None, handler)
+    assert out.content == '{"name":"支付清结算"}'
+    assert out.artifact == {"structured_content": {}} and out.tool_call_id == "c1"
+
+    image = ToolMessage(content=[{"type": "image", "url": "x"}], tool_call_id="c2")
+
+    async def image_handler(_):
+        return image
+
+    assert await mw.awrap_tool_call(None, image_handler) is image  # 非纯文本保持原样
