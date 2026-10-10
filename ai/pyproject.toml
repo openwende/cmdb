@@ -1,0 +1,49 @@
+[project]
+name = "wende-cmdb-ai"
+version = "0.1.0"
+description = "wende CMDB 的 AI 服务：资源配置调查助手"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.143.0",
+    "httpx>=0.28.1",
+    "langchain>=1.4.4",
+    "langchain-deepseek>=1.1.1",
+    "langchain-mcp-adapters>=0.3.2",
+    "langgraph>=1.2.14",
+    "langgraph-checkpoint-postgres>=3.1.2",
+    "psycopg[binary,pool]>=3.3.6",
+    "pydantic-settings>=2.15.0",
+    "sse-starlette>=3.5.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.17.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.9.4,<0.10"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "cmdb_ai"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = ["ignore::langchain_core._api.beta_decorator.LangChainBetaWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# 提示词是给模型看的长文本，不按代码行宽折行
+"src/cmdb_ai/prompts.py" = ["E501"]
