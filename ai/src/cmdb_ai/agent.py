@@ -1,11 +1,16 @@
 """调查助手 Agent：DeepSeek + CMDB MCP 工具 + 护栏中间件。"""
 
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 from langchain.agents import create_agent
 from langchain.agents.middleware import (
     ModelCallLimitMiddleware,
+    ModelRequest,
     SummarizationMiddleware,
     ToolCallLimitMiddleware,
     ToolRetryMiddleware,
+    dynamic_prompt,
 )
 from langchain_core.tools import BaseTool
 from langchain_deepseek import ChatDeepSeek
@@ -14,10 +19,17 @@ from langgraph.types import Checkpointer
 from cmdb_ai.cmdb import UserContext
 from cmdb_ai.config import Settings
 from cmdb_ai.middleware import WrapUpAtLimitMiddleware
-from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT
+from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT, with_current_date
 
 # 只读取 messages 里这个节点的模型输出；摘要中间件内部的模型调用不推给用户
 MODEL_NODE = "model"
+
+BEIJING = ZoneInfo("Asia/Shanghai")
+
+
+@dynamic_prompt
+def investigator_prompt(request: ModelRequest) -> str:
+    return with_current_date(INVESTIGATOR_SYSTEM_PROMPT, datetime.now(BEIJING).date())
 
 
 def build_model(settings: Settings, *, streaming: bool = True) -> ChatDeepSeek:
@@ -39,10 +51,10 @@ def build_agent(settings: Settings, tools: list[BaseTool], checkpointer: Checkpo
     return create_agent(
         build_model(settings),
         tools,
-        system_prompt=INVESTIGATOR_SYSTEM_PROMPT,
         context_schema=UserContext,
         checkpointer=checkpointer,
         middleware=[
+            investigator_prompt,
             SummarizationMiddleware(
                 model=build_model(settings, streaming=False),
                 trigger=("tokens", settings.summarize_trigger_tokens),
