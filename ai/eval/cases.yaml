@@ -1,0 +1,140 @@
+# 调查助手最小评测集：基于本地演示数据的固定故事 S1–S5（见 PROGRESS.md）。
+# 标准答案来自 2026-10-10 对本地库的 MCP 查询；重新造演示数据后 record_id 可能变化，需要同步更新。
+#
+# 检查项（全部通过才算这一题通过）：
+#   cite:         回答里必须出现的 ID（record_id / host_id 等，按独立数字匹配）
+#   include:      必须出现的内容；每项可以是字符串，或"任一即可"的字符串列表
+#   exclude:      不能出现的内容（如把业务名「支付清结算」误写成「支付清算」）
+#   tools:        必须调用过的工具
+#   max_tools:    工具调用次数上限
+
+- id: s1-why-two-modules
+  story: S1
+  question: 10.20.1.11 为什么同时在两个模块？
+  cite: [612, 613]
+  include:
+    - liuyang
+    - zhangwei
+    - [没有记录原因, 未记录原因, 没有写原因, 没有原因, 未写明原因, note 为空, 没有 note, 无 note, 缺少原因]
+  tools: [query_host_changes]
+  exclude: [支付清算]
+
+- id: s1-memory-upgrade
+  story: S1
+  question: pay-gw-01 的内存是什么时候、被谁从 16G 改成 32G 的？
+  cite: [610]
+  include: [zhangwei, 2026-09-03]
+  tools: [query_host_changes]
+
+- id: s1-late-night-move
+  story: S1
+  question: 9 月 16 日深夜，谁动过支付网关模块的主机？
+  cite: [612]
+  include: [liuyang, "22:41"]
+  exclude: [支付清算]
+
+- id: s1-current-modules
+  story: S1
+  question: pay-gw-01 现在属于哪些模块？
+  cite: [43]
+  include: [支付网关, 风控服务]
+  max_tools: 3
+
+- id: s2-incident-history
+  story: S2
+  question: mall-order-03 最近出过什么问题？是怎么处理的？
+  cite: [614, 617, 619]
+  include: ["500", [I/O, 数据盘]]
+  tools: [query_host_changes]
+
+- id: s2-time-in-faulty
+  story: S2
+  question: 10.10.3.13 在故障机模块里待了多久？
+  cite: [614, 619]
+  include: [2026-09-08, 2026-09-12]
+
+- id: s2-disk-replacer
+  story: S2
+  question: 谁给 mall-order-03 换的数据盘？换完多大？
+  cite: [617]
+  include: [chenjing, "500"]
+
+- id: s2-fault-reason
+  story: S2
+  question: mall-order-03 当时为什么被转进故障机？
+  cite: [616]
+  include: [数据盘 I/O 错误告警]
+
+- id: s3-where-now
+  story: S3
+  question: data-etl-05 现在在哪里？它是怎么到那儿的？
+  cite: [620, 622]
+  include: [高配计算]
+  tools: [query_host_changes]
+
+- id: s3-before-reclaim
+  story: S3
+  question: 10.40.1.15 被回收进资源池之前，属于哪个业务、哪个模块？
+  cite: [620]
+  include: [数据中台, ETL 调度]
+
+- id: s4-batch-os-upgrade
+  story: S4
+  question: 商城的数据库主机最近有没有批量变更？
+  cite: [623, 624, 625, 626]
+  include: [admin, 22.04.5]
+
+- id: s4-backup-status
+  story: S4
+  question: pay-db-02 现在还开着备份吗？
+  cite: [627]
+  include: [zhangwei, "23:31", [关闭, 关掉, 关了, "false", 未开启, 没有开启]]
+  exclude: [支付清算]
+
+- id: s4-backup-disabled-since
+  story: S4
+  question: 9 月 15 日以来，哪些主机的备份被关闭了？
+  cite: [627]
+  include: [pay-db-02]
+
+- id: s4-operator-night
+  story: S4
+  question: zhangwei 在 9 月 21 日深夜做了什么操作？
+  cite: [627]
+  include: [pay-db-02, 备份]
+
+- id: s5-allocated-to-gateway
+  story: S5
+  question: 最近从资源池分配到支付网关的是哪几台主机？谁分配的？
+  cite: [628, 629]
+  include: [10.20.90.11, 10.20.90.12, zhangwei]
+  exclude: [支付清算]
+
+- id: s5-pool-capacity
+  story: S5
+  question: 资源池里还有多少台 8 核 16G 以上的 Linux 主机？
+  include: ["35"]
+  tools: [search_hosts]
+
+- id: s5-directory-left
+  story: S5
+  question: 资源池的"广州支付备机"目录现在还剩几台主机？
+  include: [["5 台", "5台", "共 5", "共5", "：5", ": 5"]]
+
+- id: operator-day
+  story: S1
+  question: liuyang 9 月 16 日做了哪些变更？
+  cite: [871, 612]
+  include: [mall-order-01, pay-gw-01]
+
+- id: boundary-write-request
+  story: 边界
+  question: 帮我把 10.20.1.11 从风控服务里移除。
+  include: [[只读, 无法修改, 不能修改, 无法执行, 不能执行, 没有修改, 无权]]
+  exclude: [支付清算]
+
+- id: boundary-unknown-host
+  story: 边界
+  question: 10.99.99.99 这台机器是谁在用？
+  include: [[没有找到, 未找到, 查不到, 不存在, 没有查到, 未查到, 没有这台]]
+  exclude: [record_id=]

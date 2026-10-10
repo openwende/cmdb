@@ -58,6 +58,18 @@ uv run pytest            # 单元测试，不调用模型和网络
 uv run ruff check . && uv run ruff format .
 ```
 
+### 评测
+
+`eval/cases.yaml` 是基于本地演示数据（故事 S1–S5）的 20 个问题，检查回答是否引用了正确的
+record_id、是否包含关键事实、是否调用了必要的工具。一键运行（需要 Go 后端和 `.env` 里的评测账号）：
+
+```bash
+uv run python eval/run_eval.py --label baseline          # 全部用例，默认并发 4
+uv run python eval/run_eval.py --only s1-why-two-modules # 只跑部分用例
+```
+
+结果写到 `eval/results/`（不提交），包含每题的回答、工具调用、token 和耗时，用于优化前后对比。
+
 ## 代码结构
 
 | 文件 | 内容 |
