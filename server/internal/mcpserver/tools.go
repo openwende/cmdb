@@ -3,6 +3,7 @@ package mcpserver
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -44,7 +45,7 @@ func readOnly(title string) *mcp.ToolAnnotations {
 // ---------- inputs / outputs ----------
 
 type searchBusinessesIn struct {
-	Keyword string `json:"keyword,omitempty" jsonschema:"业务名称或英文标识的片段；为空时列出全部业务"`
+	Keyword string `json:"keyword,omitempty" jsonschema:"业务名称、英文标识或模块名称的片段；为空时列出全部业务"`
 	Limit   int    `json:"limit,omitempty" jsonschema:"最多返回条数，默认 20，最大 100"`
 }
 
@@ -81,7 +82,9 @@ type getHostIn struct {
 
 type changesIn struct {
 	HostID     int64  `json:"host_id,omitempty" jsonschema:"只看这台主机（主机展示 ID）"`
+	IP         string `json:"ip,omitempty" jsonschema:"只看这台主机（按 IP；与 host_id 二选一）"`
 	BusinessID uint64 `json:"business_id,omitempty" jsonschema:"只看变更前或变更后属于该业务的记录"`
+	ModuleID   uint64 `json:"module_id,omitempty" jsonschema:"只看变更前或变更后在该模块的记录（模块 ID 来自 get_business_topology 或 search_businesses）；查某个模块的主机转入转出时配合 action=placement_change"`
 	Operator   string `json:"operator,omitempty" jsonschema:"只看该操作人（登录用户名，如 zhangwei）"`
 	Since      string `json:"since,omitempty" jsonschema:"起始时间，RFC3339 或 YYYY-MM-DD（北京时间）"`
 	Until      string `json:"until,omitempty" jsonschema:"截止时间，RFC3339 或 YYYY-MM-DD（北京时间）"`
@@ -104,8 +107,9 @@ type noInput struct{}
 // registerTools 注册全部只读工具。
 func registerTools(s *mcp.Server, q *Query) {
 	mcp.AddTool(s, &mcp.Tool{
-		Name:        "search_businesses",
-		Description: "按名称或英文标识查业务，返回业务 ID、生命周期、主机数和业务人员。用户提到业务名时先用它拿到 business_id；同名或相近的业务会一起返回，需要时向用户确认是哪一个。",
+		Name: "search_businesses",
+		Description: "按名称、英文标识或模块名称查业务，返回业务 ID、生命周期、主机数和业务人员；关键字命中模块名时，matched_modules 给出命中的模块和 module_id。" +
+			"用户提到业务名或模块名时先用它定位；同名或相近的业务会一起返回，需要时向用户确认是哪一个。",
 		Annotations: readOnly("查业务"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in searchBusinessesIn) (*mcp.CallToolResult, searchBusinessesOut, error) {
 		items, err := q.SearchBusinesses(ctx, in.Keyword, clampLimit(in.Limit))
@@ -150,7 +154,8 @@ func registerTools(s *mcp.Server, q *Query) {
 		Name: "query_host_changes",
 		Description: "查主机变更记录（来自审计），按时间倒序。每条包含 record_id、时间（北京时间）、操作人、类型：" +
 			"placement_change 带变更前后归属（from/to）和类型（分配、转移、回收等）；config_change 带逐字段的前后值。" +
-			"可按主机、业务、操作人、时间范围、变更类型、关键字（如 故障机、待回收、备份）过滤。调查某台主机的历史时传 host_id。",
+			"可按主机（host_id 或 ip）、业务、模块、操作人、时间范围、变更类型、关键字（如 故障机、待回收、备份）过滤。" +
+			"调查某台主机的历史时传 host_id 或 ip；调查某个模块的主机进出时传 module_id，不用逐台主机去查。",
 		Annotations: readOnly("主机变更记录"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, in changesIn) (*mcp.CallToolResult, changesOut, error) {
 		since, err := parseTime(in.Since)
@@ -161,8 +166,14 @@ func registerTools(s *mcp.Server, q *Query) {
 		if err != nil {
 			return nil, changesOut{}, err
 		}
+		hostID := in.HostID
+		if hostID == 0 && strings.TrimSpace(in.IP) != "" {
+			if hostID, err = q.HostIDByIP(ctx, in.IP); err != nil {
+				return nil, changesOut{}, err
+			}
+		}
 		matched, items, err := q.QueryChanges(ctx, ChangeFilter{
-			HostID: in.HostID, BusinessID: in.BusinessID, Operator: in.Operator, Since: since, Until: until,
+			HostID: hostID, BusinessID: in.BusinessID, ModuleID: in.ModuleID, Operator: in.Operator, Since: since, Until: until,
 			Action: in.Action, Keyword: in.Keyword, Limit: clampLimit(in.Limit),
 		})
 		return nil, changesOut{Matched: matched, Changes: items}, err

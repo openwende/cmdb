@@ -129,9 +129,17 @@ type BusinessSummary struct {
 	Lifecycle  string   `json:"lifecycle,omitempty"`
 	HostCount  int64    `json:"host_count"`
 	Contacts   []string `json:"contacts,omitempty" gorm:"-" jsonschema:"业务人员，格式为 角色: 联系方式"`
+	// 关键字命中模块名时才有
+	MatchedModules []ModuleRef `json:"matched_modules,omitempty" gorm:"-" jsonschema:"关键字命中的模块"`
 }
 
-// SearchBusinesses 按名称或英文标识模糊查业务；keyword 为空时列出全部。
+// ModuleRef 模块及其所在集群。
+type ModuleRef struct {
+	ModuleID uint64 `json:"module_id"`
+	Path     string `json:"path" jsonschema:"集群 / 模块"`
+}
+
+// SearchBusinesses 按名称、英文标识或模块名模糊查业务；keyword 为空时列出全部。
 func (q *Query) SearchBusinesses(ctx context.Context, keyword string, limit int) ([]BusinessSummary, error) {
 	tx := q.db.WithContext(ctx).Table("businesses b").
 		Select(`b.id AS business_id, b.name, b.identifier, b.lifecycle,
@@ -139,7 +147,9 @@ func (q *Query) SearchBusinesses(ctx context.Context, keyword string, limit int)
 		Where("b.deleted_at IS NULL")
 	if kw := strings.TrimSpace(keyword); kw != "" {
 		like := "%" + kw + "%"
-		tx = tx.Where("b.name LIKE ? OR b.identifier LIKE ?", like, like)
+		tx = tx.Where(`b.name LIKE ? OR b.identifier LIKE ? OR EXISTS (
+			SELECT 1 FROM modules mo WHERE mo.business_id = b.id AND mo.deleted_at IS NULL AND mo.name LIKE ?)`,
+			like, like, like)
 	}
 	var out []BusinessSummary
 	if err := tx.Order("b.id").Limit(limit).Scan(&out).Error; err != nil {
@@ -168,7 +178,42 @@ func (q *Query) SearchBusinesses(ctx context.Context, keyword string, limit int)
 	for i := range out {
 		out[i].Contacts = contacts[out[i].BusinessID]
 	}
+	if err := q.attachMatchedModules(ctx, out, keyword); err != nil {
+		return nil, err
+	}
 	return out, nil
+}
+
+func (q *Query) attachMatchedModules(ctx context.Context, out []BusinessSummary, keyword string) error {
+	kw := strings.TrimSpace(keyword)
+	if kw == "" || len(out) == 0 {
+		return nil
+	}
+	ids := make([]uint64, len(out))
+	for i, b := range out {
+		ids[i] = b.BusinessID
+	}
+	var mods []struct {
+		ID         uint64
+		BusinessID uint64
+		Module     string
+		SetName    *string
+	}
+	if err := q.db.WithContext(ctx).Table("modules mo").
+		Select("mo.id, mo.business_id, mo.name AS module, s.name AS set_name").
+		Joins("LEFT JOIN sets s ON s.id = mo.set_id").
+		Where("mo.business_id IN ? AND mo.deleted_at IS NULL AND mo.name LIKE ?", ids, "%"+kw+"%").
+		Order("mo.business_id, mo.id").Scan(&mods).Error; err != nil {
+		return err
+	}
+	byBiz := map[uint64][]ModuleRef{}
+	for _, m := range mods {
+		byBiz[m.BusinessID] = append(byBiz[m.BusinessID], ModuleRef{ModuleID: m.ID, Path: deref(m.SetName) + " / " + m.Module})
+	}
+	for i := range out {
+		out[i].MatchedModules = byBiz[out[i].BusinessID]
+	}
+	return nil
 }
 
 // TopologyModule 拓扑中的模块。
@@ -483,6 +528,7 @@ type historyRow struct {
 type ChangeFilter struct {
 	HostID     int64
 	BusinessID uint64
+	ModuleID   uint64 // 变更前或变更后在该模块
 	Operator   string
 	Since      *time.Time
 	Until      *time.Time
@@ -535,6 +581,9 @@ func (q *Query) QueryChanges(ctx context.Context, f ChangeFilter) (int, []Change
 		if bizFilter != "" && fmt.Sprint(before["business_id"]) != bizFilter && fmt.Sprint(after["business_id"]) != bizFilter {
 			continue
 		}
+		if f.ModuleID != 0 && !inModule(before, f.ModuleID) && !inModule(after, f.ModuleID) {
+			continue
+		}
 		e := buildEntry(r, before, after, names, hostNames)
 		if f.Action != "" && e.Action != f.Action {
 			continue
@@ -548,6 +597,44 @@ func (q *Query) QueryChanges(ctx context.Context, f ChangeFilter) (int, []Change
 		}
 	}
 	return matched, out, nil
+}
+
+// inModule 快照里的归属是否包含该模块：新快照记 module_ids，旧快照只有 module_id。
+func inModule(snap map[string]any, moduleID uint64) bool {
+	if ids, ok := snap["module_ids"].([]any); ok {
+		for _, v := range ids {
+			if id, ok := number(v); ok && id == moduleID {
+				return true
+			}
+		}
+		return false
+	}
+	id, ok := number(snap["module_id"])
+	return ok && id == moduleID
+}
+
+// HostIDByIP 按 IP 找主机展示 ID；没有或有多台时返回错误。
+func (q *Query) HostIDByIP(ctx context.Context, ip string) (int64, error) {
+	ip = strings.TrimSpace(ip)
+	var rows []struct {
+		DisplayID int64
+		HostName  string
+	}
+	if err := q.db.WithContext(ctx).Table("hosts h").Select("h.display_id, h.host_name").
+		Where("h.deleted_at IS NULL").Where(q.ipExpr()+" = ?", ip).Limit(5).Scan(&rows).Error; err != nil {
+		return 0, err
+	}
+	switch len(rows) {
+	case 0:
+		return 0, fmt.Errorf("主机 %w（ip=%q）", ErrNotFound, ip)
+	case 1:
+		return rows[0].DisplayID, nil
+	}
+	cands := make([]string, len(rows))
+	for i, r := range rows {
+		cands[i] = fmt.Sprintf("host_id=%d(%s)", r.DisplayID, r.HostName)
+	}
+	return 0, fmt.Errorf("IP %s 对应多台主机，请用 host_id 指定：%s", ip, strings.Join(cands, "；"))
 }
 
 func entryMentions(e ChangeEntry, kw string) bool {

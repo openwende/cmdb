@@ -74,8 +74,8 @@ func setupQueryDB(t *testing.T) *gorm.DB {
 	hist(1, 1, "create", "", `{"cpu":8,"memory":16384,"status":"running"}`, "chenjing", day(1))
 	hist(2, 1, "update", `{"memory":16384,"custom_fields.备份":true,"business_id":"1001"}`,
 		`{"memory":32768,"custom_fields.备份":false,"business_id":"1001"}`, "zhangwei", day(3))
-	hist(3, 1, "update", `{"business_id":"1001","business_name":"支付清结算","module_names":["支付网关"]}`,
-		`{"business_id":"1001","business_name":"支付清结算","module_names":["风控服务"],"source":"transfer"}`, "liuyang", day(16))
+	hist(3, 1, "update", `{"business_id":"1001","business_name":"支付清结算","module_ids":[111],"module_names":["支付网关"]}`,
+		`{"business_id":"1001","business_name":"支付清结算","module_ids":[112],"module_names":["风控服务"],"source":"transfer"}`, "liuyang", day(16))
 	hist(4, 2, "update", `{"business_id":"1001","business_name":"支付清结算","module_names":["待回收"]}`,
 		`{"directory_id":2,"source":"reclaim"}`, "chenjing", day(14))
 	hist(5, 1, "update", "", `{"business_id":"1001","module_id":111,"source":"allocate"}`, "system", day(2)) // 旧审计：无 before、无模块名快照
@@ -183,6 +183,51 @@ func TestQueryChanges_Filters(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, matched)
 	assert.Len(t, items, 1)
+}
+
+func TestQueryChanges_ModuleAndIP(t *testing.T) {
+	q := NewQuery(setupQueryDB(t))
+	ctx := context.Background()
+
+	// 模块 111：转出（记录 3，新快照 module_ids）和旧审计的分配（记录 5，只有 module_id）
+	matched, items, err := q.QueryChanges(ctx, ChangeFilter{ModuleID: 111, Limit: 20})
+	require.NoError(t, err)
+	require.Equal(t, 2, matched)
+	assert.Equal(t, uint64(3), items[0].RecordID)
+	assert.Equal(t, uint64(5), items[1].RecordID)
+
+	// 模块 112：同一条转移记录是它的转入
+	matched, items, err = q.QueryChanges(ctx, ChangeFilter{ModuleID: 112, Limit: 20})
+	require.NoError(t, err)
+	require.Equal(t, 1, matched)
+	assert.Equal(t, "支付清结算 / 风控服务", items[0].To)
+
+	id, err := q.HostIDByIP(ctx, " 10.20.1.11 ")
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), id)
+	_, err = q.HostIDByIP(ctx, "10.99.99.99")
+	assert.ErrorIs(t, err, ErrNotFound)
+}
+
+func TestSearchBusinesses_MatchesModuleName(t *testing.T) {
+	q := NewQuery(setupQueryDB(t))
+	ctx := context.Background()
+
+	out, err := q.SearchBusinesses(ctx, "风控", 20)
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	assert.Equal(t, uint64(1001), out[0].BusinessID)
+	assert.Equal(t, []ModuleRef{{ModuleID: 112, Path: "生产集群 / 风控服务"}}, out[0].MatchedModules)
+
+	// 命中业务名时不附带模块
+	out, err = q.SearchBusinesses(ctx, "清结算", 20)
+	require.NoError(t, err)
+	require.Len(t, out, 1)
+	assert.Empty(t, out[0].MatchedModules)
+
+	out, err = q.SearchBusinesses(ctx, "不存在的模块", 20)
+	require.NoError(t, err)
+	assert.Empty(t, out)
 }
 
 func TestTopologyAndPool(t *testing.T) {
