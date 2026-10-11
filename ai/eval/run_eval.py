@@ -57,11 +57,15 @@ def check_case(case: dict[str, Any], answer: str, tool_names: list[str]) -> list
     return results
 
 
-async def run_case(investigator: Investigator, user, case: dict[str, Any], run_id: str):
+async def run_case(investigator: Investigator, user, case: dict[str, Any], run_id: str, label: str):
     final, error = None, None
     conversation_id = f"eval-{run_id}-{case['id']}"
     async for sse in investigator.stream(
-        conversation_id, case["question"], user, include_tool_outputs=True
+        conversation_id,
+        case["question"],
+        user,
+        include_tool_outputs=True,
+        trace_tags=["eval", label, case["id"]],
     ):
         if sse.event == "final":
             final = sse.data
@@ -191,7 +195,7 @@ async def main() -> int:
 
     async def bounded(case):
         async with semaphore:
-            result = await run_case(investigator, user, case, run_id)
+            result = await run_case(investigator, user, case, run_id, args.label)
             print(f"  {'✅' if result['passed'] else '❌'} {case['id']}", flush=True)
             return result
 
@@ -199,6 +203,7 @@ async def main() -> int:
     started = time.monotonic()
     results = await asyncio.gather(*(bounded(c) for c in cases))
     summary = print_report(results)
+    investigator.tracing.flush()  # 评测进程马上退出，先把 trace 发完
     summary["wall_seconds"] = round(time.monotonic() - started, 1)
 
     out_dir = EVAL_DIR / "results"

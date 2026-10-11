@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     summarize_trigger_tokens: int = 60_000
     summarize_keep_messages: int = 20
 
+    # 可观测（Langfuse，可选）：Public Key 和 Secret Key 都配置了才启用
+    langfuse_base_url: str = "http://localhost:3100"
+    langfuse_public_key: str | None = None
+    langfuse_secret_key: SecretStr | None = None
+
     # 评测脚本用的本地账号
     cmdb_eval_username: str | None = None
     cmdb_eval_password: SecretStr | None = None

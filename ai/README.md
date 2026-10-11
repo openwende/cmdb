@@ -48,7 +48,7 @@ curl -N -X POST localhost:8090/chat \
 | `message_end` | `{message_id, finish_reason, usage}` | 一次模型调用结束，含 token 用量 |
 | `tool_start` | `{tool_call_id, name, input}` | 工具调用开始 |
 | `tool_end` | `{tool_call_id, name, status, output}` | `status` 为 `success` / `error`，`output` 截断到 4000 字 |
-| `final` | `{answer, tool_calls, usage, model_calls, elapsed_ms}` | 本轮最终回答和统计 |
+| `final` | `{answer, tool_calls, usage, model_calls, elapsed_ms, trace_id?}` | 本轮最终回答和统计；启用 Langfuse 时带 `trace_id` |
 | `error` | `{message}` | 执行失败 |
 
 ## 开发
@@ -60,21 +60,40 @@ uv run ruff check . && uv run ruff format .
 
 ### 评测
 
-`eval/cases.yaml` 是基于本地演示数据（故事 S1–S5）的 20 个问题，检查回答是否引用了正确的
-record_id、是否包含关键事实、是否调用了必要的工具。一键运行（需要 Go 后端和 `.env` 里的评测账号）：
+`eval/cases.yaml` 是基于本地演示数据（故事 S1–S5 和 10 道难题）的 30 个问题，三层检查：
+
+1. 规则检查：必须引用的 record_id、必须 / 不能出现的内容、必须调用的工具、调用上限（不调用模型）
+2. 引用核对（`eval/citations.py`）：回答里引用的 record_id / host_id 必须在本题工具返回里出现过（不调用模型）
+3. LLM 评分（`eval/judge.py`，deepseek-v4-pro）：正确性对照参考要点（`reference`），忠实度对照工具返回，
+   分两次调用；结果按输入哈希缓存在 `eval/results/judge-cache.jsonl`，同样的输入不重复花钱
 
 ```bash
-uv run python eval/run_eval.py --label baseline          # 全部用例，默认并发 4
+uv run python eval/run_eval.py --label baseline          # 跑 30 题（需要 Go 后端和 .env 里的评测账号）
 uv run python eval/run_eval.py --only s1-why-two-modules # 只跑部分用例
+uv run python eval/judge.py baseline --dry-run           # 先估算要调用多少次评分模型
+uv run python eval/judge.py baseline                     # LLM 评分（命中缓存的不再调用）
+uv run python eval/compare.py baseline prompt-v2         # 按 label 对比，只读缓存，不调用模型
+uv run python eval/push_scores.py baseline               # 把分数写回 Langfuse trace（需要启用 Langfuse）
 ```
 
-结果写到 `eval/results/`（不提交），包含每题的回答、工具调用、token 和耗时，用于优化前后对比。
+同一配置跑 3 轮再对比；检查项按当前 `cases.yaml` 重新打分，改了规则不用重跑模型。评测省钱规则见 `CLAUDE.md`。
 
-同一配置建议跑 3 轮，再按 label 对比（检查项按当前 `cases.yaml` 重新打分，改了规则也不用重跑模型）：
+`eval/labeling/` 是校准评分模型用的 40 条标注集（含 10 条故意改坏的回答）、盲标结果和一致率脚本；
+`eval/ragas_faithfulness.py` 是 Ragas faithfulness 与自建评分的对比（需要 `uv sync --group eval`）。
+
+### 可观测（Langfuse，可选）
+
+本地自建，镜像和启动方式见 `deploy/langfuse/docker-compose.yml`：
 
 ```bash
-uv run python eval/compare.py baseline prompt-v2
+cd deploy/langfuse && ./init-env.sh && docker compose up -d   # 首次运行生成随机密钥
 ```
+
+打开 http://localhost:3100 ，登录账号在 `deploy/langfuse/.env`（`LANGFUSE_INIT_USER_EMAIL` / `_PASSWORD`）。
+把 `.env` 里的 `LANGFUSE_INIT_PROJECT_PUBLIC_KEY` / `SECRET_KEY` 填到本仓库 `.env` 的 `LANGFUSE_PUBLIC_KEY` /
+`LANGFUSE_SECRET_KEY` 即启用；不填则完全不启用。每次对话一条 trace（用户名、会话、标签 `chat` 或
+`eval / <label> / <用例>`），包含每次模型调用的 token（含缓存命中、推理 token）、工具调用和中间件；
+用户 JWT 不会上报。`final` 事件会带 `trace_id`。
 
 ## 代码结构
 
@@ -90,5 +109,6 @@ uv run python eval/compare.py baseline prompt-v2
 | `src/cmdb_ai/checkpoint.py` | `AsyncPostgresSaver` 与 schema `ai` |
 | `src/cmdb_ai/cmdb.py` | Go 后端客户端（登录、`/auth/me`）、`UserContext` |
 | `src/cmdb_ai/config.py` | 配置项 |
+| `src/cmdb_ai/observability.py` | Langfuse 追踪（可选） |
 
 开发进度与任务清单见上级目录的 `PROGRESS.md`。

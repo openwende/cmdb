@@ -13,6 +13,7 @@ from cmdb_ai.agent import build_agent
 from cmdb_ai.cmdb import UserContext
 from cmdb_ai.config import Settings
 from cmdb_ai.mcp_tools import list_mcp_tools, to_langchain_tools
+from cmdb_ai.observability import Tracing
 from cmdb_ai.streaming import EventTranslator, SSEEvent
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class Investigator:
         self._checkpointer = checkpointer
         self._agent = None
         self._lock = asyncio.Lock()
+        self.tracing = Tracing(settings)
 
     async def _get_agent(self, user: UserContext):
         # /mcp 需要认证，服务本身没有凭证，所以用第一个请求者的 JWT 拉取工具定义。
@@ -48,14 +50,22 @@ class Investigator:
         message: str,
         user: UserContext,
         include_tool_outputs: bool = False,
+        trace_tags: list[str] | None = None,
     ) -> AsyncIterator[SSEEvent]:
-        """include_tool_outputs：final 事件里带完整工具结果，供评测判断回答是否有依据。"""
+        """include_tool_outputs：final 事件里带完整工具结果，供评测判断回答是否有依据。
+        trace_tags：Langfuse trace 的标签，默认 ["chat"]，评测传 ["eval", label]。"""
         translator = EventTranslator(include_tool_outputs)
+        thread_id = thread_id_for(user, conversation_id)
+        config: dict = {"configurable": {"thread_id": thread_id}}
+        handler = self.tracing.handler()
+        if handler is not None:
+            config["callbacks"] = [handler]
+            config["metadata"] = self.tracing.metadata(user, thread_id, trace_tags or ["chat"])
         try:
             agent = await self._get_agent(user)
             run = await agent.astream_events(
                 {"messages": [{"role": "user", "content": message}]},
-                {"configurable": {"thread_id": thread_id_for(user, conversation_id)}},
+                config,
                 version="v3",
                 context=user,
             )
@@ -67,4 +77,7 @@ class Investigator:
             logger.exception("对话执行失败 conversation_id=%s", conversation_id)
             yield SSEEvent("error", {"message": f"{type(exc).__name__}: {exc}"})
             return
-        yield translator.final_event()
+        final = translator.final_event()
+        if handler is not None and handler.last_trace_id:
+            final.data["trace_id"] = handler.last_trace_id
+        yield final

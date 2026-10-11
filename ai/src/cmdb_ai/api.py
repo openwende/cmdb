@@ -30,6 +30,7 @@ async def lifespan(app: FastAPI):
             yield
         finally:
             await cmdb.aclose()
+            app.state.investigator.tracing.shutdown()  # 把还没发出的 trace 发完
 
 
 app = FastAPI(title="wende-cmdb-ai", lifespan=lifespan)
