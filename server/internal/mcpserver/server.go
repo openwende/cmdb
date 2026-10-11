@@ -17,7 +17,7 @@ import (
 )
 
 // Version MCP 服务版本，随工具集变化递增。
-const Version = "0.2.0"
+const Version = "0.3.0"
 
 const instructions = `这是文德 CMDB（配置管理数据库）的只读工具集。
 

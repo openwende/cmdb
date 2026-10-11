@@ -479,10 +479,14 @@ func (q *Query) GetHost(ctx context.Context, hostID int64, ip string) (*HostDeta
 // ---------- 变更历史 ----------
 
 // FieldChange 单个字段的变更。
+//
+// JSON 键用 from / to 而不是 before / after：MCP SDK 输出给模型的文本里键按字母序排列，
+// before / after 会变成 "after" 在前，模型容易把前后值读反；from / to 排序后正好是变更方向，
+// 也和归属变更的 from / to 一致。
 type FieldChange struct {
-	Field  string `json:"field"`
-	Before any    `json:"before"`
-	After  any    `json:"after"`
+	Field string `json:"field"`
+	From  any    `json:"from" jsonschema:"变更前的值"`
+	To    any    `json:"to" jsonschema:"变更后的值"`
 }
 
 // ChangeEntry 一条主机变更记录（来自审计 resource_histories）。
@@ -642,7 +646,7 @@ func entryMentions(e ChangeEntry, kw string) bool {
 		return true
 	}
 	for _, c := range e.Changes {
-		if strings.Contains(c.Field, kw) || strings.Contains(fmt.Sprint(c.Before), kw) || strings.Contains(fmt.Sprint(c.After), kw) {
+		if strings.Contains(c.Field, kw) || strings.Contains(fmt.Sprint(c.From), kw) || strings.Contains(fmt.Sprint(c.To), kw) {
 			return true
 		}
 	}
@@ -788,7 +792,7 @@ func diff(before, after map[string]any) []FieldChange {
 	for _, k := range sorted {
 		b, a := before[k], after[k]
 		if !reflect.DeepEqual(b, a) {
-			out = append(out, FieldChange{Field: k, Before: b, After: a})
+			out = append(out, FieldChange{Field: k, From: b, To: a})
 		}
 	}
 	return out

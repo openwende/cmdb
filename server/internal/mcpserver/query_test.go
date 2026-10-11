@@ -147,8 +147,8 @@ func TestQueryChanges_HostTimeline(t *testing.T) {
 	assert.Equal(t, "config_change", cfg.Action)
 	require.Len(t, cfg.Changes, 2, "business_id 等上下文字段不算配置变更")
 	assert.Equal(t, "custom_fields.备份", cfg.Changes[0].Field)
-	assert.Equal(t, true, cfg.Changes[0].Before)
-	assert.Equal(t, false, cfg.Changes[0].After)
+	assert.Equal(t, true, cfg.Changes[0].From)
+	assert.Equal(t, false, cfg.Changes[0].To)
 	assert.Equal(t, "memory", cfg.Changes[1].Field)
 
 	legacy := items[2]

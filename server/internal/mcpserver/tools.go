@@ -167,7 +167,7 @@ func registerTools(s *mcp.Server, q *Query) {
 	mcp.AddTool(s, &mcp.Tool{
 		Name: "query_host_changes",
 		Description: "查主机变更记录（来自审计），按时间倒序。每条包含 record_id、时间（北京时间）、操作人、类型：" +
-			"placement_change 带变更前后归属（from/to）和类型（分配、转移、回收等）；config_change 带逐字段的前后值。" +
+			"placement_change 带变更前后归属（from/to）和类型（分配、转移、回收等）；config_change 带逐字段的前后值（changes 里 from 是变更前、to 是变更后）。" +
 			"可按主机（host_id 或 ip）、业务、模块、操作人、时间范围、变更类型、关键字（如 故障机、待回收、备份）过滤。" +
 			"调查某台主机的历史时传 host_id 或 ip；调查某个模块的主机进出时传 module_id，不用逐台主机去查。",
 		Annotations: readOnly("主机变更记录"),

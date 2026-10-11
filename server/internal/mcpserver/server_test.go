@@ -61,6 +61,14 @@ func TestTools_CallRoundTrip(t *testing.T) {
 	assert.EqualValues(t, 2, out["matched"])
 	assert.Len(t, out["changes"], 1)
 
+	// 模型看到的是文本内容，键按字母序排列：字段变更要读成 field → from → to，不能是 after 在前
+	res, err = s.CallTool(ctx, &mcp.CallToolParams{Name: "query_host_changes",
+		Arguments: map[string]any{"host_id": 1, "action": "config_change"}})
+	require.NoError(t, err)
+	require.NotEmpty(t, res.Content)
+	text := res.Content[0].(*mcp.TextContent).Text
+	assert.Contains(t, text, `{"field":"custom_fields.备份","from":true,"to":false}`)
+
 	// 业务错误以工具错误返回给模型，而不是协议错误
 	res, err = s.CallTool(ctx, &mcp.CallToolParams{Name: "get_host", Arguments: map[string]any{"ip": "10.99.99.99"}})
 	require.NoError(t, err)
