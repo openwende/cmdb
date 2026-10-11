@@ -12,13 +12,17 @@ volumes:
 
 services:
   # ---------------------------------------------------------------------------
-  # Database Service (PostgreSQL 15)
+  # Database Service (PostgreSQL 18 + pgvector)
   # Usage:
   #   - Dev: docker-compose up -d db (Starts just DB for local Go dev)
   #   - Full: docker-compose up -d (Starts DB + App)
+  # pgvector image = official postgres:18 (Debian trixie) plus the vector
+  # extension, used by the AI service's knowledge base (schema `ai` only).
+  # The CMDB itself does not use vector. Upgrading from 18.0/18.1 requires
+  # REINDEX of ltree indexes (PostgreSQL 18.2 release notes).
   # ---------------------------------------------------------------------------
   db:
-    image: postgres:18.1
+    image: pgvector/pgvector:0.8.6-pg18-trixie
     container_name: cmdb-db
     restart: unless-stopped
     environment:
