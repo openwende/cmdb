@@ -1,4 +1,4 @@
-"""对比多组评测结果：uv run python eval/compare.py baseline prompt-v2 [...]
+"""对比多组评测结果：uv run python eval/compare.py baseline prompt-v2 [...] [--suite knowledge]
 
 每个参数是一个 label，汇总 eval/results/ 里所有该 label 的结果文件（同一配置建议跑 3 轮），
 输出 Markdown 表格：总体指标取各轮平均值（括号内为最小值–最大值），逐题指标为通过次数和平均值。
@@ -7,6 +7,8 @@
 修改检查规则后，新旧结果仍然按同一套规则比较，也不用重跑模型。
 引用幻觉率同样按保存的回答和工具返回重新计算；第二阶段之前的结果没有保存工具返回，显示为"—"。
 LLM 评分（正确性 / 忠实度）只从 judge.py 的缓存里取，不调用模型；有题没评过时显示为"—"。
+--suite 只统计这一组题（cases.yaml 的 suite 字段，没写的是 investigation）；
+题数不同的结果不要直接比均值。
 """
 
 import json
@@ -26,11 +28,23 @@ CASES = {c["id"]: c for c in yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(
 JUDGE_CACHE = load_cache()
 
 
-def load(label: str) -> list[dict[str, Any]]:
+def suite_of(case: dict[str, Any]) -> str:
+    return case.get("suite", "investigation")
+
+
+def load(label: str, suite: str | None = None) -> list[dict[str, Any]]:
     runs = []
     for path in sorted(RESULTS_DIR.glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         if data.get("label") == label:
+            if suite:
+                data["results"] = [
+                    r
+                    for r in data["results"]
+                    if r["id"] in CASES and suite_of(CASES[r["id"]]) == suite
+                ]
+                if not data["results"]:
+                    continue
             for r in data["results"]:
                 if "answer" in r and r["id"] in CASES:
                     tools = [c["name"] for c in r["tool_calls"]]
@@ -41,7 +55,7 @@ def load(label: str) -> list[dict[str, Any]]:
                         r[dim] = lookup(JUDGE_CACHE, dim, CASES[r["id"]], r)
             runs.append(data)
     if not runs:
-        sys.exit(f"没有 label 为 {label!r} 的结果")
+        sys.exit(f"没有 label 为 {label!r} 的结果" + (f"（suite={suite}）" if suite else ""))
     return runs
 
 
@@ -112,10 +126,16 @@ def fmt(name: str, values: list[float | None]) -> str:
 
 
 def main() -> None:
-    labels = sys.argv[1:]
+    args = sys.argv[1:]
+    suite = None
+    if "--suite" in args:
+        i = args.index("--suite")
+        suite = args[i + 1]
+        del args[i : i + 2]
+    labels = args
     if not labels:
         sys.exit(__doc__)
-    groups = {label: load(label) for label in labels}
+    groups = {label: load(label, suite) for label in labels}
 
     print("| 指标 | " + " | ".join(f"{lb}（{len(groups[lb])} 轮）" for lb in labels) + " |")
     print("|---|" + "---|" * len(labels))

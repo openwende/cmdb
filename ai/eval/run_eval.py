@@ -166,6 +166,9 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
 async def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--only", help="只跑这些用例 ID，逗号分隔")
+    parser.add_argument(
+        "--suite", help="只跑这一组题（cases.yaml 的 suite 字段，没写的是 investigation）"
+    )
     parser.add_argument("--concurrency", type=int, default=4)
     parser.add_argument("--label", default="run", help="写进结果文件名，方便对比")
     args = parser.parse_args()
@@ -179,6 +182,8 @@ async def main() -> int:
     if args.only:
         wanted = set(args.only.split(","))
         cases = [c for c in cases if c["id"] in wanted]
+    if args.suite:
+        cases = [c for c in cases if c.get("suite", "investigation") == args.suite]
 
     cmdb = CMDBClient(settings.cmdb_base_url, settings.cmdb_timeout_seconds)
     try:

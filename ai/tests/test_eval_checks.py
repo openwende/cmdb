@@ -61,6 +61,8 @@ def test_cases_file_is_well_formed():
         "exclude",
         "tools",
         "max_tools",
+        "suite",
+        "passages",
     }
     for case in cases:
         assert set(case) <= allowed, case["id"]

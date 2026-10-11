@@ -298,3 +298,206 @@
   reference:
     - 支付数据库模块的主机最多，共 8 台
   include: [支付数据库, "8"]
+
+# ---- 知识题（2026-10-11，第二阶段 C2）：需要知识库（knowledge/）才能答对
+#
+# suite: knowledge          这组题单独跑、单独对比（run_eval / compare 的 --suite knowledge）；
+#                           原来的 30 题没有 suite 字段，属于 investigation
+# passages:                 检索的标准答案，应命中的知识库小节（"<文档 title>#<小节标题>"），
+#                           按重要程度排序，第一个最关键；用于算 Recall@k、MRR。
+#                           tests/test_knowledge.py 检查这些小节都存在
+# 纯知识题的参考要点取自知识库；"知识 + 数据"题的数据部分取自 2026-10-11 的 MCP 工具返回。
+
+- id: k-faulty-vs-recycle
+  suite: knowledge
+  story: 知识
+  question: 故障机和待回收有什么区别？
+  reference:
+    - 两者都是业务空闲机池下的内置模块，移入它们都是普通的转移，审计类型是"转移"
+    - 故障机放故障待修的主机，是暂时离开服务，修好后通常转回原模块，始终留在本业务
+    - 待回收放业务不再使用、准备退还资源池的主机，下一步是回收到资源池、离开本业务
+    - 主机在待回收里还没有回收，仍属于这个业务
+  include: [转移, 资源池]
+  passages: [拓扑与空闲机池#故障机和待回收的区别, 拓扑与空闲机池#故障机模块, 拓扑与空闲机池#待回收模块]
+
+- id: k-reclaim-multi-module
+  suite: knowledge
+  story: 知识
+  question: 一台主机同时在两个业务模块里，这时候把它回收到资源池会怎样？系统会拦住吗？
+  reference:
+    - 回收会删掉这台主机所有的业务模块归属（不只是当前模块），然后主机进入资源池
+    - 后端回收不检查主机是否在待回收，也不检查是否还在其他模块，不会拦住
+    - 界面上"转移至主机池"只允许空闲机池（空闲机、故障机、待回收）里的主机操作，这只是界面限制
+  include: [[全部, 所有], ["re:(不|没有)(会)?(检查|校验|拦)"]]
+  passages: [主机流转规则#后端不做的校验, 主机流转规则#回收到资源池, 主机流转规则#界面限制和后端行为的区别]
+
+- id: k-backup-field
+  suite: knowledge
+  story: 知识
+  question: 主机上的"备份"字段是什么意思？把它关掉有什么风险？
+  reference:
+    - 备份是布尔值，表示这台主机是否开启了数据备份（true 为开启），不是备份负责人
+    - 数据库类主机应当开启备份
+    - 关闭期间数据损坏或误删无法恢复，属于高风险变更；约定只在维护窗口内临时关闭，结束后应恢复
+  include: [[数据备份, 开启了备份, 是否开启]]
+  passages: [自定义字段约定#备份]
+
+- id: k-audit-reason
+  suite: knowledge
+  story: 知识
+  question: 审计记录里能看到操作人当时为什么这么做吗？
+  reference:
+    - 不能：审计没有原因或备注这一列，界面上也没有地方填写原因；导入、回收接口的备注参数不会保存
+    - config 是录入时或删除前的配置，remark 是系统自动补充的说明，都不是操作原因
+    - 想知道原因需要找操作人确认
+  include: [["re:(没有|不|无).{0,10}原因"]]
+  passages: [审计记录说明#审计不记录操作原因]
+
+- id: k-audit-date-filter
+  suite: knowledge
+  story: 知识
+  question: 我在审计页面按日期筛选，凌晨做的操作怎么跑到前一天去了？
+  reference:
+    - 审计页面的日期筛选按 UTC 整天计算，筛某一天实际是北京时间当天 08:00 到次日 08:00
+    - 所以北京时间 0 点到 8 点之间的操作会被算到前一天；页面上显示的时间本身是北京时间
+  include: [UTC]
+  passages: [审计记录说明#时间和时区]
+
+- id: k-dynamic-group-custom-field
+  suite: knowledge
+  story: 知识
+  question: 动态分组能不能按 SLA 或者标签筛选主机？
+  reference:
+    - 不能：动态分组只能按主机、模块、集群的内置字段筛选，自定义字段（SLA、标签、备份等）不能作为条件
+    - 可用的主机字段包括主机名、IP、云厂商、地域、CPU、内存、磁盘、操作系统、状态、创建和更新时间；模块有模块名、服务类型；集群有集群名、环境类型
+  include: [[不能, 不支持, 无法]]
+  passages: [动态分组#动态分组能按哪些字段筛选]
+
+- id: k-no-recycle-type
+  suite: knowledge
+  story: 知识
+  question: 我想找主机什么时候转入待回收，为什么审计里搜不到"转入待回收"类型的记录？
+  reference:
+    - 实际操作从来不会产生"转入待回收"类型；转入待回收在审计里记为"转移"
+    - 要找 to 为"业务 / 待回收"的转移记录
+    - 归属变更实际只有导入资源池、分配到业务、转移、回收到资源池四种类型
+  include: [转移, 待回收]
+  passages: [主机流转规则#主机生命周期总览, 审计记录说明#归属变更类型]
+
+- id: k-remove-from-module
+  suite: knowledge
+  story: 知识
+  question: 在业务拓扑页对一台主机点"移出"当前模块，它会去哪里？
+  reference:
+    - 会被回收到资源池的默认目录，审计类型是"回收到资源池"
+    - 它在所有业务里的全部模块归属都会被删除，不只是当前模块
+    - 页面提示说会放到空闲机，和实际行为不符
+  include: [默认目录]
+  passages: [主机流转规则#回收到资源池, 资源池与目录#默认目录]
+
+- id: k-idle-pool-vs-resource-pool
+  suite: knowledge
+  story: 知识
+  question: 空闲机池和资源池是一回事吗？
+  reference:
+    - 不是：空闲机池是每个业务内置的集群，里面的主机已经分配给该业务，算该业务的主机
+    - 资源池存放尚未分配给任何业务的主机，按目录组织，不属于任何业务
+    - 一台主机不会同时在资源池和业务模块里
+  include: [[不是, 不同, 两回事, 不一样]]
+  passages: [拓扑与空闲机池#空闲机池, 资源池与目录#资源池是什么]
+
+- id: k-resource-type-fields
+  suite: knowledge
+  story: 知识
+  question: 资源类型页面上主机只有 5 个字段，那 CPU、内存、SLA 这些字段是在哪里定义的？
+  reference:
+    - 资源类型页面上的字段定义沿用蓝鲸的 bk_ 字段，和主机实际存储的字段不是一回事
+    - CPU、内存、磁盘、操作系统、状态是主机的内置字段（内存单位 MB、磁盘单位 GB）
+    - SLA 等是自定义字段，是自由的键值对，系统里没有统一的字段定义
+  include: [自定义字段]
+  passages: [资源类型#页面上的字段定义和主机实际数据, 主机内置字段#自定义字段的存储方式, 主机内置字段#硬件配置字段和单位]
+
+# ---- 知识 + 数据：既要查 CMDB，又要知识库才能解释对
+
+- id: kd-recycle-not-reclaimed
+  suite: knowledge
+  story: 知识+数据
+  question: pay-gw-02 之前被转到了待回收，它现在已经回到资源池了吗？还归支付清结算管吗？
+  reference:
+    - 2026-09-19 14:34 zhangwei 把它从支付清结算支付网关转到待回收（record 884），审计类型是"转移"
+    - 2026-09-22 19:30 chenjing 把它回收到资源池默认目录（record 895）
+    - 现在在资源池 / 默认目录，已经不属于支付清结算；在待回收期间它仍属于支付清结算
+  cite: [884, 895]
+  include: [默认目录]
+  tools: [query_host_changes]
+  exclude: [支付清算]
+  passages: [拓扑与空闲机池#待回收模块, 主机流转规则#回收到资源池]
+
+- id: kd-reclaim-while-in-other-module
+  suite: knowledge
+  story: 知识+数据
+  question: data-etl-01 八月底被回收到资源池的时候，有没有不符合流程的地方？
+  reference:
+    - 2026-08-27 19:29 chenjing 把它从 ETL 调度转到待回收，但它同时还在指标仓库模块（record 758）
+    - 2026-08-28 14:21 chenjing 回收到资源池默认目录（record 759），回收前归属是"数据中台 / 待回收、指标仓库"：它还在指标仓库时就被回收，指标仓库的归属被一起删掉
+    - 回收会删掉全部业务归属，后端不检查主机是否还在其他模块
+    - 审计没有记录原因，是否有意要找 chenjing 确认
+    - 之后 2026-09-04 又被分配回数据中台并转到报表 API（record 800、802）
+  cite: [758, 759]
+  include: [指标仓库, chenjing]
+  tools: [query_host_changes]
+  passages: [主机流转规则#后端不做的校验, 主机流转规则#回收到资源池, 审计记录说明#归属变更的 from 和 to]
+
+- id: kd-fault-reason-not-cleared
+  suite: knowledge
+  story: 知识+数据
+  question: mall-order-03 的"故障原因"字段还有值，它现在还处于故障状态吗？
+  reference:
+    - 不是：它现在在文德商城订单服务，状态是 running
+    - 故障原因字段修好后不会清空，现在的值"已更换数据盘"是修复结果（chenjing 2026-09-11 16:06 填写，record 618）
+    - 2026-09-11 16:05 chenjing 把磁盘从 300 GB 换成 500 GB 并恢复运行（record 617），2026-09-12 10:30 liuyang 把它从故障机转回订单服务（record 619）
+  cite: [619]
+  include: [订单服务, running]
+  passages: [自定义字段约定#故障原因, 拓扑与空闲机池#故障机模块]
+
+- id: kd-append-not-move-out
+  suite: knowledge
+  story: 知识+数据
+  question: 10.20.1.11 在 9 月 17 日的那条变更，是把它从风控服务转出了吗？
+  reference:
+    - 不是：2026-09-17 09:12 zhangwei 的变更（record 613）前归属是"支付清结算 / 风控服务"，后归属是"支付清结算 / 支付网关、风控服务"
+    - 这是新增了支付网关，风控服务保留，所以它现在同时在两个模块
+    - from / to 是变更前后的全部归属，要按集合对比
+  cite: [613]
+  include: [风控服务, 支付网关]
+  tools: [query_host_changes]
+  exclude: [支付清算]
+  passages: [审计记录说明#归属变更的 from 和 to, 主机流转规则#追加到业务模块]
+
+- id: kd-fault-is-plain-transfer
+  suite: knowledge
+  story: 知识+数据
+  question: obs-log-07 九月中旬被放进故障机，那是一个专门的"标记故障"操作吗？审计里是怎么记的？
+  reference:
+    - 系统没有专门的"标记故障"操作，移入故障机就是普通的转移
+    - 2026-09-13 15:45 zhangwei 把它从风控服务转到故障机，类型是"转移"（record 854）
+    - 停机和填写故障原因是另外两条配置变更：15:50 状态 running → stopped（record 855），15:51 故障原因填"网卡丢包"（record 856）
+  cite: [854, 855, 856]
+  include: [转移]
+  tools: [query_host_changes]
+  exclude: [支付清算]
+  passages: [拓扑与空闲机池#故障机模块, 主机流转规则#转入故障机和待回收]
+
+- id: kd-who-can-reclaim
+  suite: knowledge
+  story: 知识+数据
+  question: chenjing 有没有权限回收支付清结算的主机？
+  reference:
+    - 系统权限只按角色区分，不按业务划分；编辑者和管理员可以回收任何业务的主机，只读用户不能做任何修改
+    - 调查工具查不到用户的系统角色
+    - 审计里 chenjing 做过回收支付清结算主机的操作（例如 2026-09-22 把 pay-gw-02 回收到资源池，record 895），说明她是编辑者或管理员，有这个权限
+  cite: [895]
+  include: [[编辑者, editor, 管理员, admin]]
+  tools: [query_host_changes]
+  exclude: [支付清算]
+  passages: [角色与权限#系统角色, 角色与权限#权限和审计的关系]
