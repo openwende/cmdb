@@ -1,9 +1,11 @@
 import importlib.util
+import sys
 from pathlib import Path
 
 import yaml
 
 EVAL_DIR = Path(__file__).parents[1] / "eval"
+sys.path.insert(0, str(EVAL_DIR))  # run_eval 会导入同目录的 citations
 _spec = importlib.util.spec_from_file_location("run_eval", EVAL_DIR / "run_eval.py")
 run_eval = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(run_eval)

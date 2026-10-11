@@ -43,9 +43,14 @@ class Investigator:
         return self._agent
 
     async def stream(
-        self, conversation_id: str, message: str, user: UserContext
+        self,
+        conversation_id: str,
+        message: str,
+        user: UserContext,
+        include_tool_outputs: bool = False,
     ) -> AsyncIterator[SSEEvent]:
-        translator = EventTranslator()
+        """include_tool_outputs：final 事件里带完整工具结果，供评测判断回答是否有依据。"""
+        translator = EventTranslator(include_tool_outputs)
         try:
             agent = await self._get_agent(user)
             run = await agent.astream_events(

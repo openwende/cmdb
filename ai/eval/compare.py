@@ -5,6 +5,7 @@
 
 检查项按当前的 cases.yaml 对保存下来的回答重新打分，不用结果文件里的旧结论：
 修改检查规则后，新旧结果仍然按同一套规则比较，也不用重跑模型。
+引用幻觉率同样按保存的回答和工具返回重新计算；第二阶段之前的结果没有保存工具返回，显示为"—"。
 """
 
 import json
@@ -14,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from citations import check_citations
 from run_eval import check_case
 
 EVAL_DIR = Path(__file__).parent
@@ -31,18 +33,21 @@ def load(label: str) -> list[dict[str, Any]]:
                     tools = [c["name"] for c in r["tool_calls"]]
                     r["checks"] = check_case(CASES[r["id"]], r["answer"], tools)
                     r["passed"] = all(c["ok"] for c in r["checks"])
+                    r["citations"] = check_citations(r["answer"], r["tool_calls"])
             runs.append(data)
     if not runs:
         sys.exit(f"没有 label 为 {label!r} 的结果")
     return runs
 
 
-def run_metrics(run: dict[str, Any]) -> dict[str, float]:
+def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
     results = run["results"]
     ok = [r for r in results if "usage" in r]
     checks = [c for r in results for c in r["checks"]]
     calls = [c for r in ok for c in r["tool_calls"]]
     n = len(ok) or 1
+    cites = [r["citations"] for r in ok]
+    cited = sum(c["cited"] for c in cites) if None not in cites else 0
     return {
         "通过率": sum(r["passed"] for r in results) / len(results),
         "检查项通过率": sum(c["ok"] for c in checks) / len(checks),
@@ -52,10 +57,20 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float]:
         "输入 token/题": sum(r["usage"]["input_tokens"] for r in ok) / n,
         "输出 token/题": sum(r["usage"]["output_tokens"] for r in ok) / n,
         "耗时 秒/题": sum(r["elapsed_ms"] for r in ok) / 1000 / n,
+        "引用幻觉率": sum(len(c["unsupported"]) for c in cites) / cited if cited else None,
     }
 
 
-def fmt(name: str, values: list[float]) -> str:
+def fmt(name: str, values: list[float | None]) -> str:
+    if None in values:
+        return "—"
+    if "幻觉率" in name:
+        mean = statistics.mean(values)
+        return (
+            f"{mean:.1%}（{min(values):.1%}–{max(values):.1%}）"
+            if len(values) > 1
+            else f"{mean:.1%}"
+        )
     mean = statistics.mean(values)
     if "率" in name:
         text, lo, hi = f"{mean:.0%}", f"{min(values):.0%}", f"{max(values):.0%}"

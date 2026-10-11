@@ -2,7 +2,8 @@
 
 在进程内调用和 /chat 相同的 Investigator（不写检查点，每题一个独立会话），
 用 .env 里的 CMDB_EVAL_USERNAME / CMDB_EVAL_PASSWORD 登录。
-结果写到 eval/results/<时间>-<label>.json，记录每题的回答、工具调用、token、耗时和检查结果，
+结果写到 eval/results/<时间>-<label>.json，记录每题的回答、工具调用（含完整返回内容）、token、
+耗时和检查结果，
 用于优化前后对比。
 """
 
@@ -18,6 +19,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from citations import check_citations
 
 from cmdb_ai.cmdb import CMDBClient
 from cmdb_ai.config import get_settings
@@ -57,7 +59,10 @@ def check_case(case: dict[str, Any], answer: str, tool_names: list[str]) -> list
 
 async def run_case(investigator: Investigator, user, case: dict[str, Any], run_id: str):
     final, error = None, None
-    async for sse in investigator.stream(f"eval-{run_id}-{case['id']}", case["question"], user):
+    conversation_id = f"eval-{run_id}-{case['id']}"
+    async for sse in investigator.stream(
+        conversation_id, case["question"], user, include_tool_outputs=True
+    ):
         if sse.event == "final":
             final = sse.data
         elif sse.event == "error":
@@ -79,7 +84,21 @@ async def run_case(investigator: Investigator, user, case: dict[str, Any], run_i
         "question": case["question"],
         "passed": all(c["ok"] for c in checks),
         "checks": checks,
+        "citations": check_citations(final["answer"], final["tool_calls"]),
         **final,
+    }
+
+
+def citation_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """引用幻觉率 = 工具返回里找不到的引用编号数 / 引用编号总数（每题内去重）。"""
+    checked = [r["citations"] for r in results if r.get("citations") is not None]
+    cited = sum(c["cited"] for c in checked)
+    unsupported = sum(len(c["unsupported"]) for c in checked)
+    return {
+        "cited_ids": cited,
+        "unsupported_ids": unsupported,
+        "unsupported_rate": round(unsupported / cited, 4) if cited else 0,
+        "answers_with_unsupported": sum(1 for c in checked if c["unsupported"]),
     }
 
 
@@ -100,6 +119,8 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
         for c in checks:
             if not c["ok"]:
                 print(f"    ✗ {c['check']}")
+        if (r.get("citations") or {}).get("unsupported"):
+            print(f"    ✗ 引用无依据: {', '.join(r['citations']['unsupported'])}")
         if r.get("error"):
             print(f"    ✗ error: {r['error']}")
 
@@ -125,13 +146,15 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
         "avg_seconds": avg([r["elapsed_ms"] / 1000 for r in ok_runs]),
         "total_input_tokens": sum(r["usage"]["input_tokens"] for r in ok_runs),
         "total_output_tokens": sum(r["usage"]["output_tokens"] for r in ok_runs),
+        **citation_metrics(ok_runs),
     }
     print(
         f"\n通过 {summary['passed']}/{n}（{summary['pass_rate']:.0%}），"
         f"检查项通过率 {summary['check_pass_rate']:.0%}，错误 {summary['errors']}；"
         f"平均 {summary['avg_tool_calls']} 次工具调用、{summary['avg_model_calls']} 次模型调用、"
         f"输入 {summary['avg_input_tokens']} / 输出 {summary['avg_output_tokens']} token、"
-        f"{summary['avg_seconds']} 秒"
+        f"{summary['avg_seconds']} 秒；引用 {summary['cited_ids']} 个，"
+        f"无依据 {summary['unsupported_ids']} 个（{summary['unsupported_rate']:.1%}）"
     )
     return summary
 

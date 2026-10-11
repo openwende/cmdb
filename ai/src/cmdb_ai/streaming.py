@@ -8,6 +8,7 @@ SSE 事件（data 均为 JSON）：
 - tool_start     {tool_call_id, name, input}
 - tool_end       {tool_call_id, name, status, output} status 为 success / error
 - final          {answer, tool_calls, usage, model_calls, elapsed_ms}
+                 评测时 tool_calls 每项额外带完整 output（对话接口不带）
 - error          {message}
 
 同时累计统计数据，供 final 事件和评测脚本使用。
@@ -36,6 +37,7 @@ class ToolCallRecord:
     name: str
     input: Any
     status: str = "running"
+    output: str | None = None
     elapsed_ms: int | None = None
     started_at: float = field(default_factory=time.monotonic, repr=False)
 
@@ -71,7 +73,8 @@ class Usage:
 
 
 class EventTranslator:
-    def __init__(self) -> None:
+    def __init__(self, include_tool_outputs: bool = False) -> None:
+        self.include_tool_outputs = include_tool_outputs
         self.started_at = time.monotonic()
         self.usage = Usage()
         self.model_calls = 0
@@ -152,7 +155,7 @@ class EventTranslator:
                 status, text = "success", str(output)
         else:  # tool-error
             status, text = "error", data.get("message", "")
-        record.status = status
+        record.status, record.output = status, text
         return [
             SSEEvent(
                 "tool_end",
@@ -175,13 +178,16 @@ class EventTranslator:
                 return message.text
         return ""
 
+    def _tool_call_summary(self, r: ToolCallRecord) -> dict[str, Any]:
+        item = {"name": r.name, "input": r.input, "status": r.status, "elapsed_ms": r.elapsed_ms}
+        if self.include_tool_outputs:
+            item["output"] = r.output
+        return item
+
     def summary(self) -> dict[str, Any]:
         return {
             "answer": self.answer(),
-            "tool_calls": [
-                {"name": r.name, "input": r.input, "status": r.status, "elapsed_ms": r.elapsed_ms}
-                for r in self.tool_calls.values()
-            ],
+            "tool_calls": [self._tool_call_summary(r) for r in self.tool_calls.values()],
             "usage": self.usage.as_dict(),
             "model_calls": self.model_calls,
             "elapsed_ms": int((time.monotonic() - self.started_at) * 1000),

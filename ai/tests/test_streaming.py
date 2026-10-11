@@ -111,6 +111,19 @@ def test_tool_lifecycle_success_and_error():
     assert out[0].data["status"] == "error"
 
     assert [c["status"] for c in t.summary()["tool_calls"]] == ["success", "error", "error"]
+    assert "output" not in t.summary()["tool_calls"][0]  # 对话接口的 final 不重复带工具结果
+
+
+def test_summary_keeps_full_tool_output_for_eval():
+    t = EventTranslator(include_tool_outputs=True)
+    t.translate(ev("tools", {"event": "tool-started", "tool_call_id": "c1", "tool_name": "q"}))
+    full = ToolMessage(content="主机" * 3000, tool_call_id="c1")
+    t.translate(ev("tools", {"event": "tool-finished", "tool_call_id": "c1", "output": full}))
+    t.translate(ev("tools", {"event": "tool-started", "tool_call_id": "c2", "tool_name": "q"}))
+    t.translate(ev("tools", {"event": "tool-error", "tool_call_id": "c2", "message": "boom"}))
+    calls = t.summary()["tool_calls"]
+    assert calls[0]["output"] == "主机" * 3000  # 不截断：评测要看模型实际拿到的全部内容
+    assert calls[1]["output"] == "boom"
 
 
 def test_answer_is_from_current_turn_only():
