@@ -24,6 +24,10 @@ dev = [
     "pyyaml>=6.0.3",
     "ruff>=0.17.0",
 ]
+eval = [
+    "langchain-community>=0.4,<0.4.2",
+    "ragas>=0.4.3",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.4,<0.10"]

@@ -1,6 +1,6 @@
 {
  "who": "裁定后的标准答案",
- "note": "以盲标子代理的标注为底，Claude 对照工具返回裁定与评分模型的分歧；改动见 adjudications",
+ "note": "以盲标子代理的标注为底，Claude 对照工具返回裁定与评分模型的分歧；改动见 adjudications；A5 用 Ragas 复查时发现另有 5 条全局否定按严格口径应判无依据，已补裁",
  "adjudications": [
   {
    "item": "L11",
@@ -36,6 +36,41 @@
    "from": "yes",
    "to": "no",
    "why": "严格口径：\"待回收是数据中台内置空闲机池下的模块\"工具返回里没有（轻微）"
+  },
+  {
+   "item": "L02",
+   "field": "faithful",
+   "from": "yes",
+   "to": "no",
+   "why": "严格口径（A5 复查补裁）：\"CMDB 中没有任何字段说明操作意图或告警/工单\"是全局否定，工具没查过"
+  },
+  {
+   "item": "L13",
+   "field": "faithful",
+   "from": "yes",
+   "to": "no",
+   "why": "严格口径（A5 复查补裁）：\"CMDB 中没有关于是否通知、是否重新开启、备份策略是否停止执行的记录\"是全局否定"
+  },
+  {
+   "item": "L17",
+   "field": "faithful",
+   "from": "yes",
+   "to": "no",
+   "why": "严格口径（A5 复查补裁）：\"备份实际执行情况不在 CMDB 记录范围内\"是对未查询内容的断言"
+  },
+  {
+   "item": "L24",
+   "field": "faithful",
+   "from": "yes",
+   "to": "no",
+   "why": "严格口径（A5 复查补裁）：\"CMDB 中没有可执行的移除入口\"\"业务用途和下游依赖在 CMDB 中查不到\"是全局否定"
+  },
+  {
+   "item": "L28",
+   "field": "faithful",
+   "from": "yes",
+   "to": "no",
+   "why": "严格口径（A5 复查补裁）：\"CMDB 中没有字段表明备份关闭的期限或恢复计划\"是全局否定"
   }
  ],
  "labels": [
@@ -62,7 +97,7 @@
     "covered",
     "covered"
    ],
-   "faithful": "yes",
+   "faithful": "no",
    "problems": [],
    "note": "要点1：回答结论先说“审计没有记录这次转移的原因（614 note 为空）”，但随后明确写出同一操作人 liuyang 在 8-9 分钟后把故障原因填为“数据盘 I/O 错误告警”，信息完整，只是对因果做了保守处理，判 covered；若评分口径要求直接把它当作原因，可能会被判 partial。“8 分钟后（03:25、03:26）”按 03:25 计算，属允许的近似。"
   },
@@ -204,7 +239,7 @@
     "covered",
     "covered"
    ],
-   "faithful": "yes",
+   "faithful": "no",
    "problems": [],
    "note": ""
   },
@@ -251,7 +286,7 @@
     "covered",
     "covered"
    ],
-   "faithful": "yes",
+   "faithful": "no",
    "problems": [],
    "note": "“该主机全部配置变更只有这一条”：config_change 查询 matched=1，有依据。"
   },
@@ -347,7 +382,7 @@
    "points": [
     "covered"
    ],
-   "faithful": "yes",
+   "faithful": "no",
    "problems": [],
    "note": ""
   },
@@ -407,7 +442,7 @@
     "covered",
     "covered"
    ],
-   "faithful": "yes",
+   "faithful": "no",
    "problems": [],
    "note": ""
   },
