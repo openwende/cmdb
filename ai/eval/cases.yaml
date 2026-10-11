@@ -24,7 +24,7 @@
   include:
     - liuyang
     - zhangwei
-    - ["re:(没有|未)(记录|写明?|说明).{0,4}原因", 没有原因, 缺少原因, note 为空, 没有 note, 无 note]
+    - ["re:(没有|未)(记录|写明?|说明).{0,8}原因", 没有原因, 缺少原因, "re:note (均|都)?为空", 没有 note, 无 note]
   tools: [query_host_changes]
   exclude: [支付清算]
 
