@@ -1,0 +1,531 @@
+{
+ "who": "claude（盲标子代理）",
+ "note": "两个新起的子代理各标 20 条，只能读 set.json，看不到 key、评分结果、用户标注",
+ "labels": [
+  {
+   "item": "L01",
+   "points": [
+    "contradicted",
+    "covered",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "9 月 21 日给 pay-db-02 开启了“备份”（备份 false → true）",
+     "verdict": "contradicted",
+     "evidence": "record_id=627 的 custom_fields.备份 before=true after=false，即关闭备份"
+    }
+   ],
+   "note": "要点1：人、时间、标签都对，但把关闭备份说成开启备份（变更方向相反），判 contradicted。"
+  },
+  {
+   "item": "L02",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "要点1：回答结论先说“审计没有记录这次转移的原因（614 note 为空）”，但随后明确写出同一操作人 liuyang 在 8-9 分钟后把故障原因填为“数据盘 I/O 错误告警”，信息完整，只是对因果做了保守处理，判 covered；若评分口径要求直接把它当作原因，可能会被判 partial。“8 分钟后（03:25、03:26）”按 03:25 计算，属允许的近似。"
+  },
+  {
+   "item": "L03",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "上述 7 条记录（含转待回收和回收）的 note 均为空",
+     "verdict": "contradicted",
+     "evidence": "7 条记录中 record_id=205（create）有 note=“8 核，32768 MB 内存，200 GB 磁盘，Rocky Linux 9.3，running”"
+    }
+   ],
+   "note": "拿不准：唯一问题是“7 条记录 note 均为空”，create 记录其实有 note（只是配置描述，不是原因）。按严格口径判 no；如果评分口径只看变更原因类 note，可判 yes。其余事实全部核对一致。"
+  },
+  {
+   "item": "L04",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "已逐个核对按目录和规格的分组、host_id 清单与第二次 limit=100 的完整返回一致（6+12+13+4=35；19+7+6+3=35）。"
+  },
+  {
+   "item": "L05",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L06",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L07",
+   "points": [
+    "covered",
+    "covered",
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "9 月 18 日上午支付清结算共有 5 条归属变更记录",
+     "verdict": "contradicted",
+     "evidence": "query_host_changes(business_id=1027, placement_change, 09-18 00:00–11:59:59) matched=4，只有 record 628/629/630/631"
+    },
+    {
+     "claim": "11:05 obs-log-07（host_id=72）从支付清结算/故障机转回风控服务，操作人 zhangwei [record_id=859]",
+     "verdict": "unsupported",
+     "evidence": "本轮工具返回里没有 record_id=859，也没有 obs-log-07 的任何记录；该上午窗口的查询只返回 4 条"
+    }
+   ],
+   "note": "要点3：要点说当天上午只有这 4 条归属变更，回答说 5 条并多列了 record 859，判 contradicted（回答里也同时出现“上午这 4 条记录”的说法，前后自相矛盾）。"
+  },
+  {
+   "item": "L08",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L09",
+   "points": [
+    "contradicted",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "结论：数据盘是 liuyang 换的（2026-09-11 16:05，record 617）",
+     "verdict": "contradicted",
+     "evidence": "record_id=617 的 operator=chenjing"
+    }
+   ],
+   "note": "要点1：结论写 liuyang，事实部分又写 chenjing，正确和矛盾的说法同时出现，判 contradicted。"
+  },
+  {
+   "item": "L10",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "已核对 09-13 15:45 → 09-14 16:35 = 24 小时 50 分，与要点的约 1 天 50 分一致。“7 条记录均无 note”与返回一致（9 月查询的 7 条里没有 create 记录）。"
+  },
+  {
+   "item": "L11",
+   "points": [
+    "partial",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "内存是在 2026-09-03 16:20 由 zhangwei 修改的",
+     "verdict": "contradicted",
+     "evidence": "record_id=610 time=2026-09-03T15:20:00+08:00"
+    }
+   ],
+   "note": "要点1：人（zhangwei）对，但时间写成 16:20（实际 15:20），判 partial。"
+  },
+  {
+   "item": "L12",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "“host_id=57 之后没有再变更”：host_id=57 的查询 limit=100、matched=5，返回完整，有依据。"
+  },
+  {
+   "item": "L13",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L14",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L15",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "“上述 9 条变更记录 note 均为空”：10 条记录中除 create（record 144）外正好 9 条，都没有 note，有依据。"
+  },
+  {
+   "item": "L16",
+   "points": [
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "广州支付备机目录当前有 6 台主机，6 台都在运行",
+     "verdict": "contradicted",
+     "evidence": "list_pool_directories 里 directory_id=6 的 host_count=5，running_count=5"
+    }
+   ],
+   "note": "要点1：回答说 6 台，实际是 5 台（回答末尾又提到“哪 5 台”，前后自相矛盾），判 contradicted。"
+  },
+  {
+   "item": "L17",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "“该主机全部配置变更只有这一条”：config_change 查询 matched=1，有依据。"
+  },
+  {
+   "item": "L18",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L19",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L20",
+   "points": [
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "8 核、16G 及以上的 Linux 主机共 33 台",
+     "verdict": "contradicted",
+     "evidence": "search_hosts 返回 total=35，limit=100 的完整返回也是 35 条；回答自己的目录分组 6+12+13+4 也等于 35"
+    },
+    {
+     "claim": "8 核 / 16G 共 17 台",
+     "verdict": "contradicted",
+     "evidence": "返回里 cpu=8、memory_mb=16384 的有 19 台（16、44、113–124、156–160）"
+    },
+    {
+     "claim": "剔除恰好 8 核 16G 的 17 台后剩 18 台",
+     "verdict": "contradicted",
+     "evidence": "应为 35-19=16 台"
+    }
+   ],
+   "note": "要点1：结论写 33 台，与要点的 35 台不一致（文中又引用 total=35，正确和错误说法同时出现），判 contradicted。"
+  },
+  {
+   "item": "L21",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "文德商城业务下 2026-09-21 之后也没有新的变更记录",
+     "verdict": "unsupported",
+     "evidence": "业务 1026 的查询带了 action=config_change，只能说明 09-21 之后没有配置变更；业务范围内的归属变更等其他动作没查过，全局否定没有覆盖到"
+    }
+   ],
+   "note": "其余事实（623-626、503-506、662、模块 91 的 5 台主机规格）都核对过，没问题。只因这一句全局否定判 no，算是边界情况"
+  },
+  {
+   "item": "L22",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "'待回收是数据中台内置空闲机池下的模块'没有查数据中台拓扑来印证，属于常识性推断，没有扣分，拿不准"
+  },
+  {
+   "item": "L23",
+   "points": [
+    "covered",
+    "covered",
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "在故障机里待了 3 天 7 小时 13 分钟",
+     "verdict": "contradicted",
+     "evidence": "record 614 是 2026-09-08T03:17，record 619 是 2026-09-12T10:30，差值是 4 天 7 小时 13 分钟"
+    }
+   ],
+   "note": "要点3：时长少算了一天"
+  },
+  {
+   "item": "L24",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L25",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L26",
+   "points": [
+    "partial",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "2026-08-19 09:05 回收到资源池 / 默认目录，操作人 zhangwei [record_id=709]",
+     "verdict": "contradicted",
+     "evidence": "record_id=709 的 operator=chenjing"
+    }
+   ],
+   "note": "要点1：时间和路径都对，但回收操作人写成了 zhangwei（应为 chenjing），按'人错了'算 partial；也可以算 contradicted"
+  },
+  {
+   "item": "L27",
+   "points": [
+    "covered"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "2026-09-19 12:24 pay-risk-02 status stopped → running [record_id=883]",
+     "verdict": "contradicted",
+     "evidence": "record_id=883 的 before=running、after=stopped，方向写反了"
+    },
+    {
+     "claim": "需要更早（8 月及以前，zhangwei 共 79 条）可再查",
+     "verdict": "contradicted",
+     "evidence": "operator=zhangwei 的查询 matched=79，这是包括 9 月 28 条在内的总数；8 月及以前只有 51 条"
+    }
+   ],
+   "note": "其余 27 条 9 月记录逐条核对过，都对"
+  },
+  {
+   "item": "L28",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L29",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L30",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L31",
+   "points": [
+    "covered",
+    "covered",
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "关闭原因是当晚要在维护窗口做主从切换，切换完成后忘了恢复",
+     "verdict": "unsupported",
+     "evidence": "record_id=627 没有 note，工具返回里没有任何关于主从切换或忘记恢复的信息；答案后文自己也说审计里查不到原因"
+    }
+   ],
+   "note": "要点3：'之后没有重新开启'答到了，但同时编造了关闭原因，与'审计没写关闭原因'矛盾，所以判 contradicted"
+  },
+  {
+   "item": "L32",
+   "points": [
+    "contradicted",
+    "covered",
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "liuyang 在 2026-09-16 只做了 1 次主机归属变更 / 当天没有其他变更记录，共 1 条",
+     "verdict": "contradicted",
+     "evidence": "operator=liuyang 当天的查询 matched=2，还有 record_id=871（09:22，mall-order-01 从订单服务转到网关服务）"
+    },
+    {
+     "claim": "pay-gw-01 当前同时属于两个模块，即原归属被保留",
+     "verdict": "unsupported",
+     "evidence": "record_id=612 是从支付网关转到风控服务（to 只有风控服务），原归属并没有在这次操作中保留；本轮也没查到让它变成双归属的那条记录"
+    }
+   ],
+   "note": "要点1：正文没有列 871，只在待核查里顺带提到'10.10.3.11 已脱离订单服务'和 09:22，同时又断言当天只有 1 条，有对有错，判 contradicted。要点3：说只有 1 条，与'只有两条'矛盾"
+  },
+  {
+   "item": "L33",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "contradicted"
+   ],
+   "faithful": "no",
+   "problems": [
+    {
+     "claim": "这是 zhangwei 操作时漏选了移除风控服务造成的误操作",
+     "verdict": "unsupported",
+     "evidence": "record_id=613 没有 note，工具返回里看不出操作意图；答案后文也说需要确认"
+    }
+   ],
+   "note": "要点4：把原因直接断言为误操作，与'无法断定是有意还是漏操作'矛盾"
+  },
+  {
+   "item": "L34",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L35",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L36",
+   "points": [
+    "covered",
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": "结论里'10.20.1.11 转出后仍保留在风控服务'措辞含糊，但统计时没有把它算进转出（转出只列了 10.20.30.14），事实条目里也写明 613 之后它仍在风控服务，所以判 covered"
+  },
+  {
+   "item": "L37",
+   "points": [
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L38",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L39",
+   "points": [
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  },
+  {
+   "item": "L40",
+   "points": [
+    "covered",
+    "covered",
+    "covered"
+   ],
+   "faithful": "yes",
+   "problems": [],
+   "note": ""
+  }
+ ]
+}

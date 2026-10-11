@@ -6,6 +6,7 @@
 检查项按当前的 cases.yaml 对保存下来的回答重新打分，不用结果文件里的旧结论：
 修改检查规则后，新旧结果仍然按同一套规则比较，也不用重跑模型。
 引用幻觉率同样按保存的回答和工具返回重新计算；第二阶段之前的结果没有保存工具返回，显示为"—"。
+LLM 评分（正确性 / 忠实度）只从 judge.py 的缓存里取，不调用模型；有题没评过时显示为"—"。
 """
 
 import json
@@ -16,11 +17,13 @@ from typing import Any
 
 import yaml
 from citations import check_citations
+from judge import load_cache, lookup
 from run_eval import check_case
 
 EVAL_DIR = Path(__file__).parent
 RESULTS_DIR = EVAL_DIR / "results"
 CASES = {c["id"]: c for c in yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(encoding="utf-8"))}
+JUDGE_CACHE = load_cache()
 
 
 def load(label: str) -> list[dict[str, Any]]:
@@ -34,6 +37,8 @@ def load(label: str) -> list[dict[str, Any]]:
                     r["checks"] = check_case(CASES[r["id"]], r["answer"], tools)
                     r["passed"] = all(c["ok"] for c in r["checks"])
                     r["citations"] = check_citations(r["answer"], r["tool_calls"])
+                    for dim in ("correctness", "faithfulness"):
+                        r[dim] = lookup(JUDGE_CACHE, dim, CASES[r["id"]], r)
             runs.append(data)
     if not runs:
         sys.exit(f"没有 label 为 {label!r} 的结果")
@@ -58,6 +63,25 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
         "输出 token/题": sum(r["usage"]["output_tokens"] for r in ok) / n,
         "耗时 秒/题": sum(r["elapsed_ms"] for r in ok) / 1000 / n,
         "引用幻觉率": sum(len(c["unsupported"]) for c in cites) / cited if cited else None,
+        **judge_metrics(ok),
+    }
+
+
+def judge_metrics(ok: list[dict[str, Any]]) -> dict[str, float | None]:
+    """一轮里所有题都评过才出数，否则为 None，避免只评了一部分的平均分被误读。"""
+    corr = [r.get("correctness") for r in ok]
+    faith = [r.get("faithfulness") for r in ok]
+    corr = corr if corr and None not in corr else None
+    faith = faith if faith and None not in faith else None
+    return {
+        "正确性均分": statistics.mean(s["score"] for s in corr) if corr else None,
+        "要点矛盾的回答率": sum(s["contradicted"] > 0 for s in corr) / len(corr) if corr else None,
+        "忠实度均分": statistics.mean(s["score"] for s in faith) if faith else None,
+        "含错误陈述的回答率": (
+            sum(s["contradicted"] + s["unsupported"] > 0 for s in faith) / len(faith)
+            if faith
+            else None
+        ),
     }
 
 
@@ -72,7 +96,9 @@ def fmt(name: str, values: list[float | None]) -> str:
             else f"{mean:.1%}"
         )
     mean = statistics.mean(values)
-    if "率" in name:
+    if "均分" in name:
+        text, lo, hi = f"{mean:.3f}", f"{min(values):.3f}", f"{max(values):.3f}"
+    elif "率" in name:
         text, lo, hi = f"{mean:.0%}", f"{min(values):.0%}", f"{max(values):.0%}"
     elif "token" in name:
         text, lo, hi = (

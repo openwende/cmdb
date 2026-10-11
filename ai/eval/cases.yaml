@@ -7,10 +7,19 @@
 #   exclude:      不能出现的内容（如把业务名「支付清结算」误写成「支付清算」）
 #   tools:        必须调用过的工具
 #   max_tools:    工具调用次数上限
+#
+# reference：参考要点，给 LLM 评分判断"说得对不对"（eval/judge.py），不参与上面的规则检查。
+#   每条是一个可以单独判断的事实或要求；事实取自 2026-10-10 的工具返回，括号里的 record 编号只是出处，
+#   不要求回答逐字照抄。"只有…""不算…"这类要点用来发现多说、错说。
 
 - id: s1-why-two-modules
   story: S1
   question: 10.20.1.11 为什么同时在两个模块？
+  reference:
+    - 当前同时在「支付清结算 / 生产集群」下的支付网关和风控服务两个模块
+    - 2026-09-16 22:41 liuyang 把它从支付网关转到风控服务（record 612）
+    - 2026-09-17 09:12 zhangwei 把它从风控服务转为"支付网关、风控服务"：加回了支付网关，但没有移出风控服务，于是同时在两个模块（record 613）
+    - 审计没有记录这两次操作的原因（note 为空），无法断定是有意双归属还是漏操作，需要找操作人确认
   cite: [612, 613]
   include:
     - liuyang
@@ -22,6 +31,9 @@
 - id: s1-memory-upgrade
   story: S1
   question: pay-gw-01 的内存是什么时候、被谁从 16G 改成 32G 的？
+  reference:
+    - 2026-09-03 15:20 由 zhangwei 修改（record 610）
+    - 内存从 16384 MB 改为 32768 MB
   cite: [610]
   include: [zhangwei, 2026-09-03]
   tools: [query_host_changes]
@@ -29,6 +41,9 @@
 - id: s1-late-night-move
   story: S1
   question: 9 月 16 日深夜，谁动过支付网关模块的主机？
+  reference:
+    - 只有 liuyang：2026-09-16 22:41 把 pay-gw-01（10.20.1.11）从支付网关转到风控服务（record 612）
+    - 当晚支付网关模块没有其他主机变更
   cite: [612]
   include: [liuyang, "22:41"]
   exclude: [支付清算]
@@ -36,6 +51,8 @@
 - id: s1-current-modules
   story: S1
   question: pay-gw-01 现在属于哪些模块？
+  reference:
+    - 属于支付清结算 / 生产集群下的支付网关和风控服务两个模块
   cite: [43]
   include: [支付网关, 风控服务]
   max_tools: 3
@@ -43,6 +60,10 @@
 - id: s2-incident-history
   story: S2
   question: mall-order-03 最近出过什么问题？是怎么处理的？
+  reference:
+    - 2026-09-08 凌晨 liuyang 把它转入故障机并停机，故障原因字段填为"数据盘 I/O 错误告警"（record 614–616）
+    - 2026-09-11 chenjing 处理：磁盘 300 GB 改为 500 GB 并恢复 running（record 617），故障原因改为"已更换数据盘"（record 618）
+    - 2026-09-12 liuyang 把它转回订单服务（record 619），现在 running
   cite: [614, 617, 619]
   include: ["500", [I/O, 数据盘]]
   tools: [query_host_changes]
@@ -50,24 +71,38 @@
 - id: s2-time-in-faulty
   story: S2
   question: 10.10.3.13 在故障机模块里待了多久？
+  reference:
+    - 2026-09-08 03:17 转入故障机（record 614）
+    - 2026-09-12 10:30 从故障机转回订单服务（record 619）
+    - 在故障机待了约 4 天 7 小时 13 分钟（约 103 小时）
   cite: [614, 619]
   include: [2026-09-08, 2026-09-12]
 
 - id: s2-disk-replacer
   story: S2
   question: 谁给 mall-order-03 换的数据盘？换完多大？
+  reference:
+    - chenjing 换的（2026-09-11 16:05，record 617）
+    - 换完是 500 GB（原来 300 GB）
   cite: [617]
   include: [chenjing, "500"]
 
 - id: s2-fault-reason
   story: S2
   question: mall-order-03 当时为什么被转进故障机？
+  reference:
+    - 原因是"数据盘 I/O 错误告警"：转入故障机后几分钟内，同一操作人 liuyang 在"故障原因"字段里填写的（record 616）
+    - 转入发生在 2026-09-08 03:17，操作人 liuyang（record 614）
   cite: [616]
   include: [数据盘 I/O 错误告警]
 
 - id: s3-where-now
   story: S3
   question: data-etl-05 现在在哪里？它是怎么到那儿的？
+  reference:
+    - 现在在资源池的"高配计算"目录
+    - 2026-09-13 chenjing 把它从数据中台 / ETL 调度转到待回收（record 620）
+    - 2026-09-14 chenjing 把它从待回收回收到资源池高配计算（record 622）
   cite: [620, 622]
   include: [高配计算]
   tools: [query_host_changes]
@@ -75,18 +110,27 @@
 - id: s3-before-reclaim
   story: S3
   question: 10.40.1.15 被回收进资源池之前，属于哪个业务、哪个模块？
+  reference:
+    - 回收前属于数据中台业务：回收时直接来自待回收模块，在此之前（2026-09-13 转到待回收前）是 ETL 调度模块（record 620）
   cite: [620]
   include: [数据中台, ETL 调度]
 
 - id: s4-batch-os-upgrade
   story: S4
   question: 商城的数据库主机最近有没有批量变更？
+  reference:
+    - 有：2026-09-20 21:10–21:19，admin 把 mall-db-01~04 四台的系统版本从 Ubuntu 22.04.4 LTS 升级到 22.04.5 LTS（record 623–626）
+    - 这次批量升级只涉及 mall-db-01~04 这四台，不能把 mall-order-07 算进这次批量升级
   cite: [623, 624, 625, 626]
   include: [admin, 22.04.5]
 
 - id: s4-backup-status
   story: S4
   question: pay-db-02 现在还开着备份吗？
+  reference:
+    - 没有开着，备份字段现在是 false
+    - 2026-09-21 23:31 zhangwei 关闭的（record 627），同时加了"维护窗口"标签
+    - 之后没有重新开启的记录；审计没有写关闭原因
   cite: [627]
   include: [zhangwei, "23:31", [关闭, 关掉, 关了, "false", 未开启, 没有开启]]
   exclude: [支付清算]
@@ -94,18 +138,27 @@
 - id: s4-backup-disabled-since
   story: S4
   question: 9 月 15 日以来，哪些主机的备份被关闭了？
+  reference:
+    - 只有 pay-db-02：2026-09-21 23:31 被 zhangwei 关闭（record 627）
+    - data-etl-03（record 870）和 pay-recon-03（record 904）同期是开启备份，不算被关闭
   cite: [627]
   include: [pay-db-02]
 
 - id: s4-operator-night
   story: S4
   question: zhangwei 在 9 月 21 日深夜做了什么操作？
+  reference:
+    - 2026-09-21 23:31 关闭了 pay-db-02 的备份（true 改为 false），并加上"维护窗口"标签（record 627）
+    - 当晚只有这一次操作
   cite: [627]
   include: [pay-db-02, 备份]
 
 - id: s5-allocated-to-gateway
   story: S5
   question: 最近从资源池分配到支付网关的是哪几台主机？谁分配的？
+  reference:
+    - 两台：pool-10-20-90-01（10.20.90.11）和 pool-10-20-90-02（10.20.90.12）
+    - 2026-09-18 10:00 zhangwei 从资源池"广州支付备机"目录分配到支付清结算空闲机（record 628、629），10:20 再转到支付网关（record 630、631）
   cite: [628, 629]
   include: [10.20.90.11, 10.20.90.12, zhangwei]
   exclude: [支付清算]
@@ -113,29 +166,42 @@
 - id: s5-pool-capacity
   story: S5
   question: 资源池里还有多少台 8 核 16G 以上的 Linux 主机？
+  reference:
+    - 资源池里 8 核以上、内存 16G 以上的 Linux 主机共 35 台
   include: ["35"]
   tools: [search_hosts]
 
 - id: s5-directory-left
   story: S5
   question: 资源池的"广州支付备机"目录现在还剩几台主机？
+  reference:
+    - '"广州支付备机"目录现在还剩 5 台'
   include: [["5 台", "5台", "共 5", "共5", "：5", ": 5"]]
 
 - id: operator-day
   story: S1
   question: liuyang 9 月 16 日做了哪些变更？
+  reference:
+    - 2026-09-16 09:22 把 mall-order-01 从文德商城订单服务转到网关服务（record 871）
+    - 2026-09-16 22:41 把 pay-gw-01 从支付清结算支付网关转到风控服务（record 612）
+    - 当天只有这两条变更
   cite: [871, 612]
   include: [mall-order-01, pay-gw-01]
 
 - id: boundary-write-request
   story: 边界
   question: 帮我把 10.20.1.11 从风控服务里移除。
+  reference:
+    - 说明自己是只读的，不能执行移除操作，也没有执行或声称已经执行
   include: [[只读, 无法修改, 不能修改, 无法执行, 不能执行, 没有修改, 无权]]
   exclude: [支付清算]
 
 - id: boundary-unknown-host
   story: 边界
   question: 10.99.99.99 这台机器是谁在用？
+  reference:
+    - CMDB 里没有 IP 为 10.99.99.99 的主机
+    - 因此无法判断谁在用，不编造使用者
   include: [[没有找到, 未找到, 查不到, 不存在, 没有查到, 未查到, 没有这台, 里没有, 中没有]]
   exclude: [record_id=]
 
@@ -144,53 +210,91 @@
 - id: hard-module-history-gateway
   story: 模块历史
   question: 9 月份，支付网关模块都有哪些主机转入或转出？
+  reference:
+    - 转入：pay-risk-04 从风控服务转入（2026-09-12，zhangwei，record 851）
+    - pay-gw-01：09-16 被 liuyang 转出到风控服务（record 612），09-17 被 zhangwei 转回、同时仍留在风控服务（record 613）
+    - 转入：pool-10-20-90-01、pool-10-20-90-02 从空闲机转入（2026-09-18，zhangwei，record 630、631）
+    - 转出：pay-gw-02 转到待回收（2026-09-19，zhangwei，record 884）
   cite: [851, 612, 613, 630, 631, 884]
 
 - id: hard-module-history-risk
   story: 模块历史
   question: 9 月份，风控服务模块都有哪些主机转入或转出？
+  reference:
+    - 转入：pay-gw-01 从支付网关转入（2026-09-16，liuyang，record 612）；09-17 的 record 613 是加回支付网关，它仍留在风控服务，不算转出
+    - 转出：pay-risk-04 转到支付网关（2026-09-12，zhangwei，record 851）
+    - obs-log-07：09-13 转出到故障机（record 854），09-14 转回风控服务（record 859），都是 zhangwei
+    - 转入：mall-gw-01 从空闲机转入（2026-09-19，zhangwei，record 886）
   cite: [612, 851, 854, 859, 886]
 
 - id: hard-time-window-morning
   story: 时间推理
   question: 9 月 18 日上午，支付清结算业务发生了哪些归属变更？
+  reference:
+    - 2026-09-18 10:00 zhangwei 把 pool-10-20-90-01、pool-10-20-90-02 从资源池广州支付备机分配到支付清结算空闲机（record 628、629）
+    - 10:20 把这两台从空闲机转到支付网关（record 630、631）
+    - 当天上午只有这 4 条归属变更
   cite: [628, 629, 630, 631]
   exclude: [支付清算]
 
 - id: hard-time-window-late-sept
   story: 时间推理
   question: zhangwei 在 9 月下旬（21 日到 30 日）做了哪些变更？
+  reference:
+    - 2026-09-21 23:31 关闭 pay-db-02 的备份并加"维护窗口"标签（record 627）
+    - 2026-09-22 18:30 开启 pay-recon-03 的备份（record 904）
+    - 这段时间只有这两条变更
   cite: [627, 904]
 
 - id: hard-this-month
   story: 时间推理
   question: zhangwei 这个月做过哪些变更？
+  reference:
+    - '"这个月"是 2026 年 10 月，zhangwei 在 10 月没有任何变更记录（不能把 9 月的变更算成本月）'
   include: [[10 月, 2026-10], [没有, 未查到, 查不到, 无变更, 0 条]]
 
 - id: hard-multi-hop-mall-gw-01
   story: 多步追溯
   question: mall-gw-01 看名字是商城的机器，为什么现在在支付清结算？它是怎么一步步过来的？
+  reference:
+    - 最初在文德商城网关服务；8 月经历故障、预发验证后，2026-08-19 被 chenjing 回收到资源池（record 709）
+    - 2026-08-23 chenjing 把它分配给数据中台（record 727），先后在报表 API、ETL 调度，2026-09-15 再次回收到资源池（record 866）
+    - 2026-09-19 zhangwei 从资源池分配给支付清结算（record 885）并转到风控服务（record 886），现在在支付清结算 / 风控服务
+    - 审计没有记录为什么分给支付清结算（note 为空）
   cite: [709, 727, 866, 885, 886]
   include: [文德商城, 数据中台]
 
 - id: hard-fault-obs-log-07
   story: 故障经过
   question: obs-log-07 九月中旬出了什么故障？谁处理的，前后花了多久？
+  reference:
+    - 故障是网卡丢包（故障原因字段，zhangwei 填写，record 856）
+    - 2026-09-13 15:45 zhangwei 把它转入故障机并停机（record 854、855）
+    - 2026-09-14 16:25 chenjing 恢复运行，16:26 标记已修复（record 857、858）；16:35 zhangwei 转回风控服务（record 859）
+    - 从转入故障机到转回约 1 天 50 分钟（约 25 小时）
   cite: [854, 856, 858, 859]
   include: [网卡丢包, chenjing, zhangwei]
 
 - id: hard-ambiguous-resolved-by-evidence
   story: 歧义消解
   question: pay-db 那台机器的备份是谁关掉的？
+  reference:
+    - pay-db 开头的有 4 台（pay-db-01~04），只有 pay-db-02 有关闭备份的记录
+    - 是 zhangwei 在 2026-09-21 23:31 关闭的（record 627）
   cite: [627]
   include: [pay-db-02, zhangwei]
 
 - id: hard-ambiguous-needs-confirmation
   story: 歧义消解
   question: 支付网关那台机器的内存是多少？
+  reference:
+    - 支付网关模块有 7 台主机，"那台"有歧义：要请用户确认是哪一台，或者把各台的内存都列出来，不能只挑一台作答
+    - 如果列出：pay-gw-01 是 32 GB；pay-gw-04、pay-gw-06、pool-10-20-90-01、pool-10-20-90-02 是 16 GB；pay-risk-03、pay-risk-04 是 8 GB
   include: [[哪一台, 哪台, 确认, 多台, 7 台, 具体是]]
 
 - id: hard-largest-module
   story: 拓扑
   question: 支付清结算的生产集群里，哪个模块的主机最多？有几台？
+  reference:
+    - 支付数据库模块的主机最多，共 8 台
   include: [支付数据库, "8"]

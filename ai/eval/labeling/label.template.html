@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>评分校准标注</title>
+<style>
+  :root {
+    --bg: #f7f7f5; --card: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e3e2dd;
+    --accent: #2f6fdb; --ok: #2e7d4f; --warn: #b26a00; --bad: #c0392b; --code: #f1f0ec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --card: #20201e; --text: #ecebe6; --muted: #9a9993; --line: #34332f;
+      --accent: #6c9cf0; --ok: #5cc28a; --warn: #e0a043; --bad: #ef6b5b; --code: #2a2a27;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line);
+    padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0; }
+  header .progress { color: var(--muted); }
+  header .spacer { flex: 1; }
+  button { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--text);
+    border-radius: 6px; padding: 5px 12px; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main { max-width: 960px; margin: 0 auto; padding: 16px; }
+  .guide { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; }
+  .guide summary { cursor: pointer; font-weight: 600; }
+  .guide dt { font-weight: 600; margin-top: 6px; }
+  .guide dd { margin: 0 0 0 1em; color: var(--muted); }
+  .item { background: var(--card); border: 1px solid var(--line); border-radius: 8px; margin: 16px 0; padding: 14px 16px; }
+  .item.done { border-left: 4px solid var(--ok); }
+  .item h2 { font-size: 15px; margin: 0 0 6px; display: flex; gap: 8px; align-items: baseline; }
+  .item h2 .id { color: var(--muted); font-weight: 500; }
+  .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin: 12px 0 4px; }
+  .answer { white-space: pre-wrap; background: var(--code); border-radius: 6px; padding: 10px 12px; font-size: 14px;
+    max-height: 420px; overflow: auto; }
+  details.tools summary { cursor: pointer; color: var(--accent); }
+  details.tools pre { white-space: pre-wrap; word-break: break-all; background: var(--code); border-radius: 6px;
+    padding: 8px 10px; font-size: 12px; max-height: 320px; overflow: auto; }
+  .point { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 6px 0;
+    border-top: 1px dashed var(--line); }
+  .point:first-of-type { border-top: 0; }
+  .choices { display: flex; gap: 4px; flex-wrap: wrap; }
+  .choices label { border: 1px solid var(--line); border-radius: 999px; padding: 1px 10px; font-size: 13px; cursor: pointer;
+    user-select: none; }
+  .choices input { display: none; }
+  .choices input:checked + span { font-weight: 600; }
+  .choices label:has(input:checked) { border-color: currentColor; }
+  .c-covered, .c-yes { color: var(--ok); } .c-partial { color: var(--warn); }
+  .c-missing { color: var(--muted); } .c-contradicted, .c-no { color: var(--bad); }
+  textarea { width: 100%; min-height: 44px; font: inherit; font-size: 14px; color: var(--text); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  @media (max-width: 640px) { .point { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>评分校准标注</h1>
+  <span class="progress" id="progress"></span>
+  <span class="spacer"></span>
+  <button id="copy">复制结果</button>
+  <button class="primary" id="download">下载 JSON</button>
+</header>
+<main>
+  <details class="guide" open>
+    <summary>怎么标（约 2–4 分钟一条）</summary>
+    <p>每条有两件事：① 按参考要点逐条判断回答"说得对不对"；② 对照工具返回判断回答里有没有"编造或写错的事实"。
+      标注结果自动保存在这个浏览器里，标完点右上角"下载 JSON"，把文件发给 Claude（或放到 <code>eval/labeling/</code>）。
+      不要打开同目录的 <code>key.json</code>。</p>
+    <dl>
+      <dt>参考要点</dt>
+      <dd><b class="c-covered">对</b>：明确表达了这个要点（措辞、单位、时间写法不同没关系，没写 record 编号不扣分）</dd>
+      <dd><b class="c-partial">部分</b>：只覆盖了一部分，且覆盖的部分没说错（如列举漏了几项）</dd>
+      <dd><b class="c-missing">没提</b>：回答里没有</dd>
+      <dd><b class="c-contradicted">矛盾</b>：要点里任何细节说错（时间、人、数字、名称、方向），或说了相反、不一致的内容；要点写着"只有/不算/不能"而回答多列了，也算矛盾</dd>
+      <dt>事实有没有依据（要看工具返回）</dt>
+      <dd><b class="c-yes">都有依据</b>：回答里关于主机、记录、时间、人、数量的说法都能在工具返回里找到或直接推出
+        （审计记录里没有 note 字段＝note 为空）。明确标成"可能 / 待确认"的推测不算</dd>
+      <dd><b class="c-no">有问题</b>：至少一处与工具返回不一致，或把没有依据的推测（如动机、原因）当成事实。请在备注写是哪句</dd>
+    </dl>
+  </details>
+  <div id="items"></div>
+</main>
+<script>
+const DATA = /*__DATA__*/[];
+const WHO = new URLSearchParams(location.search).get("who") || "user";
+const ITEMS = WHO === "user" ? DATA.filter(d => d.user) : DATA;
+const STORE = "cmdb-ai-labels-" + WHO;
+const POINT = [["covered", "对"], ["partial", "部分"], ["missing", "没提"], ["contradicted", "矛盾"]];
+const FAITH = [["yes", "都有依据"], ["no", "有问题"]];
+
+let labels = {};
+try { labels = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { labels = {}; }
+function save() { try { localStorage.setItem(STORE, JSON.stringify(labels)); } catch (e) {} render(); }
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c])); }
+function pretty(text) {
+  try { return JSON.stringify(JSON.parse(text), null, 1); } catch (e) { return text || ""; }
+}
+function choices(name, options, value) {
+  return '<div class="choices">' + options.map(([v, t]) =>
+    `<label class="c-${v}"><input type="radio" name="${name}" value="${v}" ${value === v ? "checked" : ""}><span>${t}</span></label>`
+  ).join("") + "</div>";
+}
+function complete(d) {
+  const l = labels[d.item];
+  return l && l.points && d.reference.every((_, i) => l.points[i]) && l.faithful;
+}
+
+function build() {
+  document.getElementById("items").innerHTML = ITEMS.map(d => {
+    const l = labels[d.item] || {};
+    const points = d.reference.map((p, i) =>
+      `<div class="point"><div>${i + 1}. ${esc(p)}</div>${choices(`${d.item}-p${i}`, POINT, (l.points || [])[i])}</div>`
+    ).join("");
+    const tools = d.tool_calls.map((c, i) =>
+      `<details class="tools"><summary>[${i + 1}] ${esc(c.name)} ${esc(JSON.stringify(c.input))}${c.status === "success" ? "" : "（" + esc(c.status) + "）"}</summary><pre>${esc(pretty(c.output))}</pre></details>`
+    ).join("") || '<div class="label">本轮没有调用工具</div>';
+    return `<section class="item" id="${d.item}">
+      <h2><span class="id">${d.item}</span>${esc(d.question)}</h2>
+      <div class="label">回答</div><div class="answer">${esc(d.answer)}</div>
+      <div class="label">工具返回（${d.tool_calls.length} 次调用，点开查看）</div>${tools}
+      <div class="label">① 参考要点</div>${points}
+      <div class="label">② 事实有没有依据</div>${choices(`${d.item}-f`, FAITH, l.faithful)}
+      <div class="label">备注（哪句有问题、拿不准的地方）</div>
+      <textarea data-item="${d.item}">${esc(l.note || "")}</textarea>
+    </section>`;
+  }).join("");
+}
+
+function render() {
+  const done = ITEMS.filter(complete).length;
+  document.getElementById("progress").textContent = `${WHO === "user" ? "盲标" : "全部"} · 已完成 ${done} / ${ITEMS.length}`;
+  ITEMS.forEach(d => document.getElementById(d.item).classList.toggle("done", !!complete(d)));
+}
+
+document.addEventListener("change", e => {
+  const m = e.target.name && e.target.name.match(/^(L\d+)-(p(\d+)|f)$/);
+  if (!m) return;
+  const l = labels[m[1]] = labels[m[1]] || {};
+  if (m[3] !== undefined) { (l.points = l.points || [])[+m[3]] = e.target.value; } else { l.faithful = e.target.value; }
+  save();
+});
+document.addEventListener("input", e => {
+  if (e.target.dataset.item) { (labels[e.target.dataset.item] = labels[e.target.dataset.item] || {}).note = e.target.value; save(); }
+});
+
+function exportText() {
+  return JSON.stringify({ who: WHO, exported_at: new Date().toISOString(),
+    labels: ITEMS.filter(d => labels[d.item]).map(d => ({ item: d.item, ...labels[d.item] })) }, null, 1);
+}
+document.getElementById("download").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([exportText()], { type: "application/json" }));
+  a.download = `labels-${WHO}.json`; a.click();
+};
+document.getElementById("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(exportText()); alert("已复制"); } catch (e) { alert("复制失败，请用下载"); }
+};
+
+build(); render();
+</script>
+</body>
+</html>

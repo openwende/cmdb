@@ -51,7 +51,19 @@ def test_cases_file_is_well_formed():
     cases = yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(encoding="utf-8"))
     ids = [c["id"] for c in cases]
     assert len(ids) == len(set(ids)) >= 20
-    allowed = {"id", "story", "question", "cite", "include", "exclude", "tools", "max_tools"}
+    allowed = {
+        "id",
+        "story",
+        "question",
+        "reference",
+        "cite",
+        "include",
+        "exclude",
+        "tools",
+        "max_tools",
+    }
     for case in cases:
         assert set(case) <= allowed, case["id"]
         assert run_eval.check_case(case, "", []), f"{case['id']} 没有任何检查项"
+        reference = case.get("reference")
+        assert reference and all(isinstance(p, str) and p for p in reference), case["id"]
