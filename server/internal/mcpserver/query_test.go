@@ -90,7 +90,7 @@ func TestSearchHosts(t *testing.T) {
 	require.NoError(t, err)
 	require.EqualValues(t, 1, total)
 	assert.Equal(t, "10.20.1.11", hosts[0].IP)
-	assert.ElementsMatch(t, []string{"支付清结算 / 生产集群 / 支付网关", "支付清结算 / 生产集群 / 风控服务"}, hosts[0].Placements)
+	assert.ElementsMatch(t, []string{"支付清结算 / 支付网关", "支付清结算 / 风控服务"}, hosts[0].Placements)
 
 	total, hosts, err = q.SearchHosts(ctx, HostFilter{Location: "pool", MinCPU: 16, Limit: 20})
 	require.NoError(t, err)
@@ -152,7 +152,7 @@ func TestQueryChanges_HostTimeline(t *testing.T) {
 	assert.Equal(t, "memory", cfg.Changes[1].Field)
 
 	legacy := items[2]
-	assert.Equal(t, "支付清结算 / 生产集群 / 支付网关（按当前名称）", legacy.To)
+	assert.Equal(t, "支付清结算 / 支付网关（按当前名称）", legacy.To)
 	assert.NotEmpty(t, legacy.Note, "旧审计缺少变更前归属时要说明")
 
 	assert.Equal(t, "create", items[3].Action)

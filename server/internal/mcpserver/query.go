@@ -66,11 +66,13 @@ type Placement struct {
 	Directory   string `json:"directory,omitempty"`
 }
 
+// String 归属的文字写法：业务 / 模块 或 资源池 / 目录。不带集群，和 query_host_changes 的
+// from / to（审计快照里只有业务和模块）以及审计页面保持同一种写法；集群在结构化字段 set 里。
 func (p Placement) String() string {
 	if p.Kind == "pool_directory" {
 		return "资源池 / " + p.Directory
 	}
-	return strings.Join([]string{p.Business, p.Set, p.Module}, " / ")
+	return p.Business + " / " + p.Module
 }
 
 func (q *Query) placements(ctx context.Context, hostIDs []uuid.UUID) (map[uuid.UUID][]Placement, error) {
@@ -317,7 +319,7 @@ type HostSummary struct {
 	OSType     *string  `json:"os_type,omitempty"`
 	OSVersion  *string  `json:"os_version,omitempty"`
 	Status     string   `json:"status"`
-	Placements []string `json:"placements" jsonschema:"当前归属，业务 / 集群 / 模块 或 资源池 / 目录；可能多处"`
+	Placements []string `json:"placements" jsonschema:"当前归属，业务 / 模块 或 资源池 / 目录；可能多处"`
 }
 
 type hostRow struct {
@@ -654,7 +656,7 @@ func entryMentions(e ChangeEntry, kw string) bool {
 }
 
 type lookups struct {
-	modules     map[uint64]string // module id -> 业务 / 集群 / 模块（当前名称，旧审计无快照时兜底）
+	modules     map[uint64]string // module id -> 业务 / 模块（当前名称，旧审计无快照时兜底）
 	directories map[uint64]string
 }
 
@@ -672,7 +674,7 @@ func (q *Query) nameLookups(ctx context.Context) (lookups, error) {
 		return l, err
 	}
 	for _, m := range mods {
-		l.modules[m.ID] = strings.Join([]string{deref(m.BizName), deref(m.SetName), m.Module}, " / ")
+		l.modules[m.ID] = deref(m.BizName) + " / " + m.Module
 	}
 	var dirs []struct {
 		ID   uint64
