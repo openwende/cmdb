@@ -503,7 +503,11 @@ type ChangeEntry struct {
 	From     string        `json:"from,omitempty" jsonschema:"变更前归属"`
 	To       string        `json:"to,omitempty" jsonschema:"变更后归属"`
 	Changes  []FieldChange `json:"changes,omitempty"`
-	Note     string        `json:"note,omitempty"`
+	// 审计表没有操作备注列：录入 / 删除时的配置摘要放 Config，系统补充说明放 Remark。
+	// 以前两者都放在 note 里，模型以为 note 是操作备注，把"新建记录有 note、其余没有"
+	// 概括成"这些记录的 note 均为空"，与新建记录对不上
+	Config string `json:"config,omitempty" jsonschema:"create / delete 记录：录入时或删除前的配置摘要，不是操作原因"`
+	Remark string `json:"remark,omitempty" jsonschema:"系统补充说明（如旧审计缺少变更前归属），不是操作人写的备注"`
 }
 
 var sourceLabels = map[string]string{
@@ -644,7 +648,7 @@ func (q *Query) HostIDByIP(ctx context.Context, ip string) (int64, error) {
 }
 
 func entryMentions(e ChangeEntry, kw string) bool {
-	if strings.Contains(e.From, kw) || strings.Contains(e.To, kw) || strings.Contains(e.Source, kw) || strings.Contains(e.Note, kw) {
+	if strings.Contains(e.From, kw) || strings.Contains(e.To, kw) || strings.Contains(e.Source, kw) || strings.Contains(e.Config, kw) {
 		return true
 	}
 	for _, c := range e.Changes {
@@ -725,10 +729,10 @@ func buildEntry(r historyRow, before, after map[string]any, names lookups, hostN
 	switch {
 	case r.ChangeType == "create":
 		e.Action = "create"
-		e.Note = configSummary(after)
+		e.Config = configSummary(after)
 	case r.ChangeType == "delete":
 		e.Action = "delete"
-		e.Note = configSummary(before)
+		e.Config = configSummary(before)
 	case after["source"] != nil:
 		e.Action = "placement_change"
 		src := fmt.Sprint(after["source"])
@@ -739,7 +743,7 @@ func buildEntry(r historyRow, before, after map[string]any, names lookups, hostN
 		e.From = describePlacement(before, names)
 		e.To = describePlacement(after, names)
 		if before == nil {
-			e.Note = "该记录未保存变更前归属（早于归属快照上线的旧审计）"
+			e.Remark = "该记录未保存变更前归属（早于归属快照上线的旧审计）"
 		}
 	default:
 		e.Action = "config_change"

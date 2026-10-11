@@ -153,10 +153,10 @@ func TestQueryChanges_HostTimeline(t *testing.T) {
 
 	legacy := items[2]
 	assert.Equal(t, "支付清结算 / 支付网关（按当前名称）", legacy.To)
-	assert.NotEmpty(t, legacy.Note, "旧审计缺少变更前归属时要说明")
+	assert.NotEmpty(t, legacy.Remark, "旧审计缺少变更前归属时要说明")
 
 	assert.Equal(t, "create", items[3].Action)
-	assert.Contains(t, items[3].Note, "16384 MB")
+	assert.Contains(t, items[3].Config, "16384 MB")
 }
 
 func TestQueryChanges_Filters(t *testing.T) {
