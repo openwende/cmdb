@@ -189,18 +189,28 @@ func TestQueryChanges_ModuleAndIP(t *testing.T) {
 	q := NewQuery(setupQueryDB(t))
 	ctx := context.Background()
 
-	// 模块 111：转出（记录 3，新快照 module_ids）和旧审计的分配（记录 5，只有 module_id）
+	// 模块 111：转出（记录 3，新快照 module_ids）、旧审计的分配（记录 5，只有 module_id），
+	// 以及主机还在 111 期间的配置变更（记录 2，快照里没有模块，按当时所在的归属判断）
 	matched, items, err := q.QueryChanges(ctx, ChangeFilter{ModuleID: 111, Limit: 20})
 	require.NoError(t, err)
-	require.Equal(t, 2, matched)
-	assert.Equal(t, uint64(3), items[0].RecordID)
-	assert.Equal(t, uint64(5), items[1].RecordID)
+	require.Equal(t, 3, matched)
+	assert.Equal(t, []uint64{3, 2, 5}, []uint64{items[0].RecordID, items[1].RecordID, items[2].RecordID})
 
-	// 模块 112：同一条转移记录是它的转入
+	matched, items, err = q.QueryChanges(ctx, ChangeFilter{ModuleID: 111, Action: "config_change", Limit: 20})
+	require.NoError(t, err)
+	require.Equal(t, 1, matched, "模块过滤不能漏掉配置变更")
+	assert.Equal(t, uint64(2), items[0].RecordID)
+
+	// 模块 112：同一条转移记录是它的转入；记录 2 发生在转入之前，不算
 	matched, items, err = q.QueryChanges(ctx, ChangeFilter{ModuleID: 112, Limit: 20})
 	require.NoError(t, err)
 	require.Equal(t, 1, matched)
 	assert.Equal(t, "支付清结算 / 风控服务", items[0].To)
+
+	// 录入记录（记录 1）在任何归属变更之前，不属于任何模块
+	_, items, err = q.QueryChanges(ctx, ChangeFilter{ModuleID: 111, Action: "create", Limit: 20})
+	require.NoError(t, err)
+	assert.Empty(t, items)
 
 	id, err := q.HostIDByIP(ctx, " 10.20.1.11 ")
 	require.NoError(t, err)

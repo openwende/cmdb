@@ -98,7 +98,7 @@ type changesIn struct {
 	HostID     int64  `json:"host_id,omitempty" jsonschema:"只看这台主机（主机展示 ID）"`
 	IP         string `json:"ip,omitempty" jsonschema:"只看这台主机（按 IP；与 host_id 二选一）"`
 	BusinessID uint64 `json:"business_id,omitempty" jsonschema:"只看变更前或变更后属于该业务的记录"`
-	ModuleID   uint64 `json:"module_id,omitempty" jsonschema:"只看变更前或变更后在该模块的记录（模块 ID 来自 get_business_topology 或 search_businesses）；查某个模块的主机转入转出时配合 action=placement_change"`
+	ModuleID   uint64 `json:"module_id,omitempty" jsonschema:"只看与该模块有关的记录：归属变更看变更前或变更后在不在该模块，配置变更看变更发生时主机在不在该模块（模块 ID 来自 get_business_topology 或 search_businesses）；查某个模块的主机转入转出时配合 action=placement_change"`
 	Operator   string `json:"operator,omitempty" jsonschema:"只看该操作人（登录用户名，如 zhangwei）"`
 	Since      string `json:"since,omitempty" jsonschema:"起始时间，RFC3339 或 YYYY-MM-DD（北京时间）"`
 	Until      string `json:"until,omitempty" jsonschema:"截止时间（含），RFC3339 或 YYYY-MM-DD（北京时间）；只写日期时包含当天"`

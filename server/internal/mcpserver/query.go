@@ -584,6 +584,12 @@ func (q *Query) QueryChanges(ctx context.Context, f ChangeFilter) (int, []Change
 	if f.BusinessID != 0 {
 		bizFilter = fmt.Sprint(f.BusinessID)
 	}
+	var placedAt map[uint64]map[string]any
+	if f.ModuleID != 0 {
+		if placedAt, err = q.placementsAt(ctx, rows); err != nil {
+			return 0, nil, err
+		}
+	}
 	matched := 0
 	out := []ChangeEntry{}
 	for _, r := range rows {
@@ -591,7 +597,8 @@ func (q *Query) QueryChanges(ctx context.Context, f ChangeFilter) (int, []Change
 		if bizFilter != "" && fmt.Sprint(before["business_id"]) != bizFilter && fmt.Sprint(after["business_id"]) != bizFilter {
 			continue
 		}
-		if f.ModuleID != 0 && !inModule(before, f.ModuleID) && !inModule(after, f.ModuleID) {
+		if f.ModuleID != 0 && !inModule(before, f.ModuleID) && !inModule(after, f.ModuleID) &&
+			!inModule(placedAt[r.ID], f.ModuleID) {
 			continue
 		}
 		e := buildEntry(r, before, after, names, hostNames)
@@ -621,6 +628,56 @@ func inModule(snap map[string]any, moduleID uint64) bool {
 	}
 	id, ok := number(snap["module_id"])
 	return ok && id == moduleID
+}
+
+// placementsAt 给没有归属快照的记录（配置变更、录入、删除）找出"变更发生时主机所在的归属"：
+// 该主机在这条记录之前最近一次归属变更之后的快照。配置变更的快照里只有 business_id 没有模块，
+// 不这样做的话按 module_id 过滤会把配置变更全部漏掉（模型因此得出"这个模块没有配置变更"）。
+// 之前没有任何归属变更的记录（如刚录入）不属于任何模块，结果里没有它。
+func (q *Query) placementsAt(ctx context.Context, rows []historyRow) (map[uint64]map[string]any, error) {
+	hostIDs := map[uint64]struct{}{}
+	for _, r := range rows {
+		if !isPlacementRow(r) {
+			hostIDs[r.ResourceID] = struct{}{}
+		}
+	}
+	if len(hostIDs) == 0 {
+		return nil, nil
+	}
+	ids := make([]uint64, 0, len(hostIDs))
+	for id := range hostIDs {
+		ids = append(ids, id)
+	}
+	var hist []historyRow
+	if err := q.db.WithContext(ctx).Table("resource_histories").
+		Select("id, resource_id, change_type, before_data, after_data, changed_by, changed_at, resource_name").
+		Where("model_uid = ? AND resource_id IN ?", "host", ids).
+		Order("changed_at ASC, id ASC").Scan(&hist).Error; err != nil {
+		return nil, err
+	}
+	timeline := map[uint64][]historyRow{}
+	for _, h := range hist {
+		if isPlacementRow(h) {
+			timeline[h.ResourceID] = append(timeline[h.ResourceID], h)
+		}
+	}
+	out := map[uint64]map[string]any{}
+	for _, r := range rows {
+		if isPlacementRow(r) {
+			continue
+		}
+		for _, h := range timeline[r.ResourceID] {
+			if h.ChangedAt.After(r.ChangedAt) || (h.ChangedAt.Equal(r.ChangedAt) && h.ID > r.ID) {
+				break
+			}
+			out[r.ID] = decode(h.AfterData)
+		}
+	}
+	return out, nil
+}
+
+func isPlacementRow(r historyRow) bool {
+	return r.ChangeType == "update" && decode(r.AfterData)["source"] != nil
 }
 
 // HostIDByIP 按 IP 找主机展示 ID；没有或有多台时返回错误。
