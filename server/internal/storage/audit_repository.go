@@ -91,6 +91,10 @@ func (r *auditRepository) ListAuditLogs(ctx context.Context, params *types.Audit
 }
 
 func (r *auditRepository) applyFilters(q *gorm.DB, p *types.AuditQueryParams) *gorm.DB {
+	if p.ID != 0 {
+		q = q.Where("rh.id = ?", p.ID)
+	}
+
 	// Filter by model UIDs derived from audit_type
 	if len(p.ModelUIDs) > 0 {
 		q = q.Where("rh.model_uid IN ?", p.ModelUIDs)

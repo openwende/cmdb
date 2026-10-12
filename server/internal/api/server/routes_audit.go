@@ -18,5 +18,6 @@ func RegisterAuditRoutes(router *gin.Engine, db *gorm.DB) {
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET("/audit", handler.ListAuditLogs)
+		v1.GET("/audit/:id", handler.GetAuditLog)
 	}
 }

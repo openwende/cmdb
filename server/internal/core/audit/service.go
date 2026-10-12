@@ -49,7 +49,7 @@ type QueryRequest struct {
 
 // QueryResult 审计查询结果
 type QueryResult struct {
-	Count int64                  `json:"count"`
+	Count int64                 `json:"count"`
 	Info  []types.AuditLogEntry `json:"info"`
 }
 
@@ -71,6 +71,32 @@ func (s *Service) Query(ctx context.Context, req *QueryRequest) (*QueryResult, e
 	}
 
 	return &QueryResult{Count: total, Info: entries}, nil
+}
+
+// Get 按 ID 取单条审计记录，结构和 Query 列表里的一项相同；不存在时返回 nil。
+// 审计分类（host / business / resource）按记录的 model_uid 推出，和列表各分类的划分一致。
+func (s *Service) Get(ctx context.Context, id uint64) (*types.AuditLogEntry, error) {
+	rows, _, err := s.repo.ListAuditLogs(ctx, &types.AuditQueryParams{ID: id, Page: 1, PageSize: 1})
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+	entry := convertRow(rows[0], AuditTypeOf(rows[0].ModelUID))
+	return &entry, nil
+}
+
+// AuditTypeOf 返回模型所属的审计分类。
+func AuditTypeOf(modelUID string) string {
+	switch {
+	case strings.EqualFold(modelUID, "host"):
+		return "host"
+	case IsBusinessModel(modelUID):
+		return "business"
+	default:
+		return "resource"
+	}
 }
 
 func buildParams(req *QueryRequest) (*types.AuditQueryParams, error) {

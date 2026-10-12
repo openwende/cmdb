@@ -3,11 +3,13 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 
 	"github.com/wend/cmdb-backend/internal/core/audit"
+	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // AuditHandler 审计日志处理器
@@ -91,6 +93,29 @@ func (h *AuditHandler) ListAuditLogs(c *gin.Context) {
 		"code": 0,
 		"data": result,
 	})
+}
+
+// GetAuditLog 按 ID 取单条审计记录
+// GET /api/v1/audit/:id
+// 返回结构和 ListAuditLogs 的 data.info 里的一项相同，供前端按记录 ID 直接打开详情
+// （AI 助手回答里的 [record_id=N] 引用）。
+func (h *AuditHandler) GetAuditLog(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil || id == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid audit id"})
+		return
+	}
+	entry, err := h.service.Get(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	if entry == nil {
+		notFound := apperrors.NotFoundError("audit record", c.Param("id"))
+		c.JSON(apperrors.HTTPStatus(notFound), apperrors.NewErrorResponse(notFound, ""))
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"code": 0, "data": entry})
 }
 
 // parseIntQuery parses an integer query param into dest. Returns (true, nil) on success.

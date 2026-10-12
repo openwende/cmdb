@@ -4,18 +4,19 @@ import "time"
 
 // AuditQueryParams 审计日志查询参数
 type AuditQueryParams struct {
-	ModelUIDs       []string  // 模型 UID 白名单（空表示不过滤或配合 ExcludeModelUIDs 使用）
-	ExcludeModelUIDs []string // 模型 UID 黑名单（用于 resource 类型，排除 host 和 business 模型）
-	Actions         []string  // 变更类型：create, update, delete
-	StartTime       time.Time // 开始时间
-	EndTime         time.Time // 结束时间
-	Account         string    // 操作账号关键字
-	AccountMatch    string    // include | exclude
-	HostKeyword     string    // 主机 IP 或名称关键字
-	InstanceKeyword string    // 实例名称关键字
-	BusinessID      int64     // 业务 ID（0 表示不过滤）
-	Page            int
-	PageSize        int
+	ID               uint64    // 只取这一条（0 表示不过滤），按 ID 查单条时用
+	ModelUIDs        []string  // 模型 UID 白名单（空表示不过滤或配合 ExcludeModelUIDs 使用）
+	ExcludeModelUIDs []string  // 模型 UID 黑名单（用于 resource 类型，排除 host 和 business 模型）
+	Actions          []string  // 变更类型：create, update, delete
+	StartTime        time.Time // 开始时间
+	EndTime          time.Time // 结束时间
+	Account          string    // 操作账号关键字
+	AccountMatch     string    // include | exclude
+	HostKeyword      string    // 主机 IP 或名称关键字
+	InstanceKeyword  string    // 实例名称关键字
+	BusinessID       int64     // 业务 ID（0 表示不过滤）
+	Page             int
+	PageSize         int
 }
 
 // AuditLogRow 审计日志原始行（从数据库查询）

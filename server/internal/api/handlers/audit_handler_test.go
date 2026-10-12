@@ -186,3 +186,58 @@ func TestAuditHandler_ListAuditLogs_ParamMapping(t *testing.T) {
 		})
 	}
 }
+
+func doAuditGet(repo storage.AuditRepository, id string) *httptest.ResponseRecorder {
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	handler := NewAuditHandler(audit.NewService(repo))
+	router.GET("/api/v1/audit/:id", handler.GetAuditLog)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/audit/"+id, nil))
+	return rec
+}
+
+func TestAuditHandler_GetAuditLog(t *testing.T) {
+	repo := &fakeAuditRepo{
+		rows: []types.AuditLogRow{{
+			ID:         895,
+			ModelUID:   "host",
+			ChangeType: "update",
+			ChangedBy:  "chenjing",
+			ChangedAt:  time.Date(2026, 9, 22, 11, 30, 0, 0, time.UTC),
+			AfterData:  map[string]interface{}{"host_name": "pay-gw-02"},
+		}},
+		total: 1,
+	}
+	rec := doAuditGet(repo, "895")
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, uint64(895), repo.gotParams.ID)
+	require.Empty(t, repo.gotParams.ModelUIDs, "按 ID 取时不按分类过滤")
+
+	var body struct {
+		Data types.AuditLogEntry `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Equal(t, uint64(895), body.Data.ID)
+	require.Equal(t, "host", body.Data.AuditType)
+	require.Equal(t, "pay-gw-02", body.Data.ResourceName)
+}
+
+func TestAuditHandler_GetAuditLog_NotFoundAndInvalid(t *testing.T) {
+	rec := doAuditGet(&fakeAuditRepo{}, "999999")
+	require.Equal(t, http.StatusNotFound, rec.Code)
+	var body map[string]interface{}
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &body))
+	require.Equal(t, "NOT_FOUND", body["error"])
+
+	for _, bad := range []string{"abc", "0", "-1"} {
+		require.Equal(t, http.StatusBadRequest, doAuditGet(&fakeAuditRepo{}, bad).Code, bad)
+	}
+	require.Equal(t, http.StatusInternalServerError, doAuditGet(&fakeAuditRepo{err: errors.New("db down")}, "1").Code)
+}
+
+func TestAuditTypeOf(t *testing.T) {
+	require.Equal(t, "host", audit.AuditTypeOf("host"))
+	require.Equal(t, "business", audit.AuditTypeOf("module"))
+	require.Equal(t, "resource", audit.AuditTypeOf("switch"))
+}
