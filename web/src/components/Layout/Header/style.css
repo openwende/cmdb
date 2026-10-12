@@ -15,12 +15,21 @@
   align-items: center;
   gap: 0;
   height: 100%;
+  /* 空间不够时让左侧收缩（菜单把放不下的项收进"…"），右侧功能区保持完整可见 */
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .header-menu {
   text-align: left;
   border-bottom: none !important;
   height: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.header-function {
+  flex: 0 0 auto;
 }
 
 .header-menu .ant-menu-item {

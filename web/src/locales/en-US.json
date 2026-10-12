@@ -2034,7 +2034,8 @@
       "reasoning": "Reasoning",
       "thinking": "Thinking…",
       "stopped": "Stopped",
-      "stats": "{{toolCalls}} tool calls · {{elapsed}} · {{input}} input / {{output}} output tokens"
+      "stats_one": "{{count}} tool call · {{elapsed}} · {{input}} input / {{output}} output tokens",
+      "stats_other": "{{count}} tool calls · {{elapsed}} · {{input}} input / {{output}} output tokens"
     },
     "steps": {
       "status": {

@@ -38,6 +38,8 @@ const AIAssistantDrawer: React.FC = () => {
       mask={false}
       onClose={() => setOpen(false)}
       rootClassName="ai-assistant-drawer"
+      // 从 Header 下方开始，不盖住 Header 上的入口按钮、语言切换和用户菜单
+      rootStyle={{ top: 'var(--header-height)' }}
       styles={{ body: { padding: 0, display: 'flex', flexDirection: 'column' } }}
       extra={
         <Space size={8}>

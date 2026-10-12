@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
 import { parseCitationContent, parseCitations } from '@/components/AIAssistant/citations';
+import { CitationGroup } from '@/components/AIAssistant/CitationTag';
 import MarkdownAnswer from '@/components/AIAssistant/MarkdownAnswer';
 
 vi.mock('react-i18next', () => ({
@@ -13,9 +14,9 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-vi.mock('@/api/services/aiChat', () => ({
-  getKnowledgeSection: vi.fn(),
-}));
+const api = vi.hoisted(() => ({ getKnowledgeSection: vi.fn() }));
+
+vi.mock('@/api/services/aiChat', () => api);
 
 describe('parseCitations', () => {
   it('parses a single record citation', () => {
@@ -147,5 +148,38 @@ describe('MarkdownAnswer', () => {
     renderAnswer('`[record_id=1]`');
     expect(screen.getByText('[record_id=1]').tagName).toBe('CODE');
     expect(screen.queryByText('aiAssistant.citation.record:1')).not.toBeInTheDocument();
+  });
+});
+
+describe('doc citation popover', () => {
+  it('Esc closes only the popover, not the drawer around it', async () => {
+    api.getKnowledgeSection.mockResolvedValue({
+      id: '主机流转规则#回收到资源池',
+      doc: '主机流转规则',
+      title: '回收到资源池',
+      content: '回收是把主机从业务退回资源池。',
+    });
+    const drawerKeyDown = vi.fn();
+    render(
+      <MemoryRouter>
+        <div onKeyDown={(event) => drawerKeyDown(event.key)}>
+          <CitationGroup items={[{ kind: 'doc', id: '主机流转规则#回收到资源池' }]} />
+        </div>
+      </MemoryRouter>,
+    );
+
+    const tag = screen.getByRole('button', { name: /主机流转规则#回收到资源池/ });
+    fireEvent.click(tag);
+    expect(await screen.findByText('回收是把主机从业务退回资源池。')).toBeInTheDocument();
+    expect(api.getKnowledgeSection).toHaveBeenCalledWith('主机流转规则#回收到资源池');
+    expect(tag).toHaveAttribute('aria-expanded', 'true');
+
+    fireEvent.keyDown(tag, { key: 'Escape' });
+    expect(drawerKeyDown).not.toHaveBeenCalled();
+    await waitFor(() => expect(tag).toHaveAttribute('aria-expanded', 'false'));
+
+    // 气泡已关时 Esc 照常冒泡，抽屉可以用 Esc 关闭
+    fireEvent.keyDown(tag, { key: 'Escape' });
+    expect(drawerKeyDown).toHaveBeenCalledWith('Escape');
   });
 });

@@ -21,6 +21,12 @@ const components: Components = {
     if (items) return <CitationGroup items={items} />;
     return <span {...props}>{children}</span>;
   },
+  // 表格放进可横向滚动的容器，抽屉窄时不把列挤到一个字一行
+  table: ({ node: _node, children, ...props }) => (
+    <div className="ai-markdown__table">
+      <table {...props}>{children}</table>
+    </div>
+  ),
   a: ({ node: _node, children, ...props }) => (
     <a {...props} target="_blank" rel="noopener noreferrer">
       {children}

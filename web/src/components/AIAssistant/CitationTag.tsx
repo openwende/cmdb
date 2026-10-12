@@ -58,9 +58,11 @@ const KnowledgeSectionContent: React.FC<{ state: SectionState }> = ({ state }) =
 const DocCitation: React.FC<{ id: string }> = ({ id }) => {
   const { t } = useTranslation();
   const [state, setState] = useState<SectionState>({ status: 'idle' });
+  const [open, setOpen] = useState(false);
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open || state.status === 'success' || state.status === 'loading') return;
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen || state.status === 'success' || state.status === 'loading') return;
     setState({ status: 'loading' });
     loadSection(id)
       .then((section) => setState({ status: 'success', section }))
@@ -75,25 +77,38 @@ const DocCitation: React.FC<{ id: string }> = ({ id }) => {
       );
   };
 
+  // 气泡打开时 Esc 只关气泡：拦下事件，不让它冒泡到 AI 抽屉（抽屉也监听 Esc 关闭）。
+  // 气泡内容通过 portal 渲染，React 事件仍沿组件树冒泡到这里。
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Escape' && open) {
+      event.stopPropagation();
+      setOpen(false);
+    }
+  };
+
   return (
-    <Popover
-      trigger="click"
-      placement="left"
-      content={<KnowledgeSectionContent state={state} />}
-      onOpenChange={handleOpenChange}
-      overlayClassName="ai-knowledge-popover"
-    >
-      <Tag
-        color="purple"
-        icon={<BookOutlined />}
-        className="ai-citation ai-citation--link"
-        role="button"
-        tabIndex={0}
-        title={t('aiAssistant.citation.docTip')}
+    <span className="ai-citation-doc" onKeyDown={handleKeyDown}>
+      <Popover
+        trigger="click"
+        placement="left"
+        open={open}
+        content={<KnowledgeSectionContent state={state} />}
+        onOpenChange={handleOpenChange}
+        overlayClassName="ai-knowledge-popover"
       >
-        {id}
-      </Tag>
-    </Popover>
+        <Tag
+          color="purple"
+          icon={<BookOutlined />}
+          className="ai-citation ai-citation--link ai-citation--doc"
+          role="button"
+          tabIndex={0}
+          aria-expanded={open}
+          title={t('aiAssistant.citation.docTip')}
+        >
+          {id}
+        </Tag>
+      </Popover>
+    </span>
   );
 };
 

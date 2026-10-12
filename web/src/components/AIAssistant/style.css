@@ -192,17 +192,22 @@
   background: transparent;
 }
 
+.ai-markdown__table {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-sm) 0;
+}
+
 .ai-markdown table {
   border-collapse: collapse;
-  margin: var(--space-sm) 0;
-  display: block;
-  overflow-x: auto;
 }
 
 .ai-markdown th,
 .ai-markdown td {
   border: 1px solid var(--color-border);
   padding: 4px 8px;
+  min-width: 5em;
+  vertical-align: top;
 }
 
 .ai-markdown blockquote {
@@ -219,10 +224,20 @@
 
 .ai-citation.ant-tag {
   margin: 0 2px;
-  white-space: normal;
-  word-break: break-all;
+  white-space: nowrap;
   font-size: var(--font-size-xs);
   line-height: 18px;
+}
+
+/* 知识库引用可能很长：正文里允许在标签内折行，表格里保持一行（表格可横向滚动） */
+.ai-citation--doc.ant-tag {
+  white-space: normal;
+  word-break: break-all;
+}
+
+.ai-markdown__table .ai-citation.ant-tag {
+  white-space: nowrap;
+  word-break: normal;
 }
 
 .ai-citation--link {

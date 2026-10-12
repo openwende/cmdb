@@ -1,27 +1,44 @@
 import React from 'react';
-import { Button } from 'antd';
+import { Button, Tooltip } from 'antd';
 import { RobotOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAIAssistantSceneStore } from '@/store/AIAssistantSceneStore';
+import { useResponsive } from '@/utils/useResponsive';
 import './style.css';
+
+/** 低于这个宽度只显示图标：英文菜单较长，1024 宽时带文字的按钮会把 Header 挤出屏幕 */
+export const AI_ENTRY_LABEL_MIN_WIDTH = 1280;
 
 /** Header 右侧的 AI 助手入口：点击打开 / 收起右侧对话抽屉 */
 const AIAssistantEntry: React.FC = () => {
   const { t } = useTranslation();
+  const { width } = useResponsive();
   const open = useAIAssistantSceneStore((s) => s.open);
   const toggleOpen = useAIAssistantSceneStore((s) => s.toggleOpen);
+  const label = t('aiAssistant.entry');
+  const compact = width < AI_ENTRY_LABEL_MIN_WIDTH;
 
-  return (
+  const button = (
     <Button
       type="text"
       icon={<RobotOutlined />}
-      className={`header-ai-button${open ? ' header-ai-button--active' : ''}`}
+      className={`header-ai-button${compact ? ' header-ai-button--compact' : ''}${
+        open ? ' header-ai-button--active' : ''
+      }`}
       aria-pressed={open}
-      aria-label={t('aiAssistant.entry')}
+      aria-label={label}
       onClick={toggleOpen}
     >
-      <span className="header-ai-label">{t('aiAssistant.entry')}</span>
+      {!compact && <span className="header-ai-label">{label}</span>}
     </Button>
+  );
+
+  return compact ? (
+    <Tooltip title={label} placement="bottom">
+      {button}
+    </Tooltip>
+  ) : (
+    button
   );
 };
 

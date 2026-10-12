@@ -27,6 +27,7 @@ vi.mock('react-i18next', () => ({
 }));
 
 import AIAssistantDrawer from '@/components/AIAssistant/AIAssistantDrawer';
+import AIAssistantEntry from '@/components/Layout/Header/Function/aiAssistant';
 import { useAIAssistantSceneStore } from '@/store/AIAssistantSceneStore';
 
 // jsdom 缺这几个浏览器 API：AntD 响应式、Bubble.List 自动滚动、ThoughtChain 标题溢出检测
@@ -145,5 +146,40 @@ describe('AI assistant drawer', () => {
     renderDrawer();
     expect(await screen.findByText('10.20.1.11 为什么同时在两个模块？')).toBeInTheDocument();
     expect(api.listAIConversations).toHaveBeenCalled();
+  });
+});
+
+describe('AI assistant layout', () => {
+  beforeEach(() => {
+    useAIAssistantSceneStore.getState().reset();
+    api.listAIConversations.mockResolvedValue({ items: [] });
+  });
+
+  it('starts the drawer below the header so the entry button stays clickable', async () => {
+    useAIAssistantSceneStore.setState({ open: true });
+    renderDrawer();
+    await screen.findByText('aiAssistant.welcome.title');
+    const root = document.querySelector<HTMLElement>('.ai-assistant-drawer');
+    expect(root?.style.top).toBe('var(--header-height)');
+  });
+
+  it('shows only the icon on narrow screens and toggles the drawer', async () => {
+    const user = userEvent.setup();
+    window.innerWidth = 1024;
+    const { unmount } = render(<AIAssistantEntry />);
+    const button = screen.getByRole('button', { name: 'aiAssistant.entry' });
+    expect(button).not.toHaveTextContent('aiAssistant.entry');
+    await user.click(button);
+    expect(useAIAssistantSceneStore.getState().open).toBe(true);
+    await user.click(button);
+    expect(useAIAssistantSceneStore.getState().open).toBe(false);
+    unmount();
+
+    window.innerWidth = 1440;
+    render(<AIAssistantEntry />);
+    expect(screen.getByRole('button', { name: 'aiAssistant.entry' })).toHaveTextContent(
+      'aiAssistant.entry',
+    );
+    window.innerWidth = 1024;
   });
 });

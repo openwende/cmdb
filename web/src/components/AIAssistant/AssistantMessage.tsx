@@ -53,7 +53,7 @@ const AssistantMessage: React.FC<{ message: AIChatMessage }> = ({ message }) => 
       {message.stats && (
         <div className="ai-message__stats">
           {t('aiAssistant.message.stats', {
-            toolCalls: message.stats.toolCalls,
+            count: message.stats.toolCalls,
             elapsed: formatDuration(message.stats.elapsedMs),
             input: message.stats.inputTokens,
             output: message.stats.outputTokens,

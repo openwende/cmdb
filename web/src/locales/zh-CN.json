@@ -2034,7 +2034,8 @@
       "reasoning": "思考过程",
       "thinking": "思考中…",
       "stopped": "已停止",
-      "stats": "工具调用 {{toolCalls}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens"
+      "stats_one": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens",
+      "stats_other": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens"
     },
     "steps": {
       "status": {
