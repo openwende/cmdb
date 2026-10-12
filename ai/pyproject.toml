@@ -6,6 +6,7 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.143.0",
     "httpx>=0.28.1",
+    "jieba>=0.42.1",
     "langchain>=1.4.4",
     "langchain-deepseek>=1.1.1",
     "langchain-mcp-adapters>=0.3.2",
@@ -14,7 +15,10 @@ dependencies = [
     "langgraph-checkpoint-postgres>=3.1.2",
     "psycopg[binary,pool]>=3.3.6",
     "pydantic-settings>=2.15.0",
+    "sentence-transformers>=6.1.0,<6.2",
     "sse-starlette>=3.5.0",
+    "torch>=2.14.0,<2.14.1",
+    "transformers>=5.17,<5.18",
     "uvicorn[standard]>=0.54.0",
 ]
 
@@ -40,7 +44,11 @@ module-name = "cmdb_ai"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-filterwarnings = ["ignore::langchain_core._api.beta_decorator.LangChainBetaWarning"]
+filterwarnings = [
+    "ignore::langchain_core._api.beta_decorator.LangChainBetaWarning",
+    # jieba 0.42.1（2020 年的最后一个版本）源码里的正则没用原始字符串
+    "ignore::SyntaxWarning",
+]
 
 [tool.ruff]
 line-length = 100
