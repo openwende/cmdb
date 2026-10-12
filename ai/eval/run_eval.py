@@ -98,11 +98,15 @@ def citation_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     checked = [r["citations"] for r in results if r.get("citations") is not None]
     cited = sum(c["cited"] for c in checked)
     unsupported = sum(len(c["unsupported"]) for c in checked)
+    docs = sum(c["cited_docs"] for c in checked)
+    unsupported_docs = sum(len(c["unsupported_docs"]) for c in checked)
     return {
         "cited_ids": cited,
         "unsupported_ids": unsupported,
         "unsupported_rate": round(unsupported / cited, 4) if cited else 0,
         "answers_with_unsupported": sum(1 for c in checked if c["unsupported"]),
+        "cited_docs": docs,
+        "unsupported_docs": unsupported_docs,
     }
 
 
@@ -125,6 +129,8 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
                 print(f"    ✗ {c['check']}")
         if (r.get("citations") or {}).get("unsupported"):
             print(f"    ✗ 引用无依据: {', '.join(r['citations']['unsupported'])}")
+        if (r.get("citations") or {}).get("unsupported_docs"):
+            print(f"    ✗ doc 引用无依据: {', '.join(r['citations']['unsupported_docs'])}")
         if r.get("error"):
             print(f"    ✗ error: {r['error']}")
 
@@ -158,7 +164,8 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
         f"平均 {summary['avg_tool_calls']} 次工具调用、{summary['avg_model_calls']} 次模型调用、"
         f"输入 {summary['avg_input_tokens']} / 输出 {summary['avg_output_tokens']} token、"
         f"{summary['avg_seconds']} 秒；引用 {summary['cited_ids']} 个，"
-        f"无依据 {summary['unsupported_ids']} 个（{summary['unsupported_rate']:.1%}）"
+        f"无依据 {summary['unsupported_ids']} 个（{summary['unsupported_rate']:.1%}）；"
+        f"doc 引用 {summary['cited_docs']} 个，无依据 {summary['unsupported_docs']} 个"
     )
     return summary
 
@@ -204,7 +211,12 @@ async def main() -> int:
             print(f"  {'✅' if result['passed'] else '❌'} {case['id']}", flush=True)
             return result
 
-    print(f"运行 {len(cases)} 个用例，模型 {settings.deepseek_model}，并发 {args.concurrency}")
+    # 知识库的本地模型先加载好（和 API 启动时一样），不算进第一题的耗时
+    await asyncio.to_thread(investigator.knowledge.warm_up)
+    print(
+        f"运行 {len(cases)} 个用例，模型 {settings.deepseek_model}，并发 {args.concurrency}，"
+        f"知识库检索 {settings.knowledge_search_mode}"
+    )
     started = time.monotonic()
     results = await asyncio.gather(*(bounded(c) for c in cases))
     summary = print_report(results)
@@ -221,6 +233,7 @@ async def main() -> int:
                 "run_id": run_id,
                 "label": args.label,
                 "model": settings.deepseek_model,
+                "knowledge_search_mode": settings.knowledge_search_mode,
                 "prompt_sha": prompt_hash,
                 "summary": summary,
                 "results": results,

@@ -1,5 +1,6 @@
 """FastAPI 应用：POST /chat（SSE 流式对话）、GET /health。"""
 
+import asyncio
 import json
 import logging
 from collections.abc import AsyncIterator
@@ -26,6 +27,8 @@ async def lifespan(app: FastAPI):
     async with open_checkpointer(settings.database_url, settings.ai_db_schema) as checkpointer:
         app.state.cmdb = cmdb
         app.state.investigator = Investigator(settings, checkpointer)
+        # 知识库的两个本地模型约 4GB，启动时加载好，第一个问题不用多等十几秒
+        await asyncio.to_thread(app.state.investigator.knowledge.warm_up)
         try:
             yield
         finally:

@@ -28,10 +28,35 @@ def test_check_citations_flags_ids_missing_from_tool_outputs():
         },
     ]
     answer = "[host_id=43] [record_id=612][record_id=613][record_id=999]"
-    assert check_citations(answer, calls) == {"cited": 4, "unsupported": ["record_id=999"]}
+    result = check_citations(answer, calls)
+    assert result["cited"] == 4
+    assert result["unsupported"] == ["record_id=999"]
 
 
 def test_error_text_grounds_ids_and_old_results_are_skipped():
     calls = [{"name": "get_host", "output": '主机 not found（host_id=0 ip="10.99.99.99"）'}]
     assert check_citations("返回 not found（host_id=0）", calls)["unsupported"] == []
     assert check_citations("[record_id=612]", [{"name": "get_host"}]) is None  # 旧结果没有工具返回
+
+
+def test_doc_citations_must_come_from_search_knowledge():
+    calls = [
+        {
+            "name": "search_knowledge",
+            "output": "[doc=主机流转规则#回收到资源池]\n回收会删掉……\n\n"
+            "[doc=拓扑与空闲机池#删除和移动集群、模块]\n……",
+        },
+        {"name": "get_host", "output": '{"host_id":43}'},
+    ]
+    answer = (
+        "回收会删掉所有归属 [doc=主机流转规则#回收到资源池]，"
+        "[doc=拓扑与空闲机池#删除和移动集群、模块、host_id=43]，"
+        "[doc=主机流转规则#回收到资源池；doc=角色与权限#系统角色]"
+    )
+    result = check_citations(answer, calls)
+    assert result == {
+        "cited": 1,
+        "unsupported": [],
+        "cited_docs": 3,
+        "unsupported_docs": ["角色与权限#系统角色"],
+    }

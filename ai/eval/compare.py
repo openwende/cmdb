@@ -67,6 +67,7 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
     n = len(ok) or 1
     cites = [r["citations"] for r in ok]
     cited = sum(c["cited"] for c in cites) if None not in cites else 0
+    docs = sum(c.get("cited_docs", 0) for c in cites) if None not in cites else 0
     return {
         "通过率": sum(r["passed"] for r in results) / len(results),
         "检查项通过率": sum(c["ok"] for c in checks) / len(checks),
@@ -77,6 +78,13 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
         "输出 token/题": sum(r["usage"]["output_tokens"] for r in ok) / n,
         "耗时 秒/题": sum(r["elapsed_ms"] for r in ok) / 1000 / n,
         "引用幻觉率": sum(len(c["unsupported"]) for c in cites) / cited if cited else None,
+        "知识库查询/题": sum(c["name"] == "search_knowledge" for c in calls) / n,
+        "doc 引用/题": sum(c.get("cited_docs", 0) for c in cites) / n
+        if None not in cites
+        else None,
+        "doc 引用幻觉率": (
+            sum(len(c.get("unsupported_docs", [])) for c in cites) / docs if docs else None
+        ),
         **judge_metrics(ok),
     }
 

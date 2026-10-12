@@ -1,6 +1,7 @@
 """服务配置：从环境变量和 .env 读取。"""
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,6 +23,10 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://cmdb:password@localhost:5432/cmdb"
     # 拼进 search_path 和 DDL，只允许简单标识符
     ai_db_schema: str = Field(default="ai", pattern=r"^[a-z_][a-z0-9_]{0,62}$")
+
+    # 知识库检索（search_knowledge 工具）：rerank = 向量 + 关键词 RRF 融合后重排；
+    # vector、hybrid 只用于端到端逐项对比
+    knowledge_search_mode: Literal["vector", "hybrid", "rerank"] = "rerank"
 
     # Agent 护栏：单次提问内的模型 / 工具调用上限
     agent_model_call_limit: int = 15
