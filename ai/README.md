@@ -38,6 +38,20 @@ curl -N -X POST localhost:8090/chat \
 
 同一个 `conversation_id` 再发消息就是多轮追问。
 
+### 接口
+
+所有接口都要 `Authorization: Bearer <CMDB 的 JWT>`（AI 服务用 `/api/v1/auth/me` 校验），JWT 无效返回 401。允许跨域的前端来源由 `CORS_ORIGINS` 配置（默认 `http://localhost:5173`、`http://localhost:5199`）。
+
+| 接口 | 说明 |
+|---|---|
+| `POST /chat` `{conversation_id, message}` | SSE 流式对话（事件见下）。同一会话上一条还没答完时返回 409。客户端中途断开后，下一轮开始前会给没有结果的工具调用补上"已中断"，会话可以继续问 |
+| `GET /conversations` | 当前用户的会话列表（按最近更新倒序）：`{items: [{conversation_id, title, created_at, updated_at}]}` |
+| `GET /conversations/{id}/messages` | 会话的问答：`{items: [{role, content, created_at}]}`；只有用户问题和最终回答，中途停止的轮次只有问题。不是自己的会话返回 404 |
+| `DELETE /conversations/{id}` | 删除会话和它的检查点，204 |
+| `GET /knowledge/sections?id=<文档#小节>` | 知识库小节原文 `{id, doc, title, content}`，前端点开 `[doc=…]` 引用用 |
+
+会话列表和问答存在 `ai.conversations`、`ai.conversation_messages`，按 (用户 ID, 会话 ID) 隔离；Agent 的完整状态在 LangGraph 检查点里（thread_id = 用户ID:会话ID）。
+
 ### SSE 事件
 
 | 事件 | data | 说明 |

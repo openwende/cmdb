@@ -7,6 +7,7 @@ import asyncio
 import logging
 from collections.abc import AsyncIterator
 
+from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Checkpointer
 
 from cmdb_ai.agent import build_agent
@@ -19,10 +20,21 @@ from cmdb_ai.streaming import EventTranslator, SSEEvent
 
 logger = logging.getLogger(__name__)
 
+INTERRUPTED_TOOL_RESULT = "（这次工具调用被用户中断，没有结果。如果仍然需要，重新调用。）"
+
 
 def thread_id_for(user: UserContext, conversation_id: str) -> str:
     """检查点 thread_id 带上用户 ID：别人即使拿到会话 ID 也读不到这段对话。"""
     return f"{user.user_id}:{conversation_id}"
+
+
+def unanswered_tool_calls(messages: list) -> list[dict]:
+    """最后一条 AI 消息里还没有工具结果的调用（用户在工具执行中途断开时会留下）。"""
+    for i in range(len(messages) - 1, -1, -1):
+        if isinstance(messages[i], AIMessage):
+            answered = {m.tool_call_id for m in messages[i + 1 :] if isinstance(m, ToolMessage)}
+            return [c for c in messages[i].tool_calls if c["id"] not in answered]
+    return []
 
 
 class Investigator:
@@ -47,6 +59,30 @@ class Investigator:
                     self._agent = build_agent(self._settings, tools, self._checkpointer)
         return self._agent
 
+    async def _close_interrupted_tool_calls(self, agent, config: dict) -> None:
+        """上一轮在工具执行中途被中断时，补上"已中断"的工具结果。
+
+        模型 API 要求每个 tool_call 都有对应的工具结果，否则下一次请求直接报 400，
+        这个会话就再也问不下去了。补在新问题之前，消息顺序才对。
+        """
+        if self._checkpointer is None:
+            return
+        state = await agent.aget_state(config)
+        missing = unanswered_tool_calls(state.values.get("messages", []))
+        if missing:
+            results = [
+                ToolMessage(
+                    INTERRUPTED_TOOL_RESULT, tool_call_id=c["id"], name=c["name"], status="error"
+                )
+                for c in missing
+            ]
+            await agent.aupdate_state(config, {"messages": results}, as_node="tools")
+            logger.info("补上 %d 个被中断的工具调用结果", len(results))
+
+    async def delete_thread(self, user: UserContext, conversation_id: str) -> None:
+        if self._checkpointer is not None:
+            await self._checkpointer.adelete_thread(thread_id_for(user, conversation_id))
+
     async def stream(
         self,
         conversation_id: str,
@@ -66,6 +102,7 @@ class Investigator:
             config["metadata"] = self.tracing.metadata(user, thread_id, trace_tags or ["chat"])
         try:
             agent = await self._get_agent(user)
+            await self._close_interrupted_tool_calls(agent, config)
             run = await agent.astream_events(
                 {"messages": [{"role": "user", "content": message}]},
                 config,

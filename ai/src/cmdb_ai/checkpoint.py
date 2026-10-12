@@ -18,7 +18,8 @@ async def ensure_schema(database_url: str, schema: str) -> None:
 
 
 @asynccontextmanager
-async def open_checkpointer(database_url: str, schema: str) -> AsyncIterator[AsyncPostgresSaver]:
+async def open_pool(database_url: str, schema: str) -> AsyncIterator[AsyncConnectionPool]:
+    """AI 服务的连接池：search_path 指向自己的 schema，检查点和会话记录共用。"""
     await ensure_schema(database_url, schema)
     async with AsyncConnectionPool(
         database_url,
@@ -33,6 +34,10 @@ async def open_checkpointer(database_url: str, schema: str) -> AsyncIterator[Asy
             "options": f"-c search_path={schema}",
         },
     ) as pool:
-        saver = AsyncPostgresSaver(pool)
-        await saver.setup()
-        yield saver
+        yield pool
+
+
+async def open_checkpointer(pool: AsyncConnectionPool) -> AsyncPostgresSaver:
+    saver = AsyncPostgresSaver(pool)
+    await saver.setup()
+    return saver

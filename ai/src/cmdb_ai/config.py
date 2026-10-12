@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     cmdb_mcp_url: str = "http://localhost:8080/mcp"
     cmdb_timeout_seconds: float = 30.0
 
+    # 允许跨域调用的前端来源（JSON 列表）：本地 pnpm dev 和故障注入用的 5199
+    cors_origins: list[str] = ["http://localhost:5173", "http://localhost:5199"]
+
     # 会话 / 检查点存储
     database_url: str = "postgresql://cmdb:password@localhost:5432/cmdb"
     # 拼进 search_path 和 DDL，只允许简单标识符
