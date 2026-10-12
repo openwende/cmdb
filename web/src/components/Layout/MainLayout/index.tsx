@@ -4,6 +4,7 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Header from '../Header';
 import Sidebar from '../Sidebar';
 import Content from '../Content';
+import AIAssistant from '@/components/AIAssistant';
 import { routes } from '../../../routes';
 import { PrimaryNavKey } from '../../../routes/Types';
 import { useResponsive } from '@/utils/useResponsive';
@@ -55,6 +56,7 @@ const MainLayout: React.FC = () => {
           </Content>
         </Layout>
       </Layout>
+      <AIAssistant />
     </Layout>
   );
 };

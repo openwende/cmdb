@@ -5,9 +5,12 @@ import path from 'path';
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      // @ant-design/x 的 CJS 产物（lib）会 require `antd/es/*`，Node 原生加载时
+      // 报 ERR_UNSUPPORTED_DIR_IMPORT；测试里改用它的 ES 产物，交给 Vite 转换
+      { find: /^@ant-design\/x$/, replacement: '@ant-design/x/es/index.js' },
+    ],
   },
   test: {
     globals: true,

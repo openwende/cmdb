@@ -52,3 +52,13 @@ export interface AuditListResponse {
 export const listAuditLogs = (params: AuditQueryParams): Promise<AuditListResponse> => {
   return axios.get('/v1/audit', { params });
 };
+
+export interface AuditDetailResponse {
+  code: number;
+  data: AuditLogRaw;
+}
+
+/** 按 ID 取单条审计记录，结构和列表 data.info 里的一项相同；不存在返回 404 */
+export const getAuditLog = (id: number | string): Promise<AuditDetailResponse> => {
+  return axios.get(`/v1/audit/${encodeURIComponent(String(id))}`);
+};

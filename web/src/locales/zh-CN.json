@@ -1891,6 +1891,10 @@
           "os_type": "系统类型",
           "os_version": "系统版本"
         }
+      },
+      "messages": {
+        "recordNotFound": "审计记录不存在",
+        "recordLoadFailed": "审计记录加载失败，请稍后重试"
       }
     },
     "statistics": {
@@ -2004,6 +2008,86 @@
         "deleteTitle": "确认删除",
         "deleteContent": "确定要删除该图表吗？"
       }
+    }
+  },
+  "aiAssistant": {
+    "entry": "AI 助手",
+    "title": "AI 调查助手",
+    "newChat": "新对话",
+    "backToChat": "返回对话",
+    "welcome": {
+      "title": "你好，我是 CMDB 调查助手",
+      "description": "可以问我主机为什么在某个模块、某次变更是谁做的、某条规则是什么意思。回答里的每条事实都带依据，点开就能核对。",
+      "promptsTitle": "试试这些问题",
+      "prompts": {
+        "hostModules": "10.20.1.11 为什么同时在两个模块？",
+        "faultVsReclaim": "故障机和待回收有什么区别？",
+        "recentReclaim": "最近有哪些主机被回收到资源池？"
+      }
+    },
+    "sender": {
+      "placeholder": "输入问题，Enter 发送，Shift + Enter 换行",
+      "send": "发送",
+      "stop": "停止生成"
+    },
+    "message": {
+      "reasoning": "思考过程",
+      "thinking": "思考中…",
+      "stopped": "已停止",
+      "stats": "工具调用 {{toolCalls}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens"
+    },
+    "steps": {
+      "status": {
+        "pending": "执行中",
+        "success": "成功",
+        "error": "失败"
+      },
+      "interrupted": "已中断",
+      "input": "参数",
+      "output": "返回",
+      "noOutput": "（无返回内容）"
+    },
+    "tools": {
+      "search_businesses": "查业务",
+      "get_business_topology": "查业务拓扑",
+      "search_hosts": "查主机",
+      "get_host": "查主机详情",
+      "query_host_changes": "查变更记录",
+      "list_pool_directories": "查资源池目录",
+      "search_knowledge": "查知识库"
+    },
+    "citation": {
+      "record": "审计 #{{id}}",
+      "host": "主机 #{{id}}",
+      "recordTip": "查看这条审计记录的详情",
+      "hostTip": "主机 ID（暂无主机详情页）",
+      "docTip": "查看知识库原文"
+    },
+    "knowledge": {
+      "notFound": "知识库里没有这个小节",
+      "loadFailed": "知识库原文加载失败，请稍后重试"
+    },
+    "errors": {
+      "connectionFailed": "无法连接 AI 服务，请确认服务已启动后重试",
+      "busy": "上一条消息还在处理中，请稍后再试",
+      "requestFailed": "AI 服务请求失败，请稍后重试",
+      "server": "AI 回答失败",
+      "incomplete": "连接已断开，回答不完整"
+    },
+    "history": {
+      "title": "历史会话",
+      "empty": "还没有历史会话",
+      "untitled": "未命名会话",
+      "loadFailed": "历史会话加载失败",
+      "loadMessagesFailed": "会话内容加载失败",
+      "notFound": "会话不存在或已被删除",
+      "retry": "重试",
+      "delete": "删除",
+      "cancel": "取消",
+      "deleteConfirmTitle": "删除这个会话？",
+      "deleteConfirmContent": "删除后无法恢复。",
+      "deleted": "会话已删除",
+      "deleteFailed": "删除失败，请稍后重试"
     }
   }
 }

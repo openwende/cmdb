@@ -139,3 +139,16 @@ export const getBusinessIdFromUrl = (pathname?: string): number | null => {
   const result = parseBusinessInfoFromUrl(pathname);
   return result ? result.id : null;
 };
+
+/** 审计页深链参数：`/analysis/audit?record_id=895` 打开该记录的详情抽屉 */
+export const AUDIT_RECORD_QUERY_KEY = 'record_id';
+
+/**
+ * Generate audit page path that opens one audit record's detail drawer
+ * @param recordId Audit record ID
+ * @returns Audit page path with the record_id query
+ */
+export const getAuditRecordPath = (recordId: number | string): string => {
+  const query = new URLSearchParams({ [AUDIT_RECORD_QUERY_KEY]: String(recordId) });
+  return `/analysis/audit?${query.toString()}`;
+};

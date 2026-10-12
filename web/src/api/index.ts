@@ -57,11 +57,12 @@ export {
 
 export { getBusinessFormSchema } from './services/businessCustomField';
 
-export { listAuditLogs } from './services/audit';
+export { listAuditLogs, getAuditLog } from './services/audit';
 export type {
   AuditQueryParams as AuditApiParams,
   AuditLogRaw,
   AuditListResponse,
+  AuditDetailResponse,
 } from './services/audit';
 
 export {
@@ -73,3 +74,19 @@ export {
   getModelInstanceTopology,
   listModelInstanceHistory,
 } from './services/modelInstance';
+
+export {
+  AI_API_BASE_URL,
+  listAIConversations,
+  getAIConversationMessages,
+  deleteAIConversation,
+  getKnowledgeSection,
+  streamAIChat,
+  AIChatHttpError,
+} from './services/aiChat';
+export type {
+  AIChatEvent,
+  AIConversation,
+  AIStoredMessage,
+  AIKnowledgeSection,
+} from './types/aiChat';
