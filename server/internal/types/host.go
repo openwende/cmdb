@@ -173,3 +173,29 @@ type HostListResponse struct {
 
 // 注：HostBusinessRelation / HostModuleRelation 已于阶段2-S4 退役（host 归属统一在
 // host_node_memberships，见 docs/P1-host-membership-convergence.md）。
+
+// 主机当前归属的种类（HostPlacement.Kind）。
+const (
+	HostPlacementBusiness = "business" // 业务模块
+	HostPlacementPool     = "pool"     // 资源池目录
+)
+
+// HostPlacement 主机的一处当前归属：业务模块（带业务、集群、模块）或资源池目录。
+type HostPlacement struct {
+	Kind          string `json:"kind"` // business | pool
+	BusinessID    uint64 `json:"business_id,omitempty"`
+	BusinessName  string `json:"business_name,omitempty"`
+	SetID         uint64 `json:"set_id,omitempty"`
+	SetName       string `json:"set_name,omitempty"`
+	ModuleID      uint64 `json:"module_id,omitempty"`
+	ModuleName    string `json:"module_name,omitempty"`
+	DirectoryID   uint64 `json:"directory_id,omitempty"`
+	DirectoryName string `json:"directory_name,omitempty"`
+}
+
+// HostDetail 按 display_id 取的主机详情：主机表全部字段（和 Host 的 JSON 一致）+ 管控区域名 + 当前归属。
+type HostDetail struct {
+	Host
+	CloudAreaName string          `json:"cloud_area_name,omitempty"`
+	Placements    []HostPlacement `json:"placements"`
+}

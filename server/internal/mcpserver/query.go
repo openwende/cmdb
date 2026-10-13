@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
+	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -75,48 +76,25 @@ func (p Placement) String() string {
 	return p.Business + " / " + p.Module
 }
 
+// placements 归属解析和 REST 主机详情共用 storage.ListHostPlacements，这里只换成 MCP 的字段写法。
 func (q *Query) placements(ctx context.Context, hostIDs []uuid.UUID) (map[uuid.UUID][]Placement, error) {
-	out := make(map[uuid.UUID][]Placement, len(hostIDs))
-	if len(hostIDs) == 0 {
-		return out, nil
-	}
-	var rows []struct {
-		HostID      uuid.UUID
-		NodeKind    string
-		NodeID      uint64
-		ModuleName  *string
-		SetID       *uint64
-		SetName     *string
-		BusinessID  *uint64
-		BizName     *string
-		DirName     *string
-		DirectoryID *uint64
-	}
-	err := q.db.WithContext(ctx).Table("host_node_memberships m").
-		Select(`m.host_id, m.node_kind, m.node_id,
-			mo.name AS module_name, s.id AS set_id, s.name AS set_name,
-			b.id AS business_id, b.name AS biz_name,
-			d.id AS directory_id, d.name AS dir_name`).
-		Joins("LEFT JOIN modules mo ON m.node_kind = ? AND mo.id = m.node_id", types.NodeKindBizModule).
-		Joins("LEFT JOIN sets s ON s.id = mo.set_id").
-		Joins("LEFT JOIN businesses b ON b.id = mo.business_id").
-		Joins("LEFT JOIN resource_directories d ON m.node_kind = ? AND d.id = m.node_id", types.NodeKindPoolDirectory).
-		Where("m.host_id IN ?", hostIDs).
-		Order("m.node_kind, m.node_id").
-		Scan(&rows).Error
+	shared, err := storage.ListHostPlacements(ctx, q.db, hostIDs)
 	if err != nil {
 		return nil, err
 	}
-	for _, r := range rows {
-		p := Placement{}
-		if r.NodeKind == types.NodeKindPoolDirectory {
-			p.Kind, p.DirectoryID, p.Directory = "pool_directory", r.NodeID, deref(r.DirName)
-		} else {
-			p.Kind, p.ModuleID, p.Module = "business_module", r.NodeID, deref(r.ModuleName)
-			p.SetID, p.Set = derefU(r.SetID), deref(r.SetName)
-			p.BusinessID, p.Business = derefU(r.BusinessID), deref(r.BizName)
+	out := make(map[uuid.UUID][]Placement, len(shared))
+	for id, list := range shared {
+		for _, sp := range list {
+			p := Placement{}
+			if sp.Kind == types.HostPlacementPool {
+				p.Kind, p.DirectoryID, p.Directory = "pool_directory", sp.DirectoryID, sp.DirectoryName
+			} else {
+				p.Kind, p.ModuleID, p.Module = "business_module", sp.ModuleID, sp.ModuleName
+				p.SetID, p.Set = sp.SetID, sp.SetName
+				p.BusinessID, p.Business = sp.BusinessID, sp.BusinessName
+			}
+			out[id] = append(out[id], p)
 		}
-		out[r.HostID] = append(out[r.HostID], p)
 	}
 	return out, nil
 }
@@ -940,11 +918,4 @@ func deref(s *string) string {
 		return ""
 	}
 	return *s
-}
-
-func derefU(u *uint64) uint64 {
-	if u == nil {
-		return 0
-	}
-	return *u
 }

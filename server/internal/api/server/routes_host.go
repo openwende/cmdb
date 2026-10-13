@@ -22,6 +22,7 @@ func RegisterHostRoutes(router *gin.Engine, db *gorm.DB) {
 
 	// 创建 Handler
 	hostHandler := handlers.NewHostHandler(hostService)
+	hostDetailHandler := handlers.NewHostDetailHandler(storage.NewHostDetailRepository(db))
 	cloudAreaHandler := handlers.NewCloudAreaHandler(cloudAreaService)
 
 	// API v1 路由组
@@ -44,7 +45,8 @@ func RegisterHostRoutes(router *gin.Engine, db *gorm.DB) {
 			hosts.POST("", hostHandler.CreateHost)
 			hosts.POST("/batch", hostHandler.BatchImportHosts) // 批量导入
 			hosts.GET("", hostHandler.ListHosts)
-			hosts.GET("/statistics", hostHandler.GetHostStatistics) // 运营概览分布图聚合数据
+			hosts.GET("/statistics", hostHandler.GetHostStatistics)                 // 运营概览分布图聚合数据
+			hosts.GET("/display/:display_id", hostDetailHandler.GetHostByDisplayID) // 按展示 ID 取详情（含归属）
 			hosts.GET("/:id", hostHandler.GetHost)
 			hosts.PUT("/:id", hostHandler.UpdateHost)
 			hosts.PUT("/:id/custom-fields", hostHandler.UpdateHostCustomFields)

@@ -270,7 +270,8 @@ func (h *ResourceDirectoryHandler) GetHostLifecycle(c *gin.Context) {
 }
 
 // ListPoolHosts 获取资源池主机列表
-// GET /api/v1/resource-pool/hosts?directory_id=xxx&page=1&page_size=20
+// GET /api/v1/resource-pool/hosts?directory_id=xxx&keyword=xxx&page=1&page_size=20
+// keyword：可选，按主机名或主 IP 做不区分大小写的子串匹配；结果按 display_id 升序。
 func (h *ResourceDirectoryHandler) ListPoolHosts(c *gin.Context) {
 	var directoryID *uint64
 	if dirIDStr := c.Query("directory_id"); dirIDStr != "" {
@@ -289,7 +290,9 @@ func (h *ResourceDirectoryHandler) ListPoolHosts(c *gin.Context) {
 		pageSize = 20
 	}
 
-	hosts, total, err := h.service.ListPoolHosts(c.Request.Context(), directoryID, page, pageSize)
+	keyword := strings.TrimSpace(c.Query("keyword"))
+
+	hosts, total, err := h.service.ListPoolHosts(c.Request.Context(), directoryID, keyword, page, pageSize)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

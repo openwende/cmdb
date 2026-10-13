@@ -94,6 +94,9 @@ func (r *auditRepository) applyFilters(q *gorm.DB, p *types.AuditQueryParams) *g
 	if p.ID != 0 {
 		q = q.Where("rh.id = ?", p.ID)
 	}
+	if p.ResourceID != 0 {
+		q = q.Where("rh.resource_id = ?", p.ResourceID)
+	}
 
 	// Filter by model UIDs derived from audit_type
 	if len(p.ModelUIDs) > 0 {

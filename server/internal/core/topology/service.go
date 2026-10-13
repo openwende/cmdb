@@ -12,6 +12,7 @@ import (
 	"github.com/wend/cmdb-backend/internal/core/auditlog"
 	"github.com/wend/cmdb-backend/internal/core/host_membership"
 	"github.com/wend/cmdb-backend/internal/core/mainline"
+	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -1177,9 +1178,8 @@ func (s *service) GetNodeHosts(ctx context.Context, nodeType, refID, keyword str
 		return nil, 0, fmt.Errorf("无效的节点类型")
 	}
 
-	if keyword != "" {
-		likeKeyword := "%" + keyword + "%"
-		query = query.Where("(hosts.host_name LIKE ? OR hosts.primary_ip LIKE ?)", likeKeyword, likeKeyword)
+	if cond, args, ok := storage.HostKeywordCondition(db, "hosts", keyword); ok {
+		query = query.Where(cond, args...)
 	}
 
 	var total int64

@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/wend/cmdb-backend/internal/core/host_membership"
+	"github.com/wend/cmdb-backend/internal/storage"
 	"github.com/wend/cmdb-backend/internal/types"
 )
 
@@ -26,7 +27,7 @@ type Service interface {
 	AllocateHosts(ctx context.Context, req *types.AllocateHostsRequest) (*types.ResourcePoolLifecycleResult, error)
 	ReclaimHosts(ctx context.Context, req *types.ReclaimHostsRequest, reclaimedBy string) (*types.ResourcePoolLifecycleResult, error)
 	GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*types.ResourcePoolHostLifecycle, error)
-	ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error)
+	ListPoolHosts(ctx context.Context, directoryID *uint64, keyword string, page, pageSize int) ([]types.Host, int64, error)
 	GetStatistics(ctx context.Context) (*types.ResourcePoolStatistics, error)
 }
 
@@ -506,37 +507,34 @@ func (s *service) GetHostLifecycle(ctx context.Context, hostID uuid.UUID) (*type
 }
 
 // ListPoolHosts 获取资源池主机列表
-func (s *service) ListPoolHosts(ctx context.Context, directoryID *uint64, page, pageSize int) ([]types.Host, int64, error) {
-	var total int64
-	var poolMemberships []types.HostNodeMembership
-
+// keyword 非空时按主机名或主 IP 做不区分大小写的子串匹配（先过滤再计总数，分页总数即过滤后的数量）。
+// 结果按 display_id 升序，翻页稳定。
+func (s *service) ListPoolHosts(ctx context.Context, directoryID *uint64, keyword string, page, pageSize int) ([]types.Host, int64, error) {
 	// 读切换：资源池主机列表读 host_node_memberships pool_directory（node_id 即目录ID）
-	query := s.db.Model(&types.HostNodeMembership{}).Where("node_kind = ?", types.NodeKindPoolDirectory)
+	membership := "EXISTS (SELECT 1 FROM host_node_memberships hnm WHERE hnm.host_id = hosts.id AND hnm.node_kind = ?"
+	args := []interface{}{types.NodeKindPoolDirectory}
 	if directoryID != nil {
-		query = query.Where("node_id = ?", *directoryID)
+		membership += " AND hnm.node_id = ?"
+		args = append(args, *directoryID)
+	}
+	query := s.db.WithContext(ctx).Model(&types.Host{}).Where(membership+")", args...)
+
+	if cond, kwArgs, ok := storage.HostKeywordCondition(s.db, "hosts", keyword); ok {
+		query = query.Where(cond, kwArgs...)
 	}
 
-	if err := query.Count(&total).Error; err != nil {
+	var total int64
+	if err := query.Session(&gorm.Session{}).Count(&total).Error; err != nil {
 		return nil, 0, err
-	}
-
-	offset := (page - 1) * pageSize
-	if err := query.Offset(offset).Limit(pageSize).Find(&poolMemberships).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// 获取主机详情
-	hostIDs := make([]uuid.UUID, 0, len(poolMemberships))
-	for _, ph := range poolMemberships {
-		hostIDs = append(hostIDs, ph.HostID)
 	}
 
 	hosts := make([]types.Host, 0)
-	if len(hostIDs) > 0 {
-		if err := s.db.Where("id IN ?", hostIDs).Find(&hosts).Error; err != nil {
-			return nil, 0, err
-		}
+	offset := (page - 1) * pageSize
+	if err := query.Order("hosts.display_id ASC").Offset(offset).Limit(pageSize).Find(&hosts).Error; err != nil {
+		return nil, 0, err
+	}
 
+	if len(hosts) > 0 {
 		// 批量加载 CloudArea，填充 host.CloudArea（用于前端展示名称，避免只返回 UUID）
 		cloudAreaIDs := make([]uuid.UUID, 0, len(hosts))
 		for _, h := range hosts {

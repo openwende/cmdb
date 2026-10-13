@@ -28,6 +28,7 @@ func NewAuditHandler(service *audit.Service) *AuditHandler {
 //
 //	audit_type    string  host | business | resource  (default: host)
 //	bk_biz_id    int     optional business filter
+//	resource_id   int     optional exact resource_id filter (positive; with audit_type=host it is the host display_id)
 //	resource_type string  optional model_uid filter within the tab
 //	action        string  comma-separated: create,update,delete
 //	start_time    string  YYYY-MM-DD
@@ -55,6 +56,16 @@ func (h *AuditHandler) ListAuditLogs(c *gin.Context) {
 		}
 	}
 
+	var resourceID uint64
+	if v := c.Query("resource_id"); v != "" {
+		id, err := strconv.ParseUint(strings.TrimSpace(v), 10, 64)
+		if err != nil || id == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid resource_id"})
+			return
+		}
+		resourceID = id
+	}
+
 	var actions []string
 	if raw := c.Query("action"); raw != "" {
 		for _, a := range strings.Split(raw, ",") {
@@ -69,6 +80,7 @@ func (h *AuditHandler) ListAuditLogs(c *gin.Context) {
 	req := &audit.QueryRequest{
 		AuditType:    auditType,
 		BusinessID:   bizID,
+		ResourceID:   resourceID,
 		ResourceType: c.Query("resource_type"),
 		Actions:      actions,
 		StartTime:    c.Query("start_time"),

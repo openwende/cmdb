@@ -5,6 +5,7 @@ import "time"
 // AuditQueryParams 审计日志查询参数
 type AuditQueryParams struct {
 	ID               uint64    // 只取这一条（0 表示不过滤），按 ID 查单条时用
+	ResourceID       uint64    // 按 resource_id 精确过滤（0 表示不过滤）；主机审计里即主机 display_id
 	ModelUIDs        []string  // 模型 UID 白名单（空表示不过滤或配合 ExcludeModelUIDs 使用）
 	ExcludeModelUIDs []string  // 模型 UID 黑名单（用于 resource 类型，排除 host 和 business 模型）
 	Actions          []string  // 变更类型：create, update, delete

@@ -110,6 +110,15 @@ func TestAuditHandler_ListAuditLogs_InvalidBizID(t *testing.T) {
 	require.Nil(t, repo.gotParams)
 }
 
+func TestAuditHandler_ListAuditLogs_InvalidResourceID(t *testing.T) {
+	for _, bad := range []string{"abc", "0", "-3", "1.5", "7x", "%20"} {
+		repo := &fakeAuditRepo{}
+		rec := doAuditRequest(repo, "audit_type=host&resource_id="+bad)
+		require.Equal(t, http.StatusBadRequest, rec.Code, bad)
+		require.Nil(t, repo.gotParams, bad)
+	}
+}
+
 func TestAuditHandler_ListAuditLogs_ServiceError(t *testing.T) {
 	repo := &fakeAuditRepo{err: errors.New("db down")}
 	rec := doAuditRequest(repo, "")
@@ -134,6 +143,21 @@ func TestAuditHandler_ListAuditLogs_ParamMapping(t *testing.T) {
 			query: "bk_biz_id=1001",
 			check: func(t *testing.T, p *types.AuditQueryParams) {
 				require.Equal(t, int64(1001), p.BusinessID)
+			},
+		},
+		{
+			name:  "resource id passes through",
+			query: "audit_type=host&resource_id=42",
+			check: func(t *testing.T, p *types.AuditQueryParams) {
+				require.Equal(t, uint64(42), p.ResourceID)
+				require.Equal(t, []string{"host"}, p.ModelUIDs)
+			},
+		},
+		{
+			name:  "resource id absent means no filter",
+			query: "audit_type=host",
+			check: func(t *testing.T, p *types.AuditQueryParams) {
+				require.Zero(t, p.ResourceID)
 			},
 		},
 		{

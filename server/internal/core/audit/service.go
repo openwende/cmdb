@@ -33,6 +33,7 @@ func NewService(repo storage.AuditRepository) *Service {
 type QueryRequest struct {
 	AuditType    string   // host | business | resource
 	BusinessID   int64    // 0 = no filter
+	ResourceID   uint64   // 0 = no filter; exact resource_histories.resource_id (host display_id for host audits)
 	ResourceType string   // optional model_uid filter within the tab
 	Actions      []string // create | update | delete | ...
 	StartTime    string   // YYYY-MM-DD
@@ -141,6 +142,7 @@ func buildParams(req *QueryRequest) (*types.AuditQueryParams, error) {
 		HostKeyword:      req.HostKeyword,
 		InstanceKeyword:  req.Instance,
 		BusinessID:       req.BusinessID,
+		ResourceID:       req.ResourceID,
 		Page:             page,
 		PageSize:         pageSize,
 	}, nil
