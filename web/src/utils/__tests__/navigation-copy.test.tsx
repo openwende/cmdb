@@ -65,10 +65,13 @@ vi.mock('@/store/BusinessStore', () => ({
 }));
 
 vi.mock('@/store/AuthStore', () => ({
-  useAuthStore: () => ({
-    hasRole: (...roles: string[]) =>
-      Boolean(mockAuthUser && roles.some((role) => mockAuthUser?.roles.includes(role))),
-  }),
+  useAuthStore: <T,>(selector?: (state: { hasRole: (...roles: string[]) => boolean }) => T) => {
+    const state = {
+      hasRole: (...roles: string[]) =>
+        Boolean(mockAuthUser && roles.some((role) => mockAuthUser?.roles.includes(role))),
+    };
+    return selector ? selector(state) : state;
+  },
 }));
 
 vi.mock('@/utils/routes', () => ({

@@ -16,7 +16,9 @@ const Menu: React.FC = () => {
   const { t } = useTranslation();
   const message = useAppMessage();
   const { businessList, loadBusinessData, loading, error } = useBusinessStore();
-  const { hasRole } = useAuthStore();
+  // 选出"是否 admin"而不是只取 hasRole：hasRole 是稳定引用，用户信息异步加载完
+  // 不会让 menuItems 重算，刷新页面后"用户管理"就一直不出现
+  const isAdmin = useAuthStore((state) => state.hasRole('admin'));
 
   useEffect(() => {
     if (businessList.length === 0 && !loading) {
@@ -27,12 +29,12 @@ const Menu: React.FC = () => {
   const menuItems = useMemo(() => {
     return routes
       .filter((item) => !item.hideInMenu)
-      .filter((item) => item.key !== PrimaryNavKey.AdminUsers || hasRole('admin'))
+      .filter((item) => item.key !== PrimaryNavKey.AdminUsers || isAdmin)
       .map((item) => ({
         key: item.key,
         label: item.name ? t(item.name) : '',
       }));
-  }, [hasRole, t]);
+  }, [isAdmin, t]);
 
   // Determine which menu item is active based on the current path
   const getSelectedKey = () => {
