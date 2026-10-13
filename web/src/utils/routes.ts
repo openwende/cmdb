@@ -152,3 +152,37 @@ export const getAuditRecordPath = (recordId: number | string): string => {
   const query = new URLSearchParams({ [AUDIT_RECORD_QUERY_KEY]: String(recordId) });
   return `/analysis/audit?${query.toString()}`;
 };
+
+/** 主机资源页路径 */
+export const HOST_RESOURCE_PATH = '/resource/host';
+
+/** 主机详情深链参数：`/resource/host?host_id=43` 打开该主机的详情抽屉（值是主机 display_id） */
+export const HOST_DETAIL_QUERY_KEY = 'host_id';
+
+/**
+ * Generate host resource page path that opens one host's detail drawer
+ * @param displayId Host display_id (the ID shown in lists, AI answers and host audit records)
+ * @returns Host resource page path with the host_id query
+ */
+export const getHostDetailPath = (displayId: number | string): string => {
+  const query = new URLSearchParams({ [HOST_DETAIL_QUERY_KEY]: String(displayId) });
+  return `${HOST_RESOURCE_PATH}?${query.toString()}`;
+};
+
+export type HostIdParam =
+  | { status: 'missing' }
+  | { status: 'invalid' }
+  | { status: 'valid'; displayId: number };
+
+/**
+ * 解析主机深链参数：没有参数（或空串）为 missing；正整数为 valid；其余为 invalid
+ * @param value `host_id` 查询参数的原始值
+ */
+export const parseHostIdParam = (value: string | null | undefined): HostIdParam => {
+  if (value === null || value === undefined || value === '') return { status: 'missing' };
+  const trimmed = value.trim();
+  if (!/^\d+$/.test(trimmed)) return { status: 'invalid' };
+  const displayId = Number(trimmed);
+  if (!Number.isSafeInteger(displayId) || displayId <= 0) return { status: 'invalid' };
+  return { status: 'valid', displayId };
+};

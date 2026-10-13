@@ -1,0 +1,115 @@
+.host-detail__title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.host-detail__title-meta {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-sm);
+  font-weight: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-detail__section + .host-detail__section {
+  margin-top: var(--space-2xl);
+}
+
+.host-detail__section-title {
+  margin: 0 0 var(--space-sm);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+}
+
+.host-detail__descriptions .ant-descriptions-item-label {
+  width: 112px;
+  white-space: nowrap;
+}
+
+.host-detail__descriptions .ant-descriptions-item-content,
+.host-detail__value {
+  overflow-wrap: anywhere;
+}
+
+.host-detail__placements,
+.host-detail__audits {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.host-detail__placement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.host-detail__placement + .host-detail__placement,
+.host-detail__audits > li + li {
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+.host-detail__placement-label {
+  min-width: 0;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.host-detail__audit {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) minmax(0, auto);
+  gap: var(--space-md);
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-secondary);
+}
+
+.host-detail__audit:hover,
+.host-detail__audit:focus-visible {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.host-detail__audit-time {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.host-detail__audit-user {
+  color: var(--color-text-quaternary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.host-detail__empty {
+  color: var(--color-text-quaternary);
+}
+
+.host-detail__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3xl) 0;
+}
+
+.host-detail__loading--inline {
+  justify-content: flex-start;
+  padding: var(--space-sm) 0;
+}
+
+@media (max-width: 767px) {
+  .host-detail__audit {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .host-detail__audit-user {
+    grid-column: 1 / -1;
+  }
+}

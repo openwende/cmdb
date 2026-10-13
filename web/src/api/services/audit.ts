@@ -15,6 +15,8 @@ export interface AuditQueryParams {
   host_type?: 'ip' | 'hostname';
   instance?: string;
   instance_type?: 'name' | 'id';
+  /** 和 audit_type=host 一起用：按主机 display_id 精确过滤 */
+  resource_id?: number;
   page?: number;
   page_size?: number;
 }

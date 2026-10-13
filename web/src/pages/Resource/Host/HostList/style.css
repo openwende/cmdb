@@ -165,3 +165,9 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* ── Host ID link (opens the detail drawer) ──────────────── */
+.host-list-id-link.ant-btn {
+  height: auto;
+  padding: 0;
+}

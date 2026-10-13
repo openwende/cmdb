@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 
-import axios from '@/api/axiosInstance';
+import { buildPoolHostListParams, listPoolHosts } from '@/api/services/host';
 
 interface PoolHostQuery {
   directoryId?: number;
   page: number;
   pageSize: number;
+  /** 已提交的搜索关键字（主机名或 IP）；切换目录、翻页、改每页条数时保留 */
+  keyword?: string;
 }
 
 interface RawPoolHost {
@@ -46,6 +48,8 @@ interface PoolHostStoreState {
   loading: boolean;
   error: string | null;
   setQuery: (query: Partial<PoolHostQuery>) => void;
+  /** 提交搜索：关键字去掉首尾空白，页码回到第 1 页 */
+  search: (keyword: string) => void;
   fetchHosts: () => Promise<void>;
   removeHosts: (ids: string[]) => void;
   reset: () => void;
@@ -55,6 +59,9 @@ const DEFAULT_QUERY: PoolHostQuery = {
   page: 1,
   pageSize: 20,
 };
+
+// 每次请求递增；响应回来时不是最新一次就丢掉，避免旧响应覆盖新结果
+let requestSeq = 0;
 
 const adaptPoolHost = (item: RawPoolHost, directoryId?: number): PoolHostRow => {
   const ipv6 = item.ip_addresses?.find((address) => address.includes(':')) || '';
@@ -110,21 +117,26 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
       },
     })),
 
+  search: (keyword) =>
+    set((state) => ({
+      query: {
+        ...state.query,
+        keyword: keyword.trim(),
+        page: 1,
+      },
+    })),
+
   fetchHosts: async () => {
     const { query } = get();
+    const seq = ++requestSeq;
     set({
       loading: true,
       error: null,
     });
 
     try {
-      const response = await axios.get('/v1/resource-pool/hosts', {
-        params: {
-          page: query.page,
-          page_size: query.pageSize,
-          ...(query.directoryId ? { directory_id: query.directoryId } : {}),
-        },
-      });
+      const response = await listPoolHosts(buildPoolHostListParams(query));
+      if (seq !== requestSeq) return;
 
       const items = (response?.data?.items || []) as RawPoolHost[];
       set({
@@ -133,6 +145,7 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
         loading: false,
       });
     } catch (error) {
+      if (seq !== requestSeq) return;
       console.error('Failed to fetch pool hosts:', error);
       set({
         hosts: [],
@@ -153,12 +166,14 @@ export const usePoolHostStore = create<PoolHostStoreState>((set, get) => ({
       };
     }),
 
-  reset: () =>
+  reset: () => {
+    requestSeq += 1;
     set({
       query: DEFAULT_QUERY,
       hosts: [],
       total: 0,
       loading: false,
       error: null,
-    }),
+    });
+  },
 }));

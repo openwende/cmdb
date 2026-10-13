@@ -19,6 +19,9 @@ import { useDirectoryStore } from '@/store/DirectoryStore';
 import { usePoolHostStore } from '@/store/PoolHostStore';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '@/store/AuthStore';
+import EmptySearchResult from '@/components/common/EmptySearchResult';
+import HostDetailDrawer from '../components/HostDetailDrawer';
+import { useHostDetailDeepLink } from '../hooks/useHostDetailDeepLink';
 
 interface HostListProps {
   selectedId?: number;
@@ -46,7 +49,19 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   const poolHostLoading = usePoolHostStore((state) => state.loading);
   const query = usePoolHostStore((state) => state.query);
   const setPoolHostQuery = usePoolHostStore((state) => state.setQuery);
+  const searchPoolHosts = usePoolHostStore((state) => state.search);
   const fetchPoolHosts = usePoolHostStore((state) => state.fetchHosts);
+
+  // Search: the box is controlled locally; the store only holds the submitted keyword
+  const submittedKeyword = query.keyword || '';
+  const [searchInput, setSearchInput] = useState(submittedKeyword);
+  // 关键字在别处被改掉（如退出登录时 reset）时，输入框跟着同步
+  useEffect(() => {
+    setSearchInput(submittedKeyword);
+  }, [submittedKeyword]);
+
+  // Host detail drawer (deep link `?host_id=<display_id>`)
+  const hostDetail = useHostDetailDeepLink();
 
   // Modals
   const [importModalVisible, setImportModalVisible] = useState(false);
@@ -66,7 +81,23 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
 
   useEffect(() => {
     void fetchPoolHosts();
-  }, [fetchPoolHosts, query.directoryId, query.page, query.pageSize]);
+  }, [fetchPoolHosts, query.directoryId, query.page, query.pageSize, query.keyword]);
+
+  // 回车 / 点搜索按钮 / 点 × 时提交；关键字和页码都没变时（再按一次回车）重新拉一次
+  const handleSearch = (value: string) => {
+    const keyword = value.trim();
+    setSelectedRowKeys([]);
+    if (keyword === submittedKeyword && query.page === 1) {
+      void fetchPoolHosts();
+      return;
+    }
+    searchPoolHosts(keyword);
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    handleSearch('');
+  };
 
   const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, poolHosts, directories);
 
@@ -114,7 +145,23 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       title: t('resource.host.columns.id'),
       width: 80,
       sorter: true,
-      render: (_: any, record: any) => record.host.bk_host_display_id ?? record.host.bk_host_id,
+      render: (_: any, record: any) => {
+        const displayId = record.host.bk_host_display_id;
+        if (displayId === undefined || displayId === null || displayId === record.host.bk_host_id) {
+          return record.host.bk_host_id;
+        }
+        return (
+          <Button
+            type="link"
+            size="small"
+            className="host-list-id-link"
+            aria-label={t('resource.host.aria.openDetail', { id: displayId })}
+            onClick={() => hostDetail.open(displayId)}
+          >
+            {displayId}
+          </Button>
+        );
+      },
     },
     {
       title: t('resource.host.columns.innerIpv4'),
@@ -148,7 +195,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
     );
   };
 
-  const emptyNode = <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />;
+  const emptyNode = submittedKeyword ? (
+    <EmptySearchResult onClearFilter={handleClearSearch} />
+  ) : (
+    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
+  );
 
   return (
     <div className="host-list-wrapper">
@@ -216,6 +267,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             allowClear
             size="middle"
             placeholder={t('resource.host.search.placeholder')}
+            aria-label={t('resource.host.search.placeholder')}
+            value={searchInput}
+            onChange={(event) => setSearchInput(event.target.value)}
+            onSearch={handleSearch}
           />
           <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
             <Button
@@ -268,7 +323,22 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                     <div className="host-mobile-card__title">
                       {record.host.bk_host_innerip || hostId}
                     </div>
-                    <div className="host-mobile-card__meta">ID {hostDisplayId}</div>
+                    <div className="host-mobile-card__meta">
+                      ID{' '}
+                      {hostDisplayId !== hostId ? (
+                        <Button
+                          type="link"
+                          size="small"
+                          className="host-list-id-link"
+                          aria-label={t('resource.host.aria.openDetail', { id: hostDisplayId })}
+                          onClick={() => hostDetail.open(hostDisplayId)}
+                        >
+                          {hostDisplayId}
+                        </Button>
+                      ) : (
+                        hostDisplayId
+                      )}
+                    </div>
                   </div>
                 </div>
                 <dl className="host-mobile-card__grid">
@@ -323,6 +393,11 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
         selectedDirId={selectedId}
         onClose={() => setImportModalVisible(false)}
         onImportSuccess={handleImportSuccess}
+      />
+      <HostDetailDrawer
+        displayId={hostDetail.displayId}
+        onClose={hostDetail.close}
+        onNotFound={hostDetail.notFound}
       />
     </div>
   );

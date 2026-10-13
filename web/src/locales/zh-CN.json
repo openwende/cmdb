@@ -312,7 +312,7 @@
           "onlyModuleCanAdd": "仅能在业务模块下新增"
         },
         "search": {
-          "placeholder": "请输入IP或固资编号"
+          "placeholder": "请输入IP或主机名"
         },
         "pagination": {
           "selected": "已选择",
@@ -1327,10 +1327,11 @@
         "more": "更多"
       },
       "aria": {
-        "selectHost": "选择主机 {{id}}"
+        "selectHost": "选择主机 {{id}}",
+        "openDetail": "查看主机 {{id}} 的详情"
       },
       "search": {
-        "placeholder": "请输入IP或固资编号"
+        "placeholder": "请输入IP或主机名"
       },
       "tooltips": {
         "viewDeleteHistory": "查看删除历史",
@@ -1373,6 +1374,49 @@
         },
         "search": {
           "placeholder": "请输入IP"
+        }
+      },
+      "detail": {
+        "title": "主机详情",
+        "sections": {
+          "basic": "基本信息",
+          "placement": "当前归属",
+          "cloud": "云信息",
+          "customFields": "自定义字段",
+          "time": "时间",
+          "audit": "最近变更"
+        },
+        "fields": {
+          "id": "ID",
+          "hostName": "主机名",
+          "primaryIp": "内网 IP",
+          "ipAddresses": "全部 IP",
+          "status": "状态",
+          "os": "操作系统",
+          "cpu": "CPU（核）",
+          "memory": "内存",
+          "disk": "磁盘",
+          "cloudVendor": "云厂商",
+          "cloudArea": "云区域",
+          "cloudInstanceId": "实例 ID",
+          "cloudRegion": "地域",
+          "vpcId": "VPC",
+          "subnetId": "子网",
+          "createdAt": "创建时间",
+          "updatedAt": "更新时间"
+        },
+        "placement": {
+          "business": "业务 / 集群 / 模块",
+          "pool": "资源池目录"
+        },
+        "audit": {
+          "empty": "暂无变更记录",
+          "loadFailed": "变更记录加载失败",
+          "open": "查看审计记录 #{{id}}"
+        },
+        "messages": {
+          "notFound": "主机不存在",
+          "loadFailed": "主机详情加载失败"
         }
       }
     },

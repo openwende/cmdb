@@ -312,7 +312,7 @@
           "onlyModuleCanAdd": "Can only add under business module"
         },
         "search": {
-          "placeholder": "Please enter IP or asset number"
+          "placeholder": "Enter IP or host name"
         },
         "pagination": {
           "selected": "Selected",
@@ -1327,10 +1327,11 @@
         "more": "More"
       },
       "aria": {
-        "selectHost": "Select host {{id}}"
+        "selectHost": "Select host {{id}}",
+        "openDetail": "View details of host {{id}}"
       },
       "search": {
-        "placeholder": "Please enter IP or asset number"
+        "placeholder": "Enter IP or host name"
       },
       "tooltips": {
         "viewDeleteHistory": "View delete history",
@@ -1373,6 +1374,49 @@
         },
         "search": {
           "placeholder": "Please enter IP"
+        }
+      },
+      "detail": {
+        "title": "Host details",
+        "sections": {
+          "basic": "Basic info",
+          "placement": "Current placement",
+          "cloud": "Cloud",
+          "customFields": "Custom fields",
+          "time": "Time",
+          "audit": "Recent changes"
+        },
+        "fields": {
+          "id": "ID",
+          "hostName": "Host name",
+          "primaryIp": "Private IP",
+          "ipAddresses": "All IPs",
+          "status": "Status",
+          "os": "OS",
+          "cpu": "CPU (cores)",
+          "memory": "Memory",
+          "disk": "Disk",
+          "cloudVendor": "Cloud vendor",
+          "cloudArea": "Cloud area",
+          "cloudInstanceId": "Instance ID",
+          "cloudRegion": "Region",
+          "vpcId": "VPC",
+          "subnetId": "Subnet",
+          "createdAt": "Created at",
+          "updatedAt": "Updated at"
+        },
+        "placement": {
+          "business": "Business / Set / Module",
+          "pool": "Resource pool directory"
+        },
+        "audit": {
+          "empty": "No changes yet",
+          "loadFailed": "Failed to load changes",
+          "open": "Open audit record #{{id}}"
+        },
+        "messages": {
+          "notFound": "Host not found",
+          "loadFailed": "Failed to load host details"
         }
       }
     },

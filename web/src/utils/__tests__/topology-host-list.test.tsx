@@ -242,6 +242,10 @@ vi.mock('@/components/common/EmptySearchResult', () => ({
   default: () => <div>empty-search</div>,
 }));
 
+vi.mock('@/pages/Resource/Host/components/HostDetailDrawer', () => ({
+  default: () => null,
+}));
+
 describe('business topology host list', () => {
   beforeEach(() => {
     vi.clearAllMocks();

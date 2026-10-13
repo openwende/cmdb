@@ -90,3 +90,25 @@ export type {
   AIStoredMessage,
   AIKnowledgeSection,
 } from './types/aiChat';
+
+export {
+  buildPoolHostListParams,
+  listPoolHosts,
+  getHostByDisplayId,
+  listHostAuditLogs,
+} from './services/host';
+export type {
+  PoolHostListParams,
+  PoolHostListResponse,
+  HostRaw,
+  HostPlacementRaw,
+  HostDetailRaw,
+  HostDetailResponse,
+} from './types/host';
+export { adaptHostDetail, adaptHostAuditLogs } from './adapters/hostAdapter';
+export type {
+  HostDetailView,
+  HostPlacementView,
+  HostCustomFieldView,
+  HostAuditView,
+} from './adapters/hostAdapter';

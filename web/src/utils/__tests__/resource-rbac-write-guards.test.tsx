@@ -153,6 +153,19 @@ vi.mock('@/pages/Resource/Host/components/ImportHost', () => ({
   default: () => null,
 }));
 
+vi.mock('@/pages/Resource/Host/components/HostDetailDrawer', () => ({
+  default: () => null,
+}));
+
+vi.mock('@/pages/Resource/Host/hooks/useHostDetailDeepLink', () => ({
+  useHostDetailDeepLink: () => ({
+    displayId: null,
+    open: vi.fn(),
+    close: vi.fn(),
+    notFound: vi.fn(),
+  }),
+}));
+
 vi.mock('@/pages/Business/BusinessTopology/components/TransferHostModal', () => ({
   default: () => null,
 }));

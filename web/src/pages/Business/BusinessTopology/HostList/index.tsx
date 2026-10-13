@@ -33,6 +33,7 @@ import CreateNodeModal from '../components/CreateNodeModal';
 import { hostCopyKeys, hostCopyMenuItems, transferBaseMenuItems } from '../../constants';
 import EmptySearchResult from '@/components/common/EmptySearchResult';
 import { useAuthStore } from '@/store/AuthStore';
+import HostDetailDrawer from '@/pages/Resource/Host/components/HostDetailDrawer';
 
 interface Props {
   selectedNode: TreeData;
@@ -47,7 +48,10 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   const { idleSetID, setTransferHostData } = useTransferHostStore();
   const [searchParams] = useSearchParams();
 
+  // 输入框受控；keyword 是回车 / 点搜索按钮时提交的关键字，只有它变化才请求
   const [searchValue, setSearchValue] = useState<string>('');
+  const [keyword, setKeyword] = useState<string>('');
+  const [detailHostId, setDetailHostId] = useState<number | null>(null);
   const [hostsList, setHostsList] = useState<any[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,7 +123,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
       const response = await getTopologyNodeHosts(`${nodeType}-${nodeId}`, {
         page: currentPage,
         page_size: pageSize,
-        keyword: searchValue.trim(),
+        ...(keyword ? { keyword } : {}),
       });
 
       const items = response?.data?.items || [];
@@ -147,9 +151,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
   }, [
     adaptTopologyHost,
     currentPage,
+    keyword,
     message,
     pageSize,
-    searchValue,
     selectedNode.backendType,
     selectedNode.nodeId,
     selectedNode.type,
@@ -371,19 +375,40 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     [fetchNodeHosts, message, onTopologyChanged, selectedTransferHosts, t],
   );
 
+  // 提交搜索：页码回到第 1 页；关键字和页码都没变（再按一次回车）时重新拉一次
   const handleSearch = (value: string) => {
-    setSearchValue(value);
+    const nextKeyword = value.trim();
+    if (nextKeyword === keyword && currentPage === 1) {
+      void fetchNodeHosts();
+      return;
+    }
+    setKeyword(nextKeyword);
+    setCurrentPage(1);
   };
 
   const handleClearSearch = () => {
     setSearchValue('');
+    handleSearch('');
   };
 
   const columns = [
     {
       title: 'ID',
       dataIndex: ['host', 'display_id'],
-      render: (id: number) => <span>{id ?? '--'}</span>,
+      render: (id: number) =>
+        id === undefined || id === null ? (
+          '--'
+        ) : (
+          <Button
+            type="link"
+            size="small"
+            className="host-id-link"
+            aria-label={t('resource.host.aria.openDetail', { id })}
+            onClick={() => setDetailHostId(id)}
+          >
+            {id}
+          </Button>
+        ),
     },
     {
       title: t('resource.host.columns.innerIpv4'),
@@ -653,7 +678,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
               <div className="search-bar">
                 <Input.Search
                   placeholder={t('business.topology.hostList.search.placeholder')}
+                  aria-label={t('business.topology.hostList.search.placeholder')}
                   style={{ width: 300 }}
+                  allowClear
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   onSearch={(value) => handleSearch(value)}
@@ -675,7 +702,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 pagination={false}
                 scroll={{ x: 900 }}
                 locale={{
-                  emptyText: loading ? null : searchValue && hostsList.length === 0 ? (
+                  emptyText: loading ? null : keyword && hostsList.length === 0 ? (
                     <EmptySearchResult onClearFilter={handleClearSearch} />
                   ) : !loading && hostsList.length === 0 ? (
                     <Empty
@@ -789,6 +816,9 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
         onClose={() => setReleaseModalVisible(false)}
         onConfirm={handleReleaseHosts}
       />
+
+      {/* Host detail drawer (read only) */}
+      <HostDetailDrawer displayId={detailHostId} onClose={() => setDetailHostId(null)} />
 
       {/* Creating set and module modal*/}
       <CreateNodeModal

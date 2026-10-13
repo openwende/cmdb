@@ -178,3 +178,9 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* Host ID link (opens the host detail drawer) */
+.host-id-link.ant-btn {
+  height: auto;
+  padding: 0;
+}
