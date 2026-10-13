@@ -2105,7 +2105,7 @@
       "record": "审计 #{{id}}",
       "host": "主机 #{{id}}",
       "recordTip": "查看这条审计记录的详情",
-      "hostTip": "主机 ID（暂无主机详情页）",
+      "hostTip": "查看这台主机的详情",
       "docTip": "查看知识库原文"
     },
     "knowledge": {

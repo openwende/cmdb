@@ -138,10 +138,32 @@ describe('MarkdownAnswer', () => {
     expect(screen.getByText('拓扑与空闲机池#删除和移动集群、模块')).toBeInTheDocument();
     expect(screen.getByText(/标签 \["gw","扩容"\]/)).toBeInTheDocument();
 
-    // host 标签不可点击，record 标签可以跳到审计详情
-    expect(screen.getByText('aiAssistant.citation.host:43').closest('[role="link"]')).toBeNull();
+    // record 标签跳到审计详情，host 标签跳到主机详情深链
     await user.click(screen.getByText('aiAssistant.citation.record:613'));
     expect(screen.getByTestId('location')).toHaveTextContent('/analysis/audit?record_id=613');
+    const hostTag = screen.getByText('aiAssistant.citation.host:43').closest('[role="link"]');
+    expect(hostTag).not.toBeNull();
+    await user.click(hostTag as HTMLElement);
+    expect(screen.getByTestId('location')).toHaveTextContent('/resource/host?host_id=43');
+  });
+
+  it('opens the host deep link from the keyboard (Enter / Space)', async () => {
+    const user = userEvent.setup();
+    renderAnswer('主机 [host_id=7]');
+    const hostTag = screen.getByRole('link', { name: /aiAssistant\.citation\.host:7/ });
+    expect(hostTag).toHaveAttribute('tabindex', '0');
+    expect(hostTag).toHaveAttribute('title', 'aiAssistant.citation.hostTip');
+
+    hostTag.focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByTestId('location')).toHaveTextContent('/resource/host?host_id=7');
+  });
+
+  it('opens the host deep link with Space', () => {
+    renderAnswer('主机 [host_id=8]');
+    const hostTag = screen.getByRole('link', { name: /aiAssistant\.citation\.host:8/ });
+    fireEvent.keyDown(hostTag, { key: ' ' });
+    expect(screen.getByTestId('location')).toHaveTextContent('/resource/host?host_id=8');
   });
 
   it('does not touch brackets inside code', () => {

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { getKnowledgeSection } from '@/api/services/aiChat';
 import type { AIKnowledgeSection } from '@/api/types/aiChat';
-import { getAuditRecordPath } from '@/utils/routes';
+import { getAuditRecordPath, getHostDetailPath } from '@/utils/routes';
 import type { CitationItem } from './citations';
 import { BASE_REMARK_PLUGINS } from './markdownPlugins';
 
@@ -142,23 +142,39 @@ const RecordCitation: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-const CitationTag: React.FC<{ item: CitationItem }> = ({ item }) => {
+/** 主机引用：跳到主机资源页的详情深链，AI 抽屉保持打开 */
+const HostCitation: React.FC<{ id: string }> = ({ id }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const open = () => navigate(getHostDetailPath(id));
+  return (
+    <Tag
+      icon={<DesktopOutlined />}
+      className="ai-citation ai-citation--link"
+      role="link"
+      tabIndex={0}
+      title={t('aiAssistant.citation.hostTip')}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open();
+        }
+      }}
+    >
+      {t('aiAssistant.citation.host', { id })}
+    </Tag>
+  );
+};
+
+const CitationTag: React.FC<{ item: CitationItem }> = ({ item }) => {
   switch (item.kind) {
     case 'record':
       return <RecordCitation id={item.id} />;
     case 'doc':
       return <DocCitation id={item.id} />;
     case 'host':
-      return (
-        <Tag
-          icon={<DesktopOutlined />}
-          className="ai-citation"
-          title={t('aiAssistant.citation.hostTip')}
-        >
-          {t('aiAssistant.citation.host', { id: item.id })}
-        </Tag>
-      );
+      return <HostCitation id={item.id} />;
     default:
       return <Tag className="ai-citation">{item.text}</Tag>;
   }

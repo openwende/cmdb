@@ -2105,7 +2105,7 @@
       "record": "Audit #{{id}}",
       "host": "Host #{{id}}",
       "recordTip": "Open this audit record",
-      "hostTip": "Host ID (no host detail page yet)",
+      "hostTip": "Open this host's details",
       "docTip": "View the knowledge base section"
     },
     "knowledge": {
