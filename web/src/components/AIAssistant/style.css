@@ -208,6 +208,13 @@
   padding: 4px 8px;
   min-width: 5em;
   vertical-align: top;
+  /*
+   * 不继承 .ai-markdown 的 break-word：它让单元格的最小内容宽度缩到一个字符，
+   * 表格总被压到气泡宽度，IP、状态这类短值会在中间断开，外层横向滚动也用不上。
+   * 改回 normal 后只在空格、汉字之间和标签之间换行，放不下时由 .ai-markdown__table 横向滚动。
+   */
+  word-break: normal;
+  overflow-wrap: normal;
 }
 
 .ai-markdown blockquote {

@@ -112,6 +112,28 @@ describe('MarkdownAnswer keeps existing rendering', () => {
   });
 });
 
+describe('MarkdownAnswer tildes', () => {
+  // 单个 ~ 在回答里几乎都是范围（01~08、800~802），不能当删除线
+  it('does not strike through text between single-tilde ranges', () => {
+    const { container } = renderAnswer('主机编号 01~08（11~18）都在资源池，变更见 800~802 号记录');
+    expect(container.querySelector('del')).toBeNull();
+    expect(container).toHaveTextContent('主机编号 01~08（11~18）都在资源池，变更见 800~802 号记录');
+  });
+
+  it('keeps single-tilde ranges inside record citations working', () => {
+    renderAnswer('先转移 [record_id=800~802]，再看 01~08');
+    expect(screen.getByText('aiAssistant.citation.record:800')).toBeInTheDocument();
+    expect(screen.getByText('aiAssistant.citation.record:802')).toBeInTheDocument();
+  });
+
+  // 现状：双波浪线仍是 GFM 删除线；紧挨全角标点时同样受 CommonMark 定界符规则限制
+  // （没加 remark-cjk-friendly-gfm-strikethrough）
+  it('still renders ~~double tildes~~ as strikethrough', () => {
+    const { container } = renderAnswer('旧状态 ~~待回收~~ 已改为空闲');
+    expect(container.querySelector('del')).toHaveTextContent('待回收');
+  });
+});
+
 describe('knowledge section popover', () => {
   it('uses the same CJK-friendly plugins for the section content', async () => {
     api.getKnowledgeSection.mockResolvedValue({

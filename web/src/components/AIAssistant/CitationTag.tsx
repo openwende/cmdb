@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Popover, Spin, Tag } from 'antd';
 import { BookOutlined, DesktopOutlined, FileSearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -77,17 +77,22 @@ const DocCitation: React.FC<{ id: string }> = ({ id }) => {
       );
   };
 
-  // 气泡打开时 Esc 只关气泡：拦下事件，不让它冒泡到 AI 抽屉（抽屉也监听 Esc 关闭）。
-  // 气泡内容通过 portal 渲染，React 事件仍沿组件树冒泡到这里。
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape' && open) {
+  // 气泡打开时 Esc 只关气泡，不连带关 AI 抽屉（抽屉在自己的面板上监听 Esc）。
+  // 监听挂在 document 的捕获阶段：点过气泡正文后焦点落在 body，keydown 不经过
+  // 这个组件，挂在组件上的 onKeyDown 收不到；捕获阶段先于抽屉处理，在这里拦下。
+  useEffect(() => {
+    if (!open) return undefined;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
       event.stopPropagation();
       setOpen(false);
-    }
-  };
+    };
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => document.removeEventListener('keydown', handleKeyDown, true);
+  }, [open]);
 
   return (
-    <span className="ai-citation-doc" onKeyDown={handleKeyDown}>
+    <span className="ai-citation-doc">
       <Popover
         trigger="click"
         placement="left"

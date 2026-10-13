@@ -182,4 +182,34 @@ describe('doc citation popover', () => {
     fireEvent.keyDown(tag, { key: 'Escape' });
     expect(drawerKeyDown).toHaveBeenCalledWith('Escape');
   });
+
+  it('Esc still closes the popover after focus moved to body (clicked its text)', async () => {
+    api.getKnowledgeSection.mockResolvedValue({
+      id: '主机流转规则#故障机',
+      doc: '主机流转规则',
+      title: '故障机',
+      content: '故障机不能分配给业务。',
+    });
+    render(
+      <MemoryRouter>
+        <CitationGroup items={[{ kind: 'doc', id: '主机流转规则#故障机' }]} />
+      </MemoryRouter>,
+    );
+
+    const tag = screen.getByRole('button', { name: /主机流转规则#故障机/ });
+    fireEvent.click(tag);
+    fireEvent.click(await screen.findByText('故障机不能分配给业务。'));
+    expect(tag).toHaveAttribute('aria-expanded', 'true');
+
+    const outerKeyDown = vi.fn();
+    document.addEventListener('keydown', outerKeyDown);
+    try {
+      fireEvent.keyDown(document.body, { key: 'Escape' });
+      await waitFor(() => expect(tag).toHaveAttribute('aria-expanded', 'false'));
+      // 被气泡拦下，不会继续传给抽屉等外层监听
+      expect(outerKeyDown).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('keydown', outerKeyDown);
+    }
+  });
 });
