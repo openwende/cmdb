@@ -140,6 +140,65 @@
   word-break: break-all;
 }
 
+/* 工具步骤汇总行 */
+.ai-message__steps .ant-collapse-header {
+  padding: 2px 0 !important;
+  color: var(--color-text-quaternary) !important;
+  font-size: var(--font-size-sm);
+}
+
+.ai-message__steps .ant-collapse-content-box {
+  padding: var(--space-xs) 0 0 !important;
+}
+
+/* 分节回答：标题和 .ai-markdown h3 一致 */
+.ai-answer__section + .ai-answer__section {
+  margin-top: var(--space-md);
+}
+
+.ai-answer__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ai-answer__toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ai-answer__caret {
+  align-self: center;
+  font-size: 11px;
+  color: var(--color-text-quaternary);
+  transition: transform var(--transition-fast);
+}
+
+.ai-answer__count,
+.ai-answer__empty {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+}
+
+.ai-answer__more.ant-btn {
+  height: auto;
+  padding: 0;
+  margin-top: 2px;
+}
+
 /* Markdown 回答 */
 .ai-markdown {
   font-size: var(--font-size-base);

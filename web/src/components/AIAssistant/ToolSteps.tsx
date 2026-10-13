@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Collapse } from 'antd';
 import { ThoughtChain, type ThoughtChainItem } from '@ant-design/x';
 import {
   CheckCircleOutlined,
@@ -29,8 +30,15 @@ interface ToolStepsProps {
   streaming: boolean;
 }
 
+const STEPS_PANEL_KEY = 'steps';
+
 const ToolSteps: React.FC<ToolStepsProps> = ({ steps, streaming }) => {
   const { t } = useTranslation();
+  // 用户没手动展开 / 收起时：生成中、或有失败 / 中断的步骤就展开，全部成功后收成一行
+  const [userOpen, setUserOpen] = useState<boolean | null>(null);
+  const problemCount = steps.filter((step) => step.status !== 'success').length;
+  const open = userOpen ?? (streaming || problemCount > 0);
+  const totalMs = steps.reduce((sum, step) => sum + (step.elapsedMs ?? 0), 0);
 
   const items = useMemo<ThoughtChainItem[]>(
     () =>
@@ -73,7 +81,34 @@ const ToolSteps: React.FC<ToolStepsProps> = ({ steps, streaming }) => {
     [steps, streaming, t],
   );
 
-  return <ThoughtChain className="ai-tool-steps" size="small" collapsible items={items} />;
+  const summary = streaming
+    ? t('aiAssistant.steps.running', { count: steps.length })
+    : [
+        t('aiAssistant.steps.summary', { count: steps.length }),
+        problemCount > 0 ? t('aiAssistant.steps.problems', { count: problemCount }) : null,
+        totalMs > 0 ? formatDuration(totalMs) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+  return (
+    <Collapse
+      size="small"
+      ghost
+      className="ai-message__steps"
+      activeKey={open ? [STEPS_PANEL_KEY] : []}
+      onChange={(keys) => setUserOpen(keys.length > 0)}
+      items={[
+        {
+          key: STEPS_PANEL_KEY,
+          label: summary,
+          children: (
+            <ThoughtChain className="ai-tool-steps" size="small" collapsible items={items} />
+          ),
+        },
+      ]}
+    />
+  );
 };
 
 export default ToolSteps;

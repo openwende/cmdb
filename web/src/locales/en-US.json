@@ -2081,6 +2081,13 @@
       "send": "Send",
       "stop": "Stop generating"
     },
+    "answer": {
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items",
+      "showMore_one": "Show {{count}} more",
+      "showMore_other": "Show {{count}} more",
+      "showLess": "Show less"
+    },
     "message": {
       "reasoning": "Reasoning",
       "thinking": "Thinking…",
@@ -2094,6 +2101,12 @@
         "success": "Succeeded",
         "error": "Failed"
       },
+      "running_one": "Tool calls ({{count}} so far)",
+      "running_other": "Tool calls ({{count}} so far)",
+      "summary_one": "Called {{count}} tool",
+      "summary_other": "Called {{count}} tools",
+      "problems_one": "{{count}} failed or interrupted",
+      "problems_other": "{{count}} failed or interrupted",
       "interrupted": "Interrupted",
       "input": "Input",
       "output": "Output",

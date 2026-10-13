@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Alert, Collapse, Tag } from 'antd';
 import { useTranslation } from 'react-i18next';
 import type { AIChatMessage } from '@/store/AIAssistantSceneStore';
+import AnswerSections from './AnswerSections';
 import MarkdownAnswer from './MarkdownAnswer';
+import { splitAnswerSections } from './parseAnswer';
 import ToolSteps from './ToolSteps';
 import { formatDuration } from './format';
 
@@ -11,6 +13,11 @@ const AssistantMessage: React.FC<{ message: AIChatMessage }> = ({ message }) => 
   const { t } = useTranslation();
   const streaming = message.status === 'streaming';
   const steps = message.steps ?? [];
+  // 生成中照原样流式渲染，结束后再按小节折叠，免得内容边出边跳
+  const parsed = useMemo(
+    () => (streaming || !message.content ? null : splitAnswerSections(message.content)),
+    [streaming, message.content],
+  );
 
   return (
     <div className="ai-message">
@@ -34,7 +41,11 @@ const AssistantMessage: React.FC<{ message: AIChatMessage }> = ({ message }) => 
 
       {steps.length > 0 && <ToolSteps steps={steps} streaming={streaming} />}
 
-      {message.content && <MarkdownAnswer content={message.content} />}
+      {parsed ? (
+        <AnswerSections parsed={parsed} />
+      ) : (
+        message.content && <MarkdownAnswer content={message.content} />
+      )}
 
       {message.status === 'stopped' && (
         <Tag className="ai-message__stopped">{t('aiAssistant.message.stopped')}</Tag>
