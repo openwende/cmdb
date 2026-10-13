@@ -27,6 +27,9 @@ export interface AIToolStep {
 
 export type AIAssistantMessageStatus = 'streaming' | 'done' | 'stopped' | 'error';
 
+/** 生成中的阶段，给消息底部的状态行用：思考 / 调工具 / 工具返回后分析 / 输出回答 */
+export type AIStreamPhase = 'thinking' | 'tool' | 'analyzing' | 'answering';
+
 export interface AIChatStats {
   toolCalls: number;
   elapsedMs: number;
@@ -47,6 +50,10 @@ export interface AIChatMessage {
   /** 服务端 error 事件带回的原文 */
   errorDetail?: string;
   stats?: AIChatStats;
+  /** 生成中的阶段；还没收到事件时视为 thinking */
+  phase?: AIStreamPhase;
+  /** 发出问题的时间，状态行据此显示已用时间 */
+  startedAt?: number;
   /** 当前 content / reasoning 属于哪次模型调用，换了一次调用时文本重新开始 */
   textMessageId?: string;
   reasoningMessageId?: string;
@@ -83,6 +90,8 @@ export const applyChatEvent = (
         ...message,
         reasoning: sameCall || !prev ? prev + delta : `${prev}\n\n${delta}`,
         reasoningMessageId: id,
+        // 工具返回之后的思考就是在分析查询结果
+        phase: message.steps?.some((step) => step.status !== 'pending') ? 'analyzing' : 'thinking',
       };
     }
     case 'text': {
@@ -92,6 +101,7 @@ export const applyChatEvent = (
         ...message,
         content: sameCall ? message.content + delta : delta,
         textMessageId: id,
+        phase: 'answering',
       };
     }
     case 'tool_start': {
@@ -101,6 +111,7 @@ export const applyChatEvent = (
       return {
         ...message,
         steps: [...steps, { id, name, input, status: 'pending', startedAt: now }],
+        phase: 'tool',
       };
     }
     case 'tool_end': {
@@ -114,7 +125,11 @@ export const applyChatEvent = (
               : step,
           )
         : [...steps, { id, name, status, output, startedAt: now }];
-      return { ...message, steps: nextSteps };
+      return {
+        ...message,
+        steps: nextSteps,
+        phase: nextSteps.some((step) => step.status === 'pending') ? 'tool' : 'analyzing',
+      };
     }
     case 'final': {
       const { answer, tool_calls: toolCalls = [], usage, elapsed_ms: elapsedMs } = event.data;
@@ -301,7 +316,13 @@ export const useAIAssistantSceneStore = create<AIAssistantSceneState>((set, get)
         messages: [
           ...state.messages,
           { key: nextKey('user'), role: 'user', content: question },
-          { key: assistantKey, role: 'assistant', content: '', status: 'streaming' },
+          {
+            key: assistantKey,
+            role: 'assistant',
+            content: '',
+            status: 'streaming',
+            startedAt: Date.now(),
+          },
         ],
       }));
 

@@ -90,25 +90,51 @@
   min-width: 0;
 }
 
-.ai-message__reasoning .ant-collapse-header {
-  padding: 2px 0 !important;
-  color: var(--color-text-quaternary) !important;
+/* 生成中的状态行：流光文字 + 已用时间 */
+.ai-status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
   font-size: var(--font-size-sm);
 }
 
-.ai-message__reasoning .ant-collapse-content-box {
-  padding: 0 0 var(--space-xs) 22px !important;
-}
-
-.ai-message__reasoning-text {
-  white-space: pre-wrap;
-  word-break: break-word;
+.ai-status__text {
   color: var(--color-text-quaternary);
-  font-size: var(--font-size-sm);
-  border-left: 2px solid var(--color-border);
-  padding-left: var(--space-sm);
-  max-height: 240px;
-  overflow-y: auto;
+  background: linear-gradient(
+    90deg,
+    var(--color-text-quaternary) 0%,
+    var(--color-text-quaternary) 40%,
+    var(--color-border) 50%,
+    var(--color-text-quaternary) 60%,
+    var(--color-text-quaternary) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ai-status-shimmer 1.8s linear infinite;
+}
+
+@keyframes ai-status-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.ai-status__time {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-status__text {
+    animation: none;
+    -webkit-text-fill-color: currentColor;
+  }
 }
 
 .ai-message__stopped {

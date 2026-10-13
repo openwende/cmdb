@@ -97,7 +97,7 @@ describe('AI assistant drawer', () => {
     );
   });
 
-  it('renders reasoning, tool steps, answer, stopped tag and stats', async () => {
+  it('renders tool steps, answer, stopped tag and stats without reasoning', async () => {
     useAIAssistantSceneStore.setState({
       open: true,
       activeConversationId: 'conv-a',
@@ -129,16 +129,39 @@ describe('AI assistant drawer', () => {
     });
     renderDrawer();
 
-    expect(await screen.findByText('aiAssistant.message.reasoning')).toBeInTheDocument();
-    // 思考过程默认折叠
+    expect(await screen.findByText('aiAssistant.tools.get_host')).toBeInTheDocument();
+    // 思考过程不显示
     expect(screen.queryByText('先查主机')).not.toBeInTheDocument();
-    expect(screen.getByText('aiAssistant.tools.get_host')).toBeInTheDocument();
     expect(screen.getByText('unknown_tool')).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.steps.interrupted')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '结论' })).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.citation.record')).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.message.stopped')).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.message.stats')).toBeInTheDocument();
+  });
+
+  it('shows the current phase and elapsed time while streaming', async () => {
+    useAIAssistantSceneStore.setState({
+      open: true,
+      activeConversationId: 'conv-a',
+      messages: [
+        { key: 'u1', role: 'user', content: '问题' },
+        {
+          key: 'a1',
+          role: 'assistant',
+          content: '',
+          status: 'streaming',
+          startedAt: Date.now() - 12_000,
+          phase: 'tool',
+          steps: [{ id: 'c1', name: 'get_host', status: 'pending', startedAt: 0 }],
+        },
+      ],
+    });
+    renderDrawer();
+
+    const status = await screen.findByRole('status');
+    expect(status).toHaveTextContent('aiAssistant.status.tool');
+    expect(status).toHaveTextContent('12 s');
   });
 
   it('scrolls the list to the bottom after sending even when scrolled up', async () => {

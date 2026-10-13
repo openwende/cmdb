@@ -101,6 +101,19 @@ describe('applyChatEvent', () => {
     expect(done.stats?.toolCalls).toBe(2);
   });
 
+  it('tracks the streaming phase for the status line', () => {
+    const phases = [
+      { event: 'reasoning', data: { message_id: 'm1', delta: '想' } },
+      { event: 'tool_start', data: { tool_call_id: 'c1', name: 'get_host', input: {} } },
+      { event: 'tool_end', data: { tool_call_id: 'c1', name: 'get_host', status: 'success' } },
+      { event: 'message_start', data: { message_id: 'm2' } },
+      { event: 'reasoning', data: { message_id: 'm2', delta: '看结果' } },
+      { event: 'text', data: { message_id: 'm2', delta: '### 结论' } },
+    ] as AIChatEvent[];
+    const seen = phases.map((_, index) => run(phases.slice(0, index + 1)).phase);
+    expect(seen).toEqual(['thinking', 'tool', 'analyzing', 'analyzing', 'analyzing', 'answering']);
+  });
+
   it('marks the message as failed on an error event', () => {
     const message = applyChatEvent(base, { event: 'error', data: { message: 'boom' } });
     expect(message.status).toBe('error');

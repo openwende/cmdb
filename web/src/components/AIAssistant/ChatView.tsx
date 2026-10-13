@@ -24,9 +24,6 @@ const ROLES: GetProp<typeof Bubble.List, 'roles'> = {
   },
 };
 
-const hasVisibleContent = (message: AIChatMessage) =>
-  Boolean(message.content || message.reasoning || message.steps?.length);
-
 const ChatView: React.FC = () => {
   const { t } = useTranslation();
   const [draft, setDraft] = useState('');
@@ -57,7 +54,6 @@ const ChatView: React.FC = () => {
               key: message.key,
               role: 'assistant',
               content: message,
-              loading: message.status === 'streaming' && !hasVisibleContent(message),
             },
       ),
     [messages],

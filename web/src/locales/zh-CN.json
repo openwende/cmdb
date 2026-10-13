@@ -2088,9 +2088,13 @@
       "showMore_other": "展开其余 {{count}} 条",
       "showLess": "收起"
     },
+    "status": {
+      "thinking": "思考中",
+      "tool": "正在查询：{{tool}}",
+      "analyzing": "正在分析查询结果",
+      "answering": "正在生成回答"
+    },
     "message": {
-      "reasoning": "思考过程",
-      "thinking": "思考中…",
       "stopped": "已停止",
       "stats_one": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens",
       "stats_other": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens"

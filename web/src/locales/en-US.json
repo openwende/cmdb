@@ -2088,9 +2088,13 @@
       "showMore_other": "Show {{count}} more",
       "showLess": "Show less"
     },
+    "status": {
+      "thinking": "Thinking",
+      "tool": "Querying: {{tool}}",
+      "analyzing": "Analyzing results",
+      "answering": "Writing the answer"
+    },
     "message": {
-      "reasoning": "Reasoning",
-      "thinking": "Thinking…",
       "stopped": "Stopped",
       "stats_one": "{{count}} tool call · {{elapsed}} · {{input}} input / {{output}} output tokens",
       "stats_other": "{{count}} tool calls · {{elapsed}} · {{input}} input / {{output}} output tokens"
