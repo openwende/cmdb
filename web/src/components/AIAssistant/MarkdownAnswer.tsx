@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import remarkCitations, { CITATION_PROPERTY } from './remarkCitations';
+import { BASE_REMARK_PLUGINS } from './markdownPlugins';
 import { CitationGroup } from './CitationTag';
 import type { CitationItem } from './citations';
 
@@ -34,7 +34,7 @@ const components: Components = {
   ),
 };
 
-const REMARK_PLUGINS = [remarkGfm, remarkCitations];
+const REMARK_PLUGINS = [...BASE_REMARK_PLUGINS, remarkCitations];
 
 /** 助手回答：Markdown + 依据引用标签 */
 const MarkdownAnswer: React.FC<{ content: string }> = ({ content }) => (

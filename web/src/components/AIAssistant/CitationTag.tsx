@@ -4,11 +4,11 @@ import { BookOutlined, DesktopOutlined, FileSearchOutlined } from '@ant-design/i
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { getKnowledgeSection } from '@/api/services/aiChat';
 import type { AIKnowledgeSection } from '@/api/types/aiChat';
 import { getAuditRecordPath } from '@/utils/routes';
 import type { CitationItem } from './citations';
+import { BASE_REMARK_PLUGINS } from './markdownPlugins';
 
 // 同一小节在一次页面会话里只请求一次
 const sectionCache = new Map<string, Promise<AIKnowledgeSection>>();
@@ -38,7 +38,7 @@ const KnowledgeSectionContent: React.FC<{ state: SectionState }> = ({ state }) =
           {state.section.doc} / {state.section.title}
         </div>
         <div className="ai-knowledge-section__content ai-markdown">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{state.section.content}</ReactMarkdown>
+          <ReactMarkdown remarkPlugins={BASE_REMARK_PLUGINS}>{state.section.content}</ReactMarkdown>
         </div>
       </div>
     );
