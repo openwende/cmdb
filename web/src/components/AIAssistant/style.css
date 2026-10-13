@@ -3,6 +3,21 @@
   box-shadow: -6px 0 16px rgba(15, 23, 42, 0.08);
 }
 
+/* 标题单行：标题区可以收缩，给右侧按钮让位，放不下时省略号截断 */
+.ai-assistant-drawer .ant-drawer-header-title,
+.ai-assistant-drawer .ant-drawer-title {
+  min-width: 0;
+}
+
+.ai-assistant-drawer__title {
+  display: block;
+  /* 截断后的省略号和右侧按钮之间留点空 */
+  padding-right: var(--space-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .ai-chat,
 .ai-history {
   flex: 1;
@@ -208,13 +223,21 @@
   padding: 4px 8px;
   min-width: 5em;
   vertical-align: top;
-  /*
-   * 不继承 .ai-markdown 的 break-word：它让单元格的最小内容宽度缩到一个字符，
-   * 表格总被压到气泡宽度，IP、状态这类短值会在中间断开，外层横向滚动也用不上。
-   * 改回 normal 后只在空格、汉字之间和标签之间换行，放不下时由 .ai-markdown__table 横向滚动。
-   */
-  word-break: normal;
-  overflow-wrap: normal;
+}
+
+/*
+ * 回答里的表格（外面有可横向滚动的 .ai-markdown__table）：按内容宽度展开、至少占满气泡，
+ * 单元格统一不换行，IP、主机名、日期等不会被拆开，放不下时整体横向滚动。
+ * 知识库气泡里的表格没有滚动容器，不套用。
+ */
+.ai-markdown__table table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.ai-markdown__table th,
+.ai-markdown__table td {
+  white-space: nowrap;
 }
 
 .ai-markdown blockquote {

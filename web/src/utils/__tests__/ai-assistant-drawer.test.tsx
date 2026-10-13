@@ -163,6 +163,24 @@ describe('AI assistant layout', () => {
     expect(root?.style.top).toBe('var(--header-height)');
   });
 
+  it('keeps the title on one line with the full text as a tooltip in both views', async () => {
+    const user = userEvent.setup();
+    useAIAssistantSceneStore.setState({ open: true });
+    renderDrawer();
+    await screen.findByText('aiAssistant.welcome.title');
+
+    const title = () => document.querySelector('.ant-drawer-title .ai-assistant-drawer__title');
+    expect(title()).toHaveTextContent('aiAssistant.title');
+    expect(title()).toHaveAttribute('title', 'aiAssistant.title');
+
+    // 历史视图多一个"返回对话"按钮，标题同样单行截断、带完整提示
+    await user.click(screen.getByRole('button', { name: /aiAssistant.history.title/ }));
+    expect(
+      await screen.findByRole('button', { name: /aiAssistant.backToChat/ }),
+    ).toBeInTheDocument();
+    expect(title()).toHaveAttribute('title', 'aiAssistant.title');
+  });
+
   it('shows only the icon on narrow screens and toggles the drawer', async () => {
     const user = userEvent.setup();
     window.innerWidth = 1024;
@@ -174,6 +192,14 @@ describe('AI assistant layout', () => {
     await user.click(button);
     expect(useAIAssistantSceneStore.getState().open).toBe(false);
     unmount();
+
+    // 1440 以下只显示图标（不分语言），1280 也不带文字，给英文主菜单让出空间
+    window.innerWidth = 1280;
+    const { unmount: unmount1280 } = render(<AIAssistantEntry />);
+    expect(screen.getByRole('button', { name: 'aiAssistant.entry' })).not.toHaveTextContent(
+      'aiAssistant.entry',
+    );
+    unmount1280();
 
     window.innerWidth = 1440;
     render(<AIAssistantEntry />);

@@ -31,7 +31,12 @@ const AIAssistantDrawer: React.FC = () => {
 
   return (
     <Drawer
-      title={t('aiAssistant.title')}
+      // 单行，放不下时省略号截断（英文标题较长，有"返回对话"按钮时会折成两行）
+      title={
+        <span className="ai-assistant-drawer__title" title={t('aiAssistant.title')}>
+          {t('aiAssistant.title')}
+        </span>
+      }
       placement="right"
       width={isMobile ? '100%' : 480}
       open={open}
