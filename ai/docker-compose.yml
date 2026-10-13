@@ -1,0 +1,43 @@
+# AI 服务（本机用）：接入后端 compose 的网络，直接访问 cmdb-db、cmdb-server。
+#
+#   docker compose up -d --build      # 首次构建约几分钟；启动时加载两个模型，健康检查约 1 分钟后变 healthy
+#   docker compose logs -f ai
+#
+# 前提：
+# - 后端已用 wende-cmdb-backend 的 docker compose 启动（网络 wende-cmdb-backend_cmdb-network）
+# - .env 已填好（从 .env.example 复制）；里面指向 localhost 的地址在这里被覆盖成容器名
+# - 模型已下载到宿主机的 Hugging Face 缓存（默认 ~/.cache/huggingface），见 README
+# - 宿主机上用 uv 跑的 8090 要先停掉，或用 AI_PORT 换一个端口
+name: wende-cmdb-ai
+
+services:
+  ai:
+    build: .
+    image: wende-cmdb-ai:local
+    container_name: cmdb-ai
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      CMDB_BASE_URL: http://cmdb-server:8080
+      CMDB_MCP_URL: http://cmdb-server:8080/mcp
+      # 后端 compose 里数据库的本地默认账号；改过的话用 AI_DATABASE_URL 覆盖
+      DATABASE_URL: ${AI_DATABASE_URL:-postgresql://cmdb:password@cmdb-db:5432/cmdb}
+      # Langfuse 在宿主机的 3100（deploy/langfuse），容器里要经 host.docker.internal 访问
+      LANGFUSE_BASE_URL: http://host.docker.internal:3100
+    ports:
+      - "${AI_PORT:-8090}:8090"
+    volumes:
+      - ${HF_CACHE_DIR:-${HOME}/.cache/huggingface}:/models/huggingface:ro
+    networks:
+      - cmdb
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 120s
+
+networks:
+  cmdb:
+    external: true
+    name: wende-cmdb-backend_cmdb-network
