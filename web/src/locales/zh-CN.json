@@ -61,10 +61,13 @@
       "noModels": "暂无资源类型数据",
       "updatedAt": "更新于 {{time}}"
     },
+    "ai": {
+      "title": "AI 调查助手",
+      "desc": "用自然语言调查主机配置和变更：谁在什么时候改了什么、主机为什么在某个模块、某条流转规则是什么意思。每条结论都附带审计记录，点开就能核对。",
+      "promptsTitle": "试试这样问",
+      "open": "打开 AI 助手"
+    },
     "workspace": {
-      "connectedModels_one": "已接入 {{count}} 个资源类型",
-      "connectedModels_other": "已接入 {{count}} 个资源类型",
-      "pendingSummary": "主机、业务、实例统计将随着资源图接入逐步开放。",
       "primaryCta": "进入业务拓扑",
       "primaryCtaNoBusiness": "创建/选择业务",
       "primaryDesc": "从业务树进入主工作流，继续查看节点、主机和变更入口。",
@@ -2059,6 +2062,7 @@
   },
   "aiAssistant": {
     "entry": "AI 助手",
+    "entryNew": "新",
     "title": "AI 调查助手",
     "newChat": "新对话",
     "backToChat": "返回对话",

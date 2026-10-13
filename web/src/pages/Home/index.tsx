@@ -16,6 +16,9 @@ import dayjs from 'dayjs';
 import { listModels, getBusinessList } from '@/api';
 import { ModelDefinition } from '@/api/types/model';
 import { useAuthStore } from '@/store/AuthStore';
+import { useAIAssistantSceneStore } from '@/store/AIAssistantSceneStore';
+import SparklesIcon from '@/components/AIAssistant/SparklesIcon';
+import { EXAMPLE_PROMPT_KEYS } from '@/components/AIAssistant/examplePrompts';
 import PageLoading from '@/components/common/PageLoading';
 import './style.css';
 
@@ -31,6 +34,10 @@ const Home: React.FC = () => {
   const [models, setModels] = useState<ModelDefinition[]>([]);
   const [stats, setStats] = useState<DashStats>({ businessCount: 0, modelCount: 0 });
   const [loading, setLoading] = useState(true);
+  const setAIOpen = useAIAssistantSceneStore((s) => s.setOpen);
+  const newAIConversation = useAIAssistantSceneStore((s) => s.newConversation);
+  const sendAI = useAIAssistantSceneStore((s) => s.send);
+  const aiStreaming = useAIAssistantSceneStore((s) => s.streaming);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,6 +135,15 @@ const Home: React.FC = () => {
     },
   ];
 
+  // 首页的示例问题总是开一个新会话；已有回答在生成时只打开抽屉，不打断它
+  const askAI = (question: string) => {
+    if (!aiStreaming) {
+      newAIConversation();
+      void sendAI(question);
+    }
+    setAIOpen(true);
+  };
+
   const handleCardKeyDown = (event: React.KeyboardEvent, path: string) => {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
@@ -182,22 +198,54 @@ const Home: React.FC = () => {
         })}
       </div>
 
-      {/* ── Welcome + Actions ── */}
+      {/* ── Welcome + AI + Actions ── */}
       <div className="dashboard__welcome">
         <div className="dashboard__welcome-copy">
           <h1 className="dashboard__welcome-title">{t('dashboard.welcome')}</h1>
           <p className="dashboard__welcome-subtitle">{t('dashboard.subtitle')}</p>
-          <div className="dashboard__workspace-summary">
-            <span className="dashboard__summary-pill">
-              {t('dashboard.workspace.connectedModels', {
-                count: models.length,
-              })}
-            </span>
-            <span className="dashboard__summary-note">
-              {t('dashboard.workspace.pendingSummary')}
-            </span>
-          </div>
         </div>
+        <section className="dashboard__ai-card" aria-labelledby="dashboard-ai-title">
+          <div className="dashboard__ai-header">
+            <span className="dashboard__ai-icon">
+              <SparklesIcon />
+            </span>
+            <div className="dashboard__ai-heading">
+              <h2 id="dashboard-ai-title" className="dashboard__ai-title">
+                {t('dashboard.ai.title')}
+              </h2>
+              <p className="dashboard__ai-desc">{t('dashboard.ai.desc')}</p>
+            </div>
+          </div>
+          <div className="dashboard__ai-prompts">
+            <span className="dashboard__ai-prompts-title">{t('dashboard.ai.promptsTitle')}</span>
+            <div className="dashboard__ai-prompt-list">
+              {EXAMPLE_PROMPT_KEYS.map((key) => {
+                const question = t(`aiAssistant.welcome.prompts.${key}`);
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className="dashboard__ai-prompt"
+                    onClick={() => askAI(question)}
+                  >
+                    {question}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="dashboard__ai-footer">
+            <Button
+              type="primary"
+              size="large"
+              className="dashboard__ai-open"
+              onClick={() => setAIOpen(true)}
+            >
+              <SparklesIcon />
+              <span>{t('dashboard.ai.open')}</span>
+            </Button>
+          </div>
+        </section>
         <div className="dashboard__workspace-actions">
           {workspaceActions.map((action) =>
             action.primary ? (

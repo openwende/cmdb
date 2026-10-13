@@ -6,8 +6,7 @@ import { RobotOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAIAssistantSceneStore, type AIChatMessage } from '@/store/AIAssistantSceneStore';
 import AssistantMessage from './AssistantMessage';
-
-const EXAMPLE_PROMPT_KEYS = ['hostModules', 'faultVsReclaim', 'recentReclaim'] as const;
+import { EXAMPLE_PROMPT_KEYS } from './examplePrompts';
 
 const renderAssistant = (message: AIChatMessage) => <AssistantMessage message={message} />;
 

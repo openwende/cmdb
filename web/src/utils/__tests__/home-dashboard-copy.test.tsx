@@ -19,7 +19,6 @@ vi.mock('react-i18next', () => ({
       (
         ({
           'dashboard.stats.pending': '待接入',
-          'dashboard.workspace.pendingSummary': '主机、业务、实例统计将随着资源图接入逐步开放。',
           'dashboard.workspace.primaryCta': '进入业务拓扑',
           'dashboard.workspace.primaryCtaNoBusiness': '创建/选择业务',
           'dashboard.workspace.primaryDescNoBusiness':
@@ -81,12 +80,10 @@ describe('home dashboard copy', () => {
     vi.clearAllMocks();
   });
 
-  it('replaces placeholder stats with a lightweight workspace summary', async () => {
+  it('shows no placeholder stats', async () => {
     render(<Home />);
 
-    expect(
-      await screen.findByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('创建/选择业务')).toBeInTheDocument();
     expect(listModels).toHaveBeenCalled();
     expect(screen.queryByText('--')).not.toBeInTheDocument();
     expect(screen.queryAllByText('待接入')).toHaveLength(0);
@@ -101,12 +98,11 @@ describe('home dashboard copy', () => {
     expect(screen.queryByText('dashboard.quickActions.title')).not.toBeInTheDocument();
   });
 
-  it('demotes not-yet-connected stats into a lightweight workspace status summary', async () => {
+  it('drops the workspace status summary under the welcome copy', async () => {
     render(<Home />);
 
-    expect(
-      await screen.findByText('主机、业务、实例统计将随着资源图接入逐步开放。'),
-    ).toBeInTheDocument();
-    expect(screen.queryAllByText('待接入')).toHaveLength(0);
+    expect(await screen.findByText('创建/选择业务')).toBeInTheDocument();
+    expect(screen.queryByText('dashboard.workspace.pendingSummary')).not.toBeInTheDocument();
+    expect(screen.queryByText('dashboard.workspace.connectedModels')).not.toBeInTheDocument();
   });
 });
