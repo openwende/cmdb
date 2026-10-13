@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import remarkCitations, { CITATION_PROPERTY } from './remarkCitations';
 import { BASE_REMARK_PLUGINS } from './markdownPlugins';
 import { CitationGroup } from './CitationTag';
@@ -34,7 +35,9 @@ const components: Components = {
   ),
 };
 
-const REMARK_PLUGINS = [...BASE_REMARK_PLUGINS, remarkCitations];
+// remark-breaks 只用于回答：模型常用单个换行分隔要分开的行（"字段：值" 逐行列出），
+// CommonMark 会把它合并成一段。知识库原文按标准 CommonMark 渲染，不加。
+const REMARK_PLUGINS = [...BASE_REMARK_PLUGINS, remarkBreaks, remarkCitations];
 
 /** 助手回答：Markdown + 依据引用标签 */
 const MarkdownAnswer: React.FC<{ content: string }> = ({ content }) => (

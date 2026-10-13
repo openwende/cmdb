@@ -134,7 +134,88 @@ describe('MarkdownAnswer tildes', () => {
   });
 });
 
+describe('MarkdownAnswer single line breaks', () => {
+  // 回答里单个换行按换行显示（remark-breaks）；CommonMark 默认会把它合并成空格
+  it('keeps "field: value" lines apart and bold intact', () => {
+    const { container } = renderAnswer('**主机：**a\n**状态：**b');
+    const paragraph = container.querySelector('.ai-markdown p')!;
+    expect(paragraph.querySelectorAll('br')).toHaveLength(1);
+    expect(strongTexts(container)).toEqual(['主机：', '状态：']);
+    expect(paragraph.innerHTML).toMatch(
+      /<strong>主机：<\/strong>a<br>\s*<strong>状态：<\/strong>b/,
+    );
+  });
+
+  it('breaks plain lines separated by a single newline, with citations kept', () => {
+    const { container } = renderAnswer(
+      '转入支付网关的：host_id=55（共 4 次）[record_id=851]\n转出支付网关的：host_id=43（共 2 次）',
+    );
+    expect(container.querySelectorAll('p')).toHaveLength(1);
+    expect(container.querySelectorAll('p br')).toHaveLength(1);
+    expect(screen.getByText('aiAssistant.citation.record:851')).toBeInTheDocument();
+  });
+
+  // 列表项后紧跟一行无缩进文字：仍是同一个列表项（CommonMark 懒续行），项内换行显示
+  it('keeps a lazy line after a list item inside that item, on its own line', () => {
+    const { container } = renderAnswer('- **结论：**在两个模块\n补充说明一行');
+    const items = container.querySelectorAll('li');
+    expect(items).toHaveLength(1);
+    expect(items[0].querySelectorAll('br')).toHaveLength(1);
+    // 实际结构：<li><strong>结论：</strong>在两个模块<br>\n补充说明一行</li>
+    expect(items[0].innerHTML).toMatch(/^<strong>结论：<\/strong>在两个模块<br>\s*补充说明一行$/);
+    expect(container.querySelector('ul + p')).toBeNull();
+  });
+
+  it('does not add breaks inside tables or code blocks', () => {
+    const { container } = renderAnswer(
+      [
+        '| 主机 | 状态 |',
+        '| --- | --- |',
+        '| 01~08 | **故障** |',
+        '',
+        '```',
+        'line 1',
+        'line 2',
+        '```',
+      ].join('\n'),
+    );
+    expect(container.querySelector('table br')).toBeNull();
+    expect(container.querySelector('pre br')).toBeNull();
+    expect(container.querySelector('pre code')!.textContent).toBe('line 1\nline 2\n');
+    expect(container.querySelector('del')).toBeNull();
+  });
+
+  it('keeps single-tilde ranges and doc citations across lines', () => {
+    const { container } = renderAnswer(
+      '编号 01~08\n规则见[doc=主机流转规则#回收到资源池]，记录 [record_id=800~802]',
+    );
+    expect(container.querySelector('del')).toBeNull();
+    expect(container.querySelectorAll('p br')).toHaveLength(1);
+    expect(screen.getByText('主机流转规则#回收到资源池')).toBeInTheDocument();
+    expect(screen.getByText('aiAssistant.citation.record:800')).toBeInTheDocument();
+    expect(screen.getByText('aiAssistant.citation.record:802')).toBeInTheDocument();
+  });
+});
+
 describe('knowledge section popover', () => {
+  it('keeps CommonMark soft breaks (no remark-breaks) in the section content', async () => {
+    api.getKnowledgeSection.mockResolvedValue({
+      id: '主机流转规则#换行',
+      doc: '主机流转规则',
+      title: '换行',
+      content: '第一行\n第二行',
+    });
+    render(
+      <MemoryRouter>
+        <CitationGroup items={[{ kind: 'doc', id: '主机流转规则#换行' }]} />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /主机流转规则#换行/ }));
+    const paragraph = (await screen.findByText(/第一行/)).closest('p')!;
+    expect(paragraph.querySelector('br')).toBeNull();
+    expect(paragraph.textContent).toBe('第一行\n第二行');
+  });
+
   it('uses the same CJK-friendly plugins for the section content', async () => {
     api.getKnowledgeSection.mockResolvedValue({
       id: '主机流转规则#故障机',
