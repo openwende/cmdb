@@ -1345,7 +1345,8 @@
         "copySuccess": "复制成功",
         "copyFailed": "复制失败",
         "deleteSuccess": "删除成功",
-        "confirmDelete": "确定删除选中的主机？"
+        "confirmDelete": "确定删除选中的主机？",
+        "loadFailed": "主机列表加载失败"
       },
       "copy": {
         "id": "ID",

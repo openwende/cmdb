@@ -1345,7 +1345,8 @@
         "copySuccess": "Copied successfully",
         "copyFailed": "Copy failed",
         "deleteSuccess": "Deleted successfully",
-        "confirmDelete": "Confirm to delete selected hosts?"
+        "confirmDelete": "Confirm to delete selected hosts?",
+        "loadFailed": "Failed to load hosts"
       },
       "copy": {
         "id": "ID",
