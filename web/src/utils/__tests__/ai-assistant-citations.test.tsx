@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 
-import { parseCitationContent, parseCitations } from '@/components/AIAssistant/citations';
+import {
+  collectCitationKeys,
+  parseCitationContent,
+  parseCitations,
+  rewriteInlineIds,
+} from '@/components/AIAssistant/citations';
 import { CitationGroup } from '@/components/AIAssistant/CitationTag';
 import MarkdownAnswer from '@/components/AIAssistant/MarkdownAnswer';
 
@@ -15,8 +20,10 @@ vi.mock('react-i18next', () => ({
 }));
 
 const api = vi.hoisted(() => ({ getKnowledgeSection: vi.fn() }));
+const businessApi = vi.hoisted(() => ({ getTopologyModule: vi.fn(), getTopologySet: vi.fn() }));
 
 vi.mock('@/api/services/aiChat', () => api);
+vi.mock('@/api/services/business', () => businessApi);
 
 describe('parseCitations', () => {
   it('parses a single record citation', () => {
@@ -84,15 +91,76 @@ describe('parseCitations', () => {
   });
 
   it('leaves non-citation brackets untouched', () => {
-    const text = '见 [链接] 和 [1] 以及 ["gw","扩容"]、[module_id=97] 还有 [record_id=abc]';
+    const text = '见 [链接] 和 [1] 以及 ["gw","扩容"]、[module_id=a7] 还有 [record_id=abc]';
     expect(parseCitations(text)).toEqual([{ type: 'text', value: text }]);
   });
 
   it('keeps unknown keys next to known ones as plain items', () => {
-    expect(parseCitationContent('host_id=43, module_id=97')).toEqual([
+    expect(parseCitationContent('host_id=43, matched=10')).toEqual([
       { kind: 'host', id: '43' },
-      { kind: 'other', text: 'module_id=97' },
+      { kind: 'other', text: 'matched=10' },
     ]);
+  });
+
+  it('parses business, module, cluster and pool directory ids', () => {
+    expect(parseCitationContent('business_id=1029, module_id=108、109')).toEqual([
+      { kind: 'business', id: '1029' },
+      { kind: 'module', id: '108' },
+      { kind: 'module', id: '109' },
+    ]);
+    expect(parseCitationContent('set_id=38, directory_id=2')).toEqual([
+      { kind: 'set', id: '38' },
+      { kind: 'directory', id: '2' },
+    ]);
+  });
+
+  it('treats a bracket of query conditions as one citation', () => {
+    expect(parseCitationContent('ip=10.20.1.11, since=2026-09-01')).toEqual([
+      { kind: 'other', text: 'ip=10.20.1.11' },
+      { kind: 'other', text: 'since=2026-09-01' },
+    ]);
+    expect(parseCitationContent('record_id=abc, since=2026-09-01')).toBeNull();
+  });
+});
+
+describe('rewriteInlineIds', () => {
+  const none = new Set<string>();
+
+  it('moves ids out of prose parentheses into citations', () => {
+    expect(rewriteInlineIds('支付网关（module_id=97）和风控服务', none)).toBe(
+      '支付网关[module_id=97]和风控服务',
+    );
+    expect(rewriteInlineIds('生产集群（set_id=35），属于同一业务', none)).toBe(
+      '生产集群[set_id=35]，属于同一业务',
+    );
+  });
+
+  it('keeps the other words in the parentheses', () => {
+    expect(rewriteInlineIds('10.20.1.11（pay-gw-01，host_id=43）现在', none)).toBe(
+      '10.20.1.11（pay-gw-01）[host_id=43]现在',
+    );
+    expect(rewriteInlineIds('支付网关（module_id=97，生产集群）', none)).toBe(
+      '支付网关（生产集群）[module_id=97]',
+    );
+  });
+
+  it('drops ids already cited in the same paragraph', () => {
+    expect(rewriteInlineIds('10.20.1.11（pay-gw-01，host_id=43）', new Set(['host-43']))).toBe(
+      '10.20.1.11（pay-gw-01）',
+    );
+    expect(rewriteInlineIds('主机（host_id=43）现在', new Set(['host-43']))).toBe('主机现在');
+  });
+
+  it('counts every id of a cited range as already cited', () => {
+    const existing = collectCitationKeys('命中 4 台 [host_id=56~59]');
+    expect(rewriteInlineIds('pay-db-02（10.20.4.12，host_id=57）', existing)).toBe(
+      'pay-db-02（10.20.4.12）',
+    );
+  });
+
+  it('leaves other parentheses alone', () => {
+    const text = '8 核（32 GB）、状态 running (since=2026-09-01)、记录（record_id=abc）';
+    expect(rewriteInlineIds(text, none)).toBe(text);
   });
 });
 
@@ -164,6 +232,75 @@ describe('MarkdownAnswer', () => {
     const hostTag = screen.getByRole('link', { name: /aiAssistant\.citation\.host:8/ });
     fireEvent.keyDown(hostTag, { key: ' ' });
     expect(screen.getByTestId('location')).toHaveTextContent('/resource/host?host_id=8');
+  });
+
+  it('opens the business topology from a business citation', async () => {
+    const user = userEvent.setup();
+    renderAnswer('数据中台 [business_id=1029]');
+    await user.click(screen.getByRole('link', { name: /aiAssistant\.citation\.business:1029/ }));
+    expect(screen.getByTestId('location')).toHaveTextContent('/business/1029/topology');
+  });
+
+  it('looks up the business of a module and selects its tree node', async () => {
+    const user = userEvent.setup();
+    businessApi.getTopologyModule.mockImplementation(async (id: string) => ({
+      code: 0,
+      data: { id: Number(id), business_id: 1029, set_id: 38, name: 'm', is_default: id === '107' },
+    }));
+    renderAnswer('模块 [module_id=108] 和 [module_id=107]');
+
+    await user.click(screen.getByRole('link', { name: /aiAssistant\.citation\.module:108/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/business/1029/topology?node=module-108',
+      ),
+    );
+    await user.click(screen.getByRole('link', { name: /aiAssistant\.citation\.module:107/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/business/1029/topology?node=idle_module-107',
+      ),
+    );
+  });
+
+  it('selects the cluster node, including the idle pool', async () => {
+    const user = userEvent.setup();
+    businessApi.getTopologySet.mockImplementation(async (id: string) => ({
+      code: 0,
+      data: { id: Number(id), business_id: 1027, name: 's', is_default: id === '38' },
+    }));
+    renderAnswer('集群 [set_id=35] 和 [set_id=38]');
+
+    await user.click(screen.getByRole('link', { name: /aiAssistant\.citation\.set:35/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/business/1027/topology?node=set-35',
+      ),
+    );
+    await user.click(screen.getByRole('link', { name: /aiAssistant\.citation\.set:38/ }));
+    await waitFor(() =>
+      expect(screen.getByTestId('location')).toHaveTextContent(
+        '/business/1027/topology?node=idle_set-38',
+      ),
+    );
+  });
+
+  it('shows pool directories and query conditions as plain text', () => {
+    renderAnswer('目录 [directory_id=2] 查询 [ip=10.20.1.11, since=2026-09-01]');
+    expect(screen.getByText('aiAssistant.citation.directory:2')).toHaveClass('ai-citation-plain');
+    expect(screen.getByText('ip=10.20.1.11')).toHaveClass('ai-citation-plain');
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+  });
+
+  it('turns prose ids into tags without repeating ones cited in the paragraph', () => {
+    renderAnswer(
+      '10.20.1.11（pay-gw-01，host_id=43）在支付网关（module_id=97）和生产集群（set_id=35）[host_id=43]',
+    );
+    expect(screen.getAllByText('aiAssistant.citation.host:43')).toHaveLength(1);
+    expect(screen.getByText('aiAssistant.citation.module:97')).toBeInTheDocument();
+    expect(screen.getByText('aiAssistant.citation.set:35')).toBeInTheDocument();
+    expect(screen.getByText(/10\.20\.1\.11（pay-gw-01）在支付网关/)).toBeInTheDocument();
+    expect(screen.queryByText(/module_id=97/)).not.toBeInTheDocument();
   });
 
   it('does not touch brackets inside code', () => {

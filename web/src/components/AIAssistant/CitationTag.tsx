@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Popover, Spin, Tag } from 'antd';
-import { BookOutlined, DesktopOutlined, FileSearchOutlined } from '@ant-design/icons';
+import {
+  ApartmentOutlined,
+  BookOutlined,
+  ClusterOutlined,
+  DeploymentUnitOutlined,
+  DesktopOutlined,
+  FileSearchOutlined,
+  LoadingOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { getKnowledgeSection } from '@/api/services/aiChat';
+import { getTopologyModule, getTopologySet } from '@/api/services/business';
 import type { AIKnowledgeSection } from '@/api/types/aiChat';
+import { useAppMessage } from '@/utils/message';
 import {
   getAuditRecordPath,
+  getBusinessTopologyPath,
   getHostDetailNavigationState,
   getHostDetailPath,
 } from '@/utils/routes';
@@ -158,6 +169,7 @@ const HostCitation: React.FC<{ id: string }> = ({ id }) => {
     navigate(getHostDetailPath(id), { state: getHostDetailNavigationState(pathname) });
   return (
     <Tag
+      color="blue"
       icon={<DesktopOutlined />}
       className="ai-citation ai-citation--link"
       role="link"
@@ -176,6 +188,117 @@ const HostCitation: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
+/** 拓扑页据此不清空 URL 里的 node 参数（切换业务时默认会清空） */
+const TOPOLOGY_KEEP_PARAMS_STATE = { keepTopologyParams: true } as const;
+
+type TopologyNodeKind = 'module' | 'set';
+
+const NODE_LOADERS = { module: getTopologyModule, set: getTopologySet };
+
+// 模块 / 集群 → 所属业务，同一节点在一次页面会话里只查一次
+const nodeCache = new Map<
+  string,
+  Promise<{ data: { business_id: number; is_default?: boolean } }>
+>();
+
+const loadNode = (kind: TopologyNodeKind, id: string) => {
+  const cacheKey = `${kind}-${id}`;
+  let pending = nodeCache.get(cacheKey);
+  if (!pending) {
+    pending = NODE_LOADERS[kind](id);
+    nodeCache.set(cacheKey, pending);
+    pending.catch(() => nodeCache.delete(cacheKey));
+  }
+  return pending;
+};
+
+/**
+ * 拓扑树里节点的 key：空闲机池是 idle_set-<id>，空闲机模块是 idle_module-<id>，
+ * 其余（含故障机、待回收）是 set-<id> / module-<id>
+ */
+const getNodeKey = (kind: TopologyNodeKind, id: string, isDefault?: boolean) =>
+  `${isDefault ? `idle_${kind}` : kind}-${id}`;
+
+/** 业务引用：跳到业务拓扑，AI 抽屉保持打开 */
+const BusinessCitation: React.FC<{ id: string }> = ({ id }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const open = () => navigate(getBusinessTopologyPath(id), { state: TOPOLOGY_KEEP_PARAMS_STATE });
+  return (
+    <Tag
+      color="blue"
+      icon={<ApartmentOutlined />}
+      className="ai-citation ai-citation--link"
+      role="link"
+      tabIndex={0}
+      title={t('aiAssistant.citation.businessTip')}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open();
+        }
+      }}
+    >
+      {t('aiAssistant.citation.business', { id })}
+    </Tag>
+  );
+};
+
+/** 模块 / 集群引用：先查所属业务，再跳到业务拓扑并选中这个节点（模块右侧就是它的主机列表） */
+const TopologyNodeCitation: React.FC<{ kind: TopologyNodeKind; id: string }> = ({ kind, id }) => {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const message = useAppMessage();
+  const [loading, setLoading] = useState(false);
+
+  const open = () => {
+    if (loading) return;
+    setLoading(true);
+    loadNode(kind, id)
+      .then(({ data }) => {
+        const search = new URLSearchParams({ node: getNodeKey(kind, id, data.is_default) });
+        navigate(`${getBusinessTopologyPath(data.business_id)}?${search}`, {
+          state: TOPOLOGY_KEEP_PARAMS_STATE,
+        });
+      })
+      .catch(() => message.error(t(`aiAssistant.citation.${kind}NotFound`)))
+      .finally(() => setLoading(false));
+  };
+
+  const icon = kind === 'module' ? <ClusterOutlined /> : <DeploymentUnitOutlined />;
+  return (
+    <Tag
+      color="blue"
+      icon={loading ? <LoadingOutlined /> : icon}
+      className="ai-citation ai-citation--link"
+      role="link"
+      tabIndex={0}
+      aria-busy={loading}
+      title={t(`aiAssistant.citation.${kind}Tip`)}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          open();
+        }
+      }}
+    >
+      {t(`aiAssistant.citation.${kind}`, { id })}
+    </Tag>
+  );
+};
+
+/** 不跳转的依据（资源池目录、查询条件）：灰色小字，不用标签样式，免得以为能点 */
+const PlainCitation: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <span className="ai-citation-plain">{children}</span>
+);
+
+const PlainCitationLabel: React.FC<{ id: string }> = ({ id }) => {
+  const { t } = useTranslation();
+  return <PlainCitation>{t('aiAssistant.citation.directory', { id })}</PlainCitation>;
+};
+
 const CitationTag: React.FC<{ item: CitationItem }> = ({ item }) => {
   switch (item.kind) {
     case 'record':
@@ -184,8 +307,15 @@ const CitationTag: React.FC<{ item: CitationItem }> = ({ item }) => {
       return <DocCitation id={item.id} />;
     case 'host':
       return <HostCitation id={item.id} />;
+    case 'business':
+      return <BusinessCitation id={item.id} />;
+    case 'module':
+    case 'set':
+      return <TopologyNodeCitation kind={item.kind} id={item.id} />;
+    case 'directory':
+      return <PlainCitationLabel id={item.id} />;
     default:
-      return <Tag className="ai-citation">{item.text}</Tag>;
+      return <PlainCitation>{item.text}</PlainCitation>;
   }
 };
 

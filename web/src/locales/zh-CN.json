@@ -2126,6 +2126,15 @@
       "search_knowledge": "查知识库"
     },
     "citation": {
+      "setTip": "在业务拓扑中查看这个集群",
+      "setNotFound": "没有找到这个集群，可能已被删除或没有权限查看",
+      "business": "业务 #{{id}}",
+      "module": "模块 #{{id}}",
+      "set": "集群 #{{id}}",
+      "directory": "资源池目录 #{{id}}",
+      "businessTip": "查看这个业务的拓扑",
+      "moduleTip": "在业务拓扑中查看这个模块和它的主机",
+      "moduleNotFound": "没有找到这个模块，可能已被删除或没有权限查看",
       "record": "审计 #{{id}}",
       "host": "主机 #{{id}}",
       "recordTip": "查看这条审计记录的详情",

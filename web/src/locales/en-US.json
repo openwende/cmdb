@@ -2126,6 +2126,15 @@
       "search_knowledge": "Search knowledge base"
     },
     "citation": {
+      "setTip": "View this cluster in the business topology",
+      "setNotFound": "Cluster not found. It may have been deleted, or you may not have access.",
+      "business": "Business #{{id}}",
+      "module": "Module #{{id}}",
+      "set": "Cluster #{{id}}",
+      "directory": "Pool directory #{{id}}",
+      "businessTip": "View this business topology",
+      "moduleTip": "View this module and its hosts in the business topology",
+      "moduleNotFound": "Module not found. It may have been deleted, or you may not have access.",
       "record": "Audit #{{id}}",
       "host": "Host #{{id}}",
       "recordTip": "Open this audit record",

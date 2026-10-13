@@ -355,6 +355,17 @@
   word-break: normal;
 }
 
+.ai-citation-plain {
+  margin: 0 2px;
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.ai-citation-plain + .ai-citation-plain::before {
+  content: '· ';
+}
+
 .ai-citation--link {
   cursor: pointer;
 }

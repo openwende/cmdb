@@ -76,9 +76,14 @@ const BusinessTopology: React.FC = () => {
       return;
     }
 
+    // 从 AI 回答的业务 / 模块引用跳过来时，URL 里的 node 是新业务的，不清空
+    if ((location.state as { keepTopologyParams?: boolean } | null)?.keepTopologyParams) {
+      return;
+    }
+
     setActiveTab('hostList');
     setSearchParams(new URLSearchParams());
-  }, [businessId, setSearchParams]);
+  }, [businessId, location.state, setSearchParams]);
 
   useEffect(() => {
     if (!businessId || !businessList.length) {

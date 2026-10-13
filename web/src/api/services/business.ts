@@ -316,6 +316,20 @@ export const listTopologySets = async (
   });
 };
 
+/** Get one set (with its business_id and is_default): GET /v1/topology/sets/:id */
+export const getTopologySet = async (
+  id: number | string,
+): Promise<{ code: number; data: TopologySetItem; message?: string }> => {
+  return axios.get(`/v1/topology/sets/${id}`);
+};
+
+/** Get one module (with its business_id and is_default): GET /v1/topology/modules/:id */
+export const getTopologyModule = async (
+  id: number | string,
+): Promise<{ code: number; data: TopologyModuleItem; message?: string }> => {
+  return axios.get(`/v1/topology/modules/${id}`);
+};
+
 /** List modules under a business (or set): GET /v1/topology/modules?business_id= */
 export const listTopologyModules = async (
   businessId: number | string,
