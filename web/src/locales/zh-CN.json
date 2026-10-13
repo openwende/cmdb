@@ -1312,6 +1312,7 @@
       },
       "columns": {
         "id": "ID",
+        "hostName": "主机名",
         "innerIpv4": "内网IPv4",
         "innerIpv6": "内网IPv6",
         "cloudArea": "管控区域",
@@ -1331,7 +1332,8 @@
         "openDetail": "查看主机 {{id}} 的详情"
       },
       "search": {
-        "placeholder": "请输入IP或主机名"
+        "placeholder": "请输入IP或主机名",
+        "clearSearch": "清除搜索"
       },
       "tooltips": {
         "viewDeleteHistory": "查看删除历史",

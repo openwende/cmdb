@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import dayjs from 'dayjs';
 import { StrictMode } from 'react';
-import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { adaptHostAuditLogs, adaptHostDetail } from '@/api/adapters/hostAdapter';
+import { adaptHostAuditLogs, adaptHostDetail, formatMemory } from '@/api/adapters/hostAdapter';
 import type { HostDetailRaw } from '@/api/types/host';
 import HostDetailDrawer from '@/pages/Resource/Host/components/HostDetailDrawer';
 import { useHostDetailDeepLink } from '@/pages/Resource/Host/hooks/useHostDetailDeepLink';
@@ -177,7 +177,7 @@ describe('adaptHostDetail', () => {
       status: 'running',
       os: 'linux TencentOS Server 3.1',
       cpu: '8',
-      memory: '32768 MB',
+      memory: '32 GB',
       disk: '200 GB',
       cloudVendor: 'tencent_cloud',
       cloudArea: '腾讯云广州支付 VPC',
@@ -189,6 +189,19 @@ describe('adaptHostDetail', () => {
     // 按浏览器本地时区显示
     expect(view.createdAt).toBe(dayjs('2026-07-26T02:00:00Z').format('YYYY-MM-DD HH:mm:ss'));
     expect(view.updatedAt).toBe(dayjs('2026-09-17T01:12:00Z').format('YYYY-MM-DD HH:mm:ss'));
+  });
+
+  it('shows memory in GB from 1024 MB, otherwise in MB', () => {
+    expect(formatMemory(32768)).toBe('32 GB');
+    expect(formatMemory(1024)).toBe('1 GB');
+    expect(formatMemory(1536)).toBe('1.5 GB');
+    expect(formatMemory(1100)).toBe('1.1 GB');
+    expect(formatMemory(2047)).toBe('2 GB');
+    expect(formatMemory(1023)).toBe('1023 MB');
+    expect(formatMemory(512)).toBe('512 MB');
+    expect(formatMemory(0)).toBe('0 MB');
+    expect(formatMemory(null)).toBe('--');
+    expect(formatMemory(undefined)).toBe('--');
   });
 
   it('shows -- for missing values and no placement', () => {
@@ -274,6 +287,33 @@ const DeepLinkHarness = () => {
   );
 };
 
+const BackButton = () => {
+  const navigate = useNavigate();
+  return (
+    <>
+      <button type="button" onClick={() => navigate(-1)}>
+        browser-back
+      </button>
+      <button type="button" onClick={() => navigate(1)}>
+        browser-forward
+      </button>
+    </>
+  );
+};
+
+/** 带一条前序历史（/home），用来测浏览器后退 */
+const renderWithHistory = (url: string) =>
+  render(
+    <MemoryRouter initialEntries={['/home', url]} initialIndex={1}>
+      <Routes>
+        <Route path="/resource/host" element={<DeepLinkHarness />} />
+        <Route path="*" element={null} />
+      </Routes>
+      <LocationProbe />
+      <BackButton />
+    </MemoryRouter>,
+  );
+
 const renderAt = (url: string) =>
   render(
     <MemoryRouter initialEntries={[url]}>
@@ -308,7 +348,7 @@ describe('host detail deep link and drawer', () => {
       'resource.host.detail.sections.audit',
     ].forEach((title) => expect(view.getByRole('heading', { name: title })).toBeInTheDocument());
 
-    expect(view.getByText('32768 MB')).toBeInTheDocument();
+    expect(view.getByText('32 GB')).toBeInTheDocument();
     expect(view.getByText('200 GB')).toBeInTheDocument();
     expect(view.getByText('支付清结算 / 生产集群 / 支付网关')).toBeInTheDocument();
     expect(view.getByText('支付清结算 / 生产集群 / 风控服务')).toBeInTheDocument();
@@ -408,5 +448,64 @@ describe('host detail deep link and drawer', () => {
 
     await waitFor(() => expect(location()).toBe('/resource/host'));
     expect(message.error).toHaveBeenCalledWith('resource.host.detail.messages.loadFailed');
+  });
+});
+
+describe('host detail drawer and browser history', () => {
+  beforeEach(() => {
+    api.getHostByDisplayId.mockResolvedValue({ code: 0, data: HOST_43 });
+    api.listHostAuditLogs.mockResolvedValue(AUDITS);
+  });
+
+  it('open from the list, then back: closes the drawer and stays on the host page', async () => {
+    renderWithHistory('/resource/host');
+    fireEvent.click(screen.getByText('open-43'));
+    expect(location()).toBe('/resource/host?host_id=43');
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+    await waitFor(() =>
+      expect(document.querySelector('.host-detail-drawer.ant-drawer-open')).toBeNull(),
+    );
+  });
+
+  it('open from the list, close, then back: does not reopen the drawer', async () => {
+    renderWithHistory('/resource/host');
+    fireEvent.click(screen.getByText('open-43'));
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).not.toContain('host_id'));
+    expect(location()).toBe('/home');
+  });
+
+  it('back then forward reopens, and closing again still works', async () => {
+    renderWithHistory('/resource/host');
+    fireEvent.click(screen.getByText('open-43'));
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+
+    fireEvent.click(screen.getByText('browser-forward'));
+    await waitFor(() => expect(location()).toBe('/resource/host?host_id=43'));
+    await waitFor(() =>
+      expect(document.querySelector('.host-detail-drawer.ant-drawer-open')).not.toBeNull(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+  });
+
+  it('entered through a link (AI tag / audit): close only removes the param', async () => {
+    renderWithHistory('/resource/host?host_id=43');
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/home'));
   });
 });

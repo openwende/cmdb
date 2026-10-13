@@ -1,28 +1,67 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAppMessage } from '@/utils/message';
 import { HOST_DETAIL_QUERY_KEY, parseHostIdParam } from '@/utils/routes';
 
+/** 列表里点主机 ID 打开抽屉时压入的历史记录带上这个标记 */
+const PUSHED_BY_LIST = 'hostDetailPushedByList';
+
 /**
  * 主机资源页深链：`?host_id=43`（display_id）时打开该主机的详情抽屉。
  * 列表里点主机 ID 也走这个参数，所以链接可以直接分享。
- * 关闭抽屉时去掉参数；编号非法时提示并去掉参数（主机不存在由抽屉请求后回调 notFound）。
  * 没有参数时什么都不做，页面行为不变。
+ *
+ * 历史记录：
+ * - 列表里点 ID 用 push 打开（带 PUSHED_BY_LIST 标记），浏览器后退就是关抽屉、留在主机页；
+ *   这种情况下点关闭也走后退，回到打开前那条记录，之后再后退不会重新打开抽屉。
+ * - 从 AI 引用、审计链接或直接打开 URL 进来（没有标记）：关闭时用 replace 去掉参数。
+ * - 编号非法 / 主机不存在：提示后按上面同样的规则关闭。
  */
 export const useHostDetailDeepLink = () => {
   const { t } = useTranslation();
   const message = useAppMessage();
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pushedByList = Boolean(
+    (location.state as Record<string, unknown> | null)?.[PUSHED_BY_LIST],
+  );
   const rawHostId = searchParams.get(HOST_DETAIL_QUERY_KEY);
   const parsed = parseHostIdParam(rawHostId);
   const displayId = parsed.status === 'valid' ? parsed.displayId : null;
 
   // react-router v7 的 setSearchParams 引用会变，t / message 也不该触发 effect：都放 ref
-  const latest = useRef({ t, message, setSearchParams });
-  latest.current = { t, message, setSearchParams };
+  const latest = useRef({
+    t,
+    message,
+    setSearchParams,
+    navigate,
+    pushedByList,
+    locationKey: location.key,
+  });
+  latest.current = {
+    t,
+    message,
+    setSearchParams,
+    navigate,
+    pushedByList,
+    locationKey: location.key,
+  };
+  // 浏览器的后退是异步的：同一条记录上连着关两次（点关闭后马上按 Esc）只能退一步
+  const backedFromKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    // 已经离开那条记录（后退完成）就清掉，前进回来后还能正常关闭
+    if (backedFromKeyRef.current !== location.key) backedFromKeyRef.current = null;
+  }, [location.key]);
 
   const clearParam = useCallback(() => {
+    if (latest.current.pushedByList) {
+      if (backedFromKeyRef.current === latest.current.locationKey) return;
+      backedFromKeyRef.current = latest.current.locationKey;
+      latest.current.navigate(-1);
+      return;
+    }
     latest.current.setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
@@ -58,7 +97,7 @@ export const useHostDetailDeepLink = () => {
         next.set(HOST_DETAIL_QUERY_KEY, String(id));
         return next;
       },
-      { replace: true },
+      { state: { [PUSHED_BY_LIST]: true } },
     );
   }, []);
 

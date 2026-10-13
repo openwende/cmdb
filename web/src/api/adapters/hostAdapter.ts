@@ -63,6 +63,13 @@ const numberWithUnit = (value: number | null | undefined, unit?: string): string
   return unit ? `${value} ${unit}` : String(value);
 };
 
+/** 内存（后端单位 MB）：≥1024 MB 换算成 GB（整数不带小数，否则保留 1 位），小于 1024 显示 MB */
+export const formatMemory = (memoryMb: number | null | undefined): string => {
+  if (typeof memoryMb !== 'number' || !Number.isFinite(memoryMb)) return HOST_EMPTY_TEXT;
+  if (memoryMb < 1024) return `${memoryMb} MB`;
+  return `${Number((memoryMb / 1024).toFixed(1))} GB`;
+};
+
 /** ISO 时间按浏览器本地时区显示 */
 export const formatHostTime = (value?: string | null): string => {
   if (!value) return HOST_EMPTY_TEXT;
@@ -122,7 +129,7 @@ export const adaptHostDetail = (raw: HostDetailRaw): HostDetailView => {
     status: text(raw.status),
     os: os || HOST_EMPTY_TEXT,
     cpu: numberWithUnit(raw.cpu),
-    memory: numberWithUnit(raw.memory, 'MB'),
+    memory: formatMemory(raw.memory),
     disk: numberWithUnit(raw.disk_size, 'GB'),
     cloudVendor: text(raw.cloud_vendor),
     cloudArea: text(raw.cloud_area_name),

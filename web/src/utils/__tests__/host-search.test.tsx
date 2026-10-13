@@ -205,9 +205,7 @@ describe('HostList search box', () => {
     });
 
     // 空结果：显示空状态和"清除搜索"，点击后恢复全部
-    const clear = (
-      await screen.findAllByText('common.components.emptySearchResult.clearFilter')
-    )[0];
+    const clear = (await screen.findAllByText('resource.host.search.clearSearch'))[0];
     listPoolHosts.mockResolvedValue(listResponse([host(43, '10.20.1.11')], 30));
     fireEvent.click(clear);
     await waitFor(() =>
@@ -215,6 +213,55 @@ describe('HostList search box', () => {
     );
     expect(searchBox()).toHaveValue('');
     expect(usePoolHostStore.getState().query.keyword).toBe('');
+  });
+
+  it('applies an emptied box right away so the box and the filter agree', async () => {
+    listPoolHosts.mockResolvedValue(listResponse([host(43, '10.20.1.11')], 30));
+    renderList();
+    await waitFor(() =>
+      expect(listPoolHosts).toHaveBeenLastCalledWith({ page: 1, page_size: 20, directory_id: 1 }),
+    );
+
+    fireEvent.change(searchBox(), { target: { value: '10.90.1' } });
+    fireEvent.keyDown(searchBox(), { key: 'Enter', code: 'Enter', keyCode: 13 });
+    await waitFor(() =>
+      expect(listPoolHosts).toHaveBeenLastCalledWith(
+        expect.objectContaining({ keyword: '10.90.1' }),
+      ),
+    );
+    act(() => usePoolHostStore.getState().setQuery({ page: 2 }));
+    await waitFor(() =>
+      expect(listPoolHosts).toHaveBeenLastCalledWith(expect.objectContaining({ page: 2 })),
+    );
+
+    // 删空不回车：立即按无关键字生效，回第 1 页
+    fireEvent.change(searchBox(), { target: { value: '' } });
+    await waitFor(() =>
+      expect(listPoolHosts).toHaveBeenLastCalledWith({ page: 1, page_size: 20, directory_id: 1 }),
+    );
+    expect(usePoolHostStore.getState().query.keyword).toBe('');
+
+    // 之后切目录不再带旧关键字
+    act(() => usePoolHostStore.getState().setQuery({ directoryId: 2, page: 1 }));
+    await waitFor(() =>
+      expect(listPoolHosts).toHaveBeenLastCalledWith({ page: 1, page_size: 20, directory_id: 2 }),
+    );
+
+    // 非空的未提交输入仍然要回车才生效
+    const calls = listPoolHosts.mock.calls.length;
+    fireEvent.change(searchBox(), { target: { value: 'pay' } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(listPoolHosts).toHaveBeenCalledTimes(calls);
+  });
+
+  it('shows a host name column after the ID', async () => {
+    listPoolHosts.mockResolvedValue(listResponse([host(43, '10.20.1.11')], 1));
+    renderList();
+    const headers = await screen.findAllByRole('columnheader');
+    const titles = headers.map((cell) => cell.textContent);
+    const idIndex = titles.indexOf('resource.host.columns.id');
+    expect(titles[idIndex + 1]).toBe('resource.host.columns.hostName');
+    expect(await screen.findByRole('cell', { name: 'host-43' })).toBeInTheDocument();
   });
 
   it('uses the IP or host name placeholder (both locales)', async () => {

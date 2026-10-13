@@ -1312,6 +1312,7 @@
       },
       "columns": {
         "id": "ID",
+        "hostName": "Host name",
         "innerIpv4": "Private IPv4",
         "innerIpv6": "Private IPv6",
         "cloudArea": "Cloud area",
@@ -1331,7 +1332,8 @@
         "openDetail": "View details of host {{id}}"
       },
       "search": {
-        "placeholder": "Enter IP or host name"
+        "placeholder": "Enter IP or host name",
+        "clearSearch": "Clear search"
       },
       "tooltips": {
         "viewDeleteHistory": "View delete history",

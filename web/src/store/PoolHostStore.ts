@@ -13,6 +13,7 @@ interface PoolHostQuery {
 interface RawPoolHost {
   id: string;
   display_id?: number;
+  host_name?: string;
   primary_ip?: string;
   ip_addresses?: string[];
   status?: string;
@@ -24,6 +25,7 @@ interface PoolHostRow {
   host: {
     bk_host_id: string;
     bk_host_display_id?: number | string;
+    bk_host_name: string;
     bk_host_innerip: string;
     bk_host_innerip_v6: string;
     bk_cloud_host_status: string;
@@ -72,6 +74,7 @@ const adaptPoolHost = (item: RawPoolHost, directoryId?: number): PoolHostRow => 
     host: {
       bk_host_id: item.id,
       bk_host_display_id: item.display_id ?? item.id,
+      bk_host_name: item.host_name || '',
       bk_host_innerip: item.primary_ip || '',
       bk_host_innerip_v6: ipv6,
       bk_cloud_host_status: item.status || '--',

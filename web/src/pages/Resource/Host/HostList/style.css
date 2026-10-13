@@ -171,3 +171,7 @@
   height: auto;
   padding: 0;
 }
+
+.host-list-host-name {
+  white-space: nowrap;
+}

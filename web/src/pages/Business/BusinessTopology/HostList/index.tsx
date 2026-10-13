@@ -391,6 +391,16 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
     handleSearch('');
   };
 
+  // 输入框被清空（删空或点 ×）时立即按"无关键字"生效，保证搜索框和实际筛选一致；
+  // 非空的输入仍然要回车 / 点搜索按钮才提交
+  const handleSearchInputChange = (value: string) => {
+    setSearchValue(value);
+    if (!value.trim() && keyword) {
+      setKeyword('');
+      setCurrentPage(1);
+    }
+  };
+
   const columns = [
     {
       title: 'ID',
@@ -682,7 +692,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                   style={{ width: 300 }}
                   allowClear
                   value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  onChange={(e) => handleSearchInputChange(e.target.value)}
                   onSearch={(value) => handleSearch(value)}
                 />
               </div>
@@ -703,7 +713,10 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 scroll={{ x: 900 }}
                 locale={{
                   emptyText: loading ? null : keyword && hostsList.length === 0 ? (
-                    <EmptySearchResult onClearFilter={handleClearSearch} />
+                    <EmptySearchResult
+                      onClearFilter={handleClearSearch}
+                      clearText={t('resource.host.search.clearSearch')}
+                    />
                   ) : !loading && hostsList.length === 0 ? (
                     <Empty
                       image={Empty.PRESENTED_IMAGE_SIMPLE}

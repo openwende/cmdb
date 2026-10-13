@@ -5,9 +5,11 @@ import './style.css';
 
 interface Props {
   onClearFilter: () => void;
+  /** 清除按钮的文案；不传时用默认的"清空筛选条件" */
+  clearText?: string;
 }
 
-const EmptySearchResult: React.FC<Props> = ({ onClearFilter }) => {
+const EmptySearchResult: React.FC<Props> = ({ onClearFilter, clearText }) => {
   const { t } = useTranslation();
 
   return (
@@ -33,7 +35,7 @@ const EmptySearchResult: React.FC<Props> = ({ onClearFilter }) => {
         {t('common.components.emptySearchResult.description')}
         &nbsp;
         <Button type="link" onClick={onClearFilter} className="clear-filter-btn">
-          {t('common.components.emptySearchResult.clearFilter')}
+          {clearText ?? t('common.components.emptySearchResult.clearFilter')}
         </Button>
       </div>
     </div>

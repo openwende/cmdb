@@ -60,8 +60,9 @@ vi.mock('@/store/AuthStore', () => ({
 }));
 
 vi.mock('antd', () => ({
-  Table: ({ dataSource = [], columns = [] }: any) => (
+  Table: ({ dataSource = [], columns = [], locale }: any) => (
     <div>
+      {dataSource.length === 0 ? locale?.emptyText : null}
       {dataSource.map((record: any) => (
         <div key={record.host.bk_host_id}>
           <span>{columns[0].render(record.host.display_id, record)}</span>
@@ -122,7 +123,11 @@ vi.mock('@/components/common/Pagination', () => ({
 }));
 
 vi.mock('@/components/common/EmptySearchResult', () => ({
-  default: () => <div>empty-search</div>,
+  default: ({ clearText, onClearFilter }: any) => (
+    <button type="button" onClick={onClearFilter}>
+      empty-search {clearText}
+    </button>
+  ),
 }));
 
 // 抽屉本身另有测试；这里只看列表把哪台主机交给了抽屉
@@ -214,5 +219,39 @@ describe('business topology host search (AC3b)', () => {
 
     fireEvent.click(screen.getByText('close-detail'));
     expect(screen.queryByTestId('host-detail-drawer')).not.toBeInTheDocument();
+  });
+
+  it('applies an emptied box right away and goes back to page 1', async () => {
+    renderList();
+    await waitFor(() => expect(getTopologyNodeHosts).toHaveBeenCalledTimes(1));
+
+    fireEvent.change(searchBox(), { target: { value: '10.90.1' } });
+    fireEvent.keyDown(searchBox(), { key: 'Enter' });
+    await waitFor(() => expect(lastParams()).toMatchObject({ keyword: '10.90.1' }));
+    fireEvent.click(screen.getByText('go-page-2'));
+    await waitFor(() => expect(lastParams()).toMatchObject({ page: 2, keyword: '10.90.1' }));
+
+    // 删空不回车：立即按无关键字生效
+    fireEvent.change(searchBox(), { target: { value: '' } });
+    await waitFor(() => expect(lastParams()).toEqual({ page: 1, page_size: 20 }));
+
+    // 非空的未提交输入仍然要回车
+    const calls = getTopologyNodeHosts.mock.calls.length;
+    fireEvent.change(searchBox(), { target: { value: 'pay' } });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(getTopologyNodeHosts).toHaveBeenCalledTimes(calls);
+  });
+
+  it('labels the empty-result button "clear search"', async () => {
+    renderList();
+    await waitFor(() => expect(getTopologyNodeHosts).toHaveBeenCalledTimes(1));
+    getTopologyNodeHosts.mockResolvedValueOnce({
+      code: 0,
+      data: { items: [], pagination: { page: 1, page_size: 20, total: 0, total_page: 0 } },
+    } as any);
+    fireEvent.change(searchBox(), { target: { value: 'nope' } });
+    fireEvent.keyDown(searchBox(), { key: 'Enter' });
+    const clear = await screen.findByText(/empty-search/);
+    expect(clear).toHaveTextContent('empty-search resource.host.search.clearSearch');
   });
 });

@@ -99,6 +99,15 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
     handleSearch('');
   };
 
+  // 输入框被清空（删空或点 ×）时立即按"无关键字"生效，保证搜索框和实际筛选一致；
+  // 非空的输入仍然要回车 / 点搜索按钮才提交
+  const handleSearchInputChange = (value: string) => {
+    setSearchInput(value);
+    if (!value.trim() && submittedKeyword) {
+      handleSearch('');
+    }
+  };
+
   const hostPoolStatuses = checkHostsInHostPool(selectedRowKeys, poolHosts, directories);
 
   const handleCopyMenuClick = useCallback(
@@ -164,6 +173,12 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
       },
     },
     {
+      title: t('resource.host.columns.hostName'),
+      render: (_: any, record: any) => (
+        <span className="host-list-host-name">{record.host.bk_host_name || '--'}</span>
+      ),
+    },
+    {
       title: t('resource.host.columns.innerIpv4'),
       sorter: true,
       render: (_: any, record: any) => record.host.bk_host_innerip || '--',
@@ -196,7 +211,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
   };
 
   const emptyNode = submittedKeyword ? (
-    <EmptySearchResult onClearFilter={handleClearSearch} />
+    <EmptySearchResult
+      onClearFilter={handleClearSearch}
+      clearText={t('resource.host.search.clearSearch')}
+    />
   ) : (
     <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t('common.noData')} />
   );
@@ -269,7 +287,7 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
             placeholder={t('resource.host.search.placeholder')}
             aria-label={t('resource.host.search.placeholder')}
             value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
+            onChange={(event) => handleSearchInputChange(event.target.value)}
             onSearch={handleSearch}
           />
           <Tooltip title={t('resource.host.tooltips.viewDeleteHistory')}>
@@ -290,7 +308,8 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
           rowKey={getHostKey}
           showSorterTooltip={false}
           pagination={false}
-          scroll={{ x: 800 }}
+          // 加了"主机名"列，在原来 800 的基础上加宽，其余列宽度不被挤窄
+          scroll={{ x: 940 }}
           rowSelection={{
             selectedRowKeys,
             onChange: (rowKeys) => setSelectedRowKeys(rowKeys),
@@ -342,6 +361,10 @@ const HostList: React.FC<HostListProps> = ({ selectedId }) => {
                   </div>
                 </div>
                 <dl className="host-mobile-card__grid">
+                  <div>
+                    <dt>{t('resource.host.columns.hostName')}</dt>
+                    <dd>{record.host.bk_host_name || '--'}</dd>
+                  </div>
                   <div>
                     <dt>{t('resource.host.columns.innerIpv6')}</dt>
                     <dd>{record.host.bk_host_innerip_v6 || '--'}</dd>
