@@ -31,12 +31,21 @@
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  /* 占搜索框之外的剩余空间；最窄到最宽的按钮（min-width: auto），放不下时按钮换行 */
+  flex: 1 1 0;
 }
 
 .search-bar {
   margin-left: auto;
   display: flex;
   gap: 8px;
+  /* 宽屏 300px；工具栏不够宽时（如 1024 英文）跟着收窄，按钮不出卡片 */
+  flex: 0 1 300px;
+  min-width: 0;
+}
+
+.search-bar .host-workspace__search {
+  width: 100%;
 }
 
 .host-workspace__table-shell {
@@ -93,6 +102,7 @@
   }
 
   .search-bar {
+    flex: none;
     margin-left: 0;
     width: 100%;
   }

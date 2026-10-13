@@ -2,11 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Popover, Spin, Tag } from 'antd';
 import { BookOutlined, DesktopOutlined, FileSearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import { getKnowledgeSection } from '@/api/services/aiChat';
 import type { AIKnowledgeSection } from '@/api/types/aiChat';
-import { getAuditRecordPath, getHostDetailPath } from '@/utils/routes';
+import {
+  getAuditRecordPath,
+  getHostDetailNavigationState,
+  getHostDetailPath,
+} from '@/utils/routes';
 import type { CitationItem } from './citations';
 import { BASE_REMARK_PLUGINS } from './markdownPlugins';
 
@@ -142,11 +146,16 @@ const RecordCitation: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-/** 主机引用：跳到主机资源页的详情深链，AI 抽屉保持打开 */
+/**
+ * 主机引用：跳到主机资源页的详情深链，AI 抽屉保持打开。
+ * state 记下点击时所在的页面：在主机页上点的，关闭抽屉时退回打开前那条记录，不留重复记录。
+ */
 const HostCitation: React.FC<{ id: string }> = ({ id }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const open = () => navigate(getHostDetailPath(id));
+  const { pathname } = useLocation();
+  const open = () =>
+    navigate(getHostDetailPath(id), { state: getHostDetailNavigationState(pathname) });
   return (
     <Tag
       icon={<DesktopOutlined />}

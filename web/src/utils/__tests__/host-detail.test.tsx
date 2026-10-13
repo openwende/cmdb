@@ -4,6 +4,7 @@ import { StrictMode } from 'react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { CitationGroup } from '@/components/AIAssistant/CitationTag';
 import { adaptHostAuditLogs, adaptHostDetail, formatMemory } from '@/api/adapters/hostAdapter';
 import type { HostDetailRaw } from '@/api/types/host';
 import HostDetailDrawer from '@/pages/Resource/Host/components/HostDetailDrawer';
@@ -507,5 +508,76 @@ describe('host detail drawer and browser history', () => {
     await waitFor(() => expect(location()).toBe('/resource/host'));
     fireEvent.click(screen.getByText('browser-back'));
     await waitFor(() => expect(location()).toBe('/home'));
+  });
+});
+
+/** AI 助手里的主机引用（AI 抽屉挂在布局上，换页时一直在） */
+const AITag = () => <CitationGroup items={[{ kind: 'host', id: '43' }]} />;
+
+const renderWithAI = (entries: string[]) =>
+  render(
+    <MemoryRouter initialEntries={entries} initialIndex={entries.length - 1}>
+      <Routes>
+        <Route path="/resource/host" element={<DeepLinkHarness />} />
+        <Route path="*" element={null} />
+      </Routes>
+      <AITag />
+      <LocationProbe />
+      <BackButton />
+    </MemoryRouter>,
+  );
+
+describe('host detail opened from an AI citation and browser history', () => {
+  const aiTag = () => screen.getByRole('link', { name: /aiAssistant\.citation\.host:43/ });
+
+  beforeEach(() => {
+    api.getHostByDisplayId.mockResolvedValue({ code: 0, data: HOST_43 });
+    api.listHostAuditLogs.mockResolvedValue(AUDITS);
+  });
+
+  it('on the host page: open, close, back leaves no duplicate entry', async () => {
+    renderWithAI(['/business/1027/topology', '/resource/host']);
+    fireEvent.click(aiTag());
+    expect(location()).toBe('/resource/host?host_id=43');
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+
+    // 再点一次 AI 标签、再关一次，也不叠记录
+    fireEvent.click(aiTag());
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/business/1027/topology'));
+  });
+
+  it('on the host page: open then back closes the drawer and stays', async () => {
+    renderWithAI(['/business/1027/topology', '/resource/host']);
+    fireEvent.click(aiTag());
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+    await waitFor(() =>
+      expect(document.querySelector('.host-detail-drawer.ant-drawer-open')).toBeNull(),
+    );
+  });
+
+  it('from another page: back returns there; close stays on the host page', async () => {
+    renderWithAI(['/home', '/business/1027/topology']);
+    fireEvent.click(aiTag());
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/business/1027/topology'));
+
+    fireEvent.click(aiTag());
+    expect(await screen.findByText('pay-gw-01')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(location()).toBe('/resource/host'));
+    fireEvent.click(screen.getByText('browser-back'));
+    await waitFor(() => expect(location()).toBe('/business/1027/topology'));
   });
 });

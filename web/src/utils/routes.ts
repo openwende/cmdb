@@ -169,6 +169,19 @@ export const getHostDetailPath = (displayId: number | string): string => {
   return `${HOST_RESOURCE_PATH}?${query.toString()}`;
 };
 
+/** 打开主机详情时压入的历史记录里，记下从哪个页面打开的（location.state 的 key） */
+export const HOST_DETAIL_FROM_STATE_KEY = 'hostDetailFrom';
+
+/**
+ * Navigation state for opening the host detail drawer with a pushed history entry.
+ * When the drawer is opened from the host page itself, closing it goes back to the
+ * entry before instead of leaving a duplicate `/resource/host` entry.
+ * @param fromPathname Pathname of the page where the drawer was opened
+ */
+export const getHostDetailNavigationState = (fromPathname: string) => ({
+  [HOST_DETAIL_FROM_STATE_KEY]: fromPathname,
+});
+
 export type HostIdParam =
   | { status: 'missing' }
   | { status: 'invalid' }

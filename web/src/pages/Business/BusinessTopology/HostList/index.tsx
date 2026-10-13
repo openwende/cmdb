@@ -689,7 +689,7 @@ const HostList: React.FC<Props> = ({ selectedNode, parentNodes, onTopologyChange
                 <Input.Search
                   placeholder={t('business.topology.hostList.search.placeholder')}
                   aria-label={t('business.topology.hostList.search.placeholder')}
-                  style={{ width: 300 }}
+                  className="host-workspace__search"
                   allowClear
                   value={searchValue}
                   onChange={(e) => handleSearchInputChange(e.target.value)}
