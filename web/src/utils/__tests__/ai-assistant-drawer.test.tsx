@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -139,6 +139,36 @@ describe('AI assistant drawer', () => {
     expect(screen.getByText('aiAssistant.citation.record')).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.message.stopped')).toBeInTheDocument();
     expect(screen.getByText('aiAssistant.message.stats')).toBeInTheDocument();
+  });
+
+  it('scrolls the list to the bottom after sending even when scrolled up', async () => {
+    api.streamAIChat.mockResolvedValue(undefined);
+    useAIAssistantSceneStore.setState({
+      open: true,
+      activeConversationId: 'conv-a',
+      messages: [
+        { key: 'u1', role: 'user', content: '问题' },
+        { key: 'a1', role: 'assistant', content: '回答', status: 'done' },
+      ],
+    });
+    const user = userEvent.setup();
+    renderDrawer();
+    await screen.findByText('回答');
+
+    // 模拟用户往上滚过：离底部 600px，Bubble.List 记为"不在底部"
+    const list = document.querySelector<HTMLElement>('.ai-chat__list')!;
+    Object.defineProperty(list, 'scrollHeight', { configurable: true, value: 1000 });
+    Object.defineProperty(list, 'clientHeight', { configurable: true, value: 300 });
+    list.scrollTop = 100;
+    fireEvent.scroll(list);
+    const scrollTo = vi.mocked(Element.prototype.scrollTo);
+    scrollTo.mockClear();
+
+    await user.type(screen.getByRole('textbox'), '追问{Enter}');
+    await waitFor(() => expect(api.streamAIChat).toHaveBeenCalled());
+
+    const listCalls = scrollTo.mock.calls.filter((_, i) => scrollTo.mock.contexts[i] === list);
+    expect(listCalls).toContainEqual([{ top: 1000, behavior: 'instant' }]);
   });
 
   it('lists history conversations', async () => {

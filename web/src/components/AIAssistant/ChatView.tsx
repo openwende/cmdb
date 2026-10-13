@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Spin } from 'antd';
 import { Bubble, Prompts, Sender, Welcome, type BubbleProps } from '@ant-design/x';
 import type { GetProp } from 'antd';
@@ -64,9 +64,26 @@ const ChatView: React.FC = () => {
     [messages],
   );
 
+  // 发送后滚到底。Bubble.List 只在"新增前的最后一项"可见时才自动滚动，而发送一次会
+  // 同时追加问题和回答占位，被检查的那一项就是刚发的问题，不在视野里（往上滚过、或抽屉
+  // 重开后没停在底部时），于是不滚，流式回答也不跟随。这里显式滚到底：位置变化触发
+  // scroll 事件，Bubble.List 据此把"在底部"重新置为 true，之后的流式内容继续跟随。
+  const listRef = useRef<React.ElementRef<typeof Bubble.List>>(null);
+  const scrollToEndOnNextItemsRef = useRef(false);
+
+  useEffect(() => {
+    if (!scrollToEndOnNextItemsRef.current) return;
+    scrollToEndOnNextItemsRef.current = false;
+    const list = listRef.current;
+    if (list?.nativeElement) {
+      list.scrollTo({ offset: list.nativeElement.scrollHeight, behavior: 'instant' });
+    }
+  }, [bubbleItems]);
+
   const handleSubmit = (value: string) => {
     if (!value.trim() || streaming) return;
     setDraft('');
+    scrollToEndOnNextItemsRef.current = true;
     void send(value);
   };
 
@@ -112,7 +129,9 @@ const ChatView: React.FC = () => {
       </div>
     );
   } else {
-    body = <Bubble.List className="ai-chat__list" items={bubbleItems} roles={ROLES} />;
+    body = (
+      <Bubble.List ref={listRef} className="ai-chat__list" items={bubbleItems} roles={ROLES} />
+    );
   }
 
   return (
