@@ -12,6 +12,12 @@ import './style.css';
  * AI 调查助手抽屉：挂在 MainLayout，右侧、不遮罩，可以一边看页面一边对话。
  * 开关和对话状态都在 AIAssistantSceneStore，切换页面不丢。
  */
+/**
+ * 随视口变宽：1280 及以下 560px，1440 约 600px，1920 封顶 760px。
+ * 回答里有表格和成串的依据标签，480 太挤；抽屉不带遮罩，点依据跳转后要能看到左边的页面，所以不超过视口的一半
+ */
+const AI_DRAWER_WIDTH = 'clamp(560px, 42vw, 760px)';
+
 const AIAssistantDrawer: React.FC = () => {
   const { t } = useTranslation();
   const { isMobile } = useResponsive();
@@ -38,7 +44,7 @@ const AIAssistantDrawer: React.FC = () => {
         </span>
       }
       placement="right"
-      width={isMobile ? '100%' : 480}
+      width={isMobile ? '100%' : AI_DRAWER_WIDTH}
       open={open}
       mask={false}
       onClose={() => setOpen(false)}

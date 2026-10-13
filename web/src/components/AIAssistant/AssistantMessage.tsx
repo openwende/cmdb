@@ -7,7 +7,7 @@ import MarkdownAnswer from './MarkdownAnswer';
 import { splitAnswerSections } from './parseAnswer';
 import StreamingStatus from './StreamingStatus';
 import ToolSteps from './ToolSteps';
-import { formatDuration } from './format';
+import { formatDuration, formatTokens } from './format';
 
 /**
  * 一条助手消息：工具步骤 → 回答正文 → 生成中的状态行 / 统计。
@@ -54,8 +54,8 @@ const AssistantMessage: React.FC<{ message: AIChatMessage }> = ({ message }) => 
           {t('aiAssistant.message.stats', {
             count: message.stats.toolCalls,
             elapsed: formatDuration(message.stats.elapsedMs),
-            input: message.stats.inputTokens,
-            output: message.stats.outputTokens,
+            input: formatTokens(message.stats.inputTokens),
+            output: formatTokens(message.stats.outputTokens),
           })}
         </div>
       )}
