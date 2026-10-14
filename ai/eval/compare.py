@@ -81,6 +81,7 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
         "输入 token/题": sum(r["usage"]["input_tokens"] for r in ok) / n,
         "输出 token/题": sum(r["usage"]["output_tokens"] for r in ok) / n,
         "耗时 秒/题": sum(r["elapsed_ms"] for r in ok) / 1000 / n,
+        "摘要压缩/题": sum(r.get("summarizations", 0) for r in ok) / n,
         "引用幻觉率": sum(len(c["unsupported"]) for c in cites) / cited if cited else None,
         "知识库查询/题": sum(c["name"] == "search_knowledge" for c in calls) / n,
         "doc 引用/题": sum(c.get("cited_docs", 0) for c in cites) / n

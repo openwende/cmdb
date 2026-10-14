@@ -134,3 +134,17 @@ def test_answer_is_from_current_turn_only():
 
     t.translate(ev("values", {"messages": [*history, AIMessage("第二答")]}))
     assert t.final_event().data["answer"] == "第二答"
+
+
+def summary_message(id_):
+    return HumanMessage("摘要", id=id_, additional_kwargs={"lc_source": "summarization"})
+
+
+def test_counts_summarizations_in_current_turn_only():
+    t = EventTranslator()
+    earlier = [summary_message("s0"), AIMessage("第一答"), HumanMessage("第二问")]
+    t.translate(ev("values", {"messages": earlier}))  # s0 是之前轮次压缩的
+    assert t.summarizations == 0
+    t.translate(ev("values", {"messages": [summary_message("s1"), HumanMessage("第二问")]}))
+    t.translate(ev("values", {"messages": [summary_message("s1"), AIMessage("第二答")]}))
+    assert t.final_event().data["summarizations"] == 1

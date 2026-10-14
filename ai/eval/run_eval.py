@@ -222,6 +222,7 @@ def print_report(conversation_results: list[dict[str, Any]]) -> dict[str, Any]:
     results = turn_rows(conversation_results)
     print(
         f"\n{'用例':<28}{'结果':<6}{'检查':<8}{'工具':<6}{'模型':<6}{'输入tok':>9}{'输出tok':>9}{'秒':>7}"
+        f"{'压缩':>5}"
     )
     for r in results:
         checks = r["checks"]
@@ -231,7 +232,7 @@ def print_report(conversation_results: list[dict[str, Any]]) -> dict[str, Any]:
             f"{r['id']:<30}{'✅' if r['passed'] else '❌':<5}{f'{passed}/{len(checks)}':<10}"
             f"{len(r.get('tool_calls', [])):<7}{r.get('model_calls', 0):<7}"
             f"{usage.get('input_tokens', 0):>9}{usage.get('output_tokens', 0):>9}"
-            f"{r.get('elapsed_ms', 0) / 1000:>8.1f}"
+            f"{r.get('elapsed_ms', 0) / 1000:>8.1f}{r.get('summarizations', 0):>6}"
         )
         for c in checks:
             if not c["ok"]:
@@ -265,6 +266,7 @@ def print_report(conversation_results: list[dict[str, Any]]) -> dict[str, Any]:
         "avg_seconds": avg([r["elapsed_ms"] / 1000 for r in ok_runs]),
         "total_input_tokens": sum(r["usage"]["input_tokens"] for r in ok_runs),
         "total_output_tokens": sum(r["usage"]["output_tokens"] for r in ok_runs),
+        "summarizations": sum(r.get("summarizations", 0) for r in ok_runs),
         **citation_metrics(ok_runs),
         **multiturn_summary(conversation_results),
     }
@@ -273,7 +275,8 @@ def print_report(conversation_results: list[dict[str, Any]]) -> dict[str, Any]:
         f"检查项通过率 {summary['check_pass_rate']:.0%}，错误 {summary['errors']}；"
         f"平均 {summary['avg_tool_calls']} 次工具调用、{summary['avg_model_calls']} 次模型调用、"
         f"输入 {summary['avg_input_tokens']} / 输出 {summary['avg_output_tokens']} token、"
-        f"{summary['avg_seconds']} 秒；引用 {summary['cited_ids']} 个，"
+        f"{summary['avg_seconds']} 秒；摘要压缩 {summary['summarizations']} 次；"
+        f"引用 {summary['cited_ids']} 个，"
         f"无依据 {summary['unsupported_ids']} 个（{summary['unsupported_rate']:.1%}）；"
         f"doc 引用 {summary['cited_docs']} 个，无依据 {summary['unsupported_docs']} 个"
     )
@@ -335,7 +338,9 @@ async def main() -> int:
     await asyncio.to_thread(investigator.knowledge.warm_up)
     print(
         f"运行 {len(cases)} 个用例，模型 {settings.deepseek_model}，并发 {args.concurrency}，"
-        f"知识库检索 {settings.knowledge_search_mode}"
+        f"知识库检索 {settings.knowledge_search_mode}，"
+        f"摘要阈值 {settings.summarize_trigger_tokens} token / "
+        f"保留 {settings.summarize_keep_messages} 条"
     )
     started = time.monotonic()
     results = await asyncio.gather(*(bounded(c) for c in cases))
@@ -354,6 +359,8 @@ async def main() -> int:
                 "label": args.label,
                 "model": settings.deepseek_model,
                 "knowledge_search_mode": settings.knowledge_search_mode,
+                "summarize_trigger_tokens": settings.summarize_trigger_tokens,
+                "summarize_keep_messages": settings.summarize_keep_messages,
                 "prompt_sha": prompt_hash,
                 "summary": summary,
                 "results": results,

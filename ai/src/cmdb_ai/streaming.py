@@ -7,7 +7,8 @@ SSE 事件（data 均为 JSON）：
 - message_end    {message_id, finish_reason, usage}   一次模型调用结束及其 token 用量
 - tool_start     {tool_call_id, name, input}
 - tool_end       {tool_call_id, name, status, output} status 为 success / error
-- final          {answer, tool_calls, usage, model_calls, elapsed_ms}
+- final          {answer, tool_calls, usage, model_calls, summarizations, elapsed_ms}
+                 summarizations：本轮对话历史被摘要中间件压缩的次数（摘要调用不计入 usage）
                  评测时 tool_calls 每项额外带完整 output（对话接口不带）
 - error          {message}
 
@@ -81,6 +82,8 @@ class EventTranslator:
         self.tool_calls: dict[str, ToolCallRecord] = {}
         self._message_id: str | None = None
         self._latest_values: dict[str, Any] | None = None
+        self._summary_ids: set[str] = set()
+        self._summary_ids_before: set[str] | None = None
 
     def translate(self, event: dict[str, Any]) -> list[SSEEvent]:
         params = event["params"]
@@ -89,6 +92,7 @@ class EventTranslator:
         method, data = event["method"], params["data"]
         if method == "values":
             self._latest_values = data
+            self._track_summaries(data.get("messages", []))
             return []
         if method == "messages":
             payload, metadata = data
@@ -98,6 +102,22 @@ class EventTranslator:
         if method == "tools":
             return self._on_tool(data)
         return []
+
+    def _track_summaries(self, messages: list) -> None:
+        # 每次压缩都会换上一条新的摘要消息；第一次收到的状态里已有的摘要是之前轮次压缩的，不算本轮
+        ids = {
+            m.id
+            for m in messages
+            if isinstance(m, HumanMessage)
+            and m.additional_kwargs.get("lc_source") == "summarization"
+        }
+        if self._summary_ids_before is None:
+            self._summary_ids_before = ids
+        self._summary_ids |= ids
+
+    @property
+    def summarizations(self) -> int:
+        return len(self._summary_ids - (self._summary_ids_before or set()))
 
     def _on_message(self, payload: dict[str, Any]) -> list[SSEEvent]:
         kind = payload["event"]
@@ -190,6 +210,7 @@ class EventTranslator:
             "tool_calls": [self._tool_call_summary(r) for r in self.tool_calls.values()],
             "usage": self.usage.as_dict(),
             "model_calls": self.model_calls,
+            "summarizations": self.summarizations,
             "elapsed_ms": int((time.monotonic() - self.started_at) * 1000),
         }
 
