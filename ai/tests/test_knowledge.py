@@ -52,7 +52,8 @@ def test_knowledge_does_not_leak_eval_answers():
     hosts = set(re.findall(r"\b(?:[a-z]+-)+\d{2}\b", corpus))
     ips = set(re.findall(r"\b\d+\.\d+\.\d+\.\d+\b", corpus))
     # 两位数的 host_id（如 43）会和"约 43 分钟"这类普通数字撞上，只查三位数以上的编号
-    records = {str(n) for c in cases for n in c.get("cite", []) if n >= 100}
+    cites = [n for c in cases for t in [c, *c.get("turns", [])] for n in t.get("cite", [])]
+    records = {str(n) for n in cites if n >= 100}
     assert hosts and ips and records
     for leaked in hosts | ips | {"文德商城", "支付清结算", "观测平台", "数据中台"}:
         assert leaked not in text, leaked

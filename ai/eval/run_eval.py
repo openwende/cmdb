@@ -1,7 +1,9 @@
 """一键跑评测：uv run python eval/run_eval.py [--only id1,id2] [--concurrency 4] [--label 说明]
 
-在进程内调用和 /chat 相同的 Investigator（不写检查点，每题一个独立会话），
+在进程内调用和 /chat 相同的 Investigator（检查点只放内存、不写数据库，每题一个独立会话），
 用 .env 里的 CMDB_EVAL_USERNAME / CMDB_EVAL_PASSWORD 登录。
+多轮题（cases.yaml 里带 turns 的，suite 为 multiturn）在同一会话里按顺序问，每轮单独检查；
+只在 --suite multiturn 或 --only 指定时运行。
 结果写到 eval/results/<时间>-<label>.json，记录每题的回答、工具调用（含完整返回内容）、token、
 耗时和检查结果，
 用于优化前后对比。
@@ -20,6 +22,7 @@ from typing import Any
 
 import yaml
 from citations import check_citations
+from langgraph.checkpoint.memory import InMemorySaver
 
 from cmdb_ai.cmdb import CMDBClient
 from cmdb_ai.config import get_settings
@@ -27,6 +30,10 @@ from cmdb_ai.investigator import Investigator
 from cmdb_ai.prompts import INVESTIGATOR_SYSTEM_PROMPT
 
 EVAL_DIR = Path(__file__).parent
+
+
+# [record_id=612]、[doc=…#…] 这类引用标记：max_chars 只数正文，不数引用
+_CITATION = re.compile(r"\[\s*\w+\s*[=:：][^\]\n]*\]")
 
 
 def _mentions(answer: str, option: Any) -> bool:
@@ -54,23 +61,90 @@ def check_case(case: dict[str, Any], answer: str, tool_names: list[str]) -> list
     if "max_tools" in case:
         ok = len(tool_names) <= case["max_tools"]
         results.append({"check": f"max_tools {case['max_tools']}", "ok": ok})
+    if "min_tools" in case:
+        ok = len(tool_names) >= case["min_tools"]
+        results.append({"check": f"min_tools {case['min_tools']}", "ok": ok})
+    if "max_chars" in case:
+        ok = len(_CITATION.sub("", answer)) <= case["max_chars"]
+        results.append({"check": f"max_chars {case['max_chars']}", "ok": ok})
     return results
 
 
-async def run_case(investigator: Investigator, user, case: dict[str, Any], run_id: str, label: str):
+async def ask(
+    investigator: Investigator, user, conversation_id: str, question: str, tags: list[str]
+):
     final, error = None, None
-    conversation_id = f"eval-{run_id}-{case['id']}"
     async for sse in investigator.stream(
-        conversation_id,
-        case["question"],
-        user,
-        include_tool_outputs=True,
-        trace_tags=["eval", label, case["id"]],
+        conversation_id, question, user, include_tool_outputs=True, trace_tags=tags
     ):
         if sse.event == "final":
             final = sse.data
         elif sse.event == "error":
             error = sse.data["message"]
+    return final, error
+
+
+def score_turns(case: dict[str, Any], result: dict[str, Any]) -> None:
+    """按 case 的 turns 给多轮结果的每一轮重新打分（compare.py 也用它）。
+
+    引用核对用第 1 轮到本轮的全部工具返回：引用前面轮次查到的编号也算有依据。"""
+    history: list[dict[str, Any]] = []
+    for spec, turn in zip(case["turns"], result["turns"], strict=False):
+        if "answer" not in turn:
+            continue
+        history.extend(turn["tool_calls"])
+        turn["checks"] = check_case(spec, turn["answer"], [c["name"] for c in turn["tool_calls"]])
+        turn["passed"] = all(c["ok"] for c in turn["checks"])
+        turn["citations"] = check_citations(turn["answer"], history)
+    result["passed"] = len(result["turns"]) == len(case["turns"]) and all(
+        t["passed"] for t in result["turns"]
+    )
+
+
+def turn_rows(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """多轮结果展开成每轮一行（id 为 用例#轮次），单轮结果原样保留，用于汇总指标。"""
+    rows = []
+    for r in results:
+        if "turns" in r:
+            rows.extend({**t, "id": f"{r['id']}#{t['turn']}"} for t in r["turns"])
+        else:
+            rows.append(r)
+    return rows
+
+
+async def run_conversation(
+    investigator: Investigator, user, case: dict[str, Any], run_id: str, label: str
+):
+    conversation_id = f"eval-{run_id}-{case['id']}"
+    turns = []
+    for i, spec in enumerate(case["turns"], 1):
+        final, error = await ask(
+            investigator, user, conversation_id, spec["question"], ["eval", label, case["id"]]
+        )
+        if final is None:
+            turns.append(
+                {
+                    "turn": i,
+                    "question": spec["question"],
+                    "error": error,
+                    "passed": False,
+                    "checks": [],
+                }
+            )
+            break  # 这一轮没有回答，后面的追问没有意义
+        turns.append({"turn": i, "question": spec["question"], **final})
+    result = {"id": case["id"], "story": case.get("story"), "turns": turns}
+    score_turns(case, result)
+    return result
+
+
+async def run_case(investigator: Investigator, user, case: dict[str, Any], run_id: str, label: str):
+    if "turns" in case:
+        return await run_conversation(investigator, user, case, run_id, label)
+    conversation_id = f"eval-{run_id}-{case['id']}"
+    final, error = await ask(
+        investigator, user, conversation_id, case["question"], ["eval", label, case["id"]]
+    )
     if final is None:
         return {
             "id": case["id"],
@@ -110,7 +184,42 @@ def citation_metrics(results: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
-def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
+def multiturn_summary(results: list[dict[str, Any]]) -> dict[str, Any]:
+    """多轮专有指标：整段对话全部轮次通过的比例，复用 / 重查两类轮次的工具调用是否符合预期。"""
+    conversations = [r for r in results if "turns" in r]
+    if not conversations:
+        return {}
+    cases = {c["id"]: c for c in load_cases()}
+
+    def rate(check_name: str) -> tuple[int, int]:
+        hits = [
+            c["ok"]
+            for r in conversations
+            for spec, t in zip(cases[r["id"]]["turns"], r["turns"], strict=False)
+            if check_name in spec
+            for c in t["checks"]
+            if c["check"].startswith(check_name)
+        ]
+        return sum(hits), len(hits)
+
+    reuse_ok, reuse_n = rate("max_tools")
+    recheck_ok, recheck_n = rate("min_tools")
+    return {
+        "conversations": len(conversations),
+        "conversations_passed": sum(r["passed"] for r in conversations),
+        "reuse_turns": reuse_n,
+        "reuse_turns_ok": reuse_ok,
+        "recheck_turns": recheck_n,
+        "recheck_turns_ok": recheck_ok,
+    }
+
+
+def load_cases() -> list[dict[str, Any]]:
+    return yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(encoding="utf-8"))
+
+
+def print_report(conversation_results: list[dict[str, Any]]) -> dict[str, Any]:
+    results = turn_rows(conversation_results)
     print(
         f"\n{'用例':<28}{'结果':<6}{'检查':<8}{'工具':<6}{'模型':<6}{'输入tok':>9}{'输出tok':>9}{'秒':>7}"
     )
@@ -157,6 +266,7 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
         "total_input_tokens": sum(r["usage"]["input_tokens"] for r in ok_runs),
         "total_output_tokens": sum(r["usage"]["output_tokens"] for r in ok_runs),
         **citation_metrics(ok_runs),
+        **multiturn_summary(conversation_results),
     }
     print(
         f"\n通过 {summary['passed']}/{n}（{summary['pass_rate']:.0%}），"
@@ -167,6 +277,13 @@ def print_report(results: list[dict[str, Any]]) -> dict[str, Any]:
         f"无依据 {summary['unsupported_ids']} 个（{summary['unsupported_rate']:.1%}）；"
         f"doc 引用 {summary['cited_docs']} 个，无依据 {summary['unsupported_docs']} 个"
     )
+    if "conversations" in summary:
+        print(
+            f"多轮：对话全部轮次通过 {summary['conversations_passed']}/{summary['conversations']}；"
+            f"该复用的轮次没有多余工具调用 {summary['reuse_turns_ok']}/{summary['reuse_turns']}，"
+            f"该重查的轮次重新查了 {summary['recheck_turns_ok']}/{summary['recheck_turns']}"
+            f"（上面的题数、平均值按轮次算）"
+        )
     return summary
 
 
@@ -185,12 +302,14 @@ async def main() -> int:
         print("请在 .env 里设置 CMDB_EVAL_USERNAME / CMDB_EVAL_PASSWORD", file=sys.stderr)
         return 2
 
-    cases = yaml.safe_load((EVAL_DIR / "cases.yaml").read_text(encoding="utf-8"))
+    cases = load_cases()
     if args.only:
         wanted = set(args.only.split(","))
         cases = [c for c in cases if c["id"] in wanted]
     if args.suite:
         cases = [c for c in cases if c.get("suite", "investigation") == args.suite]
+    elif not args.only:
+        cases = [c for c in cases if "turns" not in c]  # 默认全量不含多轮题，跑法和以前一致
 
     cmdb = CMDBClient(settings.cmdb_base_url, settings.cmdb_timeout_seconds)
     try:
@@ -201,7 +320,8 @@ async def main() -> int:
     finally:
         await cmdb.aclose()
 
-    investigator = Investigator(settings)
+    # 内存检查点：多轮题的追问能接上前面的轮次；单轮题每题一个会话，和不带检查点等价
+    investigator = Investigator(settings, checkpointer=InMemorySaver())
     run_id = datetime.now().strftime("%Y%m%d-%H%M%S")
     semaphore = asyncio.Semaphore(args.concurrency)
 

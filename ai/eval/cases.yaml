@@ -501,3 +501,160 @@
   tools: [query_host_changes]
   exclude: [支付清算]
   passages: [角色与权限#系统角色, 角色与权限#权限和审计的关系]
+
+# ---- 多轮对话（2026-10-14）：同一会话里按顺序问，每轮单独做规则检查
+#
+# suite: multiturn          只在 --suite multiturn 或 --only 指定时运行，默认全量不跑
+# turns:                    每轮一个题目，字段和单轮题相同（question、reference、cite、include…），另外可用：
+#   max_tools: 0            这一轮应直接用前面轮次查到的结果作答，不该再调工具
+#   min_tools: 1            前面轮次的结果不够或用户要求确认当前状态，必须重新查
+#   max_chars:              用户要求简短回答时的长度上限（不数 [record_id=…] 这类引用标记）
+# 引用核对按第 1 轮到本轮的全部工具返回算：引用前面轮次查到的编号也有依据。
+
+- id: m1-reference-followups
+  suite: multiturn
+  story: 指代追问
+  turns:
+    - question: 10.20.1.11 为什么同时在两个模块？
+      reference:
+        - 2026-09-16 22:41 liuyang 把它从支付网关转到风控服务（record 612）
+        - 2026-09-17 09:12 zhangwei 加回了支付网关，但没有移出风控服务，于是同时在两个模块（record 613）
+        - 审计没有记录原因，需要找操作人确认
+      cite: [612, 613]
+      include: [liuyang, zhangwei]
+    - question: 它的内存是什么时候改成 32G 的？
+      reference:
+        - '"它"指 pay-gw-01（10.20.1.11）'
+        - 2026-09-03 15:20 内存从 16384 MB 改为 32768 MB（record 610）
+      cite: [610]
+      include: [2026-09-03]
+    - question: 那次是谁改的？
+      reference:
+        - 是 zhangwei（record 610），上一轮已经查到，不需要重新查
+      include: [zhangwei]
+      max_tools: 0
+
+- id: m2-change-answer-format
+  suite: multiturn
+  story: 改变回答要求
+  turns:
+    - question: 商城的数据库主机最近有没有批量变更？
+      reference:
+        - 有：2026-09-20 21:10–21:19，admin 把 mall-db-01~04 四台的系统版本从 Ubuntu 22.04.4 LTS 升级到 22.04.5 LTS（record 623–626）
+      cite: [623, 624, 625, 626]
+      include: [admin, 22.04.5]
+    - question: 只告诉我涉及几台、分别是哪几台，一句话说完。
+      reference:
+        - 一句话：4 台，mall-db-01、mall-db-02、mall-db-03、mall-db-04
+      include: [[4 台, 4台, 四台], mall-db-01, [mall-db-04, "re:mall-db-01\\s*[~～–-]\\s*0?4"]]
+      max_chars: 200
+      max_tools: 0
+    - question: 换成表格，列出每台升级前后的系统版本。
+      reference:
+        - 用表格列出 mall-db-01~04，每台都是从 Ubuntu 22.04.4 LTS 升级到 22.04.5 LTS
+      include: ["|", 22.04.4, 22.04.5]
+      max_tools: 0
+
+- id: m3-switch-host
+  suite: multiturn
+  story: 换对象再问
+  turns:
+    - question: mall-order-03 最近出过什么问题？是怎么处理的？
+      reference:
+        - 2026-09-08 凌晨 liuyang 把它转入故障机并停机，故障原因"数据盘 I/O 错误告警"（record 614–616）
+        - 2026-09-11 chenjing 把磁盘从 300 GB 换成 500 GB 并恢复运行（record 617）
+        - 2026-09-12 liuyang 把它转回订单服务（record 619）
+      cite: [614, 617, 619]
+      include: ["500"]
+    - question: obs-log-07 呢？
+      reference:
+        - '"呢"是问 obs-log-07 最近出过什么问题、怎么处理的'
+        - 故障是网卡丢包（record 856）；2026-09-13 15:45 zhangwei 把它转入故障机并停机（record 854、855）
+        - 2026-09-14 chenjing 恢复运行并标记已修复（record 857、858），16:35 zhangwei 转回风控服务（record 859）
+      cite: [854, 856]
+      include: [网卡丢包]
+      tools: [query_host_changes]
+    - question: 这两次故障，哪台在故障机里待得更久？
+      reference:
+        - mall-order-03 更久：2026-09-08 03:17 转入、09-12 10:30 转回，约 4 天 7 小时（约 103 小时）
+        - obs-log-07：2026-09-13 15:45 转入、09-14 16:35 转回，约 1 天 50 分钟（约 25 小时）
+      include: [mall-order-03, ["re:(?<!\\d)4 ?天", "103"], ["re:(?<!\\d)1 ?天", "re:(?<!\\d)2[45](\\.\\d)? ?(个)?小时"]]
+      max_tools: 0
+
+- id: m4-switch-operator
+  suite: multiturn
+  story: 换对象再问
+  turns:
+    - question: zhangwei 在 9 月 21 日深夜做了什么操作？
+      reference:
+        - 2026-09-21 23:31 关闭了 pay-db-02 的备份，并加上"维护窗口"标签（record 627）
+      cite: [627]
+      include: [pay-db-02]
+    - question: liuyang 9 月 16 日呢？
+      reference:
+        - '"呢"是问 liuyang 2026-09-16 做了什么操作'
+        - 09:22 把 mall-order-01 从文德商城订单服务转到网关服务（record 871）
+        - 22:41 把 pay-gw-01 从支付清结算支付网关转到风控服务（record 612）
+        - 当天只有这两条变更
+      cite: [871, 612]
+      include: [mall-order-01, pay-gw-01]
+
+- id: m5-needs-new-lookup
+  suite: multiturn
+  story: 需要再查的追问
+  turns:
+    - question: 最近从资源池分配到支付网关的是哪几台主机？谁分配的？
+      reference:
+        - pool-10-20-90-01（10.20.90.11）和 pool-10-20-90-02（10.20.90.12）
+        - 2026-09-18 10:00 zhangwei 从资源池"广州支付备机"目录分配到支付清结算空闲机（record 628、629），10:20 再转到支付网关（record 630、631）
+      cite: [628, 629]
+      include: [10.20.90.11, 10.20.90.12, zhangwei]
+    - question: 它们原来所在的"广州支付备机"目录现在还剩几台？
+      reference:
+        - '"广州支付备机"目录现在还剩 5 台，上一轮的变更记录里没有这个信息，需要查'
+      include: [["5 台", "5台", "共 5", "共5", "：5", ": 5"]]
+      min_tools: 1
+    - question: 这两台的内存是多少？
+      reference:
+        - '"这两台"指 pool-10-20-90-01 和 pool-10-20-90-02，内存都是 16 GB（16384 MB）'
+      include: ["16"]
+
+- id: m6-recheck-current-state
+  suite: multiturn
+  story: 当前状态要重新查
+  turns:
+    - question: pay-db-02 现在还开着备份吗？
+      reference:
+        - 没有开着，备份字段现在是 false
+        - 2026-09-21 23:31 zhangwei 关闭的（record 627）
+      cite: [627]
+      include: [zhangwei]
+    - question: 这个字段关掉有什么风险？
+      reference:
+        - 备份表示是否开启了数据备份；关闭期间数据损坏或误删无法恢复，属于高风险变更
+        - 约定只在维护窗口内临时关闭，结束后应恢复；数据库类主机应当开启备份
+      include: [[无法恢复, 不能恢复, 没法恢复, 恢复不了]]
+      tools: [search_knowledge]
+    - question: 再帮我确认一下，pay-db-02 的备份现在恢复了吗？
+      reference:
+        - 用户要求确认当前状态，应重新查询，而不是只复述第一轮的结果
+        - 没有恢复，备份字段仍是 false；2026-09-21 关闭之后没有重新开启的记录
+      include: [["re:(没有|未|尚未|还没)(有)?(恢复|开启|重新开启|打开)", "false", "re:(仍|还|依然|仍然)(是|处于|为)?(关闭|关着)"]]
+      min_tools: 1
+
+- id: m7-clarify-then-refer
+  suite: multiturn
+  story: 先澄清再指代
+  turns:
+    - question: 支付网关那台机器的内存是多少？
+      reference:
+        - 支付网关模块有 7 台主机，"那台"有歧义：要请用户确认是哪一台，或者把各台的内存都列出来，不能只挑一台作答
+      include: [[哪一台, 哪台, 确认, 多台, 7 台, 具体是]]
+    - question: 我说的是 pay-gw-01。
+      reference:
+        - pay-gw-01 的内存是 32 GB（32768 MB）
+      include: [["32 GB", "32GB", "32G", "32768"]]
+    - question: 它现在在哪些模块？
+      reference:
+        - '"它"指 pay-gw-01，现在同时在支付清结算的支付网关和风控服务两个模块'
+      include: [支付网关, 风控服务]

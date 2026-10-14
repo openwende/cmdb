@@ -9,6 +9,8 @@
 LLM 评分（正确性 / 忠实度）只从 judge.py 的缓存里取，不调用模型；有题没评过时显示为"—"。
 --suite 只统计这一组题（cases.yaml 的 suite 字段，没写的是 investigation）；
 题数不同的结果不要直接比均值。
+多轮题（--suite multiturn）每一轮算一题（逐题表里是 用例#轮次），另外给出对话通过率和
+复用 / 重查两类轮次的工具调用是否符合预期；多轮题不做 LLM 评分。
 """
 
 import json
@@ -20,7 +22,7 @@ from typing import Any
 import yaml
 from citations import check_citations
 from judge import load_cache, lookup
-from run_eval import check_case
+from run_eval import check_case, multiturn_summary, score_turns, turn_rows
 
 EVAL_DIR = Path(__file__).parent
 RESULTS_DIR = EVAL_DIR / "results"
@@ -46,7 +48,9 @@ def load(label: str, suite: str | None = None) -> list[dict[str, Any]]:
                 if not data["results"]:
                     continue
             for r in data["results"]:
-                if "answer" in r and r["id"] in CASES:
+                if "turns" in r and r["id"] in CASES:
+                    score_turns(CASES[r["id"]], r)
+                elif "answer" in r and r["id"] in CASES:
                     tools = [c["name"] for c in r["tool_calls"]]
                     r["checks"] = check_case(CASES[r["id"]], r["answer"], tools)
                     r["passed"] = all(c["ok"] for c in r["checks"])
@@ -60,7 +64,7 @@ def load(label: str, suite: str | None = None) -> list[dict[str, Any]]:
 
 
 def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
-    results = run["results"]
+    results = turn_rows(run["results"])
     ok = [r for r in results if "usage" in r]
     checks = [c for r in results for c in r["checks"]]
     calls = [c for r in ok for c in r["tool_calls"]]
@@ -86,6 +90,22 @@ def run_metrics(run: dict[str, Any]) -> dict[str, float | None]:
             sum(len(c.get("unsupported_docs", [])) for c in cites) / docs if docs else None
         ),
         **judge_metrics(ok),
+        **conversation_metrics(run["results"]),
+    }
+
+
+def conversation_metrics(results: list[dict[str, Any]]) -> dict[str, float | None]:
+    mt = multiturn_summary(results)
+    if not mt:
+        return {}
+    return {
+        "对话通过率": mt["conversations_passed"] / mt["conversations"],
+        "复用轮无多余工具调用率": (
+            mt["reuse_turns_ok"] / mt["reuse_turns"] if mt["reuse_turns"] else None
+        ),
+        "重查轮有重新查询率": (
+            mt["recheck_turns_ok"] / mt["recheck_turns"] if mt["recheck_turns"] else None
+        ),
     }
 
 
@@ -154,11 +174,11 @@ def main() -> None:
 
     print("\n| 用例 | " + " | ".join(f"{lb} 通过 / 工具 / 输入tok" for lb in labels) + " |")
     print("|---|" + "---|" * len(labels))
-    case_ids = [r["id"] for r in groups[labels[0]][0]["results"]]
+    case_ids = [r["id"] for r in turn_rows(groups[labels[0]][0]["results"])]
     for case_id in case_ids:
         cells = []
         for lb in labels:
-            rs = [r for run in groups[lb] for r in run["results"] if r["id"] == case_id]
+            rs = [r for run in groups[lb] for r in turn_rows(run["results"]) if r["id"] == case_id]
             ok = [r for r in rs if "usage" in r]
             passed = sum(r["passed"] for r in rs)
             tools = statistics.mean(len(r["tool_calls"]) for r in ok) if ok else 0
