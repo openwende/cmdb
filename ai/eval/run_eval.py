@@ -335,7 +335,8 @@ async def main() -> int:
             return result
 
     # 知识库的本地模型先加载好（和 API 启动时一样），不算进第一题的耗时
-    await asyncio.to_thread(investigator.knowledge.warm_up)
+    if investigator.knowledge.enabled:
+        await asyncio.to_thread(investigator.knowledge.warm_up)
     print(
         f"运行 {len(cases)} 个用例，模型 {settings.deepseek_model}，并发 {args.concurrency}，"
         f"知识库检索 {settings.knowledge_search_mode}，"

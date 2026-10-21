@@ -52,7 +52,8 @@ async def lifespan(app: FastAPI):
         app.state.investigator = Investigator(settings, checkpointer)
         app.state.active_threads = set()
         # 知识库的两个本地模型约 4GB，启动时加载好，第一个问题不用多等十几秒
-        await asyncio.to_thread(app.state.investigator.knowledge.warm_up)
+        if app.state.investigator.knowledge.enabled:
+            await asyncio.to_thread(app.state.investigator.knowledge.warm_up)
         try:
             yield
         finally:
@@ -173,7 +174,9 @@ async def delete_conversation(
 async def knowledge_section(
     request: Request, user: User, id: Annotated[str, Query(min_length=1, max_length=200)]
 ) -> dict:
-    section = await request.app.state.store.knowledge_section(id)
+    # 知识库关闭的部署里没有建知识库表
+    knowledge_enabled = request.app.state.investigator.knowledge.enabled
+    section = await request.app.state.store.knowledge_section(id) if knowledge_enabled else None
     if section is None:
         raise HTTPException(status_code=404, detail="知识库小节不存在")
     return section

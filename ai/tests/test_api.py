@@ -14,10 +14,15 @@ class FakeCMDB:
         return UserContext(user_id="u-1", username="alice", jwt=jwt)
 
 
+class FakeKnowledge:
+    enabled = True
+
+
 class FakeInvestigator:
     def __init__(self):
         self.calls = []
         self.deleted = []
+        self.knowledge = FakeKnowledge()
 
     async def stream(self, conversation_id, message, user):
         self.calls.append((conversation_id, message, user.username))
@@ -172,6 +177,15 @@ async def test_knowledge_section(client):
         missing = await client.get("/knowledge/sections", params={"id": "x#y"}, headers=AUTH)
     assert found.json()["title"] == "回收到资源池"
     assert missing.status_code == 404
+
+
+async def test_knowledge_section_is_404_when_knowledge_is_off(client):
+    app.state.investigator.knowledge.enabled = False
+    async with client:
+        resp = await client.get(
+            "/knowledge/sections", params={"id": "主机流转规则#回收到资源池"}, headers=AUTH
+        )
+    assert resp.status_code == 404
 
 
 async def test_cors_preflight_allows_local_frontend(client):

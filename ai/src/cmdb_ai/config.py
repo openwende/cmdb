@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     ai_db_schema: str = Field(default="ai", pattern=r"^[a-z_][a-z0-9_]{0,62}$")
 
     # 知识库检索（search_knowledge 工具）：rerank = 向量 + 关键词 RRF 融合后重排；
-    # vector、hybrid 只用于端到端逐项对比
-    knowledge_search_mode: Literal["vector", "hybrid", "rerank"] = "rerank"
+    # vector、hybrid 只用于端到端逐项对比；off 不加载本地模型（约 4GB），给内存小的部署用
+    knowledge_search_mode: Literal["vector", "hybrid", "rerank", "off"] = "rerank"
 
     # Agent 护栏：单次提问内的模型 / 工具调用上限
     agent_model_call_limit: int = 15

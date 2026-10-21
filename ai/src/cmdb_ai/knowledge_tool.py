@@ -4,6 +4,7 @@
 检索，不经过 Go 后端。检索流程用 C5 评测最好的配置：向量 + 关键词各取前 20 → RRF 融合 →
 bge-reranker-v2-m3 重排 → 前 5 节（62 个查询 Recall@5 0.95、Hit@5 1.00）。
 `KNOWLEDGE_SEARCH_MODE=vector | hybrid` 只用于端到端逐项对比。
+`KNOWLEDGE_SEARCH_MODE=off` 不加载模型，工具仍然注册（系统提示词不用分两版），调用时直接说明未启用。
 
 两个本地模型约 4GB，第一次调用时才加载（几秒到十几秒），之后常驻；torch 推理是同步的，
 放到线程里跑，不阻塞事件循环。同一个模型对象不保证线程安全，推理加锁串行。
@@ -39,6 +40,11 @@ TOOL_DESCRIPTION = """\
 返回最相关的 5 个小节，每节以 [doc=文档#小节] 开头，引用时照抄这个标记。
 query 写成完整的问题或描述（例如"主机还在别的模块时能不能回收到资源池"），不要只写一个词。"""
 
+DISABLED_RESULT = (
+    "当前环境没有启用知识库，查不到概念和规则。不要再调用 search_knowledge；"
+    '能用数据回答的部分照常回答，规则类的内容说明"当前环境未启用知识库"并放进"缺失证据"。'
+)
+
 
 @dataclass(frozen=True)
 class Passage:
@@ -57,6 +63,10 @@ class KnowledgeSearcher:
         self._embedder: BgeM3Embedder | None = None
         self._reranker: BgeReranker | None = None
         self._lock = threading.Lock()
+
+    @property
+    def enabled(self) -> bool:
+        return self._mode != "off"
 
     def warm_up(self) -> tuple[BgeM3Embedder, BgeReranker | None]:
         with self._lock:
@@ -99,6 +109,8 @@ def format_passages(passages: list[Passage]) -> str:
 
 def build_knowledge_tool(searcher: KnowledgeSearcher) -> BaseTool:
     async def search_knowledge(query: str) -> str:
+        if not searcher.enabled:
+            return DISABLED_RESULT
         return format_passages(await searcher.asearch(query))
 
     return StructuredTool.from_function(

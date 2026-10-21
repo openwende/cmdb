@@ -4,6 +4,7 @@ from test_knowledge_search import SECTIONS, FakeReranker
 from cmdb_ai.config import get_settings
 from cmdb_ai.knowledge_store import embedding_text, sync
 from cmdb_ai.knowledge_tool import (
+    DISABLED_RESULT,
     TOOL_NAME,
     KnowledgeSearcher,
     Passage,
@@ -57,3 +58,13 @@ async def test_rerank_mode_uses_reranker_order_and_tool_wraps_it(conn, embedder)
     assert out.startswith("[doc=拓扑与空闲机池#故障机模块]\n故障机是空闲机池下的内置模块")
     assert "[doc=主机内置字段#硬件配置字段和单位]" in out
     assert "主机流转规则" not in out  # top_k=2，分数最低的被截掉
+
+
+async def test_off_mode_loads_no_model_and_tool_says_disabled():
+    settings = get_settings().model_copy(update={"knowledge_search_mode": "off"})
+    searcher = KnowledgeSearcher(settings)
+    assert not searcher.enabled
+    tool = build_knowledge_tool(searcher)
+    assert tool.name == TOOL_NAME  # 仍然注册，提示词不用分两版
+    assert await tool.ainvoke({"query": "故障机"}) == DISABLED_RESULT
+    assert searcher._embedder is None and searcher._reranker is None
