@@ -3,6 +3,7 @@ import pytest
 
 from cmdb_ai.api import app
 from cmdb_ai.cmdb import CMDBAuthError, UserContext
+from cmdb_ai.quota import QuotaExceeded
 from cmdb_ai.streaming import SSEEvent
 
 
@@ -56,6 +57,17 @@ class FakeStore:
         return None
 
 
+class FakeQuota:
+    def __init__(self, exceeded=None):
+        self.exceeded = exceeded
+        self.consumed = []
+
+    async def consume(self, user_id, day, per_user_limit, total_limit):
+        if self.exceeded is None:
+            self.consumed.append(user_id)
+        return self.exceeded
+
+
 AUTH = {"Authorization": "Bearer good"}
 
 
@@ -65,6 +77,7 @@ def client():
     app.state.cmdb = FakeCMDB()
     app.state.investigator = FakeInvestigator()
     app.state.store = FakeStore()
+    app.state.quota = FakeQuota()
     app.state.active_threads = set()
     transport = httpx.ASGITransport(app=app)
     return httpx.AsyncClient(transport=transport, base_url="http://test")
@@ -115,6 +128,17 @@ async def test_chat_rejects_concurrent_turn_in_same_conversation(client):
     assert busy.status_code == 409
     assert other.status_code == 200
     assert app.state.store.messages_log[0][1] == "c-2"  # 被拒绝的那条不记
+    assert app.state.quota.consumed == ["u-1"]  # 也不扣次数
+
+
+async def test_chat_rejects_when_daily_quota_used_up(client):
+    app.state.quota = FakeQuota(QuotaExceeded("user", 30))
+    async with client:
+        resp = await client.post("/chat", json=BODY, headers=AUTH)
+    assert resp.status_code == 429
+    assert "每个账号每天 30 次" in resp.json()["detail"]
+    assert app.state.investigator.calls == []
+    assert app.state.store.messages_log == []
 
 
 async def test_conversation_endpoints_are_scoped_to_user(client):

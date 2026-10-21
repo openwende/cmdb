@@ -1,6 +1,7 @@
 """FastAPI 应用：对话（SSE）、历史会话、知识库小节、健康检查。
 
-POST   /chat                              SSE 流式对话；同一会话上一条没答完时 409
+POST   /chat                              SSE 流式对话；同一会话上一条没答完时 409，
+                                          今天的提问次数用完时 429
 GET    /conversations                     当前用户的会话列表
 GET    /conversations/{id}/messages       恢复一个会话的问答
 DELETE /conversations/{id}                删除会话（连同检查点）
@@ -26,6 +27,7 @@ from cmdb_ai.cmdb import CMDBAuthError, CMDBClient, UserContext
 from cmdb_ai.config import get_settings
 from cmdb_ai.conversations import ConversationStore
 from cmdb_ai.investigator import Investigator, thread_id_for
+from cmdb_ai.quota import QuotaStore, today
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -42,8 +44,11 @@ async def lifespan(app: FastAPI):
         checkpointer = await open_checkpointer(pool)
         store = ConversationStore(pool, settings.ai_db_schema)
         await store.setup()
+        quota = QuotaStore(pool, settings.ai_db_schema)
+        await quota.setup()
         app.state.cmdb = cmdb
         app.state.store = store
+        app.state.quota = quota
         app.state.investigator = Investigator(settings, checkpointer)
         app.state.active_threads = set()
         # 知识库的两个本地模型约 4GB，启动时加载好，第一个问题不用多等十几秒
@@ -101,6 +106,16 @@ async def chat(body: ChatRequest, request: Request, user: User) -> EventSourceRe
     if thread_id in active:
         # 同一会话并发跑两轮会读写同一份检查点，后完成的会覆盖先完成的
         raise HTTPException(status_code=409, detail=BUSY_MESSAGE)
+    settings = get_settings()
+    exceeded = await state.quota.consume(
+        user.user_id,
+        today(settings.quota_timezone),
+        settings.chat_daily_limit_per_user,
+        settings.chat_daily_limit_total,
+    )
+    if exceeded is not None:
+        logger.warning("提问次数已用完 scope=%s user=%s", exceeded.scope, user.username)
+        raise HTTPException(status_code=429, detail=exceeded.message)
 
     def sse(event: str, data: dict) -> dict[str, str]:
         return {"event": event, "data": json.dumps(data, ensure_ascii=False, default=str)}

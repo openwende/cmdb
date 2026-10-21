@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     summarize_trigger_tokens: int = 60_000
     summarize_keep_messages: int = 20
 
+    # 每天的提问次数限额（/chat，评测不走这里）：每个账号一份、全站一份，0 表示不限；
+    # "每天"按 quota_timezone 的日期算
+    chat_daily_limit_per_user: int = Field(default=30, ge=0)
+    chat_daily_limit_total: int = Field(default=200, ge=0)
+    quota_timezone: str = "Asia/Shanghai"
+
     # 可观测（Langfuse，可选）：Public Key 和 Secret Key 都配置了才启用
     langfuse_base_url: str = "http://localhost:3100"
     langfuse_public_key: str | None = None
