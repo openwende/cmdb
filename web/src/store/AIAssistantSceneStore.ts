@@ -170,6 +170,7 @@ export const getChatErrorKey = (error: unknown): string => {
   if (error instanceof AIChatHttpError) {
     if (error.status === 401) return 'common.errors.unauthorized';
     if (error.status === 409) return 'aiAssistant.errors.busy';
+    if (error.status === 429) return 'aiAssistant.errors.quotaExceeded';
     return 'aiAssistant.errors.requestFailed';
   }
   // fetch 连不上服务（服务停了、CORS、断网）时抛 TypeError

@@ -178,9 +178,11 @@ describe('AIAssistantSceneStore', () => {
     expect(useAIAssistantSceneStore.getState().streaming).toBe(false);
   });
 
-  it('maps 409 and connection failures to error messages', async () => {
+  it('maps 409, 429 and connection failures to error messages', async () => {
     api.streamAIChat.mockRejectedValueOnce(new AIChatHttpError(409));
     await useAIAssistantSceneStore.getState().send('a');
+    api.streamAIChat.mockRejectedValueOnce(new AIChatHttpError(429));
+    await useAIAssistantSceneStore.getState().send('q');
     api.streamAIChat.mockRejectedValueOnce(new TypeError('Failed to fetch'));
     await useAIAssistantSceneStore.getState().send('b');
     api.streamAIChat.mockResolvedValueOnce(undefined);
@@ -192,6 +194,7 @@ describe('AIAssistantSceneStore', () => {
       .map((m) => m.errorKey);
     expect(errors).toEqual([
       'aiAssistant.errors.busy',
+      'aiAssistant.errors.quotaExceeded',
       'aiAssistant.errors.connectionFailed',
       'aiAssistant.errors.incomplete',
     ]);

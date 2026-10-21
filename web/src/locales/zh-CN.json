@@ -2148,6 +2148,7 @@
     "errors": {
       "connectionFailed": "无法连接 AI 服务，请确认服务已启动后重试",
       "busy": "上一条消息还在处理中，请稍后再试",
+      "quotaExceeded": "今天的 AI 提问次数已用完，请明天再来",
       "requestFailed": "AI 服务请求失败，请稍后重试",
       "server": "AI 回答失败",
       "incomplete": "连接已断开，回答不完整"

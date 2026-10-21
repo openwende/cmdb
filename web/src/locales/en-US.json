@@ -2148,6 +2148,7 @@
     "errors": {
       "connectionFailed": "Cannot reach the AI service. Make sure it is running and try again",
       "busy": "The previous message is still being processed. Please try again shortly",
+      "quotaExceeded": "You have used up today's AI questions. Please come back tomorrow",
       "requestFailed": "The AI service request failed. Please try again later",
       "server": "The AI failed to answer",
       "incomplete": "The connection dropped and the answer is incomplete"
