@@ -209,13 +209,15 @@ const Home: React.FC = () => {
             <span className="dashboard__ai-icon">
               <SparklesIcon />
             </span>
-            <div className="dashboard__ai-heading">
-              <h2 id="dashboard-ai-title" className="dashboard__ai-title">
-                {t('dashboard.ai.title')}
-              </h2>
-              <p className="dashboard__ai-desc">{t('dashboard.ai.desc')}</p>
-            </div>
+            <h2 id="dashboard-ai-title" className="dashboard__ai-title">
+              {t('dashboard.ai.title')}
+            </h2>
+            <Button type="primary" className="dashboard__ai-open" onClick={() => setAIOpen(true)}>
+              <SparklesIcon />
+              <span>{t('dashboard.ai.open')}</span>
+            </Button>
           </div>
+          <p className="dashboard__ai-desc">{t('dashboard.ai.desc')}</p>
           <div className="dashboard__ai-prompts">
             <span className="dashboard__ai-prompts-title">{t('dashboard.ai.promptsTitle')}</span>
             <div className="dashboard__ai-prompt-list">
@@ -228,22 +230,12 @@ const Home: React.FC = () => {
                     className="dashboard__ai-prompt"
                     onClick={() => askAI(question)}
                   >
-                    {question}
+                    <span className="dashboard__ai-prompt-text">{question}</span>
+                    <RightOutlined className="dashboard__ai-prompt-arrow" aria-hidden />
                   </button>
                 );
               })}
             </div>
-          </div>
-          <div className="dashboard__ai-footer">
-            <Button
-              type="primary"
-              size="large"
-              className="dashboard__ai-open"
-              onClick={() => setAIOpen(true)}
-            >
-              <SparklesIcon />
-              <span>{t('dashboard.ai.open')}</span>
-            </Button>
           </div>
         </section>
         <div className="dashboard__workspace-actions">
