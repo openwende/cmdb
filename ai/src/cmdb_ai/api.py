@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
         app.state.quota = quota
         app.state.investigator = Investigator(settings, checkpointer)
         app.state.active_threads = set()
-        # 知识库的两个本地模型约 4GB，启动时加载好，第一个问题不用多等十几秒
+        # 知识库用本地模型时约 4GB，启动时加载好，第一个问题不用多等十几秒
         if app.state.investigator.knowledge.enabled:
             await asyncio.to_thread(app.state.investigator.knowledge.warm_up)
         try:

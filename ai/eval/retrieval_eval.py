@@ -1,6 +1,7 @@
 """检索评测：uv run python eval/retrieval_eval.py [--mode 模式] [--label 名称]
 
-只测检索，不跑 Agent、不调用任何付费模型（向量化、rerank 都用本地模型）。
+只测检索，不跑 Agent、不调用任何付费模型。向量化、rerank 按 KNOWLEDGE_MODEL_PROVIDER 用本地模型
+或硅基流动托管的同款模型（免费），库里的向量要先用同一来源入库。
 查询 = eval/retrieval_cases.yaml + cases.yaml 里带 passages 的题（用题目原文当查询）。
 
 模式：
@@ -30,18 +31,19 @@ from typing import Any
 import psycopg
 import yaml
 
-from cmdb_ai.config import get_settings
+from cmdb_ai.config import Settings, get_settings
+from cmdb_ai.knowledge_models import make_embedder, make_reranker
 from cmdb_ai.knowledge_search import (
     CANDIDATES,
-    BgeReranker,
     Hit,
+    Reranker,
     fetch_passages,
     keyword_search,
     rerank,
     rrf,
     vector_search,
 )
-from cmdb_ai.knowledge_store import BgeM3Embedder
+from cmdb_ai.knowledge_store import indexed_models
 
 EVAL_DIR = Path(__file__).parent
 RESULTS_DIR = EVAL_DIR / "results"
@@ -79,16 +81,22 @@ def summarize(rows: list[dict[str, Any]]) -> dict[str, float]:
 class Retriever:
     """按模式检索；向量模型、reranker 只加载一次，查询向量预先算好。"""
 
-    def __init__(self, conn: psycopg.Connection, schema: str, queries: list[dict[str, Any]]):
-        self.conn, self.schema = conn, schema
+    def __init__(self, conn: psycopg.Connection, settings: Settings, queries: list[dict[str, Any]]):
+        self.conn, self.schema, self.settings = conn, settings.ai_db_schema, settings
+        embedder = make_embedder(settings)
+        indexed = indexed_models(conn, self.schema)
+        if indexed != {embedder.name}:
+            raise SystemExit(
+                f"库里的向量来自 {sorted(indexed)}，查询用 {embedder.name}，先重新入库"
+            )
         texts = [q["query"] for q in queries]
-        self.vectors = dict(zip(texts, BgeM3Embedder().embed(texts), strict=True))
-        self._reranker: BgeReranker | None = None
+        self.vectors = dict(zip(texts, embedder.embed(texts), strict=True))
+        self._reranker: Reranker | None = None
 
     @property
-    def reranker(self) -> BgeReranker:
+    def reranker(self) -> Reranker:
         if self._reranker is None:
-            self._reranker = BgeReranker()
+            self._reranker = make_reranker(self.settings)
         return self._reranker
 
     def _rerank(self, query: str, hits: list[Hit]) -> list[Hit]:
@@ -117,7 +125,7 @@ class Retriever:
 
 
 def run_mode(
-    retriever: Retriever, queries: list[dict[str, Any]], mode: str, label: str
+    retriever: Retriever, queries: list[dict[str, Any]], mode: str, label: str, provider: str
 ) -> dict[str, Any]:
     start = time.perf_counter()
     rows = []
@@ -138,7 +146,7 @@ def run_mode(
     groups = {"全部": rows} | {s: [r for r in rows if r["style"] == s] for s in STYLES}
     summary = {name: summarize(rs) for name, rs in groups.items() if rs}
 
-    print(f"## 模式 {mode}，查询 {len(rows)} 个，检索耗时 {elapsed:.1f} 秒\n")
+    print(f"## 模式 {mode}（模型 {provider}），查询 {len(rows)} 个，检索耗时 {elapsed:.1f} 秒\n")
     print("| 分组 | 查询数 | " + " | ".join(COLS) + " |")
     print("|---|---|" + "---|" * len(COLS))
     for name, m in summary.items():
@@ -156,7 +164,14 @@ def run_mode(
     out = RESULTS_DIR / f"retrieval-{datetime.now():%Y%m%d-%H%M%S}-{label}.json"
     out.write_text(
         json.dumps(
-            {"label": label, "mode": mode, "seconds": elapsed, "summary": summary, "rows": rows},
+            {
+                "label": label,
+                "mode": mode,
+                "model_provider": provider,
+                "seconds": elapsed,
+                "summary": summary,
+                "rows": rows,
+            },
             ensure_ascii=False,
             indent=1,
         ),
@@ -177,14 +192,15 @@ def main() -> None:
     modes = MODES if args.mode == "all" else [args.mode]
 
     with psycopg.connect(settings.database_url) as conn:
-        retriever = Retriever(conn, settings.ai_db_schema, queries)
+        retriever = Retriever(conn, settings, queries)
         results = []
         for mode in modes:
             if args.mode == "all":
                 label = f"{args.label}-{mode}" if args.label else mode
             else:
                 label = args.label or mode
-            results.append(run_mode(retriever, queries, mode, label))
+            provider = settings.knowledge_model_provider
+            results.append(run_mode(retriever, queries, mode, label, provider))
 
     if len(results) > 1:
         cols = ["Recall@1", "Recall@5", "Hit@1", "Hit@5", "MRR"]

@@ -6,11 +6,13 @@ bge-reranker-v2-m3 重排 → 前 5 节（62 个查询 Recall@5 0.95、Hit@5 1.0
 `KNOWLEDGE_SEARCH_MODE=vector | hybrid` 只用于端到端逐项对比。
 `KNOWLEDGE_SEARCH_MODE=off` 不加载模型，工具仍然注册（系统提示词不用分两版），调用时直接说明未启用。
 
-两个本地模型约 4GB，第一次调用时才加载（几秒到十几秒），之后常驻；torch 推理是同步的，
+模型来源由 `KNOWLEDGE_MODEL_PROVIDER` 选择（见 knowledge_models）。本地两个模型约 4GB，
+第一次调用时才加载（几秒到十几秒），之后常驻；torch 推理和托管 API 的 HTTP 请求都是同步的，
 放到线程里跑，不阻塞事件循环。同一个模型对象不保证线程安全，推理加锁串行。
 """
 
 import asyncio
+import logging
 import threading
 from dataclasses import dataclass
 
@@ -18,16 +20,19 @@ import psycopg
 from langchain_core.tools import BaseTool, StructuredTool
 
 from cmdb_ai.config import Settings
+from cmdb_ai.knowledge_models import make_embedder, make_reranker
 from cmdb_ai.knowledge_search import (
     CANDIDATES,
-    BgeReranker,
+    Reranker,
     fetch_passages,
     keyword_search,
     rerank,
     rrf,
     vector_search,
 )
-from cmdb_ai.knowledge_store import TABLE, BgeM3Embedder
+from cmdb_ai.knowledge_store import TABLE, Embedder, indexed_models
+
+logger = logging.getLogger(__name__)
 
 TOP_K = 5
 TOOL_NAME = "search_knowledge"
@@ -55,30 +60,47 @@ class Passage:
 
 class KnowledgeSearcher:
     def __init__(self, settings: Settings, top_k: int = TOP_K, table: str = TABLE):
+        self._settings = settings
         self._database_url = settings.database_url
         self._schema = settings.ai_db_schema
         self._table = table
         self._mode = settings.knowledge_search_mode
         self._top_k = top_k
-        self._embedder: BgeM3Embedder | None = None
-        self._reranker: BgeReranker | None = None
+        self._embedder: Embedder | None = None
+        self._reranker: Reranker | None = None
         self._lock = threading.Lock()
+        self._index_checked = False
 
     @property
     def enabled(self) -> bool:
         return self._mode != "off"
 
-    def warm_up(self) -> tuple[BgeM3Embedder, BgeReranker | None]:
+    def warm_up(self) -> tuple[Embedder, Reranker | None]:
         with self._lock:
             if self._embedder is None:
-                self._embedder = BgeM3Embedder()
+                self._embedder = make_embedder(self._settings)
             if self._reranker is None and self._mode == "rerank":
-                self._reranker = BgeReranker()
+                self._reranker = make_reranker(self._settings)
             return self._embedder, self._reranker
+
+    def _check_index(self, conn: psycopg.Connection, embedder: Embedder) -> None:
+        """库里的向量和查询向量要出自同一个模型来源，否则相似度没有意义。只查一次，不一致只告警。"""
+        if self._index_checked:
+            return
+        self._index_checked = True
+        models = indexed_models(conn, self._schema, self._table)
+        if models != {embedder.name}:
+            logger.warning(
+                "知识库向量来自 %s，查询向量来自 %s：先用当前配置重新入库"
+                "（uv run python -m cmdb_ai.knowledge_store）",
+                sorted(models),
+                embedder.name,
+            )
 
     def search(self, query: str) -> list[Passage]:
         embedder, reranker = self.warm_up()
         with psycopg.connect(self._database_url) as conn:
+            self._check_index(conn, embedder)
             with self._lock:
                 vector = embedder.embed([query])[0]
             hits = vector_search(conn, self._schema, vector, CANDIDATES, self._table)

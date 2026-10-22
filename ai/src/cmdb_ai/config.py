@@ -28,8 +28,13 @@ class Settings(BaseSettings):
     ai_db_schema: str = Field(default="ai", pattern=r"^[a-z_][a-z0-9_]{0,62}$")
 
     # 知识库检索（search_knowledge 工具）：rerank = 向量 + 关键词 RRF 融合后重排；
-    # vector、hybrid 只用于端到端逐项对比；off 不加载本地模型（约 4GB），给内存小的部署用
+    # vector、hybrid 只用于端到端逐项对比；off 不检索，工具只回"未启用"
     knowledge_search_mode: Literal["vector", "hybrid", "rerank", "off"] = "rerank"
+    # 向量和 rerank 模型的来源：local = 本地 bge-m3 + bge-reranker-v2-m3（约 4GB 内存）；
+    # siliconflow = 硅基流动托管的同款模型（不占内存，要 SILICONFLOW_API_KEY）
+    knowledge_model_provider: Literal["local", "siliconflow"] = "local"
+    siliconflow_api_key: SecretStr | None = None
+    siliconflow_base_url: str = "https://api.siliconflow.cn/v1"
 
     # Agent 护栏：单次提问内的模型 / 工具调用上限
     agent_model_call_limit: int = 15

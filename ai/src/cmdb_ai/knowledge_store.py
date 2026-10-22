@@ -2,6 +2,8 @@
 
     uv run python -m cmdb_ai.knowledge_store      # 同步 knowledge/*.md 到数据库
 
+向量模型按 KNOWLEDGE_MODEL_PROVIDER 选本地或托管 API；换了来源再运行一次，全部小节重新向量化。
+
 每个 `##` 小节一行（小节平均 200 字左右，不再往下切）。同步是幂等的：正文和向量模型都没变的
 小节不重新向量化，只刷新分词（词表改了也能生效）；文档里删掉的小节从表里删除。
 
@@ -175,13 +177,29 @@ def sync(
     return {"sections": len(sections), "embedded": len(stale), "removed": len(removed)}
 
 
+def indexed_models(conn: psycopg.Connection, schema: str, table: str = TABLE) -> set[str]:
+    """表里的向量出自哪些模型（`Embedder.name`）。"""
+    rows = conn.execute(
+        sql.SQL("SELECT DISTINCT embed_model FROM {}.{}").format(
+            sql.Identifier(schema), sql.Identifier(table)
+        )
+    ).fetchall()
+    return {r[0] for r in rows}
+
+
 def main() -> None:
+    from cmdb_ai.knowledge_models import make_embedder  # 它反过来导入本模块
+
     settings = get_settings()
     sections = load_sections()
+    embedder = make_embedder(settings)
     with psycopg.connect(settings.database_url) as conn:
         setup(conn, settings.ai_db_schema)
-        stats = sync(conn, settings.ai_db_schema, sections, BgeM3Embedder())
-    print(f"小节 {stats['sections']}，重新向量化 {stats['embedded']}，删除 {stats['removed']}")
+        stats = sync(conn, settings.ai_db_schema, sections, embedder)
+    print(
+        f"向量模型 {embedder.name}：小节 {stats['sections']}，"
+        f"重新向量化 {stats['embedded']}，删除 {stats['removed']}"
+    )
 
 
 if __name__ == "__main__":

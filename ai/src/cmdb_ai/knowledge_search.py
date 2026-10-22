@@ -11,6 +11,7 @@
 
 from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Protocol
 
 import psycopg
 from psycopg import sql
@@ -110,6 +111,12 @@ def fetch_passages(
     return dict(rows)
 
 
+class Reranker(Protocol):
+    name: str
+
+    def score(self, query: str, passages: Sequence[str]) -> list[float]: ...
+
+
 class BgeReranker:
     """本地 bge-reranker-v2-m3 交叉编码器：查询和小节一起过模型打相关性分。"""
 
@@ -126,7 +133,7 @@ class BgeReranker:
 
 
 def rerank(
-    reranker: BgeReranker, query: str, hits: Sequence[Hit], passages: dict[str, str]
+    reranker: Reranker, query: str, hits: Sequence[Hit], passages: dict[str, str]
 ) -> list[Hit]:
     """按 reranker 分数重排候选，分数相同按原名次。"""
     scores = reranker.score(query, [passages[h.id] for h in hits])

@@ -334,12 +334,12 @@ async def main() -> int:
             print(f"  {'✅' if result['passed'] else '❌'} {case['id']}", flush=True)
             return result
 
-    # 知识库的本地模型先加载好（和 API 启动时一样），不算进第一题的耗时
+    # 知识库的模型先加载好（和 API 启动时一样），不算进第一题的耗时
     if investigator.knowledge.enabled:
         await asyncio.to_thread(investigator.knowledge.warm_up)
     print(
         f"运行 {len(cases)} 个用例，模型 {settings.deepseek_model}，并发 {args.concurrency}，"
-        f"知识库检索 {settings.knowledge_search_mode}，"
+        f"知识库检索 {settings.knowledge_search_mode}（模型 {settings.knowledge_model_provider}），"
         f"摘要阈值 {settings.summarize_trigger_tokens} token / "
         f"保留 {settings.summarize_keep_messages} 条"
     )
@@ -360,6 +360,7 @@ async def main() -> int:
                 "label": args.label,
                 "model": settings.deepseek_model,
                 "knowledge_search_mode": settings.knowledge_search_mode,
+                "knowledge_model_provider": settings.knowledge_model_provider,
                 "summarize_trigger_tokens": settings.summarize_trigger_tokens,
                 "summarize_keep_messages": settings.summarize_keep_messages,
                 "prompt_sha": prompt_hash,
