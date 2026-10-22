@@ -23,20 +23,27 @@ uv sync
 uv run uvicorn cmdb_ai.api:app --port 8090
 ```
 
+知识库检索（`search_knowledge`）用的向量和 rerank 模型有两种来源，本机和 207 都用托管 API：
+
+- `KNOWLEDGE_MODEL_PROVIDER=siliconflow`：硅基流动托管的 bge-m3 + bge-reranker-v2-m3（目前免费），填 `SILICONFLOW_API_KEY`，不占内存，每次检索约 0.4 秒
+- `KNOWLEDGE_MODEL_PROVIDER=local`（代码默认）：本地加载同款模型，首次从 Hugging Face 下载约 4.4GB，常驻约 4GB 内存，检索效果和 API 相同（62 个查询 Recall@5 0.95、MRR 0.93）
+
+换来源后运行一次 `uv run python -m cmdb_ai.knowledge_store`，全部小节按新来源重算向量。
+
 首次启动会在 CMDB 的数据库里创建 schema `ai` 和检查点表。
 
 ### 用 Docker 运行（本机）
 
-日常开发和演示建议用上面的 `uv run`：容器里没有 MPS，rerank 走 CPU，每次检索约 11 秒，宿主机 MPS 约 1 秒（62 个检索查询 695 秒 vs 66 秒，指标相同：Recall@5 0.95、Hit@5 1.00、MRR 0.93）。容器用于一条命令起全套、换机器也能跑。
+容器用于一条命令起全套、换机器也能跑。用托管 API 时检索速度和宿主机一样；用本地模型时容器里没有 MPS，rerank 走 CPU，每次检索约 11 秒（宿主机 MPS 约 1 秒）。
 
 ```bash
-# 前提：后端 compose 已启动；.env 已填好；模型已在 ~/.cache/huggingface（先用 uv 跑过一次即可）
+# 前提：后端 compose 已启动；.env 已填好（用本地模型时，模型要已在 ~/.cache/huggingface）
 # 宿主机上的 8090 要先停掉，或者 AI_PORT=8092 换端口
 docker compose up -d --build
 docker compose logs -f ai          # 约 15 秒后 healthy
 ```
 
-- 镜像约 2.2GB：模型不打进镜像，只读挂载宿主机的 Hugging Face 缓存（`HF_CACHE_DIR` 可改），`HF_HUB_OFFLINE=1`
+- 镜像约 2.2GB：模型不打进镜像，只读挂载宿主机的 Hugging Face 缓存（`HF_CACHE_DIR` 可改），`HF_HUB_OFFLINE=1`；用托管 API 时用不到这个挂载
 - Linux 上的 torch 从 PyTorch CPU 源安装（`pyproject.toml` 的 `[tool.uv.sources]`）；PyPI 上 linux 的 torch 带 CUDA 依赖，镜像会到 10GB 以上
 - 容器接入后端的网络 `wende-cmdb-backend_cmdb-network`，`.env` 里指向 localhost 的 CMDB / 数据库地址由 compose 覆盖成容器名，Langfuse 走 `host.docker.internal:3100`
 

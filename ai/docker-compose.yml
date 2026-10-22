@@ -1,12 +1,13 @@
 # AI 服务（本机用）：接入后端 compose 的网络，直接访问 cmdb-db、cmdb-server。
 #
-#   docker compose up -d --build      # 首次构建约几分钟；启动时加载两个模型，健康检查约 1 分钟后变 healthy
+#   docker compose up -d --build      # 首次构建约几分钟；用本地模型时启动要加载两个模型，约 1 分钟后 healthy
 #   docker compose logs -f ai
 #
 # 前提：
 # - 后端已用 wende-cmdb-backend 的 docker compose 启动（网络 wende-cmdb-backend_cmdb-network）
 # - .env 已填好（从 .env.example 复制）；里面指向 localhost 的地址在这里被覆盖成容器名
-# - 模型已下载到宿主机的 Hugging Face 缓存（默认 ~/.cache/huggingface），见 README
+# - 知识库模型来源看 .env 的 KNOWLEDGE_MODEL_PROVIDER；用本地模型（local）时，模型要已下载到宿主机的
+#   Hugging Face 缓存（默认 ~/.cache/huggingface），见 README
 # - 宿主机上用 uv 跑的 8090 要先停掉，或用 AI_PORT 换一个端口
 name: wende-cmdb-ai
 
