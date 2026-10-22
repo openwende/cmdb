@@ -16,7 +16,12 @@ from typing import Protocol
 import psycopg
 from psycopg import sql
 
-from cmdb_ai.knowledge_store import TABLE, to_vector_literal, tokenize
+from cmdb_ai.knowledge_store import (
+    TABLE,
+    import_sentence_transformers,
+    to_vector_literal,
+    tokenize,
+)
 
 RERANK_MODEL = "BAAI/bge-reranker-v2-m3"
 RERANK_REVISION = "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"  # 固定版本
@@ -123,10 +128,9 @@ class BgeReranker:
     name = RERANK_MODEL
 
     def __init__(self, model: str = RERANK_MODEL, revision: str = RERANK_REVISION):
-        from sentence_transformers import CrossEncoder  # 导入 torch 要几秒，用到时再导
-
+        st = import_sentence_transformers()
         # 小节最长不到 400 字，查询 + 小节在 512 token 以内，不会被截断
-        self._model = CrossEncoder(model, revision=revision, max_length=512)
+        self._model = st.CrossEncoder(model, revision=revision, max_length=512)
 
     def score(self, query: str, passages: Sequence[str]) -> list[float]:
         return self._model.predict([(query, p) for p in passages], batch_size=16).tolist()

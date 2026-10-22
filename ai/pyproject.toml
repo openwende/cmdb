@@ -15,11 +15,17 @@ dependencies = [
     "langgraph-checkpoint-postgres>=3.1.2",
     "psycopg[binary,pool]>=3.3.6",
     "pydantic-settings>=2.15.0",
-    "sentence-transformers>=6.1.0,<6.2",
     "sse-starlette>=3.5.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+# 本地知识库模型（KNOWLEDGE_MODEL_PROVIDER=local）才需要：uv sync --extra local-models。
+# 用托管 API（siliconflow）时不装，镜像小约 1GB
+[project.optional-dependencies]
+local-models = [
+    "sentence-transformers>=6.1.0,<6.2",
     "torch>=2.14.0,<2.14.1",
     "transformers>=5.17,<5.18",
-    "uvicorn[standard]>=0.54.0",
 ]
 
 [dependency-groups]

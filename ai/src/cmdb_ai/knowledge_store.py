@@ -55,15 +55,30 @@ class Embedder(Protocol):
     def embed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
 
+def import_sentence_transformers():
+    """本地模型才用到 sentence-transformers（连带 torch，导入要几秒），用到时再导。
+
+    它在可选依赖组 local-models 里，用托管 API 的环境（包括默认构建的镜像）没装。
+    """
+    try:
+        import sentence_transformers
+    except ImportError as e:
+        raise ImportError(
+            "KNOWLEDGE_MODEL_PROVIDER=local 需要本地模型依赖：uv sync --extra local-models"
+            "（Docker 镜像构建时加 --build-arg INSTALL_LOCAL_MODELS=true）；"
+            "或改用托管 API：KNOWLEDGE_MODEL_PROVIDER=siliconflow"
+        ) from e
+    return sentence_transformers
+
+
 class BgeM3Embedder:
     """本地 bge-m3 稠密向量（1024 维，已归一化，用余弦距离）。bge-m3 的查询不需要加指令前缀。"""
 
     name = EMBED_MODEL
 
     def __init__(self, model: str = EMBED_MODEL, revision: str = EMBED_REVISION):
-        from sentence_transformers import SentenceTransformer  # 导入 torch 要几秒，用到时再导
-
-        self._model = SentenceTransformer(model, revision=revision)
+        st = import_sentence_transformers()
+        self._model = st.SentenceTransformer(model, revision=revision)
 
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
         vectors = self._model.encode(list(texts), normalize_embeddings=True, batch_size=16)

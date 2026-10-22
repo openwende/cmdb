@@ -13,7 +13,11 @@ name: wende-cmdb-ai
 
 services:
   ai:
-    build: .
+    build:
+      context: .
+      args:
+        # 默认不装 torch 等本地模型依赖；用本地模型时 INSTALL_LOCAL_MODELS=true docker compose up -d --build
+        INSTALL_LOCAL_MODELS: ${INSTALL_LOCAL_MODELS:-false}
     image: wende-cmdb-ai:local
     container_name: cmdb-ai
     restart: unless-stopped

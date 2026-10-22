@@ -1,4 +1,5 @@
 import json
+import sys
 
 import httpx
 import pytest
@@ -11,6 +12,7 @@ from cmdb_ai.knowledge_models import (
     SiliconFlowEmbedder,
     SiliconFlowReranker,
     make_embedder,
+    make_reranker,
 )
 from cmdb_ai.knowledge_store import EMBED_DIM
 
@@ -102,3 +104,11 @@ def test_siliconflow_provider_requires_key():
 def test_embedder_name_includes_provider():
     # 名字进 content_hash：从本地切到托管 API 后重新入库会重算全部向量
     assert SiliconFlowEmbedder.name == "siliconflow:BAAI/bge-m3"
+
+
+@pytest.mark.parametrize("make", [make_embedder, make_reranker])
+def test_local_provider_without_extra_names_the_dependency_group(monkeypatch, make):
+    monkeypatch.setitem(sys.modules, "sentence_transformers", None)  # 相当于没装
+    settings = get_settings().model_copy(update={"knowledge_model_provider": "local"})
+    with pytest.raises(ImportError, match="uv sync --extra local-models"):
+        make(settings)

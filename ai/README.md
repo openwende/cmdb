@@ -26,7 +26,9 @@ uv run uvicorn cmdb_ai.api:app --port 8090
 知识库检索（`search_knowledge`）用的向量和 rerank 模型有两种来源，本机和 207 都用托管 API：
 
 - `KNOWLEDGE_MODEL_PROVIDER=siliconflow`：硅基流动托管的 bge-m3 + bge-reranker-v2-m3（目前免费），填 `SILICONFLOW_API_KEY`，不占内存，每次检索约 0.4 秒
-- `KNOWLEDGE_MODEL_PROVIDER=local`（代码默认）：本地加载同款模型，首次从 Hugging Face 下载约 4.4GB，常驻约 4GB 内存，检索效果和 API 相同（62 个查询 Recall@5 0.95、MRR 0.93）
+- `KNOWLEDGE_MODEL_PROVIDER=local`（代码默认）：本地加载同款模型，首次从 Hugging Face 下载约 4.4GB，常驻约 4GB 内存，检索效果和 API 相同（62 个查询 Recall@5 0.95、MRR 0.93）。torch、sentence-transformers、transformers 在可选依赖组 `local-models` 里，要用 `uv sync --extra local-models` 装上；没装时服务启动就报错并给出这条命令
+
+`uv sync` 会删掉没声明的包：装过 `local-models` 或 `eval` 组的环境，之后同步要带上同样的参数（例如 `uv sync --extra local-models --group eval`），否则这些包会被卸掉。
 
 换来源后运行一次 `uv run python -m cmdb_ai.knowledge_store`，全部小节按新来源重算向量。
 
@@ -43,7 +45,8 @@ docker compose up -d --build
 docker compose logs -f ai          # 约 15 秒后 healthy
 ```
 
-- 镜像约 2.2GB：模型不打进镜像，只读挂载宿主机的 Hugging Face 缓存（`HF_CACHE_DIR` 可改），`HF_HUB_OFFLINE=1`；用托管 API 时用不到这个挂载
+- 默认构建不装 `local-models` 依赖，镜像约 590MB（本机 arm64），只能用托管 API。要用本地模型：`INSTALL_LOCAL_MODELS=true docker compose up -d --build`（直接 `docker build` 时加 `--build-arg INSTALL_LOCAL_MODELS=true`），镜像约 2.2GB
+- 模型不打进镜像，只读挂载宿主机的 Hugging Face 缓存（`HF_CACHE_DIR` 可改），`HF_HUB_OFFLINE=1`；用托管 API 时用不到这个挂载
 - Linux 上的 torch 从 PyTorch CPU 源安装（`pyproject.toml` 的 `[tool.uv.sources]`）；PyPI 上 linux 的 torch 带 CUDA 依赖，镜像会到 10GB 以上
 - 容器接入后端的网络 `wende-cmdb-backend_cmdb-network`，`.env` 里指向 localhost 的 CMDB / 数据库地址由 compose 覆盖成容器名，Langfuse 走 `host.docker.internal:3100`
 

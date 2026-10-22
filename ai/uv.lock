@@ -4000,12 +4000,16 @@ dependencies = [
     { name = "langgraph-checkpoint-postgres" },
     { name = "psycopg", extra = ["binary", "pool"] },
     { name = "pydantic-settings" },
-    { name = "sentence-transformers" },
     { name = "sse-starlette" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.optional-dependencies]
+local-models = [
+    { name = "sentence-transformers" },
     { name = "torch", version = "2.14.0", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform != 'linux'" },
     { name = "torch", version = "2.14.0+cpu", source = { registry = "https://download.pytorch.org/whl/cpu" }, marker = "sys_platform == 'linux'" },
     { name = "transformers" },
-    { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.dev-dependencies]
@@ -4033,13 +4037,14 @@ requires-dist = [
     { name = "langgraph-checkpoint-postgres", specifier = ">=3.1.2" },
     { name = "psycopg", extras = ["binary", "pool"], specifier = ">=3.3.6" },
     { name = "pydantic-settings", specifier = ">=2.15.0" },
-    { name = "sentence-transformers", specifier = ">=6.1.0,<6.2" },
+    { name = "sentence-transformers", marker = "extra == 'local-models'", specifier = ">=6.1.0,<6.2" },
     { name = "sse-starlette", specifier = ">=3.5.0" },
-    { name = "torch", marker = "sys_platform != 'linux'", specifier = ">=2.14.0,<2.14.1" },
-    { name = "torch", marker = "sys_platform == 'linux'", specifier = ">=2.14.0,<2.14.1", index = "https://download.pytorch.org/whl/cpu" },
-    { name = "transformers", specifier = ">=5.17,<5.18" },
+    { name = "torch", marker = "sys_platform == 'linux' and extra == 'local-models'", specifier = ">=2.14.0,<2.14.1", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "torch", marker = "sys_platform != 'linux' and extra == 'local-models'", specifier = ">=2.14.0,<2.14.1" },
+    { name = "transformers", marker = "extra == 'local-models'", specifier = ">=5.17,<5.18" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
 ]
+provides-extras = ["local-models"]
 
 [package.metadata.requires-dev]
 dev = [
