@@ -24,9 +24,9 @@ dependencies = [
 # 用托管 API（siliconflow）时不装，镜像小约 1GB
 [project.optional-dependencies]
 local-models = [
-    "sentence-transformers>=6.1.0,<6.2",
-    "torch>=2.14.0,<2.14.1",
-    "transformers>=5.17,<5.18",
+    "sentence-transformers>=6.1.0,<6.3",
+    "torch>=2.14.0,<2.15.1",
+    "transformers>=5.17,<5.23",
 ]
 
 [dependency-groups]
@@ -37,7 +37,7 @@ dev = [
     "ruff>=0.17.0",
 ]
 eval = [
-    "langchain-community>=0.4,<0.4.2",
+    "langchain-community>=0.4,<0.4.3",
     "ragas>=0.4.3",
 ]
 
