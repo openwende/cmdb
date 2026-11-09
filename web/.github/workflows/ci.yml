@@ -1,9 +1,12 @@
-name: Quality
+name: CI
 
 on:
   pull_request:
   push:
-    branches: [main, dev]
+    branches: [main]
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -18,17 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Vitest 4 typically requires Node.js 20+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Enable Corepack (pnpm)
         run: corepack enable
-
-      - name: Activate pnpm
-        run: corepack prepare pnpm@10.9.0 --activate
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -43,7 +42,18 @@ jobs:
         run: pnpm typecheck
 
       - name: Test
-        run: pnpm test
+        run: pnpm exec vitest run
 
       - name: Build
         run: pnpm build
+
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t cmdb-web:ci .
