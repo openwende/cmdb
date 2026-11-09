@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/openwende/cmdb-server/internal/auth"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/auth"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // 业务模块 id 约定（测试数据）

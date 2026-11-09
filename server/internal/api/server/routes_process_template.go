@@ -4,11 +4,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	"github.com/openwende/cmdb-server/internal/core/host_membership"
-	"github.com/openwende/cmdb-server/internal/core/process"
-	"github.com/openwende/cmdb-server/internal/core/resource_directory"
-	"github.com/openwende/cmdb-server/internal/core/service_template"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	"github.com/openwende/cmdb/server/internal/core/host_membership"
+	"github.com/openwende/cmdb/server/internal/core/process"
+	"github.com/openwende/cmdb/server/internal/core/resource_directory"
+	"github.com/openwende/cmdb/server/internal/core/service_template"
 )
 
 // RegisterProcessRoutes 注册进程管理相关路由

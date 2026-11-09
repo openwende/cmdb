@@ -1,12 +1,12 @@
 ---
 title: 主机内置字段
 sources:
-  - cmdb-server/internal/types/host.go
-  - cmdb-server/migrations/20260530130000_canonical_init.up.sql（hosts 表、CHECK 约束、唯一索引）
-  - cmdb-server/internal/storage/host_repository.go（自定义字段合并更新、软删除）
-  - cmdb-server/internal/api/handlers/host_handler.go（mark_destroyed）
-  - cmdb-server/internal/mcpserver/query.go、tools.go（search_hosts / get_host 输出字段）
-  - cmdb-server/docs/HOST_IMPORT_GUIDE.md（字段说明，已按代码修正）
+  - server/internal/types/host.go
+  - server/migrations/20260530130000_canonical_init.up.sql（hosts 表、CHECK 约束、唯一索引）
+  - server/internal/storage/host_repository.go（自定义字段合并更新、软删除）
+  - server/internal/api/handlers/host_handler.go（mark_destroyed）
+  - server/internal/mcpserver/query.go、tools.go（search_hosts / get_host 输出字段）
+  - server/docs/HOST_IMPORT_GUIDE.md（字段说明，已按代码修正）
 ---
 
 # 主机内置字段

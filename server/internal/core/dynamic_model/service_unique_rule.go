@@ -9,7 +9,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 func (s *service) EnsureLegacyUniqueRules(ctx context.Context, modelUID string) error {

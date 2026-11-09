@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

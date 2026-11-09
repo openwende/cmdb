@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 const currentUserContextKey = "auth.currentUser"

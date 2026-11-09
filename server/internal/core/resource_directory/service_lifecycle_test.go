@@ -11,8 +11,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/openwende/cmdb-server/internal/core/host_membership"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/host_membership"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 func setupResourceLifecycleTestDB(t *testing.T) *gorm.DB {

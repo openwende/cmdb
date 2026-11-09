@@ -1,9 +1,13 @@
-name: CI
+name: Web
 
 on:
   pull_request:
+    paths: &paths
+      - web/**
+      - .github/workflows/web.yml
   push:
     branches: [main]
+    paths: *paths
 
 permissions:
   contents: read
@@ -13,26 +17,26 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
+  test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-
+    defaults:
+      run:
+        working-directory: web
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Enable Corepack (pnpm)
+      - name: Enable Corepack
         run: corepack enable
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Format check
+      - name: Check formatting
         run: pnpm format:check
 
       - name: Lint
@@ -46,14 +50,3 @@ jobs:
 
       - name: Build
         run: pnpm build
-
-  image:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t cmdb-web:ci .

@@ -8,8 +8,8 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // TemplateGenerator 模板生成器

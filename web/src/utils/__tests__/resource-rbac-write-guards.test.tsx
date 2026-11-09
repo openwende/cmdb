@@ -300,7 +300,7 @@ describe('resource page RBAC write guards', () => {
     });
 
     expect(screen.getByRole('button', { name: 'resource.business.actions.create' })).toBeDisabled();
-    // batchEdit 入口已被产品下线（BusinessList 中整段注释，见 74a7f0b），viewer 自然看不到。
+    // batchEdit 入口已被产品下线（BusinessList 中整段注释，见 4bc9793），viewer 自然看不到。
     expect(screen.queryByText('resource.business.actions.batchEdit')).not.toBeInTheDocument();
     expect(screen.queryByText('resource.business.actions.archive')).not.toBeInTheDocument();
   });

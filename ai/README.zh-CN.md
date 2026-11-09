@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-[Wende CMDB](https://github.com/openwende/cmdb-server) 的 AI 服务：资源配置调查助手。
+[Wende CMDB](../README.zh-CN.md) 的 AI 服务：资源配置调查助手。
 
 > **状态：** 早期开发阶段。
 
@@ -155,11 +155,3 @@ cd deploy/langfuse && ./init-env.sh && docker compose up -d   # 首次运行生�
 | `src/cmdb_ai/cmdb.py` | Go 后端客户端（登录、`/auth/me`）、`UserContext` |
 | `src/cmdb_ai/config.py` | 配置项 |
 | `src/cmdb_ai/observability.py` | Langfuse 追踪（可选） |
-
-## 许可证
-
-基于 [GNU Affero General Public License v3.0](LICENSE) 发布。
-
-## 参与贡献
-
-暂不接受外部 Pull Request，但欢迎提交 Bug 报告和功能建议，详见 [CONTRIBUTING.md](CONTRIBUTING.md)（英文）。

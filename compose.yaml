@@ -1,5 +1,5 @@
 # Runs Wende CMDB from source: PostgreSQL, the API server, the web UI and,
-# optionally, the AI assistant. See README.md in this directory.
+# optionally, the AI assistant. See the quick start in README.md.
 name: wende-cmdb
 
 services:
@@ -25,7 +25,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ../../migrations:/migrations:ro
+      - ./server/migrations:/migrations:ro
     command:
       - -path=/migrations
       - -database=postgres://cmdb:${DB_PASSWORD}@db:5432/cmdb?sslmode=disable
@@ -34,7 +34,7 @@ services:
 
   server:
     build:
-      context: ../..
+      context: ./server
       dockerfile: Dockerfile.business
       args:
         GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
@@ -58,7 +58,7 @@ services:
 
   web:
     build:
-      context: ${CMDB_WEB_DIR:-../../../cmdb-web}
+      context: ./web
     restart: unless-stopped
     depends_on:
       server:
@@ -74,7 +74,7 @@ services:
   ai:
     profiles: [ai]
     build:
-      context: ${CMDB_AI_DIR:-../../../cmdb-ai}
+      context: ./ai
     restart: unless-stopped
     depends_on:
       server:
@@ -84,7 +84,7 @@ services:
       CMDB_BASE_URL: http://server:8080
       CMDB_MCP_URL: http://server:8080/mcp
       DATABASE_URL: postgresql://cmdb:${DB_PASSWORD}@db:5432/cmdb
-      # Knowledge search needs an embedding model. See the cmdb-ai README.
+      # Knowledge search needs an embedding model. See ai/README.md.
       KNOWLEDGE_SEARCH_MODE: ${KNOWLEDGE_SEARCH_MODE:-off}
       KNOWLEDGE_MODEL_PROVIDER: ${KNOWLEDGE_MODEL_PROVIDER:-siliconflow}
       SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}

@@ -12,8 +12,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/openwende/cmdb-server/internal/storage"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/storage"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type Service interface {

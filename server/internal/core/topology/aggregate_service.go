@@ -9,8 +9,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/core/mainline"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/mainline"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type AggregateService struct {

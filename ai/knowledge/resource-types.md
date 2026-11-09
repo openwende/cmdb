@@ -2,7 +2,7 @@
 title: 资源类型
 sources:
   - 库表 dynamic_models、dynamic_attributes（4 个内置类型、25 个字段定义）、resources（自建类型的实例，目前为 0）
-  - cmdb-web/src/locales/zh-CN.json（主线、是否主线、主线说明）
+  - web/src/locales/zh-CN.json（主线、是否主线、主线说明）
 ---
 
 # 资源类型

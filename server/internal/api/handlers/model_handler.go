@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/lib/pq"
-	"github.com/openwende/cmdb-server/internal/core/model"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/model"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type ModelHandler struct {

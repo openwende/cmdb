@@ -5,8 +5,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/openwende/cmdb-server/internal/types"
-	"github.com/openwende/cmdb-server/pkg/apperrors"
+	"github.com/openwende/cmdb/server/internal/types"
+	"github.com/openwende/cmdb/server/pkg/apperrors"
 
 	"gorm.io/gorm"
 )

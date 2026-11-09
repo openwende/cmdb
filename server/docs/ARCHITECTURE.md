@@ -39,7 +39,7 @@
 ### 目录结构
 
 ```
-cmdb-server/
+server/
 ├── cmd/
 │   └── server/              # 应用入口
 ├── internal/
@@ -761,7 +761,7 @@ DELETE /api/v1/businesses/:id    # 删除
 - [API 文档](API.md)
 - [测试指南](TESTING.md)
 - [快速开始](QUICKSTART.md)
-- [贡献指南](../CONTRIBUTING.md)
+- [贡献指南](../../CONTRIBUTING.md)
 
 ---
 

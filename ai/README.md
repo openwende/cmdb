@@ -1,18 +1,15 @@
 # Wende CMDB AI
 
-[![CI](https://github.com/openwende/cmdb-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/openwende/cmdb-ai/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-
 English | [简体中文](README.zh-CN.md)
 
-An AI assistant for investigating [Wende CMDB](https://github.com/openwende/cmdb-server), such as "Why is this host in two modules?" or "Who moved this host last week?". It answers from live CMDB data through read-only tools, and cites the records behind each claim.
+An AI assistant for investigating [Wende CMDB](../README.md), with questions such as "Why is this host in two modules?" or "Who moved this host last week?". It answers from live CMDB data through read-only tools, and cites the records behind each claim.
 
 > **Status:** early development. The prompts and knowledge base are in Chinese, so the assistant currently works best in Chinese.
 
 ## How it works
 
 ```
-browser ──SSE (user's JWT)──▶ POST /chat ──▶ agent ──MCP (same JWT)──▶ cmdb-server /mcp
+browser ──SSE (user's JWT)──▶ POST /chat ──▶ agent ──MCP (same JWT)──▶ server /mcp
                                                │
                                                └──▶ PostgreSQL schema `ai`
 ```
@@ -26,9 +23,9 @@ Built with Python 3.12, FastAPI, LangChain and LangGraph. The model is [DeepSeek
 
 ## Run it
 
-To run the assistant with the full stack, follow the [quick start](https://github.com/openwende/cmdb-server/tree/main/deploy/quickstart).
+To run the assistant with the whole product, follow the [quick start](../README.md#add-the-ai-assistant).
 
-To develop locally, you need [uv](https://docs.astral.sh/uv/), a DeepSeek API key and a running cmdb-server:
+To develop locally, you need [uv](https://docs.astral.sh/uv/), a DeepSeek API key and a running [server](../server/README.md):
 
 ```bash
 cp .env.example .env  # then set DEEPSEEK_API_KEY
@@ -74,7 +71,7 @@ Changes to the prompts and tools are measured rather than judged by eye. `eval/c
 3. **LLM judging:** correctness against reference points, and faithfulness against tool results. Scores are cached by input hash, so unchanged inputs are not judged twice.
 
 ```bash
-uv run python eval/run_eval.py --label baseline    # requires cmdb-server and spends model credit
+uv run python eval/run_eval.py --label baseline    # requires the server and spends model credit
 uv run python eval/judge.py baseline --dry-run     # estimate judging calls first
 uv run python eval/judge.py baseline
 uv run python eval/compare.py baseline my-change   # reads caches only
@@ -89,9 +86,3 @@ uv run pytest                   # no model or network calls; database tests need
 uv run ruff check .
 uv run ruff format --check .
 ```
-
-We are not accepting outside pull requests yet, but bug reports and feature requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-Licensed under the [GNU Affero General Public License v3.0](LICENSE).

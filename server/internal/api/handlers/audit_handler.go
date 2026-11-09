@@ -8,8 +8,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/openwende/cmdb-server/internal/core/audit"
-	"github.com/openwende/cmdb-server/pkg/apperrors"
+	"github.com/openwende/cmdb/server/internal/core/audit"
+	"github.com/openwende/cmdb/server/pkg/apperrors"
 )
 
 // AuditHandler 审计日志处理器

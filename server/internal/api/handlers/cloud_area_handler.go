@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/openwende/cmdb-server/internal/api/response"
-	"github.com/openwende/cmdb-server/internal/core/cloud_area"
-	"github.com/openwende/cmdb-server/internal/types"
-	"github.com/openwende/cmdb-server/pkg/apperrors"
+	"github.com/openwende/cmdb/server/internal/api/response"
+	"github.com/openwende/cmdb/server/internal/core/cloud_area"
+	"github.com/openwende/cmdb/server/internal/types"
+	"github.com/openwende/cmdb/server/pkg/apperrors"
 )
 
 // CloudAreaHandler 云区域处理器

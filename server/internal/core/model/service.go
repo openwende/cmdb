@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/openwende/cmdb-server/internal/storage"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/storage"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type Service interface {

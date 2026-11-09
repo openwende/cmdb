@@ -4,10 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	"github.com/openwende/cmdb-server/internal/core/cloud_area"
-	"github.com/openwende/cmdb-server/internal/core/host"
-	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	"github.com/openwende/cmdb/server/internal/core/cloud_area"
+	"github.com/openwende/cmdb/server/internal/core/host"
+	"github.com/openwende/cmdb/server/internal/storage"
 )
 
 // RegisterHostRoutes 注册主机相关路由（包括云区域）

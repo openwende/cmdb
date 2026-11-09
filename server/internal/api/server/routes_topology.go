@@ -4,10 +4,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	"github.com/openwende/cmdb-server/internal/core/host_membership"
-	"github.com/openwende/cmdb-server/internal/core/mainline"
-	"github.com/openwende/cmdb-server/internal/core/topology"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	"github.com/openwende/cmdb/server/internal/core/host_membership"
+	"github.com/openwende/cmdb/server/internal/core/mainline"
+	"github.com/openwende/cmdb/server/internal/core/topology"
 )
 
 // RegisterTopologyRoutes 注册业务拓扑路由

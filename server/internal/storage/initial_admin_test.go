@@ -3,7 +3,7 @@ package storage
 import (
 	"testing"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 )

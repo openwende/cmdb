@@ -13,7 +13,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"gorm.io/gorm"
 
-	authn "github.com/openwende/cmdb-server/internal/auth"
+	authn "github.com/openwende/cmdb/server/internal/auth"
 )
 
 // Version MCP 服务版本，随工具集变化递增。

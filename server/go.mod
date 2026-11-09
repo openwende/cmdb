@@ -1,4 +1,4 @@
-module github.com/openwende/cmdb-server
+module github.com/openwende/cmdb/server
 
 go 1.26.0
 

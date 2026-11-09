@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/openwende/cmdb-server/pkg/config"
+	"github.com/openwende/cmdb/server/pkg/config"
 )
 
 func main() {

@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
 )
 
 func setupAggregateInstanceTestDB(t *testing.T) *gorm.DB {

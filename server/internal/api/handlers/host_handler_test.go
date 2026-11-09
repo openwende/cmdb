@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/openwende/cmdb-server/internal/api/response"
-	"github.com/openwende/cmdb-server/internal/core/host"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/api/response"
+	"github.com/openwende/cmdb/server/internal/core/host"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type fakeHostRepo struct {

@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/types"
 	"gorm.io/gorm"
 )
 

@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/openwende/cmdb-server/internal/core/service_template"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/service_template"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // ServiceTemplateHandler 服务模板 HTTP Handler

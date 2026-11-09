@@ -1,6 +1,6 @@
 # 阶段1·里程碑2：读切换（host 归属读路径迁到 host_node_memberships）
 
-> 前置：里程碑1（堵写洞，commit `685cdb2`）已完成——新表 `host_node_memberships` 现与旧三表实时一致（写侧 4 个洞经 `HostMembershipService.SyncFromLegacy` 在同事务回填，allocate/reclaim/transfer-to-pool 早经 hms）。本里程碑把**读侧**从旧三表切到新表。**旧三表仍保持双写作安全网，本里程碑不删旧表**（删除是阶段2）。
+> 前置：里程碑1（堵写洞，commit `882e17f`）已完成——新表 `host_node_memberships` 现与旧三表实时一致（写侧 4 个洞经 `HostMembershipService.SyncFromLegacy` 在同事务回填，allocate/reclaim/transfer-to-pool 早经 hms）。本里程碑把**读侧**从旧三表切到新表。**旧三表仍保持双写作安全网，本里程碑不删旧表**（删除是阶段2）。
 >
 > 背景与总体设计见 `docs/P1-host-membership-convergence.md`（§2 表结构、§6 实施现状）。
 

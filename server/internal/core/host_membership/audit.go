@@ -9,8 +9,8 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/auth"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/auth"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // resourceHistoryAuditRecorder 把主机归属变更写入 resource_histories（model_uid=host），

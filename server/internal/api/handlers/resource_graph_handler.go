@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/openwende/cmdb-server/internal/core/resource_graph"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/resource_graph"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type ResourceGraphHandler struct {

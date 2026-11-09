@@ -1,4 +1,6 @@
 # Defined networks for internal container communication
+name: cmdb-server
+
 networks:
   cmdb-network:
     driver: bridge
@@ -82,7 +84,7 @@ services:
         condition: service_completed_successfully
     environment:
       # Local development only: debug mode allows the built-in JWT secret and
-      # creates the demo accounts. See deploy/quickstart for a production-style setup.
+      # creates the demo accounts. See the quick start in the root README for a release-mode setup.
       SERVER_MODE: debug
       DATABASE_HOST: db # Connects to 'db' service alias
       DATABASE_PASSWORD: password

@@ -3,7 +3,7 @@ package storage
 import (
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // MigrateTopology 执行拓扑相关的数据库迁移

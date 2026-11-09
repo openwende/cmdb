@@ -1,6 +1,6 @@
 # Wende CMDB Server 快速开始指南
 
-> 本指南使用仓库根目录的开发配置（debug 模式，带密码公开的演示账号），只适合本地试用。要运行包含 Web 界面的完整环境，请看 [deploy/quickstart](../deploy/quickstart/README.zh-CN.md)。
+> 本指南使用 `server/docker-compose.yml` 的开发配置（debug 模式，带密码公开的演示账号），只适合本地试用。要运行包含 Web 界面的完整环境，请看[快速开始](../../README.zh-CN.md#快速开始)。
 
 本指南将帮助您快速部署和测试 Wende CMDB Server 服务。
 

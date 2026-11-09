@@ -1,11 +1,8 @@
 # Wende CMDB Web
 
-[![CI](https://github.com/openwende/cmdb-web/actions/workflows/ci.yml/badge.svg)](https://github.com/openwende/cmdb-web/actions/workflows/ci.yml)
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
-
 English | [简体中文](README.zh-CN.md)
 
-The web UI for [Wende CMDB](https://github.com/openwende/cmdb-server), an open-source configuration management database. Built with React, TypeScript, Vite and Ant Design.
+The web UI for [Wende CMDB](../README.md). Built with React, TypeScript, Vite and Ant Design. To run the whole product, see the [quick start](../README.md#quick-start).
 
 > **Status:** early development. Some charts on the statistics pages still show sample data, and are labeled as such.
 
@@ -15,16 +12,12 @@ The web UI for [Wende CMDB](https://github.com/openwende/cmdb-server), an open-s
 - **Host management:** import from Excel, allocate, transfer and reclaim hosts, and search the resource pool.
 - **Models:** manage resource types, attributes and unique rules.
 - **Audit:** filter change records by object, action, time and account.
-- **AI assistant:** a chat panel for the optional [cmdb-ai](https://github.com/openwende/cmdb-ai) service, with answers that link to their evidence.
+- **AI assistant:** a chat panel for the optional [AI service](../ai/README.md), with answers that link to their evidence.
 - **Languages:** English and Simplified Chinese.
-
-## Run with the full stack
-
-To run the UI together with the server and database, follow the [quick start](https://github.com/openwende/cmdb-server/tree/main/deploy/quickstart).
 
 ## Development
 
-You need Node.js 22 or later, and [Corepack](https://nodejs.org/api/corepack.html) for pnpm. Start [cmdb-server](https://github.com/openwende/cmdb-server) first, then run:
+You need Node.js 22 or later, and [Corepack](https://nodejs.org/api/corepack.html) for pnpm. Start the [server](../server/README.md) first, then run:
 
 ```bash
 corepack enable
@@ -53,11 +46,3 @@ These variables are read at build time:
 | `VITE_DEMO_LOGIN` | off                   | Set to `true` to show the demo accounts and one-click sign-in on the login page. Only for public demo sites |
 
 The [Dockerfile](Dockerfile) builds an image that serves the UI with nginx and proxies these paths to the `server` and `ai` containers. See [deploy/nginx.conf](deploy/nginx.conf).
-
-## Contributing
-
-We are not accepting outside pull requests yet, but bug reports and feature requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
-
-## License
-
-Licensed under the [GNU Affero General Public License v3.0](LICENSE).

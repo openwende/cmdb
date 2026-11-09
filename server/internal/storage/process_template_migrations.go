@@ -3,7 +3,7 @@ package storage
 import (
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // MigrateProcessAndTemplates 迁移进程和模板相关表

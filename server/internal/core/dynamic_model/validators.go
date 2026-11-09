@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // Validator 字段校验器

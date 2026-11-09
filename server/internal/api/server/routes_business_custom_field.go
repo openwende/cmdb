@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	"github.com/openwende/cmdb-server/internal/core/business_custom_field"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	"github.com/openwende/cmdb/server/internal/core/business_custom_field"
 )
 
 func RegisterBusinessCustomFieldRoutes(router *gin.Engine, db *gorm.DB) {

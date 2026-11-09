@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	authn "github.com/openwende/cmdb-server/internal/auth"
-	"github.com/openwende/cmdb-server/pkg/config"
+	authn "github.com/openwende/cmdb/server/internal/auth"
+	"github.com/openwende/cmdb/server/pkg/config"
 )
 
 func connect(t *testing.T) *mcp.ClientSession {

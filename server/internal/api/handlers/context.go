@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/openwende/cmdb-server/internal/auth"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/auth"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // systemTenantUUID 是 types.SystemTenantID 的 UUID 形态，供需要 uuid.UUID 的调用方使用。

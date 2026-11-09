@@ -133,7 +133,7 @@ R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前�
 `ImportHostsToPool`、`MoveHostsInPool`、`TransferHosts`（空闲机→业务模块）、`MoveSet`（集群转业务）。
 即新表当时是“只写影子表 + 写洞”，**尚不可作读源**。
 
-- **阶段 1·里程碑 1（已完成，commit `685cdb2`）｜堵写洞使新表权威**：给 `HostMembershipService`
+- **阶段 1·里程碑 1（已完成，commit `882e17f`）｜堵写洞使新表权威**：给 `HostMembershipService`
   加 `SyncFromLegacy(hostID)` 原语（按旧三表重建该主机新表归属，幂等、business_id/set_id 由 module 推导）；
   上述 4 个写路径在写旧表的同一事务内 guarded 调用之，零改动旧表写语义。容器全生命周期 + 浏览器真实动线 +
   全量对账验证：新表与旧表实时一致。**读侧仍读旧表，UI 行为不变。**

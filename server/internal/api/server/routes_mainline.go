@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	"github.com/openwende/cmdb-server/internal/core/mainline"
-	"github.com/openwende/cmdb-server/internal/core/topology"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	"github.com/openwende/cmdb/server/internal/core/mainline"
+	"github.com/openwende/cmdb/server/internal/core/topology"
 )
 
 func RegisterMainlineRoutes(router *gin.Engine, db *gorm.DB) {

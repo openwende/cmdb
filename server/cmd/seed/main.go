@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/openwende/cmdb-server/internal/core/model"
-	"github.com/openwende/cmdb-server/internal/storage"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/model"
+	"github.com/openwende/cmdb/server/internal/storage"
+	"github.com/openwende/cmdb/server/internal/types"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/core/topology"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/topology"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // TopologyHandler 业务拓扑处理器

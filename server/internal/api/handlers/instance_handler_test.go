@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // stubInstanceService 是 instance.Service 接口的测试替身：BatchCreateInstances / ListInstances 返回固定数据。

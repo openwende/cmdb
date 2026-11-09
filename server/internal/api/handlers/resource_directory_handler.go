@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/openwende/cmdb-server/internal/core/resource_directory"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/resource_directory"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // bindHostRequestError 把请求体绑定错误转成对前端友好的结构化错误。

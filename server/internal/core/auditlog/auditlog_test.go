@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb/server/internal/auth"
 )
 
 func setupAuditTestDB(t *testing.T) *gorm.DB {

@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/openwende/cmdb-server/internal/core/mainline"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/mainline"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 func TestAggregateService_GetNodeDetail_ReturnsAllowedActions(t *testing.T) {

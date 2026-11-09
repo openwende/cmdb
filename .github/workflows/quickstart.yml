@@ -1,0 +1,63 @@
+name: Quick start
+
+# Runs the README's quick start, so changes cannot silently break it.
+on:
+  pull_request:
+    paths: &paths
+      - compose.yaml
+      - init-env.sh
+      - server/**
+      - web/**
+      - ai/Dockerfile
+      - ai/pyproject.toml
+      - ai/uv.lock
+      - ai/src/**
+      - .github/workflows/quickstart.yml
+  push:
+    branches: [main]
+    paths: *paths
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quickstart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create secrets
+        run: |
+          ./init-env.sh > /dev/null
+          echo "DEEPSEEK_API_KEY=not-used-in-this-test" >> .env
+
+      - name: Start all services
+        run: docker compose --profile ai up -d --build --wait --wait-timeout 300
+
+      - name: Check the web UI, sign-in and services
+        run: |
+          set -euo pipefail
+          base=http://localhost:3000
+          password="$(grep '^AUTH_BOOTSTRAP_ADMIN_PASSWORD=' .env | cut -d= -f2)"
+
+          curl -fsS "$base/" > /dev/null
+          token="$(curl -fsS -X POST "$base/api/v1/auth/login" \
+            -H 'Content-Type: application/json' \
+            -d "{\"username\":\"admin\",\"password\":\"$password\"}" | jq -er .access_token)"
+          curl -fsS -H "Authorization: Bearer $token" "$base/api/v1/businesses" > /dev/null
+          curl -fsS "$base/ai-api/health" > /dev/null
+
+          # Published demo passwords must not work in release mode.
+          status="$(curl -s -o /dev/null -w '%{http_code}' -X POST "$base/api/v1/auth/login" \
+            -H 'Content-Type: application/json' \
+            -d '{"username":"admin","password":"admin123456"}')"
+          test "$status" = 401
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose --profile ai logs --no-color --tail 100

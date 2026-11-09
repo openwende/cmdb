@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/openwende/cmdb-server/internal/core/cloud_area"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/cloud_area"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // TestListCloudAreas 锁定 R8 契约：云区域列表返回统一 envelope

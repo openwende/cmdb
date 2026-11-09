@@ -232,7 +232,7 @@ describe('topology transfer host page', () => {
 
     fireEvent.click(screen.getByText('business.topology.transferHost.buttons.confirmChange'));
 
-    // idlePool 现走模块转移（带 target_module_id），而非上交资源池——避免主机从业务拓扑"消失"（5384616）。
+    // idlePool 现走模块转移（带 target_module_id），而非上交资源池——避免主机从业务拓扑"消失"（0f47d68）。
     await waitFor(() => {
       expect(transferTopologyHosts).toHaveBeenCalledWith({
         host_ids: ['host-1'],

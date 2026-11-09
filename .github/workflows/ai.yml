@@ -1,9 +1,13 @@
-name: CI
+name: AI
 
 on:
   pull_request:
+    paths: &paths
+      - ai/**
+      - .github/workflows/ai.yml
   push:
     branches: [main]
+    paths: *paths
 
 permissions:
   contents: read
@@ -16,6 +20,9 @@ jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: ai
     services:
       postgres:
         image: pgvector/pgvector:0.8.6-pg18-trixie
@@ -36,6 +43,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           version: "0.9.4"
+          working-directory: ai
 
       - name: Install dependencies
         run: uv sync --frozen
@@ -48,12 +56,3 @@ jobs:
 
       - name: Test
         run: uv run --frozen pytest
-
-  image:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build image
-        run: docker build -t cmdb-ai:ci .

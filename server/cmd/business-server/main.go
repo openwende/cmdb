@@ -10,13 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/openwende/cmdb-server/internal/api/server"
-	"github.com/openwende/cmdb-server/internal/core/business"
-	"github.com/openwende/cmdb-server/internal/core/instance"
-	"github.com/openwende/cmdb-server/internal/core/mainline"
-	"github.com/openwende/cmdb-server/internal/core/model"
-	"github.com/openwende/cmdb-server/internal/storage"
-	"github.com/openwende/cmdb-server/pkg/config"
+	"github.com/openwende/cmdb/server/internal/api/server"
+	"github.com/openwende/cmdb/server/internal/core/business"
+	"github.com/openwende/cmdb/server/internal/core/instance"
+	"github.com/openwende/cmdb/server/internal/core/mainline"
+	"github.com/openwende/cmdb/server/internal/core/model"
+	"github.com/openwende/cmdb/server/internal/storage"
+	"github.com/openwende/cmdb/server/pkg/config"
 	"gorm.io/gorm"
 )
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/types"
 	"gorm.io/gorm"
 )
 

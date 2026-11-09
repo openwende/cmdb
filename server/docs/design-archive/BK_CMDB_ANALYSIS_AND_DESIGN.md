@@ -572,7 +572,7 @@ import (
     "github.com/aws/aws-sdk-go/aws/credentials"
     "github.com/aws/aws-sdk-go/aws/session"
     "github.com/aws/aws-sdk-go/service/ec2"
-    "github.com/openwende/cmdb-server/internal/cloudvendor"
+    "github.com/openwende/cmdb/server/internal/cloudvendor"
 )
 
 func init() {
@@ -663,8 +663,8 @@ package cloudsync
 import (
     "context"
     "fmt"
-    "github.com/openwende/cmdb-server/internal/cloudvendor"
-    "github.com/openwende/cmdb-server/internal/types"
+    "github.com/openwende/cmdb/server/internal/cloudvendor"
+    "github.com/openwende/cmdb/server/internal/types"
 )
 
 type SyncEngine struct {

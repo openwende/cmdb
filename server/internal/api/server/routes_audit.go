@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/api/handlers"
-	auditcore "github.com/openwende/cmdb-server/internal/core/audit"
-	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb/server/internal/api/handlers"
+	auditcore "github.com/openwende/cmdb/server/internal/core/audit"
+	"github.com/openwende/cmdb/server/internal/storage"
 )
 
 // RegisterAuditRoutes 注册审计日志路由

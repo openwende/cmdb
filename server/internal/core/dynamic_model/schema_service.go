@@ -7,8 +7,8 @@ import (
 
 	"gorm.io/gorm"
 
-	businesscustomfield "github.com/openwende/cmdb-server/internal/core/business_custom_field"
-	"github.com/openwende/cmdb-server/internal/types"
+	businesscustomfield "github.com/openwende/cmdb/server/internal/core/business_custom_field"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 type SchemaService struct {

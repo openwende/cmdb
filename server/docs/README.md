@@ -64,7 +64,7 @@
 ## 🔧 开发相关
 
 ### 贡献指南
-- **[贡献指南](../CONTRIBUTING.md)** - 如何参与项目开发
+- **[贡献指南](../../CONTRIBUTING.md)** - 如何参与项目开发
   - 开发环境设置
   - 代码规范（Go 代码风格、命名规范、架构模式）
   - 提交规范（Conventional Commits）
@@ -98,7 +98,7 @@
 👉 查看 [系统架构文档](ARCHITECTURE.md)
 
 #### ...参与代码贡献
-👉 查看 [贡献指南](../CONTRIBUTING.md)
+👉 查看 [贡献指南](../../CONTRIBUTING.md)
 
 #### ...运行测试
 👉 查看 [测试指南](TESTING.md)
@@ -123,7 +123,7 @@
 1. **[快速开始指南](QUICKSTART.md)** - 了解如何启动服务
 2. **[系统架构文档](ARCHITECTURE.md)** - 理解系统设计
 3. **[API 文档](API.md)** - 熟悉所有接口
-4. **[贡献指南](../CONTRIBUTING.md)** - 开始贡献代码
+4. **[贡献指南](../../CONTRIBUTING.md)** - 开始贡献代码
 5. **[测试指南](TESTING.md)** - 编写和运行测试
 
 ### 🎨 前端开发者
@@ -150,7 +150,7 @@
 4. **[快速开始指南](QUICKSTART.md)** - 测试环境搭建
 
 ### 📝 技术写作者
-1. **[贡献指南](../CONTRIBUTING.md)** - 文档贡献规范
+1. **[贡献指南](../../CONTRIBUTING.md)** - 文档贡献规范
 2. **[更新日志](CHANGELOG.md)** - 版本发布说明
 3. **[系统架构文档](ARCHITECTURE.md)** - 技术文档参考
 
@@ -283,7 +283,7 @@ A: 查看 [快速开始指南](QUICKSTART.md) 的**故障排查**章节
 A: 使用 `docker exec -it cmdb-db psql -U cmdb -d cmdb`
 
 **Q: 如何贡献代码？**
-A: 查看 [贡献指南](../CONTRIBUTING.md)
+A: 查看 [贡献指南](../../CONTRIBUTING.md)
 
 **Q: 如何运行测试？**
 A: 查看 [测试指南](TESTING.md)
@@ -293,7 +293,7 @@ A: 查看 [系统架构文档 - 性能优化](ARCHITECTURE.md#性能优化)
 
 ### 获取支持
 
-- **GitHub Issues**: [项目 Issues](https://github.com/openwende/cmdb-server/issues)
+- **GitHub Issues**: [项目 Issues](https://github.com/openwende/cmdb/server/issues)
 - **文档反馈**: 如发现文档问题，请提交 Issue 或 PR
 
 ---
@@ -305,7 +305,7 @@ A: 查看 [系统架构文档 - 性能优化](ARCHITECTURE.md#性能优化)
 - 某个功能缺少文档
 - 文档可以写得更清楚
 
-发现文档问题请提交 Issue。暂不接受外部 Pull Request，详见[贡献指南](../CONTRIBUTING.md)。
+发现文档问题请提交 Issue。暂不接受外部 Pull Request，详见[贡献指南](../../CONTRIBUTING.md)。
 
 ---
 

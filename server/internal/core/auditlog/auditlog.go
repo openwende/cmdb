@@ -14,8 +14,8 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/auth"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/auth"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // Record 尽力写一条 resource_histories（best-effort：审计写失败只吞错、绝不回滚或阻断

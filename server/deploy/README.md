@@ -2,11 +2,11 @@
 
 ## Try it
 
-To run the server, web UI and database together, follow the [quick start](quickstart/README.md).
+To run the server, web UI and database together, follow the [quick start](../../README.md#quick-start).
 
 ## Local development
 
-The `docker-compose.yml` in the repository root is for development only. It runs in debug mode, which allows the built-in JWT secret and creates demo accounts with published passwords.
+`server/docker-compose.yml` is for development only. It runs in debug mode, which allows the built-in JWT secret and creates demo accounts with published passwords.
 
 ```bash
 make dev-db    # start PostgreSQL only, on 127.0.0.1:5432
@@ -17,7 +17,7 @@ The database credentials are `cmdb` / `password`.
 
 ## Production
 
-Build the image, or use the quick start's Compose file as a starting point:
+Build the image, or use the root `compose.yaml` as a starting point:
 
 ```bash
 ./deploy/scripts/build.sh --name your-registry/cmdb --tag v1.0.0 --push

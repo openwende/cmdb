@@ -260,7 +260,7 @@
 
 ## 贡献指南
 
-参与方式请参阅 [CONTRIBUTING.md](../CONTRIBUTING.md)。
+参与方式请参阅 [CONTRIBUTING.md](../../CONTRIBUTING.md)。
 
 ## 相关链接
 

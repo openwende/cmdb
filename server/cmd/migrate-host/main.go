@@ -8,8 +8,8 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
-	"github.com/openwende/cmdb-server/internal/migration"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/migration"
 )
 
 func main() {

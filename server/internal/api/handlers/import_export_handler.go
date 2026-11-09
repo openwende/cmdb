@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
-	"github.com/openwende/cmdb-server/internal/import_export"
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb/server/internal/import_export"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // ImportExportHandler 导入导出处理器

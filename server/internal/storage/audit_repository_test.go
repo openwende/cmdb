@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb/server/internal/types"
 )
 
 // ListAuditLogs 的查询列用了 PG 专有的 ::text，sqlite 跑不了；这里只验证过滤条件 applyFilters。
