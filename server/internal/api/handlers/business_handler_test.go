@@ -10,11 +10,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openwende/cmdb-server/internal/core/business"
+	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb-server/pkg/apperrors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/wend/cmdb-backend/internal/core/business"
-	"github.com/wend/cmdb-backend/internal/types"
-	"github.com/wend/cmdb-backend/pkg/apperrors"
 )
 
 // MockService is a mock implementation of business.Service

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# WEND CMDB Backend API 自动化测试脚本
+# Wende CMDB Server API 自动化测试脚本
 # 验证所有API端点是否正常工作
 
 set -e  # 遇到错误立即退出
@@ -561,7 +561,7 @@ show_summary() {
 # 主函数
 main() {
     echo -e "${YELLOW}╔════════════════════════════════════════╗${NC}"
-    echo -e "${YELLOW}║  WEND CMDB Backend API 自动化测试      ║${NC}"
+    echo -e "${YELLOW}║  Wende CMDB Server API 自动化测试      ║${NC}"
     echo -e "${YELLOW}╚════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${BLUE}Base URL:${NC} $BASE_URL"

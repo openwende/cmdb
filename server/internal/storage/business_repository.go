@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/lib/pq"
-	"github.com/wend/cmdb-backend/internal/types"
-	"github.com/wend/cmdb-backend/pkg/apperrors"
+	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb-server/pkg/apperrors"
 	"gorm.io/gorm"
 )
 

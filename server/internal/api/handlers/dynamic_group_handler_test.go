@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/wend/cmdb-backend/internal/core/dynamic_group"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_group"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // stubDynamicGroupService 是 dynamic_group.Service 接口的测试替身：仅 List 返回固定数据。

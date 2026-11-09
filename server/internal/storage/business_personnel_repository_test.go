@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/openwende/cmdb-server/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

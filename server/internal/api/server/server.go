@@ -6,16 +6,16 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wend/cmdb-backend/internal/api/handlers"
-	authn "github.com/wend/cmdb-backend/internal/auth"
-	authcore "github.com/wend/cmdb-backend/internal/core/auth"
-	"github.com/wend/cmdb-backend/internal/core/business"
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/core/instance"
-	"github.com/wend/cmdb-backend/internal/core/model"
-	"github.com/wend/cmdb-backend/internal/mcpserver"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/pkg/config"
+	"github.com/openwende/cmdb-server/internal/api/handlers"
+	authn "github.com/openwende/cmdb-server/internal/auth"
+	authcore "github.com/openwende/cmdb-server/internal/core/auth"
+	"github.com/openwende/cmdb-server/internal/core/business"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/core/instance"
+	"github.com/openwende/cmdb-server/internal/core/model"
+	"github.com/openwende/cmdb-server/internal/mcpserver"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/pkg/config"
 )
 
 type Server struct {

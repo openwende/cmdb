@@ -3,8 +3,8 @@ package storage
 import (
 	"testing"
 
+	"github.com/openwende/cmdb-server/internal/types"
 	"github.com/stretchr/testify/require"
-	"github.com/wend/cmdb-backend/internal/types"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

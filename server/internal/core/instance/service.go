@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/mainline"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type Service interface {

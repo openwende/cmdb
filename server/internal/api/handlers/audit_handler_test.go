@@ -12,9 +12,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wend/cmdb-backend/internal/core/audit"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/audit"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // fakeAuditRepo records the params it receives and returns canned data so the

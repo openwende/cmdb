@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // fakeAuditRepo 是 storage.AuditRepository 的测试替身，记录收到的查询参数并返回预设数据。

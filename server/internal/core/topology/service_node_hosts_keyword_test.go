@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // GetNodeHosts 的 keyword：主机名或主 IP 子串，不区分大小写，% 和 _ 按字面匹配；先过滤再计总数。

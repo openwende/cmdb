@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/host_membership"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/host_membership"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // Service 资源目录管理服务

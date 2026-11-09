@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // shanghai 工具输出统一用北京时间（带偏移量），避免 Agent 把 UTC 当本地时间讲给用户。

@@ -9,9 +9,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/import_export"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/import_export"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // ImportExportHandler 导入导出处理器
@@ -176,11 +176,11 @@ func (h *ImportExportHandler) ValidateTemplate(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"code": 0,
 		"data": gin.H{
-			"valid":           result.TemplateValid,
-			"fields_changed":  result.FieldsChanged,
-			"missing_fields":  result.MissingFields,
-			"obsolete_fields": result.ObsoleteFields,
-			"total_rows":      result.Total,
+			"valid":             result.TemplateValid,
+			"fields_changed":    result.FieldsChanged,
+			"missing_fields":    result.MissingFields,
+			"obsolete_fields":   result.ObsoleteFields,
+			"total_rows":        result.Total,
 			"validation_errors": result.Errors,
 		},
 		"message": "验证完成",

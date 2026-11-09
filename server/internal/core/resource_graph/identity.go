@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 func MatchIdentity(rules types.IdentityRules, payload map[string]any) (string, bool) {

@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // ModelSchemaService 管理动态模型与其属性的 schema（模型 CRUD + 属性 CRUD）。

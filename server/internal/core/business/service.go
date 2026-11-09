@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/auditlog"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
-	"github.com/wend/cmdb-backend/pkg/apperrors"
+	"github.com/openwende/cmdb-server/internal/core/auditlog"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb-server/pkg/apperrors"
 )
 
 type Service interface {

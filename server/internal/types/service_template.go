@@ -85,10 +85,10 @@ func (SetTemplateServiceBinding) TableName() string {
 
 // CreateServiceTemplateRequest 创建服务模板请求
 type CreateServiceTemplateRequest struct {
-	Name        string    `json:"name" binding:"required"`
-	BusinessID  uint64    `json:"business_id" binding:"required"`
-	ServiceType string    `json:"service_type" binding:"omitempty,oneof=web api db cache mq other"`
-	Description string    `json:"description"`
+	Name        string `json:"name" binding:"required"`
+	BusinessID  uint64 `json:"business_id" binding:"required"`
+	ServiceType string `json:"service_type" binding:"omitempty,oneof=web api db cache mq other"`
+	Description string `json:"description"`
 }
 
 // UpdateServiceTemplateRequest 更新服务模板请求
@@ -117,11 +117,11 @@ type SyncModulesRequest struct {
 
 // CreateSetTemplateRequest 创建集群模板请求
 type CreateSetTemplateRequest struct {
-	Name               string    `json:"name" binding:"required"`
-	BusinessID         uint64    `json:"business_id" binding:"required"`
-	EnvType            string    `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
-	Description        string    `json:"description"`
-	ServiceTemplateIDs []uint64  `json:"service_template_ids"` // 关联的服务模板
+	Name               string   `json:"name" binding:"required"`
+	BusinessID         uint64   `json:"business_id" binding:"required"`
+	EnvType            string   `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
+	Description        string   `json:"description"`
+	ServiceTemplateIDs []uint64 `json:"service_template_ids"` // 关联的服务模板
 }
 
 // UpdateSetTemplateRequest 更新集群模板请求

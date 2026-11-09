@@ -94,10 +94,10 @@ type TopologyTreeNode struct {
 // CreateSetRequest 创建集群请求
 type CreateSetRequest struct {
 	BusinessID  uint64 `json:"business_id" binding:"required"`
-	Name        string    `json:"name" binding:"required"`
-	Description string    `json:"description"`
-	EnvType     string    `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
-	SortOrder   int       `json:"sort_order"`
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	EnvType     string `json:"env_type" binding:"omitempty,oneof=prod staging dev test"`
+	SortOrder   int    `json:"sort_order"`
 }
 
 // UpdateSetRequest 更新集群请求
@@ -144,9 +144,9 @@ type MoveNodeRequest struct {
 // GetTopologyTreeRequest 获取拓扑树请求
 type GetTopologyTreeRequest struct {
 	BusinessID   *uint64 `form:"business_id"`
-	IncludeHosts bool       `form:"include_hosts"`  // 是否包含主机节点
-	MaxDepth     int        `form:"max_depth"`      // 最大深度（1=业务，2=集群，3=模块，4=主机）
-	ExpandNodeID string     `form:"expand_node_id"` // 展开指定节点
+	IncludeHosts bool    `form:"include_hosts"`  // 是否包含主机节点
+	MaxDepth     int     `form:"max_depth"`      // 最大深度（1=业务，2=集群，3=模块，4=主机）
+	ExpandNodeID string  `form:"expand_node_id"` // 展开指定节点
 }
 
 // TopologyStatistics 拓扑统计信息

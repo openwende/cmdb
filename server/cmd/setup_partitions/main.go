@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/wend/cmdb-backend/internal/storage"
+	"github.com/openwende/cmdb-server/internal/storage"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	authjwt "github.com/wend/cmdb-backend/internal/auth"
-	authcore "github.com/wend/cmdb-backend/internal/core/auth"
-	"github.com/wend/cmdb-backend/internal/types"
+	authjwt "github.com/openwende/cmdb-server/internal/auth"
+	authcore "github.com/openwende/cmdb-server/internal/core/auth"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type AuthHandler struct {

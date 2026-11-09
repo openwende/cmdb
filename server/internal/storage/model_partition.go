@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 var invalidPartitionChars = regexp.MustCompile(`[^a-zA-Z0-9_]+`)

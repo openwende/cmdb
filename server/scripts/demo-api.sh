@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# WEND CMDB Backend - 快速演示脚本
+# Wende CMDB Server - 快速演示脚本
 # 演示基本的API使用流程
 
 set -e
@@ -15,7 +15,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${YELLOW}╔════════════════════════════════════════╗${NC}"
-echo -e "${YELLOW}║  WEND CMDB Backend 快速演示            ║${NC}"
+echo -e "${YELLOW}║  Wende CMDB Server 快速演示            ║${NC}"
 echo -e "${YELLOW}╚════════════════════════════════════════╝${NC}"
 echo ""
 

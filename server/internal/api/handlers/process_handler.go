@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/wend/cmdb-backend/internal/core/process"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/process"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // ProcessHandler 进程管理 HTTP Handler

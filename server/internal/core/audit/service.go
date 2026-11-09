@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // businessModelUIDs are model UIDs classified under the "business" audit tab.

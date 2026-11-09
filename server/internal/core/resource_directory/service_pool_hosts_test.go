@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // seedPoolHosts 资源池目录 1、2 下各有主机，另有一台在业务模块（不应出现在资源池列表）。

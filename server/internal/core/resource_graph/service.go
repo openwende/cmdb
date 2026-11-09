@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type Service interface {
@@ -263,10 +263,10 @@ func (s *service) CreateEdge(ctx context.Context, input CreateEdgeInput) (*types
 		return nil, err
 	}
 	if err := s.recordEvent(ctx, s.db.WithContext(ctx), "edge.created", nil, map[string]any{
-		"edge_id":   edge.ID,
-		"from_id":   edge.FromID,
-		"to_id":     edge.ToID,
-		"rel_type":  edge.RelType,
+		"edge_id":  edge.ID,
+		"from_id":  edge.FromID,
+		"to_id":    edge.ToID,
+		"rel_type": edge.RelType,
 	}); err != nil {
 		return nil, err
 	}

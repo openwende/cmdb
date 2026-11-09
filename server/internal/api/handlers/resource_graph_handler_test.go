@@ -12,8 +12,8 @@ import (
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/resource_graph"
-	"github.com/wend/cmdb-backend/internal/storage"
+	"github.com/openwende/cmdb-server/internal/core/resource_graph"
+	"github.com/openwende/cmdb-server/internal/storage"
 )
 
 func setupResourceGraphHandlerTest(t *testing.T) (*gin.Engine, *gorm.DB) {

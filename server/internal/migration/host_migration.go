@@ -7,8 +7,8 @@ import (
 
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // HostMigration 主机迁移工具

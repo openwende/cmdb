@@ -12,9 +12,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wend/cmdb-backend/internal/api/response"
-	"github.com/wend/cmdb-backend/internal/core/host"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/api/response"
+	"github.com/openwende/cmdb-server/internal/core/host"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type fakeHostRepo struct {
@@ -181,7 +181,7 @@ func TestHostHandler_ListHostsUsesDefaultTenant(t *testing.T) {
 	var envelope struct {
 		Code int `json:"code"`
 		Data struct {
-			Items      []types.Host       `json:"items"`
+			Items      []types.Host        `json:"items"`
 			Pagination response.Pagination `json:"pagination"`
 		} `json:"data"`
 	}

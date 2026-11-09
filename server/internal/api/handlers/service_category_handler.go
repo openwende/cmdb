@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/wend/cmdb-backend/internal/core/service_category"
+	"github.com/openwende/cmdb-server/internal/core/service_category"
 )
 
 type ServiceCategoryHandler struct {

@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	authjwt "github.com/wend/cmdb-backend/internal/auth"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
+	authjwt "github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
 	"golang.org/x/crypto/bcrypt"
 )
 

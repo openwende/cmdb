@@ -10,13 +10,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/wend/cmdb-backend/internal/api/server"
-	"github.com/wend/cmdb-backend/internal/core/business"
-	"github.com/wend/cmdb-backend/internal/core/instance"
-	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/core/model"
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/pkg/config"
+	"github.com/openwende/cmdb-server/internal/api/server"
+	"github.com/openwende/cmdb-server/internal/core/business"
+	"github.com/openwende/cmdb-server/internal/core/instance"
+	"github.com/openwende/cmdb-server/internal/core/mainline"
+	"github.com/openwende/cmdb-server/internal/core/model"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/pkg/config"
 )
 
 // version flags
@@ -121,7 +121,7 @@ func main() {
 
 	// 5. Start Server with Graceful Shutdown
 	go func() {
-		fmt.Printf("🚀 WEND CMDB Backend %s (%s) build %s\n", version, commit, buildTime)
+		fmt.Printf("🚀 Wende CMDB Server %s (%s) build %s\n", version, commit, buildTime)
 		fmt.Printf("🌐 Server starting on %s\n", cfg.Server.GetAddress())
 		if err := srv.Run(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to start server: %v", err)

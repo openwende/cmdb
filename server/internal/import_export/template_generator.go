@@ -8,8 +8,8 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // TemplateGenerator 模板生成器
@@ -26,13 +26,13 @@ func NewTemplateGenerator(dynamicService dynamic_model.Service) *TemplateGenerat
 
 // TemplateMetadata 模板元数据
 type TemplateMetadata struct {
-	ModelUID      string    `json:"model_uid"`
-	ModelName     string    `json:"model_name"`
-	GeneratedAt   time.Time `json:"generated_at"`
-	Version       string    `json:"version"`       // 模板版本，如 "v1"
-	FieldsHash    string    `json:"fields_hash"`   // 字段配置的哈希值，用于检测变更
-	TotalFields   int       `json:"total_fields"`
-	RequiredFields int      `json:"required_fields"`
+	ModelUID       string    `json:"model_uid"`
+	ModelName      string    `json:"model_name"`
+	GeneratedAt    time.Time `json:"generated_at"`
+	Version        string    `json:"version"`     // 模板版本，如 "v1"
+	FieldsHash     string    `json:"fields_hash"` // 字段配置的哈希值，用于检测变更
+	TotalFields    int       `json:"total_fields"`
+	RequiredFields int       `json:"required_fields"`
 }
 
 // FieldTemplateInfo 字段模板信息
@@ -105,8 +105,8 @@ func (g *TemplateGenerator) GenerateExcelTemplate(ctx context.Context, modelUID 
 func (g *TemplateGenerator) createDataSheet(f *excelize.File, sheetName string, attributes []types.DynamicAttribute) error {
 	// 样式定义
 	headerStyle, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true, Size: 12, Color: "FFFFFF"},
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"4472C4"}, Pattern: 1},
+		Font:      &excelize.Font{Bold: true, Size: 12, Color: "FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"4472C4"}, Pattern: 1},
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
 		Border: []excelize.Border{
 			{Type: "top", Color: "000000", Style: 1},
@@ -117,8 +117,8 @@ func (g *TemplateGenerator) createDataSheet(f *excelize.File, sheetName string, 
 	})
 
 	requiredStyle, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Bold: true, Size: 12, Color: "FFFFFF"},
-		Fill: excelize.Fill{Type: "pattern", Color: []string{"E74C3C"}, Pattern: 1}, // 红色背景
+		Font:      &excelize.Font{Bold: true, Size: 12, Color: "FFFFFF"},
+		Fill:      excelize.Fill{Type: "pattern", Color: []string{"E74C3C"}, Pattern: 1}, // 红色背景
 		Alignment: &excelize.Alignment{Horizontal: "center", Vertical: "center"},
 		Border: []excelize.Border{
 			{Type: "top", Color: "000000", Style: 1},
@@ -129,7 +129,7 @@ func (g *TemplateGenerator) createDataSheet(f *excelize.File, sheetName string, 
 	})
 
 	exampleStyle, _ := f.NewStyle(&excelize.Style{
-		Font: &excelize.Font{Color: "7F7F7F", Italic: true},
+		Font:      &excelize.Font{Color: "7F7F7F", Italic: true},
 		Alignment: &excelize.Alignment{Horizontal: "left"},
 	})
 

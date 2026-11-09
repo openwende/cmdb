@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/api/response"
-	"github.com/wend/cmdb-backend/internal/core/dynamic_group"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/api/response"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_group"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type DynamicGroupHandler struct {

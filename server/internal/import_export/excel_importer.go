@@ -10,8 +10,8 @@ import (
 
 	"github.com/xuri/excelize/v2"
 
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // ExcelImporter Excel 导入器

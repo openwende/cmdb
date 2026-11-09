@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/core/topology"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/mainline"
+	"github.com/openwende/cmdb-server/internal/core/topology"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type MainlineHandler struct {

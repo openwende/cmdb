@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/api/handlers"
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/api/handlers"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
 )
 
 // RegisterDynamicModelRoutes 注册动态模型路由

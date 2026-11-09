@@ -6,9 +6,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/wend/cmdb-backend/internal/storage"
-	"github.com/wend/cmdb-backend/internal/types"
-	"github.com/wend/cmdb-backend/pkg/apperrors"
+	"github.com/openwende/cmdb-server/internal/storage"
+	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb-server/pkg/apperrors"
 )
 
 // Service 云区域服务

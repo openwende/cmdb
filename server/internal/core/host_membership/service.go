@@ -21,8 +21,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 
-	"github.com/wend/cmdb-backend/internal/auth"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // NodeRef 节点引用：资源池目录 或 业务模块。

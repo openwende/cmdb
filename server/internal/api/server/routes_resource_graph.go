@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/api/handlers"
-	"github.com/wend/cmdb-backend/internal/core/resource_graph"
+	"github.com/openwende/cmdb-server/internal/api/handlers"
+	"github.com/openwende/cmdb-server/internal/core/resource_graph"
 )
 
 func RegisterResourceGraphRoutes(router *gin.Engine, db *gorm.DB) {

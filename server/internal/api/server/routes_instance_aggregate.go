@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/api/handlers"
-	"github.com/wend/cmdb-backend/internal/core/dynamic_model"
-	"github.com/wend/cmdb-backend/internal/core/instance"
+	"github.com/openwende/cmdb-server/internal/api/handlers"
+	"github.com/openwende/cmdb-server/internal/core/dynamic_model"
+	"github.com/openwende/cmdb-server/internal/core/instance"
 )
 
 func RegisterInstanceAggregateRoutes(router *gin.Engine, dynamicModelService dynamic_model.Service, db *gorm.DB) {

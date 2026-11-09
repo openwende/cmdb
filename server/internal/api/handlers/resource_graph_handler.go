@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/wend/cmdb-backend/internal/core/resource_graph"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/resource_graph"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type ResourceGraphHandler struct {
@@ -15,13 +15,13 @@ type ResourceGraphHandler struct {
 }
 
 type createTypeRequest struct {
-	Name          string                 `json:"name"`
-	DisplayName   string                 `json:"display_name"`
-	Category      string                 `json:"category"`
-	Icon          string                 `json:"icon"`
-	Schema        map[string]any         `json:"schema"`
-	IdentityRules types.IdentityRules    `json:"identity_rules"`
-	Builtin       bool                   `json:"builtin"`
+	Name          string              `json:"name"`
+	DisplayName   string              `json:"display_name"`
+	Category      string              `json:"category"`
+	Icon          string              `json:"icon"`
+	Schema        map[string]any      `json:"schema"`
+	IdentityRules types.IdentityRules `json:"identity_rules"`
+	Builtin       bool                `json:"builtin"`
 }
 
 type createResourceRequest struct {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/wend/cmdb-backend/pkg/config"
+	"github.com/openwende/cmdb-server/pkg/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"

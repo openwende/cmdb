@@ -10,8 +10,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/wend/cmdb-backend/internal/auth"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // 业务模块 id 约定（测试数据）
@@ -84,7 +84,7 @@ func setupHMTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func poolNode() NodeRef   { return NodeRef{Kind: types.NodeKindPoolDirectory, ID: poolDirID} }
+func poolNode() NodeRef     { return NodeRef{Kind: types.NodeKindPoolDirectory, ID: poolDirID} }
 func mod(id uint64) NodeRef { return NodeRef{Kind: types.NodeKindBizModule, ID: id} }
 
 func membershipsOf(t *testing.T, db *gorm.DB, hostID uuid.UUID) []types.HostNodeMembership {

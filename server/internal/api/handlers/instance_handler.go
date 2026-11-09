@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/wend/cmdb-backend/internal/api/response"
-	"github.com/wend/cmdb-backend/internal/core/instance"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/api/response"
+	"github.com/openwende/cmdb-server/internal/core/instance"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 type InstanceHandler struct {

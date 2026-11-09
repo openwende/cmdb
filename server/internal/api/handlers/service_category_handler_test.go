@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/wend/cmdb-backend/internal/core/service_category"
+	"github.com/openwende/cmdb-server/internal/core/service_category"
 )
 
 func setupServiceCategoryHandlerTestDB(t *testing.T) *gorm.DB {

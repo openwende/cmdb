@@ -11,8 +11,8 @@ import (
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 
-	"github.com/wend/cmdb-backend/internal/auth"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // AuditRecorder 主机配置变更（创建 / 修改配置 / 删除）的审计落点。

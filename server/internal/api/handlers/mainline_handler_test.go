@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 
-	"github.com/wend/cmdb-backend/internal/core/mainline"
-	"github.com/wend/cmdb-backend/internal/core/topology"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/core/mainline"
+	"github.com/openwende/cmdb-server/internal/core/topology"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 // GetTree 走 topology.Service(legacy 实体 + mainline 主线树),v2 已在 P1 退出拓扑路径。

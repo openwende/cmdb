@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# WEND CMDB Backend Build Script
+# Wende CMDB Server Build Script
 # This script builds the Docker image and optionally pushes to registry
 
 set -euo pipefail
 
 # Configuration
-IMAGE_NAME=${IMAGE_NAME:-wend/cmdb-backend}
+IMAGE_NAME=${IMAGE_NAME:-openwende/cmdb-server}
 IMAGE_TAG=${IMAGE_TAG:-latest}
 REGISTRY=${REGISTRY:-}
 PLATFORM=${PLATFORM:-linux/amd64,linux/arm64}
@@ -45,13 +45,13 @@ log_error() {
 # Help function
 show_help() {
     cat << EOF
-WEND CMDB Backend Build Script
+Wende CMDB Server Build Script
 
 Usage: $0 [OPTIONS]
 
 OPTIONS:
     -h, --help              Show this help message
-    -n, --name NAME         Docker image name (default: wend/cmdb-backend)
+    -n, --name NAME         Docker image name (default: openwende/cmdb-server)
     -t, --tag TAG           Docker image tag (default: latest)
     -r, --registry URL      Docker registry URL
     -p, --platform LIST     Build platforms (default: linux/amd64,linux/arm64)

@@ -9,8 +9,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/openwende/cmdb-server/pkg/config"
 	"github.com/stretchr/testify/require"
-	"github.com/wend/cmdb-backend/pkg/config"
 )
 
 func TestProtectAPIRejectsViewerWriteRequests(t *testing.T) {

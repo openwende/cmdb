@@ -13,8 +13,8 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/wend/cmdb-backend/internal/auth"
-	"github.com/wend/cmdb-backend/internal/types"
+	"github.com/openwende/cmdb-server/internal/auth"
+	"github.com/openwende/cmdb-server/internal/types"
 )
 
 func setupHostAuditDB(t *testing.T) *gorm.DB {

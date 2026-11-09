@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"github.com/wend/cmdb-backend/internal/api/response"
-	"github.com/wend/cmdb-backend/internal/core/host"
-	"github.com/wend/cmdb-backend/internal/types"
-	"github.com/wend/cmdb-backend/pkg/apperrors"
+	"github.com/openwende/cmdb-server/internal/api/response"
+	"github.com/openwende/cmdb-server/internal/core/host"
+	"github.com/openwende/cmdb-server/internal/types"
+	"github.com/openwende/cmdb-server/pkg/apperrors"
 )
 
 // HostHandler 主机处理器

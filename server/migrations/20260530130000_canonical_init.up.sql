@@ -1,4 +1,4 @@
--- Canonical initial schema — wende-cmdb-backend (fresh DB)
+-- Canonical initial schema — cmdb-server (fresh DB)
 -- 取代旧增量迁移链。business 主键/外键统一 BIGINT。
 -- seed 数据不在此文件(收敛为独立 Go seed 步骤)。
 
