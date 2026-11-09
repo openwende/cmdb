@@ -1967,7 +1967,7 @@
       "sampleDataTipInstance": "实例数量统计已接入真实数据；变更趋势与自定义图仍为示例数据",
       "sampleData": {
         "hostBusiness": {
-          "blueking": "蓝鲸",
+          "blueking": "平台服务",
           "financeSystem": "财务系统",
           "officialSiteBusiness": "官网业务",
           "hrBusiness": "人力资源业务",

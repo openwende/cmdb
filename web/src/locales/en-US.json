@@ -1967,7 +1967,7 @@
       "sampleDataTipInstance": "Instance count statistics use live data; change trend and custom charts are still sample data.",
       "sampleData": {
         "hostBusiness": {
-          "blueking": "BlueKing",
+          "blueking": "Platform Services",
           "financeSystem": "Finance System",
           "officialSiteBusiness": "Official Website",
           "hrBusiness": "HR Business",

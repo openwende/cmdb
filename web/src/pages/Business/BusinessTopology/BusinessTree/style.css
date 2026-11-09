@@ -1,4 +1,4 @@
-/* BusinessTree (Navigator) Styles matching Prototype */
+/* BusinessTree (Navigator) styles */
 .topo-navigator {
   width: 280px;
   background: var(--color-bg-container);
@@ -24,7 +24,7 @@
   overflow: hidden;
 }
 
-/* Specific override for AntD search input to match prototype */
+/* Specific override for the AntD search input */
 .topo-search .ant-input-search,
 .topo-search .ant-input-group-wrapper {
   width: 100%;
