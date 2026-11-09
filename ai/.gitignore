@@ -1,0 +1,25 @@
+# Secrets — never commit real keys; .env.example is the committed template
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Eval / local run output
+eval/results/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

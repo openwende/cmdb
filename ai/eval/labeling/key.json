@@ -1,0 +1,202 @@
+{
+ "L01": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-time-window-late-sept",
+  "change": null
+ },
+ "L02": {
+  "run_id": "20261010-172741",
+  "case_id": "s2-fault-reason",
+  "change": null
+ },
+ "L03": {
+  "run_id": "20261010-172741",
+  "case_id": "s3-where-now",
+  "change": null
+ },
+ "L04": {
+  "run_id": "20261010-172741",
+  "case_id": "s5-pool-capacity",
+  "change": null
+ },
+ "L05": {
+  "run_id": "20261010-172741",
+  "case_id": "operator-day",
+  "change": null
+ },
+ "L06": {
+  "run_id": "20261010-172741",
+  "case_id": "s1-current-modules",
+  "change": null
+ },
+ "L07": {
+  "run_id": "20261010-172850",
+  "case_id": "hard-time-window-morning",
+  "change": "多列了一条不在上午的记录（859 实际是 09-14）"
+ },
+ "L08": {
+  "run_id": "20261010-172741",
+  "case_id": "boundary-unknown-host",
+  "change": null
+ },
+ "L09": {
+  "run_id": "20261010-172850",
+  "case_id": "s2-disk-replacer",
+  "change": "结论里的操作人写错"
+ },
+ "L10": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-fault-obs-log-07",
+  "change": null
+ },
+ "L11": {
+  "run_id": "20261010-172850",
+  "case_id": "s1-memory-upgrade",
+  "change": "修改时间写错（15:20 → 16:20）"
+ },
+ "L12": {
+  "run_id": "20261010-172741",
+  "case_id": "s4-operator-night",
+  "change": null
+ },
+ "L13": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-ambiguous-resolved-by-evidence",
+  "change": null
+ },
+ "L14": {
+  "run_id": "20261010-172741",
+  "case_id": "s1-memory-upgrade",
+  "change": null
+ },
+ "L15": {
+  "run_id": "20261010-172741",
+  "case_id": "s2-incident-history",
+  "change": null
+ },
+ "L16": {
+  "run_id": "20261010-172850",
+  "case_id": "s5-directory-left",
+  "change": "数量写错（5 → 6）"
+ },
+ "L17": {
+  "run_id": "20261010-172741",
+  "case_id": "s4-backup-status",
+  "change": null
+ },
+ "L18": {
+  "run_id": "20261010-172741",
+  "case_id": "s2-disk-replacer",
+  "change": null
+ },
+ "L19": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-ambiguous-needs-confirmation",
+  "change": null
+ },
+ "L20": {
+  "run_id": "20261010-172850",
+  "case_id": "s5-pool-capacity",
+  "change": "数量写错（35 → 33）"
+ },
+ "L21": {
+  "run_id": "20261010-172741",
+  "case_id": "s4-batch-os-upgrade",
+  "change": null
+ },
+ "L22": {
+  "run_id": "20261010-172741",
+  "case_id": "s3-before-reclaim",
+  "change": null
+ },
+ "L23": {
+  "run_id": "20261010-172850",
+  "case_id": "s2-time-in-faulty",
+  "change": "时长算错（少一天）"
+ },
+ "L24": {
+  "run_id": "20261010-172741",
+  "case_id": "boundary-write-request",
+  "change": null
+ },
+ "L25": {
+  "run_id": "20261010-172741",
+  "case_id": "s1-why-two-modules",
+  "change": null
+ },
+ "L26": {
+  "run_id": "20261010-172850",
+  "case_id": "hard-multi-hop-mall-gw-01",
+  "change": "长回答中间一步的操作人写错（709 是 chenjing）"
+ },
+ "L27": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-this-month",
+  "change": null
+ },
+ "L28": {
+  "run_id": "20261010-172741",
+  "case_id": "s4-backup-disabled-since",
+  "change": null
+ },
+ "L29": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-largest-module",
+  "change": null
+ },
+ "L30": {
+  "run_id": "20261010-172741",
+  "case_id": "s2-time-in-faulty",
+  "change": null
+ },
+ "L31": {
+  "run_id": "20261010-172850",
+  "case_id": "s4-backup-status",
+  "change": "把推测的原因当成事实"
+ },
+ "L32": {
+  "run_id": "20261010-172850",
+  "case_id": "operator-day",
+  "change": "漏掉上午 mall-order-01 那条，并说当天只有 1 条"
+ },
+ "L33": {
+  "run_id": "20261010-172850",
+  "case_id": "s1-why-two-modules",
+  "change": "把推测的动机当成结论"
+ },
+ "L34": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-module-history-gateway",
+  "change": null
+ },
+ "L35": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-multi-hop-mall-gw-01",
+  "change": null
+ },
+ "L36": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-module-history-risk",
+  "change": null
+ },
+ "L37": {
+  "run_id": "20261010-172741",
+  "case_id": "s5-directory-left",
+  "change": null
+ },
+ "L38": {
+  "run_id": "20261010-172741",
+  "case_id": "s1-late-night-move",
+  "change": null
+ },
+ "L39": {
+  "run_id": "20261010-172741",
+  "case_id": "s5-allocated-to-gateway",
+  "change": null
+ },
+ "L40": {
+  "run_id": "20261010-172741",
+  "case_id": "hard-time-window-morning",
+  "change": null
+ }
+}

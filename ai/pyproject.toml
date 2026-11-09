@@ -1,0 +1,79 @@
+[project]
+name = "wende-cmdb-ai"
+version = "0.1.0"
+description = "wende CMDB 的 AI 服务：资源配置调查助手"
+requires-python = ">=3.12"
+license = "AGPL-3.0-only"
+dependencies = [
+    "fastapi>=0.143.0",
+    "httpx>=0.28.1",
+    "jieba>=0.42.1",
+    "langchain>=1.4.4",
+    "langchain-deepseek>=1.1.1",
+    "langchain-mcp-adapters>=0.3.2",
+    "langfuse>=4.15.6,<4.16",
+    "langgraph>=1.2.14",
+    "langgraph-checkpoint-postgres>=3.1.2",
+    "psycopg[binary,pool]>=3.3.6",
+    "pydantic-settings>=2.15.0",
+    "sse-starlette>=3.5.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+# 本地知识库模型（KNOWLEDGE_MODEL_PROVIDER=local）才需要：uv sync --extra local-models。
+# 用托管 API（siliconflow）时不装，镜像小约 1GB
+[project.optional-dependencies]
+local-models = [
+    "sentence-transformers>=6.1.0,<6.2",
+    "torch>=2.14.0,<2.14.1",
+    "transformers>=5.17,<5.18",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pyyaml>=6.0.3",
+    "ruff>=0.17.0",
+]
+eval = [
+    "langchain-community>=0.4,<0.4.2",
+    "ragas>=0.4.3",
+]
+
+# 容器（linux）里只装 CPU 版 torch：PyPI 上 linux 的 torch（含 aarch64）都带 CUDA 依赖，镜像会多出约 4GB。
+# macOS 不受影响，仍用 PyPI 的包（MPS）
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[build-system]
+requires = ["uv_build>=0.9.4,<0.10"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "cmdb_ai"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::langchain_core._api.beta_decorator.LangChainBetaWarning",
+    # jieba 0.42.1（2020 年的最后一个版本）源码里的正则没用原始字符串
+    "ignore::SyntaxWarning",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC"]
+
+[tool.ruff.lint.per-file-ignores]
+# 提示词是给模型看的长文本，不按代码行宽折行
+"src/cmdb_ai/prompts.py" = ["E501"]

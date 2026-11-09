@@ -1,0 +1,238 @@
+# 检索评测的补充查询（2026-10-11，第二阶段 C2）：只测检索，不跑 Agent、不调用模型。
+#
+# 检索评测集 = 这里的查询 + cases.yaml 里带 passages 的题（用题目原文当查询）。
+# passages 是应命中的知识库小节（"<文档 title>#<小节标题>"），第一个最关键；Recall@k 看全部，MRR 看排名最前的那个命中。
+# style 用来分组看各种检索方式的长处：
+#   keyword     查询里有字段名、取值、报错原文等字面关键词，关键词检索应占优
+#   paraphrase  口语化、换了说法，和原文几乎没有相同的词，向量检索应占优
+#   plain       普通问法
+
+- id: r-memory-unit
+  style: keyword
+  query: memory_mb 是什么单位？32768 是多少内存？
+  passages: [主机内置字段#硬件配置字段和单位]
+
+- id: r-backup-audit-field
+  style: keyword
+  query: custom_fields.备份 从 true 变成 false 是什么意思
+  passages: [审计记录说明#配置变更的 changes, 自定义字段约定#备份]
+
+- id: r-regex-operator
+  style: keyword
+  query: 动态分组的 $regex 条件写 ^web 为什么匹配不到
+  passages: [动态分组#条件怎么组合]
+
+- id: r-is-idle-pool
+  style: keyword
+  query: get_business_topology 返回的 is_idle_pool 是什么
+  passages: [拓扑与空闲机池#空闲机池]
+
+- id: r-running-count
+  style: keyword
+  query: list_pool_directories 里 host_count 和 running_count 有什么区别
+  passages: [资源池与目录#资源池目录, 资源池与目录#资源池里的主机是否可用]
+
+- id: r-import-rejected
+  style: keyword
+  query: 导入资源池报错"已分配到业务，请先回收"
+  passages: [主机流转规则#录入主机和导入资源池]
+
+- id: r-old-audit-remark
+  style: keyword
+  query: remark 写着"该记录未保存变更前归属"是什么情况
+  passages: [审计记录说明#旧审计记录的特殊情况]
+
+- id: r-current-name
+  style: keyword
+  query: 审计里模块名后面带"（按当前名称）"是什么意思
+  passages: [审计记录说明#旧审计记录的特殊情况]
+
+- id: r-delete-module-error
+  style: keyword
+  query: 删除模块提示"模块下还有 3 台主机，无法删除"
+  passages: [拓扑与空闲机池#删除和移动集群、模块]
+
+- id: r-default-directory
+  style: keyword
+  query: 默认目录能改名或者删除吗
+  passages: [资源池与目录#默认目录]
+
+- id: r-status-values
+  style: keyword
+  query: 主机 status 有哪些取值，terminated 是什么
+  passages: [主机内置字段#主机状态]
+
+- id: r-bizops
+  style: keyword
+  query: contacts 里的 bizops 是什么角色
+  passages: [角色与权限#业务人员角色]
+
+- id: r-spare-tag
+  style: keyword
+  query: 标签里的 spare 和 api-small 是什么意思
+  passages: [自定义字段约定#标签]
+
+- id: r-asset-number
+  style: keyword
+  query: 固资编号 WD-2024 的格式
+  passages: [自定义字段约定#固资编号]
+
+- id: r-env-values
+  style: keyword
+  query: 环境字段里预发和试运行有什么区别
+  passages: [自定义字段约定#环境]
+
+- id: r-machine-broken
+  style: paraphrase
+  query: 机器坏了，在系统里一般怎么处理？
+  passages: [拓扑与空闲机池#故障机模块]
+
+- id: r-return-unused
+  style: paraphrase
+  query: 业务不要的机器怎么退还给平台？
+  passages: [拓扑与空闲机池#待回收模块, 主机流转规则#回收到资源池]
+
+- id: r-two-services-one-box
+  style: paraphrase
+  query: 一台服务器上跑了两个服务，系统里能表示吗？
+  passages: [拓扑与空闲机池#一台主机可以属于多个模块, 主机流转规则#追加到业务模块]
+
+- id: r-count-mismatch
+  style: paraphrase
+  query: 模块里显示的机器数量和我搜出来的对不上，怎么回事？
+  passages: [拓扑与空闲机池#主机数的统计口径]
+
+- id: r-who-owns-box
+  style: paraphrase
+  query: 这台机子出问题了应该找哪个团队？
+  passages: [自定义字段约定#责任团队]
+
+- id: r-downtime-budget
+  style: paraphrase
+  query: 可用性 99.95% 一个月最多能停多久？
+  passages: [自定义字段约定#SLA]
+
+- id: r-missing-audit
+  style: paraphrase
+  query: 我明明改过配置，为什么操作记录里找不到？
+  passages: [审计记录说明#审计记录的可靠性]
+
+- id: r-spare-ready
+  style: paraphrase
+  query: 想从备机里挑几台马上能用的，要注意什么？
+  passages: [资源池与目录#资源池里的主机是否可用]
+
+- id: r-released-cloud-vm
+  style: paraphrase
+  query: 云上的机器已经释放了，系统里还能看到它吗？
+  passages: [主机内置字段#删除和销毁主机]
+
+- id: r-same-ip
+  style: paraphrase
+  query: 两台机器的内网地址一样，系统允许吗？
+  passages: [主机内置字段#IP 和管控区域]
+
+- id: r-lifecycle
+  style: plain
+  query: 一台主机从进入系统到退回资源池要经过哪些步骤？
+  passages: [主机流转规则#主机生命周期总览]
+
+- id: r-allocate
+  style: plain
+  query: 从资源池分配主机给业务后，主机在哪个模块？
+  passages: [主机流转规则#分配到业务, 拓扑与空闲机池#空闲机模块]
+
+- id: r-viewer
+  style: plain
+  query: 只读用户可以修改主机吗？
+  passages: [角色与权限#系统角色]
+
+- id: r-ai-can-write
+  style: plain
+  query: AI 助手能帮我执行主机转移吗？
+  passages: [角色与权限#调查助手的权限]
+
+- id: r-business-delete
+  style: plain
+  query: 业务为什么删除不了？
+  passages: [拓扑与空闲机池#业务生命周期]
+
+- id: r-module-filter-config
+  style: plain
+  query: 按模块查询审计时，配置变更是怎么算进这个模块的？
+  passages: [审计记录说明#按模块查询审计]
+
+- id: r-cross-business
+  style: plain
+  query: 一台主机在两个业务里时，审计的位置怎么显示？
+  passages: [审计记录说明#跨业务主机的位置写法]
+
+- id: r-mainline
+  style: plain
+  query: 资源类型里的主线类型是什么意思？
+  passages: [资源类型#主线类型]
+
+- id: r-custom-type
+  style: plain
+  query: 新建的资源类型能和主机关联吗？
+  passages: [资源类型#新建的资源类型]
+
+- id: r-operator-vs-owner
+  style: paraphrase
+  query: 记录里显示是某某做的，那这台机器就归他负责吗？
+  passages: [审计记录说明#操作人, 自定义字段约定#责任团队]
+
+- id: r-what-is-audited
+  style: plain
+  query: 主机的哪些操作会留下审计记录？业务和模块的改动查得到吗？
+  passages: [审计记录说明#审计记录了什么]
+
+- id: r-custom-fields-stale
+  style: paraphrase
+  query: 主机已经退回去了，为什么负责团队那一栏还是原来的？
+  passages: [自定义字段约定#自定义字段总览, 自定义字段约定#责任团队]
+
+- id: r-monitoring
+  style: keyword
+  query: 监控字段为 false 表示什么
+  passages: [自定义字段约定#监控]
+
+- id: r-dynamic-group-live
+  style: paraphrase
+  query: 我建的那个筛选组，过几天里面的机器怎么变了？
+  passages: [动态分组#动态分组是什么, 动态分组#分组上显示的主机数]
+
+- id: r-dynamic-group-scope
+  style: plain
+  query: 动态分组会把资源池里的主机也选进来吗？
+  passages: [动态分组#动态分组的范围]
+
+- id: r-host-id
+  style: keyword
+  query: host_id 和 uuid、display_id 是什么关系
+  passages: [主机内置字段#主机标识]
+
+- id: r-cloud-vendor
+  style: keyword
+  query: cloud_vendor 为 custom 是什么意思
+  passages: [主机内置字段#云厂商和云主机信息]
+
+- id: r-transfer-keeps-others
+  style: plain
+  query: 把主机从一个模块转到另一个模块，它在其他模块的归属会受影响吗？
+  passages: [主机流转规则#转移到业务模块]
+
+- id: r-move-in-pool
+  style: plain
+  query: 资源池里的主机换目录，审计里怎么记？
+  passages: [资源池与目录#资源池内换目录]
+
+- id: r-env-type
+  style: keyword
+  query: 集群 env_type 和模块 service_type 有哪些取值
+  passages: [拓扑与空闲机池#集群环境类型和模块服务类型]
+
+- id: r-hierarchy
+  style: paraphrase
+  query: 系统里业务下面是怎么一层层组织机器的？
+  passages: [拓扑与空闲机池#拓扑层级]

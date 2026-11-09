@@ -1,0 +1,16 @@
+{"who":"user","exported_at":"2026-10-11T02:47:58.315Z","labels":[
+{"item":"L03","points":["covered","covered","covered"],"faithful":"yes"},
+{"item":"L07","points":["covered","covered","covered"],"faithful":"yes","note":"结论中：20 分钟后再转移到\"生产集群 / 支付网关\"。这句中我在页面上看到的是：支付清结算 / 支付网关。你说的没错，只不过支付网关是在生产集群这个集群下面的，我的想法是：这两个统一说辞就行，不然用户可能有点迷惑，虽然这并不是错误的。"},
+{"item":"L08","points":["covered","covered"],"faithful":"yes","note":"以上都没有问题，但是发现一个其他问题：主机资源里面的搜索未支持实际功能，目前只是一个壳子显示在页面上，这个需要支持一下，不然主机没法进行检索。"},
+{"item":"L10","points":["covered","covered","covered","covered"],"faithful":"yes"},
+{"item":"L11","note":"结论中：pay-gw-01（10.20.1.11，host_id=43）的内存是在 2026-09-03 16:20（北京时间）由操作人 zhangwei 从 16384MB（16G）改为 32768MB（32G）的。[record_id=610]，我看到的时间是 2026-09-03 15:20，你核对一下，页面显示的是这个时间。","points":["covered","covered"]},
+{"item":"L15","points":["covered","covered","covered"],"faithful":"yes"},
+{"item":"L16","points":["covered"],"faithful":"no","note":"你给的参考要点中还剩 5 台，这是对的。但是你在给用户的结论中说的是：当前有 **6 台**主机，其中 6 台都在运行中，这是错误的，事实依据是5台，更正一下。"},
+{"item":"L17","points":["covered","covered","covered"],"faithful":"yes"},
+{"item":"L20","note":"前端页面中暂时没有主机的详细属性的展示，我无法看到主机的信心，因此我无法准确的回答你"},
+{"item":"L21","points":["covered","covered"],"faithful":"yes"},
+{"item":"L25","points":["covered","covered","covered","covered"],"faithful":"yes"},
+{"item":"L26","points":["covered","covered","covered","covered"],"faithful":"yes"},
+{"item":"L27","points":["covered"],"faithful":"yes"},
+{"item":"L29","points":["covered"],"faithful":"yes"},
+{"item":"L36","points":["covered","covered","covered","covered"],"faithful":"yes","note":""}]}
