@@ -8,7 +8,7 @@
 - faithfulness（忠实度）：只给问题、本题的工具返回、回答；把回答拆成事实陈述，逐条判
   supported / unsupported / contradicted，得分 = supported / 陈述数。旧结果没有保存工具返回，跳过
 
-省钱规则（见 CLAUDE.md）：同样的输入不重复打分。缓存键包含维度、评分提示词、评分模型及参数、
+省钱规则：同样的输入不重复打分。缓存键包含维度、评分提示词、评分模型及参数、
 问题、回答、参考要点或工具返回；任何一项变了才重新调用。缓存在 eval/results/judge-cache.jsonl，
 compare.py 直接读缓存出分，不调用模型。先用 --only 挑 5 题调提示词，稳定后再跑全量。
 """

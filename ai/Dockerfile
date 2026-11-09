@@ -1,4 +1,4 @@
-# AI 服务镜像（本机和 207 演示机共用，见 docker-compose.yml、deploy/207/docker-compose.yml）。
+# AI 服务镜像。
 #
 # - 默认不装本地知识库模型的依赖（torch、sentence-transformers、transformers）：本机和 207 都用托管 API
 #   （KNOWLEDGE_MODEL_PROVIDER=siliconflow）。要用本地模型时构建加 --build-arg INSTALL_LOCAL_MODELS=true

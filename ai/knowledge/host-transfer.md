@@ -1,13 +1,13 @@
 ---
 title: 主机流转规则
 sources:
-  - wende-cmdb-backend/internal/core/host_membership/service.go（Move 替换语义、MoveBetweenModules 追加/替换）
-  - wende-cmdb-backend/internal/core/resource_directory/service.go（ImportHostsToPool、AllocateHosts、ReclaimHosts、MoveHostsInPool）
-  - wende-cmdb-backend/internal/core/topology/service.go（TransferHosts、TransferHostsToPool）
-  - wende-cmdb-backend/internal/types/host_membership.go（source 常量）
-  - wende-cmdb/src/pages/Business/BusinessTopology/HostList/index.tsx、TransferHost/index.tsx（界面菜单与调用的接口）
-  - wende-cmdb/src/locales/zh-CN.json（转移、归还主机池的提示文字）
-  - wende-cmdb-backend/scripts/seed_ai_demo_data.py（故障、回收的约定流程）
+  - cmdb-server/internal/core/host_membership/service.go（Move 替换语义、MoveBetweenModules 追加/替换）
+  - cmdb-server/internal/core/resource_directory/service.go（ImportHostsToPool、AllocateHosts、ReclaimHosts、MoveHostsInPool）
+  - cmdb-server/internal/core/topology/service.go（TransferHosts、TransferHostsToPool）
+  - cmdb-server/internal/types/host_membership.go（source 常量）
+  - cmdb-web/src/pages/Business/BusinessTopology/HostList/index.tsx、TransferHost/index.tsx（界面菜单与调用的接口）
+  - cmdb-web/src/locales/zh-CN.json（转移、归还主机池的提示文字）
+  - cmdb-server/scripts/seed_ai_demo_data.py（故障、回收的约定流程）
   - 库里实测：审计 source 只出现过 import / allocate / transfer / reclaim
 ---
 

@@ -1,12 +1,12 @@
 ---
 title: 拓扑与空闲机池
 sources:
-  - wende-cmdb-backend/internal/types/topology.go
-  - wende-cmdb-backend/internal/core/topology/service.go（InitializeBusinessTopology、builtinIdleModules、DeleteSet、DeleteModule、MoveSet、MoveModule）
-  - wende-cmdb-backend/internal/core/business/service.go（CreateBusiness、DeleteBusiness）
-  - wende-cmdb-backend/internal/core/host_membership/service.go（I4 业务多属）
-  - wende-cmdb-backend/internal/mcpserver/server.go、tools.go（MCP 说明）
-  - wende-cmdb/src/locales/zh-CN.json（业务生命周期、归档）
+  - cmdb-server/internal/types/topology.go
+  - cmdb-server/internal/core/topology/service.go（InitializeBusinessTopology、builtinIdleModules、DeleteSet、DeleteModule、MoveSet、MoveModule）
+  - cmdb-server/internal/core/business/service.go（CreateBusiness、DeleteBusiness）
+  - cmdb-server/internal/core/host_membership/service.go（I4 业务多属）
+  - cmdb-server/internal/mcpserver/server.go、tools.go（MCP 说明）
+  - cmdb-web/src/locales/zh-CN.json（业务生命周期、归档）
 ---
 
 # 拓扑与空闲机池

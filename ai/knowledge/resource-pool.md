@@ -1,10 +1,10 @@
 ---
 title: 资源池与目录
 sources:
-  - wende-cmdb-backend/internal/core/resource_directory/service.go（目录增删改移、ImportHostsToPool、MoveHostsInPool、GetHostLifecycle）
-  - wende-cmdb-backend/internal/core/host_membership/service.go（I1 无游离、I2 池/业务互斥）
-  - wende-cmdb-backend/internal/storage/process_template_migrations.go（默认目录）
-  - wende-cmdb-backend/internal/mcpserver/query.go（list_pool_directories）
+  - cmdb-server/internal/core/resource_directory/service.go（目录增删改移、ImportHostsToPool、MoveHostsInPool、GetHostLifecycle）
+  - cmdb-server/internal/core/host_membership/service.go（I1 无游离、I2 池/业务互斥）
+  - cmdb-server/internal/storage/process_template_migrations.go（默认目录）
+  - cmdb-server/internal/mcpserver/query.go（list_pool_directories）
 ---
 
 # 资源池与目录

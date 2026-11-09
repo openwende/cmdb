@@ -1,153 +1,97 @@
-# wende-cmdb-ai
+# Wende CMDB AI
 
-wende CMDB 的 AI 服务：资源配置调查助手（后续扩展为主机分配 / 流转助手）。
+[![CI](https://github.com/openwende/cmdb-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/openwende/cmdb-ai/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
-- Python 3.12 + FastAPI + LangChain `create_agent`，模型使用 DeepSeek（默认 `deepseek-flash`）
-- 通过 MCP 调用 Go CMDB 后端 `/mcp` 的只读工具，调用时转发用户的登录凭证
-- 会话状态用 LangGraph `AsyncPostgresSaver` 持久化到 PostgreSQL（独立 schema `ai`）
-- 对话接口 `POST /chat`，SSE 流式输出
+English | [简体中文](README.zh-CN.md)
+
+An AI assistant for investigating [Wende CMDB](https://github.com/openwende/cmdb-server), such as "Why is this host in two modules?" or "Who moved this host last week?". It answers from live CMDB data through read-only tools, and cites the records behind each claim.
+
+> **Status:** early development. The prompts and knowledge base are in Chinese, so the assistant currently works best in Chinese.
+
+## How it works
 
 ```
-前端 ──SSE（用户 JWT）──▶ POST /chat ──▶ create_agent ──MCP（同一个 JWT）──▶ Go CMDB /mcp
-                              │
-                              └──▶ PostgreSQL schema ai（检查点，thread_id = 用户ID:会话ID）
+browser ──SSE (user's JWT)──▶ POST /chat ──▶ agent ──MCP (same JWT)──▶ cmdb-server /mcp
+                                               │
+                                               └──▶ PostgreSQL schema `ai`
 ```
 
-## 本地运行
+- **Permissions:** every tool call uses the signed-in user's own token, so the assistant can only see what that user can see.
+- **Read-only:** the MCP tools it uses do not change CMDB data.
+- **Limits:** model calls and tool calls per question, and questions per day, are capped.
+- **Storage:** conversations and agent checkpoints live in a separate `ai` schema.
 
-前提：Go 后端已用 docker compose 启动（`cmdb-db`、`cmdb-server`），`http://localhost:8080/health` 返回 200。
+Built with Python 3.12, FastAPI, LangChain and LangGraph. The model is [DeepSeek](https://platform.deepseek.com/).
+
+## Run it
+
+To run the assistant with the full stack, follow the [quick start](https://github.com/openwende/cmdb-server/tree/main/deploy/quickstart).
+
+To develop locally, you need [uv](https://docs.astral.sh/uv/), a DeepSeek API key and a running cmdb-server:
 
 ```bash
-cp .env.example .env   # 已有 .env 时跳过；填入 DEEPSEEK_API_KEY
+cp .env.example .env  # then set DEEPSEEK_API_KEY
 uv sync
 uv run uvicorn cmdb_ai.api:app --port 8090
 ```
 
-知识库检索（`search_knowledge`）用的向量和 rerank 模型有两种来源，本机和 207 都用托管 API：
+### Knowledge search
 
-- `KNOWLEDGE_MODEL_PROVIDER=siliconflow`：硅基流动托管的 bge-m3 + bge-reranker-v2-m3（目前免费），填 `SILICONFLOW_API_KEY`，不占内存，每次检索约 0.4 秒
-- `KNOWLEDGE_MODEL_PROVIDER=local`（代码默认）：本地加载同款模型，首次从 Hugging Face 下载约 4.4GB，常驻约 4GB 内存，检索效果和 API 相同（62 个查询 Recall@5 0.95、MRR 0.93）。torch、sentence-transformers、transformers 在可选依赖组 `local-models` 里，要用 `uv sync --extra local-models` 装上；没装时服务启动就报错并给出这条命令
+The `search_knowledge` tool looks up domain knowledge from the documents in `knowledge/`. Set `KNOWLEDGE_SEARCH_MODE=off` to disable it, or choose where the embedding and rerank models run:
 
-`uv sync` 会删掉没声明的包：装过 `local-models` 或 `eval` 组的环境，之后同步要带上同样的参数（例如 `uv sync --extra local-models --group eval`），否则这些包会被卸掉。
-
-换来源后运行一次 `uv run python -m cmdb_ai.knowledge_store`，全部小节按新来源重算向量。
-
-首次启动会在 CMDB 的数据库里创建 schema `ai` 和检查点表。
-
-### 用 Docker 运行（本机）
-
-容器用于一条命令起全套、换机器也能跑。用托管 API 时检索速度和宿主机一样；用本地模型时容器里没有 MPS，rerank 走 CPU，每次检索约 11 秒（宿主机 MPS 约 1 秒）。
-
-```bash
-# 前提：后端 compose 已启动；.env 已填好（用本地模型时，模型要已在 ~/.cache/huggingface）
-# 宿主机上的 8090 要先停掉，或者 AI_PORT=8092 换端口
-docker compose up -d --build
-docker compose logs -f ai          # 约 15 秒后 healthy
-```
-
-- 默认构建不装 `local-models` 依赖，镜像约 590MB（本机 arm64），只能用托管 API。要用本地模型：`INSTALL_LOCAL_MODELS=true docker compose up -d --build`（直接 `docker build` 时加 `--build-arg INSTALL_LOCAL_MODELS=true`），镜像约 2.2GB
-- 模型不打进镜像，只读挂载宿主机的 Hugging Face 缓存（`HF_CACHE_DIR` 可改），`HF_HUB_OFFLINE=1`；用托管 API 时用不到这个挂载
-- Linux 上的 torch 从 PyTorch CPU 源安装（`pyproject.toml` 的 `[tool.uv.sources]`）；PyPI 上 linux 的 torch 带 CUDA 依赖，镜像会到 10GB 以上
-- 容器接入后端的网络 `wende-cmdb-backend_cmdb-network`，`.env` 里指向 localhost 的 CMDB / 数据库地址由 compose 覆盖成容器名，Langfuse 走 `host.docker.internal:3100`
-
-### 调用示例
-
-```bash
-TOKEN=$(curl -s -X POST localhost:8080/api/v1/auth/login -H 'Content-Type: application/json' \
-  -d '{"username":"chenjing","password":"<密码>"}' | jq -r .access_token)
-
-curl -N -X POST localhost:8090/chat \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"conversation_id":"demo-1","message":"10.20.1.11 为什么同时在两个模块？"}'
-```
-
-同一个 `conversation_id` 再发消息就是多轮追问。
-
-### 接口
-
-所有接口都要 `Authorization: Bearer <CMDB 的 JWT>`（AI 服务用 `/api/v1/auth/me` 校验），JWT 无效返回 401。允许跨域的前端来源由 `CORS_ORIGINS` 配置（默认 `http://localhost:5173`、`http://localhost:5199`）。
-
-| 接口 | 说明 |
-|---|---|
-| `POST /chat` `{conversation_id, message}` | SSE 流式对话（事件见下）。同一会话上一条还没答完时返回 409。客户端中途断开后，下一轮开始前会给没有结果的工具调用补上"已中断"，会话可以继续问 |
-| `GET /conversations` | 当前用户的会话列表（按最近更新倒序）：`{items: [{conversation_id, title, created_at, updated_at}]}` |
-| `GET /conversations/{id}/messages` | 会话的问答：`{items: [{role, content, created_at}]}`；只有用户问题和最终回答，中途停止的轮次只有问题。不是自己的会话返回 404 |
-| `DELETE /conversations/{id}` | 删除会话和它的检查点，204 |
-| `GET /knowledge/sections?id=<文档#小节>` | 知识库小节原文 `{id, doc, title, content}`，前端点开 `[doc=…]` 引用用 |
-
-会话列表和问答存在 `ai.conversations`、`ai.conversation_messages`，按 (用户 ID, 会话 ID) 隔离；Agent 的完整状态在 LangGraph 检查点里（thread_id = 用户ID:会话ID）。
-
-### SSE 事件
-
-| 事件 | data | 说明 |
+| `KNOWLEDGE_MODEL_PROVIDER` | Models | Requirements |
 |---|---|---|
-| `message_start` | `{message_id}` | 一次模型调用开始 |
-| `reasoning` | `{message_id, delta}` | 思考过程增量 |
-| `text` | `{message_id, delta}` | 回答文本增量（调用工具前的过渡语也会出现） |
-| `message_end` | `{message_id, finish_reason, usage}` | 一次模型调用结束，含 token 用量 |
-| `tool_start` | `{tool_call_id, name, input}` | 工具调用开始 |
-| `tool_end` | `{tool_call_id, name, status, output}` | `status` 为 `success` / `error`，`output` 截断到 4000 字 |
-| `final` | `{answer, tool_calls, usage, model_calls, elapsed_ms, trace_id?}` | 本轮最终回答和统计；启用 Langfuse 时带 `trace_id` |
-| `error` | `{message}` | 执行失败 |
+| `siliconflow` | Hosted bge-m3 and bge-reranker-v2-m3 | `SILICONFLOW_API_KEY` |
+| `local` (default) | The same models, run locally | `uv sync --extra local-models`, a download of about 4.4 GB and about 4 GB of memory |
 
-## 开发
+After choosing a provider, build the index:
 
 ```bash
-uv run pytest            # 单元测试，不调用模型和网络
-uv run ruff check . && uv run ruff format .
+uv run python -m cmdb_ai.knowledge_store
 ```
 
-### 评测
+## API
 
-`eval/cases.yaml` 是基于本地演示数据（故事 S1–S5 和 10 道难题）的 30 个问题，三层检查：
+All endpoints require `Authorization: Bearer <CMDB JWT>`.
 
-1. 规则检查：必须引用的 record_id、必须 / 不能出现的内容、必须调用的工具、调用上限（不调用模型）
-2. 引用核对（`eval/citations.py`）：回答里引用的 record_id / host_id 必须在本题工具返回里出现过（不调用模型）
-3. LLM 评分（`eval/judge.py`，deepseek-v4-pro）：正确性对照参考要点（`reference`），忠实度对照工具返回，
-   分两次调用；结果按输入哈希缓存在 `eval/results/judge-cache.jsonl`，同样的输入不重复花钱
-
-```bash
-uv run python eval/run_eval.py --label baseline          # 跑 30 题（需要 Go 后端和 .env 里的评测账号）
-uv run python eval/run_eval.py --only s1-why-two-modules # 只跑部分用例
-uv run python eval/judge.py baseline --dry-run           # 先估算要调用多少次评分模型
-uv run python eval/judge.py baseline                     # LLM 评分（命中缓存的不再调用）
-uv run python eval/compare.py baseline prompt-v2         # 按 label 对比，只读缓存，不调用模型
-uv run python eval/push_scores.py baseline               # 把分数写回 Langfuse trace（需要启用 Langfuse）
-```
-
-同一配置跑 3 轮再对比；检查项按当前 `cases.yaml` 重新打分，改了规则不用重跑模型。评测省钱规则见 `CLAUDE.md`。
-
-`eval/labeling/` 是校准评分模型用的 40 条标注集（含 10 条故意改坏的回答）、盲标结果和一致率脚本；
-`eval/ragas_faithfulness.py` 是 Ragas faithfulness 与自建评分的对比（需要 `uv sync --group eval`）。
-
-### 可观测（Langfuse，可选）
-
-本地自建，镜像和启动方式见 `deploy/langfuse/docker-compose.yml`：
-
-```bash
-cd deploy/langfuse && ./init-env.sh && docker compose up -d   # 首次运行生成随机密钥
-```
-
-打开 http://localhost:3100 ，登录账号在 `deploy/langfuse/.env`（`LANGFUSE_INIT_USER_EMAIL` / `_PASSWORD`）。
-把 `.env` 里的 `LANGFUSE_INIT_PROJECT_PUBLIC_KEY` / `SECRET_KEY` 填到本仓库 `.env` 的 `LANGFUSE_PUBLIC_KEY` /
-`LANGFUSE_SECRET_KEY` 即启用；不填则完全不启用。每次对话一条 trace（用户名、会话、标签 `chat` 或
-`eval / <label> / <用例>`），包含每次模型调用的 token（含缓存命中、推理 token）、工具调用和中间件；
-用户 JWT 不会上报。`final` 事件会带 `trace_id`。
-
-## 代码结构
-
-| 文件 | 内容 |
+| Endpoint | Description |
 |---|---|
-| `src/cmdb_ai/api.py` | FastAPI 应用、JWT 校验、`/chat` |
-| `src/cmdb_ai/investigator.py` | 懒加载工具、执行一轮对话（接口和评测共用） |
-| `src/cmdb_ai/agent.py` | `create_agent`、DeepSeek 模型、中间件 |
-| `src/cmdb_ai/middleware.py` | 调用次数到上限时基于已有证据收尾；工具结果转成纯文本再交给模型 |
-| `src/cmdb_ai/prompts.py` | 系统提示词 |
-| `src/cmdb_ai/mcp_tools.py` | MCP 工具转换、按用户转发 JWT 的拦截器 |
-| `src/cmdb_ai/streaming.py` | v3 流式事件 → SSE 事件，统计 token / 工具调用 |
-| `src/cmdb_ai/checkpoint.py` | `AsyncPostgresSaver` 与 schema `ai` |
-| `src/cmdb_ai/cmdb.py` | Go 后端客户端（登录、`/auth/me`）、`UserContext` |
-| `src/cmdb_ai/config.py` | 配置项 |
-| `src/cmdb_ai/observability.py` | Langfuse 追踪（可选） |
+| `POST /chat` | Send `{conversation_id, message}` and stream the answer over SSE |
+| `GET /conversations` | List the user's conversations |
+| `GET /conversations/{id}/messages` | Get the questions and answers in a conversation |
+| `DELETE /conversations/{id}` | Delete a conversation |
+| `GET /knowledge/sections?id=<doc#section>` | Get the text of a knowledge base section |
 
-开发进度与任务清单见上级目录的 `PROGRESS.md`。
+`POST /chat` emits these events: `message_start`, `reasoning`, `text`, `message_end`, `tool_start`, `tool_end`, `final` and `error`.
+
+## Evaluation
+
+Changes to the prompts and tools are measured rather than judged by eye. `eval/cases.yaml` has 30 questions over a fixed demo dataset, checked in three layers:
+
+1. **Rules:** required records, required and forbidden content, required tools and call limits.
+2. **Citations:** every cited record must appear in that question's tool results.
+3. **LLM judging:** correctness against reference points, and faithfulness against tool results. Scores are cached by input hash, so unchanged inputs are not judged twice.
+
+```bash
+uv run python eval/run_eval.py --label baseline    # requires cmdb-server and spends model credit
+uv run python eval/judge.py baseline --dry-run     # estimate judging calls first
+uv run python eval/judge.py baseline
+uv run python eval/compare.py baseline my-change   # reads caches only
+```
+
+`eval/labeling/` holds the labeled set used to calibrate the judge. Optional tracing with self-hosted Langfuse is set up in `deploy/langfuse/`.
+
+## Development
+
+```bash
+uv run pytest                   # no model or network calls; database tests need PostgreSQL
+uv run ruff check .
+uv run ruff format --check .
+```
+
+We are not accepting outside pull requests yet, but bug reports and feature requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Licensed under the [GNU Affero General Public License v3.0](LICENSE).

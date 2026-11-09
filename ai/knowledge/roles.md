@@ -1,12 +1,12 @@
 ---
 title: 角色与权限
 sources:
-  - wende-cmdb-backend/internal/types/auth.go、internal/auth/middleware.go（ProtectAPI）
-  - wende-cmdb-backend/internal/api/server/server.go（/auth/users 仅管理员、/mcp 挂载位置）
-  - wende-cmdb-backend/internal/core/auth/service.go（管理员不能停用或降级自己）
-  - wende-cmdb-backend/internal/core/business/service.go（业务人员角色）
-  - wende-cmdb-backend/internal/mcpserver/server.go、tools.go（只读工具）
-  - wende-cmdb/docs/plans/2026-04-20-minimal-rbac-design.md、src/store/AuthStore.ts、src/locales/zh-CN.json
+  - cmdb-server/internal/types/auth.go、internal/auth/middleware.go（ProtectAPI）
+  - cmdb-server/internal/api/server/server.go（/auth/users 仅管理员、/mcp 挂载位置）
+  - cmdb-server/internal/core/auth/service.go（管理员不能停用或降级自己）
+  - cmdb-server/internal/core/business/service.go（业务人员角色）
+  - cmdb-server/internal/mcpserver/server.go、tools.go（只读工具）
+  - cmdb-web/src/store/AuthStore.ts、src/locales/zh-CN.json
 ---
 
 # 角色与权限

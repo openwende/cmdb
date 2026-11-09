@@ -1,13 +1,12 @@
 ---
 title: 审计记录说明
 sources:
-  - wende-cmdb-backend/internal/core/host_membership/audit.go（归属变更审计，同事务，快照内容）
-  - wende-cmdb-backend/internal/core/host/audit.go（配置变更审计，best-effort，快照字段）
-  - wende-cmdb-backend/internal/core/auditlog/auditlog.go（业务 / 集群 / 模块审计）
-  - wende-cmdb-backend/internal/mcpserver/query.go（ChangeEntry、sourceLabels、buildEntry、describePlacement、placementsAt）
-  - wende-cmdb-backend/migrations/20260530130000_canonical_init.up.sql（resource_histories 表）
-  - wende-cmdb/docs/requirements/audit-host-change-flow.md、src/pages/Analysis/auditChange.ts、constants.ts（审计页的类型名称、时间显示）
-  - PROGRESS.md 已知问题（审计页日期筛选按 UTC）
+  - cmdb-server/internal/core/host_membership/audit.go（归属变更审计，同事务，快照内容）
+  - cmdb-server/internal/core/host/audit.go（配置变更审计，best-effort，快照字段）
+  - cmdb-server/internal/core/auditlog/auditlog.go（业务 / 集群 / 模块审计）
+  - cmdb-server/internal/mcpserver/query.go（ChangeEntry、sourceLabels、buildEntry、describePlacement、placementsAt）
+  - cmdb-server/migrations/20260530130000_canonical_init.up.sql（resource_histories 表）
+  - cmdb-web/src/pages/Analysis/auditChange.ts、constants.ts（审计页的类型名称、时间显示）
 ---
 
 # 审计记录说明

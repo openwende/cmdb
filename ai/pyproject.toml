@@ -3,6 +3,7 @@ name = "wende-cmdb-ai"
 version = "0.1.0"
 description = "wende CMDB 的 AI 服务：资源配置调查助手"
 requires-python = ">=3.12"
+license = "AGPL-3.0-only"
 dependencies = [
     "fastapi>=0.143.0",
     "httpx>=0.28.1",

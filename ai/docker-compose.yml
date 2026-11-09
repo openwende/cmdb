@@ -4,7 +4,7 @@
 #   docker compose logs -f ai
 #
 # 前提：
-# - 后端已用 wende-cmdb-backend 的 docker compose 启动（网络 wende-cmdb-backend_cmdb-network）
+# - 后端已用 cmdb-server 的 docker compose 启动（网络 cmdb-server_cmdb-network）
 # - .env 已填好（从 .env.example 复制）；里面指向 localhost 的地址在这里被覆盖成容器名
 # - 知识库模型来源看 .env 的 KNOWLEDGE_MODEL_PROVIDER；用本地模型（local）时，模型要已下载到宿主机的
 #   Hugging Face 缓存（默认 ~/.cache/huggingface），见 README
@@ -45,4 +45,4 @@ services:
 networks:
   cmdb:
     external: true
-    name: wende-cmdb-backend_cmdb-network
+    name: cmdb-server_cmdb-network

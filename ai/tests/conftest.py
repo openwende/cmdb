@@ -1,10 +1,16 @@
 import hashlib
+import os
+from pathlib import Path
 
 import psycopg
 import pytest
 
-from cmdb_ai.config import get_settings
-from cmdb_ai.knowledge_store import EMBED_DIM, setup
+# 新克隆没有 .env 时也能跑测试；假值调用不了模型接口。
+if not (Path(__file__).parent.parent / ".env").exists():
+    os.environ.setdefault("DEEPSEEK_API_KEY", "dummy-for-tests")
+
+from cmdb_ai.config import get_settings  # noqa: E402
+from cmdb_ai.knowledge_store import EMBED_DIM, setup  # noqa: E402
 
 
 class FakeEmbedder:

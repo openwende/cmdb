@@ -1,9 +1,9 @@
 ---
 title: 自定义字段约定
 sources:
-  - wende-cmdb-backend/scripts/seed_ai_demo_data.py（各字段的取值和修改时机）
+  - cmdb-server/scripts/seed_ai_demo_data.py（各字段的取值和修改时机）
   - 库里实测的取值分布（2026-10-11，155 台主机）
-  - wende-cmdb/src/pages/Business/BusinessTopology/HostList（搜索框提示"请输入IP或固资编号"）
+  - cmdb-web/src/pages/Business/BusinessTopology/HostList（搜索框提示"请输入IP或固资编号"）
 note: >
   系统里没有任何地方定义这些字段的含义，本文是 Claude 根据取值和造数逻辑起草的运维约定，
   用户 2026-10-11 认可。固资编号格式、预发和试运行的区别、五个状态类标签、两档 SLA 的划分、

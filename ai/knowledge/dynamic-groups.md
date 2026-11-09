@@ -1,8 +1,8 @@
 ---
 title: 动态分组
 sources:
-  - wende-cmdb-backend/internal/core/dynamic_group/service.go（GetMeta 可用字段、Preview、applyCondition、validateInput）
-  - wende-cmdb-backend/internal/types/dynamic_group.go
+  - cmdb-server/internal/core/dynamic_group/service.go（GetMeta 可用字段、Preview、applyCondition、validateInput）
+  - cmdb-server/internal/types/dynamic_group.go
   - 库表 dynamic_groups（业务内名称唯一）
 ---
 
