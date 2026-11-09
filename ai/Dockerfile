@@ -7,7 +7,7 @@
 #   Hugging Face 缓存，并设 HF_HUB_OFFLINE=1。容器里没有 MPS，推理走 CPU
 FROM ghcr.io/astral-sh/uv:0.9.4 AS uv
 
-FROM python:3.12.13-slim-trixie
+FROM python:3.15.0-slim-trixie
 
 COPY --from=uv /uv /usr/local/bin/uv
 
