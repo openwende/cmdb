@@ -68,8 +68,6 @@ logs/
 coverage.out
 coverage.html
 
-# Docker
-.dockerignore
 
 # Temporary files
 tmp/
@@ -94,3 +92,6 @@ deploy/helm/charts/*.tgz
 # Local development
 local/
 scripts/local/
+
+# Build output
+/business-server

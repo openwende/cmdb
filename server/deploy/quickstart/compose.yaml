@@ -1,0 +1,99 @@
+# Runs Wende CMDB from source: PostgreSQL, the API server, the web UI and,
+# optionally, the AI assistant. See README.md in this directory.
+name: wende-cmdb
+
+services:
+  db:
+    image: pgvector/pgvector:0.8.6-pg18-trixie
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cmdb
+      POSTGRES_USER: cmdb
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?run ./init-env.sh first}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cmdb -d cmdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ../../migrations:/migrations:ro
+    command:
+      - -path=/migrations
+      - -database=postgres://cmdb:${DB_PASSWORD}@db:5432/cmdb?sslmode=disable
+      - up
+    restart: "no"
+
+  server:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.business
+      args:
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      SERVER_MODE: release
+      DATABASE_HOST: db
+      DATABASE_PASSWORD: ${DB_PASSWORD}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?run ./init-env.sh first}
+      AUTH_BOOTSTRAP_ADMIN_PASSWORD: ${AUTH_BOOTSTRAP_ADMIN_PASSWORD:?run ./init-env.sh first}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  web:
+    build:
+      context: ${CMDB_WEB_DIR:-../../../cmdb-web}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    ports:
+      - "${WEB_PORT:-3000}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  ai:
+    profiles: [ai]
+    build:
+      context: ${CMDB_AI_DIR:-../../../cmdb-ai}
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      CMDB_BASE_URL: http://server:8080
+      CMDB_MCP_URL: http://server:8080/mcp
+      DATABASE_URL: postgresql://cmdb:${DB_PASSWORD}@db:5432/cmdb
+      # Knowledge search needs an embedding model. See the cmdb-ai README.
+      KNOWLEDGE_SEARCH_MODE: ${KNOWLEDGE_SEARCH_MODE:-off}
+      KNOWLEDGE_MODEL_PROVIDER: ${KNOWLEDGE_MODEL_PROVIDER:-siliconflow}
+      SILICONFLOW_API_KEY: ${SILICONFLOW_API_KEY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+volumes:
+  postgres_data:

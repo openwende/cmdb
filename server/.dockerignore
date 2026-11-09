@@ -1,0 +1,12 @@
+.git
+.github
+bin
+build
+coverage*
+deploy
+docs
+logs
+*.log
+*.md
+config/config.yaml
+.env
