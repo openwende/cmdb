@@ -9,6 +9,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	// defaultJWTSecret lets local development start without configuration.
+	// Release mode refuses it; see validate.
+	defaultJWTSecret = "dev-secret-please-change-1234567890-abcdef"
+	// exampleJWTSecret is the placeholder in config/config.example.yaml.
+	exampleJWTSecret = "your-super-secret-jwt-key-at-least-32-characters-long"
+)
+
 // Config represents the application configuration
 type Config struct {
 	Server   ServerConfig   `yaml:"server" mapstructure:"server"`
@@ -62,9 +70,20 @@ type DatabaseConfig struct {
 
 // AuthConfig represents authentication configuration
 type AuthConfig struct {
-	JWT          JWTConfig      `yaml:"jwt" mapstructure:"jwt"`
-	PasswordHash PasswordConfig `yaml:"password" mapstructure:"password"`
-	Session      SessionConfig  `yaml:"session" mapstructure:"session"`
+	JWT          JWTConfig       `yaml:"jwt" mapstructure:"jwt"`
+	PasswordHash PasswordConfig  `yaml:"password" mapstructure:"password"`
+	Session      SessionConfig   `yaml:"session" mapstructure:"session"`
+	Bootstrap    BootstrapConfig `yaml:"bootstrap" mapstructure:"bootstrap"`
+}
+
+// BootstrapConfig controls which accounts are created on an empty database.
+type BootstrapConfig struct {
+	// AdminPassword is the initial admin password in release mode. When empty,
+	// a random password is generated and logged once.
+	AdminPassword string `yaml:"admin_password" mapstructure:"admin_password"`
+	// SeedDemoUsers creates the demo accounts, whose passwords are in the source
+	// code, in release mode. Only enable it for public demo sites.
+	SeedDemoUsers bool `yaml:"seed_demo_users" mapstructure:"seed_demo_users"`
 }
 
 // JWTConfig represents JWT configuration
@@ -169,6 +188,9 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("database.host", "localhost")
 	v.SetDefault("database.port", 5432)
 	v.SetDefault("database.user", "cmdb")
+	// Viper only reads environment variables for keys it knows about, so this
+	// default is what makes DATABASE_PASSWORD work without a config file.
+	v.SetDefault("database.password", "")
 	v.SetDefault("database.name", "cmdb")
 	v.SetDefault("database.ssl_mode", "disable")
 	v.SetDefault("database.timezone", "UTC")
@@ -179,7 +201,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("database.migrations_path", "./migrations")
 
 	// Auth defaults
-	v.SetDefault("auth.jwt.secret", "dev-secret-please-change-1234567890-abcdef")
+	v.SetDefault("auth.jwt.secret", defaultJWTSecret)
 	v.SetDefault("auth.jwt.issuer", "wend-cmdb")
 	v.SetDefault("auth.jwt.access_token_expiry", "24h")
 	v.SetDefault("auth.jwt.refresh_token_expiry", "168h") // 7 days
@@ -188,6 +210,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.password.cost", 12)
 	v.SetDefault("auth.session.timeout", "24h")
 	v.SetDefault("auth.session.max_sessions", 5)
+	v.SetDefault("auth.bootstrap.admin_password", "")
+	v.SetDefault("auth.bootstrap.seed_demo_users", false)
 
 	// Log defaults
 	v.SetDefault("log.level", "info")
@@ -197,6 +221,12 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("log.max_backups", 3)
 	v.SetDefault("log.max_age", 7)
 	v.SetDefault("log.compress", true)
+}
+
+// isPublishedJWTSecret reports whether secret is one of the values in this
+// repository. Anyone can read them, so tokens signed with them can be forged.
+func isPublishedJWTSecret(secret string) bool {
+	return secret == defaultJWTSecret || secret == exampleJWTSecret
 }
 
 // validate validates the configuration
@@ -230,6 +260,15 @@ func validate(config *Config) error {
 
 	if len(config.Auth.JWT.Secret) < 32 {
 		return fmt.Errorf("JWT secret must be at least 32 characters")
+	}
+
+	if config.Server.Mode == "release" && isPublishedJWTSecret(config.Auth.JWT.Secret) {
+		return fmt.Errorf("refusing to start in release mode with a JWT secret published in the source code: " +
+			"set AUTH_JWT_SECRET to a random value of at least 32 characters (for example, the output of `openssl rand -hex 32`)")
+	}
+
+	if password := config.Auth.Bootstrap.AdminPassword; password != "" && len(password) < 12 {
+		return fmt.Errorf("initial admin password must be at least 12 characters")
 	}
 
 	// Validate log config

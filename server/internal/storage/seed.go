@@ -14,9 +14,6 @@ import (
 // 这里只包含 storage 包内、彼此无跨包依赖的 seed。依赖 mainline 内置模型(A 套 models)的
 // B 套同步,见 SeedDynamicFromStatic —— 必须在 mainline.EnsureBuiltinModels 之后调用。
 func SeedBuiltins(db *gorm.DB) error {
-	if err := seedDefaultAuthUsers(db); err != nil {
-		return fmt.Errorf("seed default auth users: %w", err)
-	}
 	if err := seedBuiltinServiceCategories(db); err != nil {
 		return fmt.Errorf("seed builtin service categories: %w", err)
 	}
@@ -48,7 +45,8 @@ func SeedDynamicFromStatic(db *gorm.DB) error {
 	return nil
 }
 
-// SeedAuthUsers 单独暴露 auth 账户 seed,供只建了 auth 表的场景(如 handler 测试)调用。
+// SeedAuthUsers creates the demo accounts, whose passwords are in the source code.
+// Production deployments use EnsureInitialAdmin instead.
 func SeedAuthUsers(db *gorm.DB) error {
 	return seedDefaultAuthUsers(db)
 }

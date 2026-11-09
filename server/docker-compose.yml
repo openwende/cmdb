@@ -1,5 +1,3 @@
-version: '3.8'
-
 # Defined networks for internal container communication
 networks:
   cmdb-network:
@@ -28,11 +26,11 @@ services:
     environment:
       POSTGRES_DB: cmdb
       POSTGRES_USER: cmdb
-      POSTGRES_PASSWORD: password # Matches config/config.yaml default
+      POSTGRES_PASSWORD: password # Local development only
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
       TZ: UTC
     ports:
-      - "5432:5432" # Exposed for local dev tools (pgAdmin, DBeaver)
+      - "127.0.0.1:5432:5432" # Local dev tools (pgAdmin, DBeaver)
     volumes:
       - cmdb_postgres_data:/var/lib/postgresql
       # - ./migrations:/docker-entrypoint-initdb.d # Optional: Auto-init with SQL
@@ -74,7 +72,7 @@ services:
       context: .
       dockerfile: Dockerfile.business
       args:
-        GOPROXY: "https://goproxy.cn,direct"
+        GOPROXY: ${GOPROXY:-https://proxy.golang.org,direct}
     container_name: cmdb-server
     restart: unless-stopped
     depends_on:
@@ -83,8 +81,9 @@ services:
       db-migrate:
         condition: service_completed_successfully
     environment:
-      # Override config settings via env vars
-      SERVER_MODE: release
+      # Local development only: debug mode allows the built-in JWT secret and
+      # creates the demo accounts. See deploy/quickstart for a production-style setup.
+      SERVER_MODE: debug
       DATABASE_HOST: db # Connects to 'db' service alias
       DATABASE_PASSWORD: password
       ENABLE_COMPAT_AUTOMIGRATE: "true"

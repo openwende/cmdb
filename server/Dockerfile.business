@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Speed up module downloads (settable via build-arg)
-ARG GOPROXY=https://goproxy.cn,direct
+ARG GOPROXY=https://proxy.golang.org,direct
 ENV GOPROXY=$GOPROXY
 
 # Copy module dependency files
@@ -27,8 +27,9 @@ RUN go mod download
 # Copy the entire source code
 COPY . .
 
-# Build the application, targeting the specific main package
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+# Build the application for the architecture of the target image
+ARG TARGETARCH
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH:-amd64} go build \
     -ldflags="-w -s" \
     -o /app/business-server \
     ./cmd/business-server
@@ -54,15 +55,15 @@ WORKDIR /app
 # Copy the built application from the builder stage
 COPY --from=builder /app/business-server .
 
+# Configuration comes from environment variables; the example config is not
+# copied so an unconfigured image cannot start with its published JWT secret.
+
 # Ensure the binary is executable
 RUN chmod +x ./business-server
 
 # Create necessary directories and set permissions
 RUN mkdir -p /app/data /app/logs /app/config && \
     chown -R cmdb:cmdb /app
-
-# Copy example config as default (optional fallback)
-COPY --from=builder /app/config/config.example.yaml /app/config/config.yaml
 
 # Switch to the non-root user
 USER cmdb

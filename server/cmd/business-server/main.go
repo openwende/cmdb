@@ -17,6 +17,7 @@ import (
 	"github.com/openwende/cmdb-server/internal/core/model"
 	"github.com/openwende/cmdb-server/internal/storage"
 	"github.com/openwende/cmdb-server/pkg/config"
+	"gorm.io/gorm"
 )
 
 // version flags
@@ -67,6 +68,9 @@ func main() {
 	// 顺序硬约束:内置模型(A 套)→ B 套同步,修掉收敛前 automigrate 早于 lazy 导致的空跑。
 	mainlineService := mainline.NewService(db.DB())
 	seedCtx := context.Background()
+	if err := seedAccounts(db.DB(), cfg); err != nil {
+		log.Fatalf("Failed to seed accounts: %v", err)
+	}
 	if err := storage.SeedBuiltins(db.DB()); err != nil {
 		log.Fatalf("Failed to seed builtin data: %v", err)
 	}
@@ -140,4 +144,22 @@ func main() {
 		log.Fatal("Server forced to shutdown:", err)
 	}
 	log.Println("Server exiting")
+}
+
+// seedAccounts creates the accounts a new database starts with. Demo accounts
+// have published passwords, so release mode only creates them when asked to.
+func seedAccounts(db *gorm.DB, cfg *config.Config) error {
+	if cfg.Server.Mode != "release" || cfg.Auth.Bootstrap.SeedDemoUsers {
+		return storage.SeedAuthUsers(db)
+	}
+
+	generatedPassword, err := storage.EnsureInitialAdmin(db, cfg.Auth.Bootstrap.AdminPassword)
+	if err != nil {
+		return err
+	}
+	if generatedPassword != "" {
+		log.Printf("Created the initial admin account. Username: %s, password: %s. This password is only shown once.",
+			storage.InitialAdminUsername, generatedPassword)
+	}
+	return nil
 }

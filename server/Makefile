@@ -42,7 +42,7 @@ build-server:
 # Development
 dev: deps
 	@echo "Starting development server..."
-	$(GOCMD) run ./cmd/business-server
+	SERVER_MODE=debug $(GOCMD) run ./cmd/business-server
 
 dev-db:
 	@echo "Starting development database..."
