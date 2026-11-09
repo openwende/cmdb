@@ -2,7 +2,7 @@
 # Adheres to Go Docker build best practices
 
 # 1. Builder Stage
-FROM golang:1.26.0-bookworm AS builder
+FROM golang:1.27.3-bookworm AS builder
 
 # Install necessary tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
