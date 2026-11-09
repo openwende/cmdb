@@ -5,7 +5,7 @@
 #   （linux 的 torch 从 PyTorch CPU 源装，见 pyproject.toml 的 [tool.uv.sources]）
 # - 两个本地模型（bge-m3、bge-reranker-v2-m3，约 4.2GB）不打进镜像，运行时只读挂载宿主机的
 #   Hugging Face 缓存，并设 HF_HUB_OFFLINE=1。容器里没有 MPS，推理走 CPU
-FROM ghcr.io/astral-sh/uv:0.9.4 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.7 AS uv
 
 FROM python:3.12.13-slim-trixie
 
