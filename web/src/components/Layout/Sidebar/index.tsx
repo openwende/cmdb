@@ -1,0 +1,319 @@
+import React, { useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Divider, Layout, Menu } from 'antd';
+import { useLocation, useNavigate } from 'react-router-dom';
+import './style.css';
+import { NavigationItem, PrimaryNavKey, EntityRouteType } from '../../../routes/Types';
+import { MenuFoldOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import BusinessSelector from '../../Business/BusinessSelector';
+import { routes } from '../../../routes';
+import {
+  isBusinessSetPage,
+  isBusinessPage,
+  isBusinessRelatedPage,
+  buildEntityPath,
+} from '../../../utils/routes';
+import { useAuthStore } from '@/store/AuthStore';
+
+const { Sider } = Layout;
+
+const SIDEBAR_COLLAPSED_WIDTH = 60;
+const SIDEBAR_EXPANDED_WIDTH = 259;
+
+interface SidebarProps {
+  currentSection: NavigationItem | undefined;
+  isMobile?: boolean;
+  isTablet?: boolean;
+  sidebarOpen?: boolean;
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({
+  currentSection,
+  isMobile = false,
+  isTablet = false,
+  sidebarOpen = false,
+  onClose,
+}) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+  const [collapsed, setCollapsed] = useState(false);
+
+  const toggleCollapsed = () => {
+    setCollapsed(!collapsed);
+  };
+
+  // On tablet, force collapsed; on mobile, never collapse (it's full-width overlay)
+  const effectiveCollapsed = isTablet ? true : isMobile ? false : collapsed;
+
+  // Get sidebar menu items
+  const getSidebarSection = (): NavigationItem | undefined => {
+    if (isBusinessPage(location.pathname)) {
+      return routes.find((route: NavigationItem) => route.key === 'businessEntity');
+    }
+
+    if (isBusinessSetPage(location.pathname)) {
+      return routes.find((route: NavigationItem) => route.key === PrimaryNavKey.BusinessSet);
+    }
+
+    return currentSection;
+  };
+
+  const sidebarSection = getSidebarSection();
+  const sidebarItems = sidebarSection?.children || [];
+
+  // Check if current path matches route pattern (supports dynamic params like :id)
+  const matchesRoute = (currentPath: string, routePattern: string): boolean => {
+    const currentSegments = currentPath.split('/').filter(Boolean);
+    const patternSegments = routePattern.split('/').filter(Boolean);
+
+    if (currentSegments.length !== patternSegments.length) return false;
+
+    return patternSegments.every(
+      (pattern, index) => pattern.startsWith(':') || pattern === currentSegments[index],
+    );
+  };
+
+  // Get the currently selected sidebar item
+  const getSelectedKey = () => {
+    const path = location.pathname;
+
+    if (sidebarItems.length > 0) {
+      // Special handling for business set paths
+      if (isBusinessSetPage(path)) {
+        // Extract current page type from path
+        const pathSegments = path.split('/');
+        if (pathSegments.length >= 4) {
+          // Get the last segment as the current page type
+          const pageType = pathSegments[3]; // e.g., topology
+          // Find the matching item in sidebar items
+          const selectedItem = sidebarItems.find((item: NavigationItem) => {
+            return item.path === pageType;
+          });
+          return selectedItem ? selectedItem.key : '';
+        }
+      } else {
+        // Regular path handling
+        // First try direct path matching (with dynamic route support)
+        let selectedItem = sidebarItems.find((item: NavigationItem) => {
+          if (!item.path) return false;
+          // Build full path for matching
+          const fullPattern = `${sidebarSection?.path}/${item.path}`;
+          return matchesRoute(path, fullPattern);
+        });
+
+        // If no exact match found, check if current path matches any child route
+        if (!selectedItem) {
+          selectedItem = sidebarItems.find((item: NavigationItem) => {
+            if (!item.children || !item.path) return false;
+
+            return item.children.some((child: NavigationItem) => {
+              if (child.path) {
+                // Build full child path pattern
+                const childPattern = `${sidebarSection?.path}/${item.path}/${child.path}`;
+                return matchesRoute(path, childPattern);
+              }
+              // For index routes, check if path matches parent
+              if (child.index) {
+                const parentPattern = `${sidebarSection?.path}/${item.path}`;
+                return matchesRoute(path, parentPattern);
+              }
+              return false;
+            });
+          });
+        }
+
+        if (selectedItem && !selectedItem.hideInMenu) {
+          return selectedItem.key;
+        }
+
+        // The match resolved to a hidden dynamic route (e.g. the model detail
+        // route `/model/:name/*`) or nothing matched. If the path is still a
+        // sub-route of this section, keep the section active by highlighting
+        // the first visible item (e.g. model detail → 类型总览).
+        if (sidebarSection?.path && path.startsWith(`${sidebarSection.path}/`)) {
+          const firstVisible = sidebarItems.find(
+            (item: NavigationItem) => !item.hideInMenu && item.path,
+          );
+          if (firstVisible) return firstVisible.key;
+        }
+
+        return '';
+      }
+    }
+
+    // Fallback for dynamic sub-routes (e.g., /model/:name/basic → highlight 'overview')
+    // If path starts with the current section's path but no sidebar item matched,
+    // return the key of the first visible sidebar item as a contextual hint
+    if (sidebarSection?.path && location.pathname.startsWith(sidebarSection.path + '/')) {
+      const firstVisible = sidebarItems.find(
+        (item: NavigationItem) => !item.hideInMenu && item.path,
+      );
+      if (firstVisible) return firstVisible.key;
+    }
+
+    return '';
+  };
+
+  const onMenuClick = (key: string) => {
+    const item = sidebarItems.find((item: NavigationItem) => item.key === key);
+    if (item) {
+      // Get business or business set ID from current URL
+      const pathSegments = location.pathname.split('/');
+      let fullPath = '';
+
+      // Check if current path is business related
+      if (isBusinessPage(location.pathname)) {
+        fullPath = item.path
+          ? buildEntityPath(pathSegments, EntityRouteType.Business, item.path)
+          : '';
+      }
+      // Check if current path is business set related
+      else if (isBusinessSetPage(location.pathname)) {
+        fullPath = item.path
+          ? buildEntityPath(pathSegments, EntityRouteType.BusinessSet, item.path)
+          : '';
+      }
+      // Other paths
+      else if (sidebarSection) {
+        // Use original logic directly
+        fullPath =
+          item.path && item.path.startsWith('/')
+            ? item.path
+            : `${sidebarSection.path}/${item.path || ''}`;
+      }
+      navigate(fullPath);
+    }
+  };
+
+  // Check if we're in business or business set related section
+  const isBusinessRelated = isBusinessRelatedPage(location.pathname);
+
+  const selectedKey = getSelectedKey();
+
+  const menuItems = useMemo(() => {
+    return sidebarItems
+      .filter((item: NavigationItem) => !item.hideInMenu)
+      .map((item: NavigationItem) => ({
+        key: item.key,
+        label: item.name ? t(item.name) : '',
+        icon: item.icon,
+      }));
+  }, [t, sidebarItems]);
+
+  // Global navigation items for mobile overlay
+  const { hasRole } = useAuthStore();
+  const globalNavItems = useMemo(() => {
+    return routes
+      .filter((item: NavigationItem) => !item.hideInMenu)
+      .filter((item: NavigationItem) => item.key !== PrimaryNavKey.AdminUsers || hasRole('admin'))
+      .map((item: NavigationItem) => ({
+        key: item.key,
+        label: item.name ? t(item.name) : '',
+        icon: item.icon,
+      }));
+  }, [hasRole, t]);
+
+  const globalNavSelectedKey = useMemo(() => {
+    const path = location.pathname;
+    if (isBusinessRelatedPage(path)) return PrimaryNavKey.Business;
+    const matched = routes.find(
+      (item: NavigationItem) => path === item.path || path.startsWith(`${item.path}/`),
+    );
+    return matched ? matched.key : (routes[0]?.key ?? '');
+  }, [location.pathname]);
+
+  const onGlobalNavClick = (key: string) => {
+    const item = routes.find((nav: NavigationItem) => nav.key === key);
+    if (item?.path) {
+      navigate(item.path);
+      onClose?.();
+    }
+  };
+
+  // Nothing to show (no secondary nav AND not mobile)
+  if (sidebarItems.length === 0 && !isMobile) return null;
+
+  // --- Mobile: overlay sidebar ---
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        {sidebarOpen && <div className="sidebar-backdrop" onClick={onClose} aria-hidden="true" />}
+        <Sider
+          className={`app-sidebar app-sidebar--mobile ${sidebarOpen ? 'app-sidebar--open' : ''}`}
+          width={SIDEBAR_EXPANDED_WIDTH}
+        >
+          {/* Global navigation — always visible on mobile */}
+          <div className="sidebar-section-label">{t('common.layout.primaryNavigation')}</div>
+          <Menu
+            mode="inline"
+            selectedKeys={[globalNavSelectedKey]}
+            items={globalNavItems}
+            className="sidebar-menu sidebar-global-nav"
+            onClick={({ key }) => onGlobalNavClick(key as string)}
+          />
+          {/* Secondary navigation — only when current section has children */}
+          {sidebarItems.length > 0 && (
+            <>
+              <Divider className="sidebar-section-divider" />
+              {isBusinessRelated && <BusinessSelector collapsed={false} />}
+              {isBusinessRelated && <Divider className="business-sidebar-divider" />}
+              <div className="sidebar-section-label sidebar-section-label--secondary">
+                {t('common.layout.sectionNavigation')}
+              </div>
+              <Menu
+                key={location.pathname}
+                mode="inline"
+                selectedKeys={[selectedKey]}
+                items={menuItems}
+                className="sidebar-menu"
+                onClick={({ key }) => onMenuClick(key as string)}
+              />
+            </>
+          )}
+        </Sider>
+      </>
+    );
+  }
+
+  // --- Desktop / Tablet ---
+  if (sidebarItems.length === 0) return null;
+
+  return (
+    <Sider
+      className="app-sidebar"
+      width={effectiveCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH}
+    >
+      {/* Display business selector in business and business set sections */}
+      {isBusinessRelated && <BusinessSelector collapsed={effectiveCollapsed} />}
+      {isBusinessRelated && <Divider className="business-sidebar-divider" />}
+      <Menu
+        key={location.pathname}
+        mode="inline"
+        selectedKeys={[selectedKey]}
+        items={menuItems}
+        inlineCollapsed={effectiveCollapsed}
+        className="sidebar-menu"
+        onClick={({ key }) => onMenuClick(key as string)}
+      />
+      {/* Hide the collapse toggle on tablet (always collapsed) */}
+      {!isMobile && (
+        <button
+          type="button"
+          onClick={toggleCollapsed}
+          className="menu-toggler"
+          aria-label={
+            collapsed ? t('common.layout.expandSidebar') : t('common.layout.collapseSidebar')
+          }
+          aria-expanded={!collapsed}
+        >
+          {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        </button>
+      )}
+    </Sider>
+  );
+};
+
+export default Sidebar;

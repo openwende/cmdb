@@ -1,0 +1,201 @@
+.transfer-container {
+  margin: 0 0 16px;
+  padding: 16px;
+  background-color: var(--color-bg-container);
+
+  .info-item {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+
+    &.first-item {
+      margin-top: 24px;
+    }
+
+    .info-label {
+      color: var(--color-text-secondary);
+      font-size: 14px;
+      font-weight: 700;
+      text-align: right;
+      width: 140px;
+    }
+
+    .ant-tabs-tab {
+      padding-top: 0;
+    }
+
+    .ant-tabs-nav {
+      margin-bottom: 10px;
+    }
+
+    .info-content {
+      width: 100%;
+
+      .edit-icon {
+        margin-left: 10px;
+        color: var(--color-primary);
+      }
+
+      .info-number {
+        color: var(--color-text-secondary);
+        font-weight: 700;
+      }
+
+      .del-label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+
+        .inst-count {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background-color: var(--color-text-quaternary);
+          color: var(--color-bg-container);
+          font-size: 12px;
+
+          &.red-count {
+            background-color: var(--color-error);
+          }
+        }
+      }
+
+      .info-button {
+        height: 26px;
+        line-height: 26px;
+        border-radius: 50px;
+        width: 70px;
+        cursor: default;
+      }
+
+      .info-button-right {
+        margin-left: 10px;
+      }
+
+      .options {
+        margin-top: 24px;
+        bottom: 0;
+        left: 0;
+        position: sticky;
+        display: flex;
+        gap: 8px;
+
+        &::before {
+          content: '';
+          position: absolute;
+          top: -16px;
+          right: 0;
+          height: 1px;
+          background-color: var(--color-border-secondary);
+        }
+
+        &.sticky-active {
+          flex-shrink: 0;
+          padding: 8px 0;
+          background-color: var(--color-bg-container);
+          margin-left: 0;
+
+          &::before {
+            top: -1px;
+            left: 0;
+          }
+        }
+      }
+
+      .info-button-hover {
+        cursor: pointer;
+        background: var(--color-bg-spotlight) !important;
+      }
+
+      .info-button-tip {
+        margin-left: 8px;
+        color: var(--color-text-secondary);
+        font-size: 12px;
+      }
+
+      .empty-wrapper {
+        background-color: var(--color-bg-spotlight);
+        color: var(--color-text-secondary);
+        height: 60px;
+        line-height: 60px;
+        padding: 0 28px;
+      }
+    }
+
+    .add-inst-wrapper {
+      .ant-collapse-content-box {
+        padding: 0;
+      }
+
+      .host-content {
+        .ant-table-placeholder {
+          display: none;
+        }
+
+        .add-button {
+          font-size: 12px;
+          line-height: 42px;
+          text-align: center;
+
+          .ant-btn-link {
+            color: var(--color-primary);
+
+            &:hover,
+            &:focus-visible {
+              color: var(--color-primary-hover);
+            }
+          }
+        }
+
+        .bind-number {
+          background-color: var(--color-bg-layout);
+          color: var(--color-text-tertiary);
+          border-radius: 8px;
+          padding: 0 6px;
+          margin-left: 6px;
+          font-size: 12px;
+          display: inline-block;
+          min-width: 18px;
+          text-align: center;
+        }
+
+        .ant-btn-link.process-action-edit {
+          color: var(--color-primary);
+
+          &:hover,
+          &:focus-visible {
+            color: var(--color-primary-hover);
+          }
+        }
+
+        .ant-btn-link.process-action-delete {
+          color: var(--color-error);
+
+          &:hover,
+          &:focus-visible {
+            color: #b91c1c;
+          }
+        }
+      }
+
+      .inst-panel {
+        margin-top: 15px;
+      }
+
+      .module-section {
+        margin-bottom: 15px;
+      }
+    }
+
+    .tip-text {
+      margin-bottom: 10px;
+    }
+
+    .del-action {
+      color: var(--color-error);
+    }
+  }
+}

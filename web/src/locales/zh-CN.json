@@ -1,0 +1,2172 @@
+{
+  "routes": {
+    "home": "首页",
+    "business": "业务",
+    "businessTopology": "业务拓扑",
+    "transferHost": "转移主机",
+    "serviceTemplate": "服务模板",
+    "dynamicGroup": "动态分组",
+    "businessSet": "业务集",
+    "businessSetTopology": "拓扑工作区",
+    "modelManagement": "资源类型",
+    "modelOverview": "类型总览",
+    "modelGroups": "类型分组",
+    "modelTopology": "关系拓扑",
+    "resource": "资源目录",
+    "resourceContent": "资源目录",
+    "project": "项目",
+    "resourceBusiness": "业务列表",
+    "resourceModel": "资源类型",
+    "businessDetail": "业务详情",
+    "modelDetail": "类型详情",
+    "archivedBusiness": "已归档业务",
+    "host": "主机资源",
+    "deleteHistory": "删除记录",
+    "analysis": "审计与分析",
+    "userManagement": "用户管理",
+    "userList": "账号列表",
+    "auditLogs": "操作审计",
+    "operations": "运营概览",
+    "notFound": "404"
+  },
+  "dashboard": {
+    "title": "总览",
+    "welcome": "欢迎使用配置管理平台",
+    "subtitle": "统一管理基础设施与应用资源的配置信息",
+    "stats": {
+      "businesses": "业务数",
+      "models": "资源类型数",
+      "instances": "实例总数",
+      "hosts": "主机总数",
+      "pending": "待接入",
+      "auditToday": "今日审计",
+      "auditTodaySuffix": " 条",
+      "systemHealth": "系统健康"
+    },
+    "quickActions": {
+      "title": "快捷操作",
+      "createModel": "创建资源类型",
+      "importHost": "导入主机",
+      "viewTopology": "查看拓扑",
+      "auditLog": "操作审计",
+      "createModelDesc": "定义新的资源类型",
+      "importHostDesc": "批量导入主机资源",
+      "viewTopologyDesc": "查看业务拓扑结构",
+      "auditLogDesc": "查看操作审计日志"
+    },
+    "recentModels": {
+      "title": "最近更新的资源类型",
+      "viewAll": "查看全部",
+      "attributes": "个属性",
+      "noModels": "暂无资源类型数据",
+      "updatedAt": "更新于 {{time}}"
+    },
+    "ai": {
+      "title": "AI 调查助手",
+      "desc": "用自然语言调查主机配置和变更：谁在什么时候改了什么、主机为什么在某个模块、某条流转规则是什么意思。每条结论都附带审计记录，点开就能核对。",
+      "promptsTitle": "试试这样问",
+      "open": "打开 AI 助手"
+    },
+    "workspace": {
+      "primaryCta": "进入业务拓扑",
+      "primaryCtaNoBusiness": "创建/选择业务",
+      "primaryDesc": "从业务树进入主工作流，继续查看节点、主机和变更入口。",
+      "primaryDescNoBusiness": "当前还没有业务，先进入业务列表创建或选择业务。",
+      "secondary": {
+        "resources": "进入资源目录",
+        "resourcesDesc": "查看主机与基础资源，补齐台账接入。",
+        "models": "进入资源类型管理",
+        "modelsDesc": "维护资源类型和 schema，扩展平台能力。"
+      }
+    },
+    "onboarding": {
+      "title": "开始使用",
+      "noBusiness": {
+        "title": "创建您的第一个业务",
+        "desc": "业务是配置管理的顶层组织单元，所有资源和拓扑都归属于业务。",
+        "action": "创建业务",
+        "viewerDesc": "暂无业务数据，请联系管理员创建业务。"
+      },
+      "noModel": {
+        "title": "定义资源类型",
+        "desc": "资源类型定义了您要管理的数据结构，例如主机、容器、域名等。",
+        "action": "创建资源类型"
+      },
+      "readyImport": {
+        "title": "导入主机资源",
+        "desc": "业务和资源类型已就绪，可以开始导入主机等实际资源了。",
+        "action": "进入资源目录"
+      }
+    }
+  },
+  "common": {
+    "layout": {
+      "platformName": "配置平台",
+      "help": "帮助",
+      "login": "登录",
+      "logout": "退出登录",
+      "expandSidebar": "展开侧栏",
+      "collapseSidebar": "收起侧栏",
+      "primaryNavigation": "模块",
+      "sectionNavigation": "当前页面"
+    },
+    "rename": "重命名",
+    "delete": "删除",
+    "edit": "编辑",
+    "confirm": "确定",
+    "cancel": "取消",
+    "save": "保存",
+    "submit": "提交",
+    "next": "下一步",
+    "previous": "上一步",
+    "confirmLeave": "确认离开当前页？",
+    "unsavedChanges": "离开将会导致未保存信息丢失",
+    "pleaseEnter": "请输入",
+    "pleaseSelect": "请选择",
+    "noMatch": "无匹配人员",
+    "noData": "暂无数据",
+    "notSet": "未设置",
+    "loading": "加载中...",
+    "message": {
+      "createSuccess": "创建成功",
+      "createFailed": "创建失败",
+      "updateSuccess": "修改成功",
+      "updateFailed": "修改失败",
+      "copySuccess": "复制成功"
+    },
+    "form": {
+      "rulesMessage": "该字段是必填项"
+    },
+    "errors": {
+      "requestFailed": "请求失败，请稍后重试",
+      "networkError": "网络连接失败，请检查网络后重试",
+      "unauthorized": "登录已过期，请重新登录",
+      "notFound": "请求的资源不存在",
+      "serverError": "服务器内部错误，请稍后重试",
+      "boundary": {
+        "title": "页面出错了",
+        "subtitle": "发生了意外错误，请重试",
+        "retry": "重试"
+      }
+    },
+    "components": {
+      "businessSelector": {
+        "createBusiness": "新建业务",
+        "placeholder": "请选择业务或业务集",
+        "selectBusiness": "请选择业务",
+        "businessGroup": "业务",
+        "businessSetGroup": "业务集"
+      },
+      "formComponents": {
+        "noMatchData": "无匹配数据",
+        "noMatchPersonnel": "无匹配人员",
+        "componentTypeNotFound": "组件类型 {{type}} 不存在"
+      },
+      "confirmModal": {
+        "confirm": "确定",
+        "cancel": "取消"
+      },
+      "emptySearchResult": {
+        "title": "搜索结果为空",
+        "description": "可以尝试 调整关键词 或",
+        "clearFilter": "清空筛选条件"
+      },
+      "pagination": {
+        "total": "共计 {{total}} 条"
+      },
+      "deleteHistory": {
+        "columns": {
+          "updateTime": "更新时间",
+          "operatorAccount": "操作账号"
+        },
+        "placeholder": {
+          "searchIp": "请输入IP"
+        }
+      }
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "登录并进入工作区",
+      "subtitle": "统一管理基础设施与应用资源的配置信息，实现全链路可视化与变更可追溯。",
+      "defaultAccount": "默认账号：admin / admin123456，editor / editor123456，viewer / viewer123456",
+      "submit": "登录",
+      "or": "或",
+      "demoLogin": "一键体验（admin）",
+      "demoLoginTip": "使用管理员账号快速进入，适合演示与试用，无需手动输入密码。",
+      "fields": {
+        "username": "用户名",
+        "password": "密码"
+      },
+      "placeholders": {
+        "username": "请输入用户名",
+        "password": "请输入密码"
+      },
+      "messages": {
+        "invalidCredentials": "用户名或密码错误"
+      }
+    },
+    "userManagement": {
+      "entry": "用户管理",
+      "title": "用户管理",
+      "subtitle": "维护站内账号、角色和启停状态。当前版本保持固定角色模型：admin / editor / viewer。",
+      "actions": {
+        "create": "新增用户",
+        "edit": "编辑用户",
+        "resetPassword": "重置密码"
+      },
+      "fields": {
+        "username": "用户名",
+        "displayName": "显示名称",
+        "password": "密码",
+        "role": "角色",
+        "status": "状态"
+      },
+      "columns": {
+        "username": "用户名",
+        "displayName": "显示名称",
+        "role": "角色",
+        "status": "状态",
+        "lastLoginAt": "最后登录时间",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "placeholders": {
+        "username": "请输入用户名",
+        "displayName": "请输入显示名称",
+        "password": "请输入新密码"
+      },
+      "roles": {
+        "admin": "管理员",
+        "editor": "编辑者",
+        "viewer": "只读用户"
+      },
+      "status": {
+        "active": "启用",
+        "disabled": "停用"
+      },
+      "messages": {
+        "loadFailed": "加载用户列表失败",
+        "passwordResetSuccess": "密码重置成功"
+      },
+      "validation": {
+        "passwordLength": "密码长度需为 {{min}}-{{max}} 个字符",
+        "passwordNoOuterSpaces": "密码不能包含首尾空格"
+      }
+    }
+  },
+  "business": {
+    "messages": {
+      "noBusinessData": "暂无业务数据，请先创建业务",
+      "noBusinessRedirect": "尚未创建任何业务，请先前往业务列表创建",
+      "loadBusinessFailed": "业务数据加载失败"
+    },
+    "topology": {
+      "tabs": {
+        "hostList": "主机列表",
+        "serviceInstance": "服务实例",
+        "nodeInfo": "节点信息"
+      },
+      "workspace": {
+        "business": "业",
+        "currentNode": "当前节点",
+        "noBusiness": "请选择业务",
+        "noNode": "请先在左侧选择节点",
+        "module": "模块",
+        "cluster": "集群",
+        "idlePool": "空闲机池",
+        "selectNode": "先在左侧树中选择节点，右侧会切换到该节点的主机、服务和详情工作区。",
+        "hostList": "查看当前节点下的主机，并从这里发起新增、转移和回收操作。",
+        "serviceInstance": "查看当前节点下的服务实例，继续切换实例或进程视图。",
+        "nodeInfo": "查看当前节点的关键信息，确认归属、状态和维护责任。"
+      },
+      "hostList": {
+        "columns": {
+          "moduleName": "模块名",
+          "clusterName": "集群名"
+        },
+        "transfer": {
+          "hostPoolTip": "主机需在空闲机池下才允许转移至主机池",
+          "otherBusinessTip": "主机需在空闲机池下才允许转移至其他业务"
+        },
+        "menus": {
+          "businessModule": "业务模块",
+          "currentModule": "当前模块",
+          "exportSelected": "导出选中",
+          "exportAll": "导出全部",
+          "importExcel": "导入excel更新"
+        },
+        "empty": {
+          "noModuleCreated": "该集群尚未创建模块",
+          "createNow": "立即创建",
+          "noHostsInModule": "当前模块暂无主机，可通过「新增」导入主机或从其他模块分配",
+          "selectModuleFirst": "请在拓扑树中选择一个模块节点查看主机"
+        },
+        "buttons": {
+          "add": "新增",
+          "edit": "编辑",
+          "transferTo": "转移至",
+          "appendTo": "追加至",
+          "removeFrom": "移出",
+          "copy": "复制",
+          "more": "更多"
+        },
+        "tooltips": {
+          "onlyModuleCanAdd": "仅能在业务模块下新增"
+        },
+        "search": {
+          "placeholder": "请输入IP或主机名"
+        },
+        "pagination": {
+          "selected": "已选择",
+          "items": "条",
+          "total": "共 {{count}} 台主机"
+        },
+        "floating": {
+          "selectedCount": "已选择 {{count}} 台主机"
+        }
+      },
+      "addHostModal": {
+        "columns": {
+          "innerIP": "内网IP",
+          "innerIPv6": "内网IPv6",
+          "cloudArea": "管控区域"
+        },
+        "unassigned": "未分配",
+        "messages": {
+          "pleaseInputIP": "请输入IP",
+          "addSuccess": "成功添加 {{count}} 台主机",
+          "noNewHosts": "没有新的主机可添加",
+          "copySuccess": "复制成功",
+          "copyFailed": "复制失败",
+          "ipIncorrectOrNotExists": "IP不正确或主机不存在",
+          "noHostSelected": "暂无主机选中"
+        },
+        "placeholders": {
+          "pleaseInput": "请输入",
+          "searchTopologyNode": "搜索拓扑节点",
+          "inputIPNewline": "请输入IP，换行分隔"
+        },
+        "buttons": {
+          "addToList": "添加至列表",
+          "cancel": "取消",
+          "confirm": "确定",
+          "nextStep": "下一步"
+        },
+        "tabs": {
+          "staticTopology": "静态拓扑",
+          "customInput": "自定义输入",
+          "resultPreview": "结果预览"
+        },
+        "menu": {
+          "copyIP": "复制IP",
+          "removeAll": "移除所有"
+        },
+        "labels": {
+          "selectedCount": "已选择 {{count}} 台主机"
+        },
+        "titles": {
+          "selectHost": "选择主机",
+          "addHostToModule": "新增主机到模块"
+        }
+      },
+      "tree": {
+        "search": "请输入关键词",
+        "loadError": "加载拓扑树失败",
+        "noData": "暂无拓扑数据",
+        "create": {
+          "form": {
+            "label1": "集群模板",
+            "placeholder1": "请选择集群模板",
+            "noContent": "暂无选项",
+            "createSetTemplate": "创建集群模板",
+            "label2": "集群名称",
+            "placeholder2": "请输入集群名称，需批量创建多个可使用换行分隔",
+            "label3": "服务模板",
+            "placeholder3": "请选择服务模板",
+            "createServiceTemplate": "新建服务模板",
+            "label4": "模块名称",
+            "tooltip4": "模块名称需同服务模板名称保持一致",
+            "placeholder4": "请输入模块名称",
+            "label5": "所属服务分类",
+            "placeholder5": "请选择服务分类"
+          },
+          "setTitle": "新建集群",
+          "moduleTitle": "新建模块",
+          "dynamicTitle": "新建拓扑节点",
+          "templateMode": "从模板新建",
+          "directMode": "直接新建",
+          "selected": "已选择",
+          "fields": {
+            "childModel": "子节点类型",
+            "name": "名称",
+            "envType": "环境类型",
+            "serviceType": "服务类型"
+          },
+          "placeholders": {
+            "name": "请输入名称",
+            "envType": "请选择环境类型",
+            "serviceType": "请选择服务类型"
+          },
+          "helper": {
+            "modelDriven": "会根据当前节点自动筛选允许创建的子节点类型，并按表单 schema 生成创建表单。",
+            "schemaDriven": "内置拓扑节点会优先读取当前业务下的表单 schema，避免继续依赖前端写死字段。"
+          },
+          "messages": {
+            "loadModelsFailed": "加载可创建资源类型失败",
+            "loadModelDetailFailed": "加载类型详情失败",
+            "createFailed": "创建节点失败"
+          },
+          "empty": {
+            "noChildModels": "当前节点下没有可创建的子节点类型"
+          }
+        }
+      },
+      "copyMenu": {
+        "ipv4": "内网IPv4",
+        "ipv6": "内网IPv6",
+        "cloudIdGroup": "管控区域ID:IP",
+        "cloudIdIPv4": "管控区域ID:IPv4",
+        "cloudIdIPv6": "管控区域ID:IPv6",
+        "cloudIdIPIPv4First": "管控区域ID:IP(IPv4优先)",
+        "cloudIdIPIPv6First": "管控区域ID:IP(IPv6优先)",
+        "cloudRegion": "管控区域",
+        "moduleName": "模块名",
+        "setName": "集群名"
+      },
+      "transferMenu": {
+        "idlePool": "空闲机池",
+        "businessModule": "业务模块",
+        "hostPool": "主机池",
+        "otherBusiness": "其他业务"
+      },
+      "transferHostModal": {
+        "titles": {
+          "idlePool": "转移主机到空闲机池",
+          "businessModule": "转移主机到业务模块",
+          "otherBusiness": "转移主机到其他业务",
+          "appendToBusiness": "追加主机到业务模块"
+        },
+        "objectNames": {
+          "business": "业务",
+          "cluster": "集群",
+          "module": "模块"
+        },
+        "tooltips": {
+          "selectModuleFirst": "请先选择业务模块",
+          "hostModuleUnchanged": "主机所属模块未发生改变"
+        },
+        "buttons": {
+          "confirm": "确定",
+          "nextStep": "下一步",
+          "cancel": "取消",
+          "clear": "清空"
+        },
+        "placeholders": {
+          "selectBusiness": "请选择业务",
+          "searchKeyword": "请输入关键字"
+        },
+        "empty": {
+          "selectBusinessFirst": "请先选择业务",
+          "noModuleSelected": "暂无模块选中"
+        },
+        "preview": {
+          "title": "结果预览",
+          "selectedText": "已选择",
+          "moduleCountSuffix": "个模块"
+        }
+      },
+      "releaseHostModal": {
+        "title": "确认归还主机池",
+        "confirmMessagePrefix": "确认将",
+        "confirmMessageSuffix": "台空闲主机转移到主机池？",
+        "warning": "请务必确认业务进程已停止或主机处于关机状态",
+        "selectDirectory": "归还至目录"
+      },
+      "transferHost": {
+        "columns": {
+          "processName": "进程名称",
+          "processAlias": "进程别名",
+          "startupParams": "进程启动参数",
+          "bindInfo": "绑定信息",
+          "action": "操作",
+          "serviceInstance": "服务实例",
+          "belongingModule": "所属模块",
+          "cloudArea": "管控区域"
+        },
+        "tips": {
+          "addInstanceTip": "主机转移到目标模块后，若目标模块配置有服务模板，则新增相应的服务实例",
+          "deleteInstanceTip": "移出当前模块，主机的服务实例信息也一同被删除",
+          "moveToIdleTip": "当主机仅属于当前模块时，移除后将主机会默认放置于空闲机中"
+        },
+        "status": {
+          "noProcessAdded": "（未添加进程）"
+        },
+        "buttons": {
+          "addProcess": "添加进程",
+          "confirmChange": "确认变更"
+        },
+        "actions": {
+          "moveToIdle": "转移到空闲机的主机"
+        },
+        "confirmDelete": {
+          "title": "确定删除该进程?"
+        },
+        "messages": {
+          "noChangeInfo": "目标模块为源模块，无变更信息",
+          "transferSuccess": "主机转移成功",
+          "transferFailed": "主机转移失败"
+        },
+        "tabs": {
+          "deleteServiceInstance": "删除服务实例",
+          "moveToIdleHost": "移动到空闲机的主机",
+          "addServiceInstance": "新增服务实例"
+        },
+        "labels": {
+          "selectedHosts": "已选主机",
+          "units": "台",
+          "transferTo": "转移到",
+          "changeConfirmation": "变更确认"
+        }
+      },
+      "serviceInstance": {
+        "menu": {
+          "batchDelete": "批量删除",
+          "copyIP": "复制IP",
+          "editLabel": "编辑标签"
+        },
+        "messages": {
+          "batchDelete": "批量删除功能",
+          "copyIP": "复制IP功能",
+          "editLabel": "编辑标签功能",
+          "searchKeyword": "搜索: {{keyword}}"
+        },
+        "buttons": {
+          "add": "新增",
+          "edit": "编辑",
+          "delete": "删除",
+          "instanceOperation": "实例操作"
+        },
+        "views": {
+          "instance": "实例",
+          "process": "进程"
+        },
+        "controls": {
+          "expandAll": "全部展开",
+          "searchPlaceholder": "请输入关键字"
+        },
+        "empty": {
+          "nonBusinessModule": "非业务模块，无服务实例，请选择业务模块查看"
+        },
+        "instance": {
+          "columns": {
+            "instanceName": "实例名称",
+            "processCount": "进程数量",
+            "labels": "标签",
+            "action": "操作",
+            "processName": "进程名称",
+            "processStart": "进程启动",
+            "startupParams": "进程启动参数",
+            "bindInfo": "绑定信息"
+          },
+          "actions": {
+            "addProcess": "添加进程",
+            "clone": "克隆"
+          },
+          "messages": {
+            "instanceNameUpdateSuccess": "实例名称修改成功",
+            "labelSaveSuccess": "标签保存成功",
+            "cloneInstanceInfo": "克隆实例功能",
+            "deleteInstanceSuccess": "删除实例成功",
+            "deleteProcessSuccess": "删除进程成功"
+          },
+          "modal": {
+            "editLabel": "编辑标签"
+          },
+          "form": {
+            "placeholders": {
+              "key": "键",
+              "value": "值"
+            }
+          },
+          "drawer": {
+            "viewProcess": "查看进程",
+            "addProcess": "添加进程",
+            "editProcess": "编辑进程"
+          },
+          "pagination": {
+            "selected": "已选择",
+            "items": "条"
+          },
+          "confirm": {
+            "deleteInstance": "确定删除该实例?",
+            "deleteProcess": "确定删除该进程?"
+          }
+        },
+        "process": {
+          "columns": {
+            "processAlias": "进程别名",
+            "instanceCount": "实例数量",
+            "serviceInstance": "所属实例",
+            "processName": "进程名称",
+            "startupParams": "进程启动参数",
+            "bindInfo": "绑定信息",
+            "action": "操作"
+          },
+          "sections": {
+            "basicInfo": "基础信息",
+            "listenInfo": "监听信息"
+          },
+          "form": {
+            "processName": "进程名称",
+            "processAlias": "进程别名",
+            "startupParams": "进程启动参数",
+            "description": "备注",
+            "placeholders": {
+              "startupParams": "请输入进程启动参数",
+              "description": "请输入备注"
+            }
+          },
+          "messages": {
+            "deleteSuccess": "删除进程成功",
+            "deleteAction": "删除进程:"
+          },
+          "drawer": {
+            "viewTitle": "查看进程",
+            "editTitle": "编辑进程"
+          },
+          "table": {
+            "noData": "暂无数据"
+          },
+          "pagination": {
+            "selected": "已选择",
+            "items": "条"
+          },
+          "fields": {
+            "createTime": "创建时间",
+            "creator": "创建人",
+            "updateTime": "更新时间",
+            "description": "备注"
+          },
+          "confirm": {
+            "deleteProcess": "确定删除该进程?"
+          }
+        }
+      },
+      "moduleNodeInfo": {
+        "deleteSuccess": "删除模块节点成功",
+        "deleteFailed": "删除模块节点失败",
+        "saveSuccess": "保存成功",
+        "serviceCategory": "服务分类",
+        "basicInfo": "基础信息",
+        "moduleName": "模块名称",
+        "moduleNamePlaceholder": "请输入模块名称",
+        "moduleType": "模块类型",
+        "moduleTypePlaceholder": "请选择模块类型",
+        "moduleTypeOptions": {
+          "normal": "普通",
+          "database": "数据库"
+        },
+        "mainOperator": "主要维护人",
+        "mainOperatorPlaceholder": "请输入主要维护人",
+        "backupOperator": "备份维护人",
+        "backupOperatorPlaceholder": "请输入备份维护人",
+        "confirmDeleteTitle": "确定删除 module?",
+        "serviceTemplate": "服务模板",
+        "none": "无",
+        "hostAttributeAutoApply": "主机属性自动应用",
+        "notEnabled": "未启用",
+        "createTime": "创建时间",
+        "creator": "创建人",
+        "updateTime": "更新时间",
+        "updater": "更新人",
+        "deleteNode": "删除节点"
+      },
+      "setNodeInfo": {
+        "deleteSuccess": "删除集群节点成功",
+        "deleteFailed": "删除集群节点失败",
+        "saveSuccess": "保存成功",
+        "basicInfo": "基础信息",
+        "setName": "集群名称",
+        "setNamePlaceholder": "请输入集群名称",
+        "setDescription": "集群描述",
+        "setDescriptionPlaceholder": "请输入集群描述",
+        "environmentType": "环境类型",
+        "environmentTypePlaceholder": "请选择环境类型",
+        "environment": {
+          "test": "测试",
+          "experience": "体验",
+          "production": "正式"
+        },
+        "serviceStatus": "服务状态",
+        "serviceStatusPlaceholder": "请选择服务状态",
+        "status": {
+          "open": "开放",
+          "closed": "关闭"
+        },
+        "designCapacity": "设计容量",
+        "designCapacityPlaceholder": "请输入设计容量",
+        "remarks": "备注",
+        "remarksPlaceholder": "请输入备注",
+        "confirmDeleteTitle": "确定删除 set?",
+        "clusterTemplate": "集群模板",
+        "none": "无",
+        "createTime": "创建时间",
+        "creator": "创建人",
+        "updateTime": "更新时间",
+        "updater": "更新人",
+        "deleteNode": "删除节点"
+      },
+      "businessNodeInfo": {
+        "basicInfo": "基础信息",
+        "businessName": "业务名",
+        "createTime": "创建时间",
+        "creator": "创建人",
+        "updateTime": "更新时间",
+        "updater": "更新人",
+        "lifecycle": "生命周期",
+        "online": "已上线",
+        "testing": "测试中",
+        "timezone": "时区",
+        "language": "语言",
+        "chinese": "中文",
+        "english": "英文",
+        "roles": "角色",
+        "rolesEmpty": "角色信息尚未录入",
+        "maintainer": "运维人员",
+        "productor": "产品人员",
+        "tester": "测试人员",
+        "developer": "开发人员",
+        "operator": "操作人员"
+      },
+      "idleNodeInfo": {
+        "alertMessage": "容器集群节点（Node）上没有运行任何Pod，都会归于 \"空Pod节点\"",
+        "nodeName": "节点名称"
+      },
+      "addProcessModal": {
+        "title": "添加进程",
+        "buttons": {
+          "submit": "提交",
+          "cancel": "取消",
+          "add": "添加",
+          "delete": "删除",
+          "addImmediately": "立即添加"
+        },
+        "sections": {
+          "basicInfo": "基础信息",
+          "listenInfo": "监听信息",
+          "processManagementInfo": "进程管理信息"
+        },
+        "fields": {
+          "processName": "进程名称",
+          "processAlias": "进程别名",
+          "startupParams": "启动参数",
+          "description": "备注",
+          "workPath": "工作路径",
+          "pidFile": "PID文件路径",
+          "startUser": "启动用户",
+          "startCount": "启动数量",
+          "priority": "启动优先级",
+          "startCommand": "启动命令",
+          "stopCommand": "停止命令",
+          "restartCommand": "重启命令",
+          "forceStopCommand": "强制停止命令",
+          "reloadCommand": "进程重载命令",
+          "startWaitTime": "启动等待时长",
+          "operationTimeout": "操作超时时长"
+        },
+        "placeholders": {
+          "processName": "请输入进程名称",
+          "processAlias": "请输入进程别名",
+          "startupParams": "请输入启动参数",
+          "description": "请输入备注",
+          "workPath": "请输入工作路径",
+          "pidFile": "请输入PID文件路径",
+          "startUser": "请输入启动用户",
+          "startCount": "请输入启动数量",
+          "priority": "请输入启动优先级",
+          "startCommand": "请输入启动命令",
+          "stopCommand": "请输入停止命令",
+          "restartCommand": "请输入重启命令",
+          "forceStopCommand": "请输入强制停止命令",
+          "reloadCommand": "请输入进程重载命令",
+          "startWaitTime": "请输入启动等待时长",
+          "operationTimeout": "请输入操作超时时长",
+          "selectOrInputIP": "请选择或输入IP",
+          "inputPort": "请输入Port",
+          "selectProtocol": "请选择Protocol"
+        },
+        "tooltips": {
+          "processName": "进程启动后的名称，需要用于检查进程是否存活。例如：\"./application\"",
+          "processAlias": "进程的别名，方便识别，例如：\"代理服务\"",
+          "startupParams": "程序启动参数 用于唯一识别一个进程，例如 -cp zookeeper",
+          "workPath": "执行进程启停等操作的工作路径",
+          "priority": "批量启动进程依据优先级从小到大排序操作，停止进程按反序操作。优先级数值范围支持输入 [ -100 ~ 10000 ]",
+          "startWaitTime": "在执行启动命令后，等待多久检查PID存活的状态",
+          "operationTimeout": "执行命令的超时时长"
+        },
+        "confirmModal": {
+          "title": "确认离开当前页？",
+          "description": "离开将会导致未保存信息丢失"
+        },
+        "columns": {
+          "actions": "操作"
+        },
+        "titles": {
+          "edit": "编辑进程",
+          "add": "添加进程"
+        }
+      }
+    },
+    "dynamicGroupForm": {
+      "conditionTypes": {
+        "variable": {
+          "title": "可变条件",
+          "desc": "在使用动态分组时，操作符和条件值可修改"
+        },
+        "immutable": {
+          "title": "锁定条件",
+          "desc": "在使用动态分组时，条件及条件值均不可修改"
+        }
+      },
+      "conditionNames": {
+        "immutable": "锁定条件",
+        "variable": "可变条件"
+      },
+      "sections": {
+        "basicInfo": "基础信息",
+        "conditions": "条件",
+        "resultPreview": "结果预览"
+      },
+      "form": {
+        "groupName": {
+          "label": "分组名称",
+          "placeholder": "请输入分组名称"
+        },
+        "groupObject": {
+          "label": "查询对象"
+        }
+      },
+      "searchTarget": {
+        "host": {
+          "name": "主机",
+          "desc": "目标为主机列表"
+        },
+        "set": {
+          "name": "集群",
+          "desc": "目标为集群列表"
+        },
+        "object": {
+          "name": "对象",
+          "desc": "目标为对象列表"
+        }
+      },
+      "conditionPicker": {
+        "addText": "添加",
+        "searchPlaceholder": "请输入字段名称或唯一标识",
+        "selectAll": "全选",
+        "alreadyAdded": "已在{{typeName}}中添加",
+        "serviceTemplate": "服务模板"
+      },
+      "propertyList": {
+        "toggleTooltip": "切换为{{typeName}}",
+        "requiredFieldError": "该字段是必填项"
+      },
+      "queryOperatorDesc": {
+        "eq": "等于",
+        "ne": "不等于",
+        "lt": "小于",
+        "gt": "大于",
+        "in": "精确",
+        "nin": "精确",
+        "range": "范围",
+        "lte": "小于等于",
+        "gte": "大于等于",
+        "like": "模糊",
+        "contains": "匹配(大小写不敏感)",
+        "containsCs": "匹配(大小写敏感)"
+      },
+      "formComponent": {
+        "placeholders": {
+          "immutableValue": "请输入条件值",
+          "immutableSelect": "请选择条件值",
+          "variableValue": "请输入默认值",
+          "variableSelect": "请选择默认值"
+        }
+      },
+      "previewResult": {
+        "title": "结果预览",
+        "updateTime": "（生成时间：{{time}}）",
+        "refresh": "刷新",
+        "emptyTip": "请先在左侧设置分组条件",
+        "columns": {
+          "internalIPv4": "内网IPv4",
+          "region": "管控区域",
+          "cloudVendor": "云主机状态",
+          "cloudVendorID": "云主机实例ID",
+          "cloudBusiness": "云厂商",
+          "createTime": "创建时间",
+          "creator": "创建人"
+        }
+      },
+      "buttons": {
+        "edit": "编辑",
+        "submit": "提交",
+        "preview": "预览",
+        "clearConditions": "清空条件"
+      },
+      "confirm": {
+        "clearConditions": "确认清空当前的分组条件？",
+        "toggleConfirm": "确认切换？",
+        "toggleDescription": "填写内容会清空，确认切换？",
+        "leaveConfirm": "确认离开当前页？",
+        "leaveDescription": "离开将会导致未保存信息丢失"
+      }
+    },
+    "dynamicGroup": {
+      "searchFields": {
+        "id": "ID",
+        "name": "分组名称",
+        "bkObjId": "查询对象",
+        "modifyUser": "修改人"
+      },
+      "columns": {
+        "name": "分组名称",
+        "bkObjId": "查询对象",
+        "createUser": "创建用户",
+        "createTime": "创建时间",
+        "modifyUser": "修改人",
+        "lastTime": "修改时间",
+        "action": "操作"
+      },
+      "actions": {
+        "preview": "预览",
+        "create": "新建"
+      },
+      "titles": {
+        "preview": "动态分组详情",
+        "edit": "编辑动态分组",
+        "create": "创建动态分组"
+      },
+      "searchPlaceholder": "请输入{{field}}",
+      "messages": {
+        "loadFailed": "加载动态分组失败",
+        "loadMetaFailed": "加载动态分组条件元数据失败",
+        "createFailed": "创建动态分组失败",
+        "updateFailed": "更新动态分组失败",
+        "previewFailed": "预览动态分组失败",
+        "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败",
+        "noBusinessSelected": "请先选择业务"
+      },
+      "confirm": {
+        "deleteTitle": "确定删除",
+        "deleteDescription": "确认要删除\"{{name}}\"分组?"
+      },
+      "alert": {
+        "message": "动态分组目前仅提供主机文档的操作条件，在编辑SaaS中可以访问其下资源，包括作业任务、监控配置等。",
+        "linkText": "查看详情"
+      },
+      "objectTypes": {
+        "host": "主机",
+        "set": "对象"
+      }
+    },
+    "entryRedirect": {
+      "errorTitle": "业务数据加载失败",
+      "errorSubTitle": "无法获取业务列表，请检查网络后重试",
+      "retry": "重试",
+      "goToBusinessList": "前往业务管理"
+    }
+  },
+  "resource": {
+    "model": {
+      "columns": {
+        "displayName": "显示名称",
+        "name": "类型标识",
+        "modelName": "资源类型",
+        "classification": "分类",
+        "group": "分组",
+        "groupName": "分组名",
+        "groupDisplayName": "分组显示名",
+        "groupModelCount": "资源类型数",
+        "icon": "图标",
+        "mainline": "主线",
+        "scope": "范围",
+        "level": "层级",
+        "updatedAt": "更新时间",
+        "actions": "操作",
+        "builtIn": "内置",
+        "instanceName": "实例名称",
+        "business": "业务",
+        "createdAt": "创建时间",
+        "changeType": "变更类型",
+        "changedFields": "变更字段",
+        "operator": "操作人",
+        "clientIp": "客户端 IP",
+        "relationDirection": "关系方向",
+        "relationLabel": "关系语义",
+        "relatedInstance": "关联实例",
+        "depth": "深度",
+        "path": "路径",
+        "sourceTarget": "源/目标",
+        "attributeDisplayName": "属性显示名",
+        "attributeName": "属性名",
+        "attributeType": "属性类型",
+        "attributeRequired": "必填",
+        "attributeUnique": "唯一",
+        "attributeEditable": "可编辑",
+        "attributeSortOrder": "排序",
+        "attributeOptions": "配置"
+      },
+      "actions": {
+        "create": "新建资源类型",
+        "createGroup": "新建分组",
+        "manageGroups": "管理分组",
+        "refresh": "刷新",
+        "viewDetail": "查看详情",
+        "viewInstances": "查看实例",
+        "viewInstanceDetail": "查看详情",
+        "viewInstanceRelations": "查看关联",
+        "viewInstanceHistory": "查看历史",
+        "createInstance": "创建实例",
+        "createInstanceRelation": "新增实例关联",
+        "createAttribute": "新增属性",
+        "createRelation": "新建关系",
+        "editRelation": "编辑关系",
+        "createUniqueRule": "新建唯一规则",
+        "editUniqueRule": "编辑唯一规则"
+      },
+      "fields": {
+        "name": "类型标识",
+        "displayName": "显示名称",
+        "classification": "分类",
+        "group": "所属分组",
+        "groupName": "分组名",
+        "groupDisplayName": "分组显示名",
+        "icon": "图标",
+        "description": "描述",
+        "isMainline": "是否主线",
+        "mainlineScope": "主线范围",
+        "mainlineLevel": "主线层级",
+        "parentModel": "父主线类型",
+        "builtIn": "内置类型",
+        "createdAt": "创建时间",
+        "updatedAt": "更新时间",
+        "healthStatus": "健康状态",
+        "lastCheckTime": "最近检查时间",
+        "business": "业务",
+        "parentNode": "父节点",
+        "instanceName": "实例名称",
+        "sortOrder": "排序",
+        "propertiesJson": "属性 JSON",
+        "attributeDisplayName": "属性显示名",
+        "attributeName": "属性名",
+        "attributeType": "属性类型",
+        "attributeRequired": "必填",
+        "attributeUnique": "唯一",
+        "attributeEditable": "可编辑",
+        "defaultValue": "默认值",
+        "placeholder": "占位提示",
+        "helpText": "帮助说明",
+        "enumValues": "枚举值"
+      },
+      "placeholders": {
+        "search": "搜索类型标识、显示名称或分类",
+        "name": "请输入类型标识，例如 rack",
+        "displayName": "请输入显示名称",
+        "group": "请选择类型分组",
+        "groupName": "请输入分组英文名，例如 database_assets",
+        "groupDisplayName": "请输入分组显示名称",
+        "icon": "请输入图标名，例如 rack",
+        "description": "请输入描述",
+        "parentModel": "请选择父主线类型",
+        "business": "请选择业务",
+        "parentNode": "请选择父节点",
+        "instanceName": "请输入实例名称",
+        "relationDefinition": "请选择关系定义",
+        "targetInstance": "请选择目标实例",
+        "propertiesJson": "请输入 JSON，例如 {\"name\":\"rack-a\"}",
+        "attributeDisplayName": "请输入属性显示名",
+        "attributeName": "请输入属性名，例如 rack_code",
+        "enumValues": "每行一个枚举值，也支持逗号分隔",
+        "defaultValue": "请输入默认值",
+        "placeholder": "请输入表单占位提示",
+        "helpText": "请输入字段说明"
+      },
+      "sections": {
+        "attributes": "属性定义",
+        "advanced": "高级配置",
+        "modelGroups": "类型分组",
+        "modelOverview": "类型总览"
+      },
+      "topologyPending": {
+        "title": "全局关系拓扑暂未开放",
+        "subtitle": "关系拓扑还在建设中。现在可以先维护资源类型、类型分组，或进入业务拓扑查看已接入节点。",
+        "backOverview": "返回类型总览",
+        "viewGroups": "查看类型分组",
+        "viewBusinessTopology": "进入业务拓扑"
+      },
+      "tabs": {
+        "overview": "类型信息",
+        "basic": "基本信息",
+        "attributes": "属性管理",
+        "fields": "字段设计",
+        "uniques": "唯一校验",
+        "preview": "表单预览",
+        "instances": "实例列表",
+        "instanceDetail": "实例详情",
+        "instanceRelations": "实例关联",
+        "instanceHistory": "实例历史",
+        "instanceTopology": "实例拓扑",
+        "relations": "关系",
+        "history": "变更记录",
+        "importExport": "导入导出",
+        "groups": "类型分组",
+        "templates": "字段模板"
+      },
+      "groups": {
+        "all": "全部资源类型",
+        "mainline": "主线类型",
+        "business": "业务类型",
+        "resource": "资源类型",
+        "builtin": "内置类型"
+      },
+      "options": {
+        "classification": {
+          "business": "业务类型",
+          "resource": "资源类型"
+        },
+        "scope": {
+          "business": "业务级",
+          "global": "全局级",
+          "none": "无"
+        },
+        "boolean": {
+          "yes": "是",
+          "no": "否"
+        },
+        "fieldType": {
+          "string": "单行文本",
+          "int": "数字",
+          "bool": "布尔",
+          "enum": "枚举"
+        }
+      },
+      "messages": {
+        "loadFailed": "加载资源类型失败",
+        "createFailed": "创建资源类型失败",
+        "loadGroupsFailed": "加载类型分组失败",
+        "createGroupFailed": "创建类型分组失败",
+        "loadInstancesFailed": "加载实例失败",
+        "loadInstanceDetailFailed": "加载实例详情失败",
+        "loadRelationDefinitionsFailed": "加载实例可用关系失败",
+        "loadTargetInstancesFailed": "加载目标实例失败",
+        "loadInstanceRelationsFailed": "加载实例关联失败",
+        "createInstanceRelationSuccess": "创建实例关联成功",
+        "createInstanceRelationFailed": "创建实例关联失败",
+        "deleteInstanceRelationSuccess": "删除实例关联成功",
+        "deleteInstanceRelationFailed": "删除实例关联失败",
+        "loadInstanceHistoryFailed": "加载实例历史失败",
+        "loadInstanceTopologyFailed": "加载实例拓扑失败",
+        "relationTargetRequired": "请先选择关系定义和目标实例",
+        "instanceCreateFailed": "创建实例失败",
+        "attributeCreateFailed": "创建属性失败",
+        "loadRelationsFailed": "加载类型关系失败",
+        "createRelationFailed": "创建类型关系失败",
+        "updateRelationFailed": "更新类型关系失败",
+        "deleteRelationSuccess": "删除类型关系成功",
+        "deleteRelationFailed": "删除类型关系失败",
+        "loadUniqueRulesFailed": "加载唯一规则失败",
+        "createUniqueRuleFailed": "创建唯一规则失败",
+        "updateUniqueRuleFailed": "更新唯一规则失败",
+        "deleteUniqueRuleSuccess": "删除唯一规则成功",
+        "deleteUniqueRuleFailed": "删除唯一规则失败",
+        "invalidAttributeName": "属性名需以小写字母开头，仅支持小写字母、数字和下划线",
+        "invalidJson": "属性 JSON 格式不合法",
+        "loadParentFailed": "加载父节点失败"
+      },
+      "empty": {
+        "noAttributes": "该类型暂无属性定义",
+        "noInstances": "该类型暂无实例",
+        "noInstanceDetail": "暂无实例详情",
+        "noInstanceRelations": "该实例暂无关联关系",
+        "noInstanceHistory": "该实例暂无变更历史",
+        "noInstanceTopology": "该实例暂无拓扑关系",
+        "noRelations": "该类型暂无关系定义",
+        "noUniqueRules": "该类型暂无唯一规则",
+        "tabPending": "该能力将在后续阶段接入",
+        "noDescription": "暂无类型描述"
+      },
+      "unsupported": {
+        "dynamicCapabilityTitle": "该功能暂不可用",
+        "uniqueRules": "当前资源类型的唯一规则功能暂时无法使用，请联系管理员确认类型配置。",
+        "relations": "当前资源类型的关系设计功能暂时无法使用，请联系管理员确认类型配置。"
+      },
+      "helper": {
+        "modelBasics": "先完成对象基础定义，再按需启用主线能力。这样能把类型和拓扑挂载解耦。",
+        "advancedMainline": "只有需要参与业务主线拓扑的资源类型，才需要开启主线配置。",
+        "mainlineNotice": "主线类型需要配置范围、层级和父主线类型。当前 P1 仍不支持挂在 module 下。",
+        "propertiesJson": "可以在 JSON 中补充任意属性，name / sort_order 会自动并入。",
+        "parentNodeEmpty": "当前业务下未找到可挂载的父节点，请先确认父主线实例已存在。",
+        "instanceBusinessScope": "业务主线实例创建时，通常需要先选择业务，再选择父节点。",
+        "instanceListNote": "实例列表由该类型的属性结构驱动，可在此创建和管理该类型的资源实例。",
+        "instanceHistoryPage": "先选择一个实例，再查看它的变更记录、关联关系和拓扑上下文。",
+        "instanceRelationsPage": "这里展示的是实例级实际关联数据，不同于类型层的关系设计。",
+        "instanceRelationCreate": "新增实例关联时，会先按类型关系定义约束目标类型和关联方式。",
+        "instanceConfigBlock": "配置字段来自实例 configs。",
+        "instanceMetricsBlock": "状态字段来自实例 state.metrics。",
+        "instanceTopologyPage": "当前拓扑共 {{nodeCount}} 个节点，{{edgeCount}} 条边。",
+        "enumValues": "枚举值将用于实例表单下拉选项。",
+        "instanceFallbackForm": "该类型还没有自定义属性，当前先提供基础实例字段。",
+        "attributeDesigner": "先定义类型属性，再由实例表单自动按属性结构渲染。",
+        "attributeRoadmap": "在此定义该资源类型的属性字段，包括字段名称、类型、是否必填等。属性定义会直接影响实例创建表单。",
+        "attributeSortHint": "字段按顺序排列展示，可通过调整 sort_order 值来改变字段在实例表单中的显示顺序。",
+        "listOverview": "资源类型列表先按分组聚合浏览，主线只是资源类型的一种能力，不再作为唯一中心视角。",
+        "groupsPending": "资源类型分组帮助您对类型进行归类管理，当前分组功能正在完善中。",
+        "groupsPage": "类型分组现在已经接入后端持久化，可以用来组织资源类型视图和创建入口。",
+        "previewNotice": "当前预览直接复用动态实例表单的字段映射，用来验证字段设计是否合理。",
+        "relationsPending": "类型关系设计还未接入前端，这里先保留占位。",
+        "relationsDesign": "类型关系定义了源类型能指向哪些目标类型，以及关系约束和删除策略。",
+        "relationsDesignHint": "这一页只处理类型层的关系设计，不处理实例之间的实际关联数据。",
+        "relationsListNote": "关系设计会直接约束实例关联的可创建范围，删除前请确认没有线上实例在使用。",
+        "historyPending": "此处将显示该类型及其属性的变更历史记录。",
+        "uniquesPending": "唯一规则用于防止重复数据写入，规则生效后在实例创建和更新时会自动触发校验。",
+        "uniquesDesign": "唯一规则会在实例写入前执行校验，用来阻止重复资源进入类型实例表。",
+        "uniquesDesignHint": "默认唯一规则通常对应主标识，辅助唯一规则用于补充业务上的重复约束。",
+        "uniquesListNote": "更新唯一规则会直接影响后续实例创建和更新行为，调整前请确认已有数据不会产生冲突。",
+        "importExportPending": "后续会在这里接入类型导入导出和模板能力。"
+      },
+      "uniques": {
+        "columns": {
+          "name": "规则名称",
+          "fields": "字段组合",
+          "emptyHandling": "空值处理",
+          "status": "状态",
+          "actions": "操作"
+        },
+        "fields": {
+          "name": "规则名称",
+          "fields": "唯一字段",
+          "description": "规则描述",
+          "isDefault": "默认规则",
+          "isAuxiliary": "辅助规则",
+          "enabled": "启用规则",
+          "ignoreIfAllEmpty": "字段全空时忽略"
+        },
+        "placeholders": {
+          "name": "请输入规则名称",
+          "fields": "请选择唯一字段",
+          "description": "请输入规则描述"
+        },
+        "tags": {
+          "default": "默认",
+          "auxiliary": "辅助",
+          "standard": "普通"
+        },
+        "status": {
+          "enabled": "已启用",
+          "disabled": "已停用"
+        },
+        "options": {
+          "emptyHandling": {
+            "ignore": "全空时跳过",
+            "validate": "全空也校验"
+          }
+        },
+        "confirmDelete": "确认删除这条唯一规则吗？"
+      },
+      "relations": {
+        "columns": {
+          "targetModel": "目标类型",
+          "associationType": "关联类型",
+          "mapping": "映射约束",
+          "onDelete": "删除行为",
+          "description": "描述",
+          "actions": "操作"
+        },
+        "fields": {
+          "targetModel": "目标类型",
+          "associationType": "关联类型",
+          "mapping": "映射约束",
+          "onDelete": "删除行为",
+          "description": "描述",
+          "actions": "操作"
+        },
+        "options": {
+          "onDelete": {
+            "cascade": "级联删除",
+            "restrict": "禁止删除",
+            "set_null": "置空"
+          }
+        },
+        "confirmDelete": "确认删除这条类型关系吗？",
+        "confirmDeleteInstanceRelation": "确认删除这条实例关系吗？"
+      }
+    },
+    "host": {
+      "tabs": {
+        "unassigned": "未分配",
+        "assigned": "已分配",
+        "all": "全部"
+      },
+      "cloudArea": {
+        "direct": "直连区域"
+      },
+      "columns": {
+        "id": "ID",
+        "hostName": "主机名",
+        "innerIpv4": "内网IPv4",
+        "innerIpv6": "内网IPv6",
+        "cloudArea": "管控区域",
+        "businessTopology": "业务拓扑",
+        "cloudHostStatus": "云主机状态"
+      },
+      "actions": {
+        "importHost": "导入主机",
+        "assign": "分配",
+        "assignTo": "分配到",
+        "transferTo": "转移到",
+        "copy": "复制",
+        "more": "更多"
+      },
+      "aria": {
+        "selectHost": "选择主机 {{id}}",
+        "openDetail": "查看主机 {{id}} 的详情"
+      },
+      "search": {
+        "placeholder": "请输入IP或主机名",
+        "clearSearch": "清除搜索"
+      },
+      "tooltips": {
+        "viewDeleteHistory": "查看删除历史",
+        "onlyHostPoolHosts": "仅主机池主机可进行此操作",
+        "onlyIdleHostsToHostPool": "仅允许业务下空闲机转移至主机池",
+        "onlyIdleHostsCrossBusiness": "仅允许业务下空闲机跨业务转移",
+        "onlyBusinessHosts": "仅业务下主机可进行此操作"
+      },
+      "messages": {
+        "noCopyContent": "无可复制内容",
+        "copySuccess": "复制成功",
+        "copyFailed": "复制失败",
+        "deleteSuccess": "删除成功",
+        "confirmDelete": "确定删除选中的主机？",
+        "loadFailed": "主机列表加载失败"
+      },
+      "copy": {
+        "id": "ID",
+        "innerIpv4": "内网IPv4",
+        "innerIpv6": "内网IPv6",
+        "cloudAreaIdIp": "管控区域ID:IP",
+        "cloudAreaIdIpv4": "管控区域ID:IPv4",
+        "cloudAreaIdIpv6": "管控区域ID:IPv6",
+        "cloudAreaIdIpIpv4First": "管控区域ID:IP(IPv4优先)",
+        "cloudAreaIdIpIpv6First": "管控区域ID:IP(IPv6优先)",
+        "cloudArea": "管控区域",
+        "topoPath": "业务拓扑",
+        "cloudHostStatus": "云主机状态"
+      },
+      "assign": {
+        "businessIdlePool": "业务空闲机池",
+        "hostPoolOtherDirectory": "主机池其他目录"
+      },
+      "more": {
+        "delete": "删除"
+      },
+      "deleteHistory": {
+        "columns": {
+          "updateTime": "更新时间",
+          "operationAccount": "操作账号"
+        },
+        "search": {
+          "placeholder": "请输入IP"
+        }
+      },
+      "detail": {
+        "title": "主机详情",
+        "sections": {
+          "basic": "基本信息",
+          "placement": "当前归属",
+          "cloud": "云信息",
+          "customFields": "自定义字段",
+          "time": "时间",
+          "audit": "最近变更"
+        },
+        "fields": {
+          "id": "ID",
+          "hostName": "主机名",
+          "primaryIp": "内网 IP",
+          "ipAddresses": "全部 IP",
+          "status": "状态",
+          "os": "操作系统",
+          "cpu": "CPU（核）",
+          "memory": "内存",
+          "disk": "磁盘",
+          "cloudVendor": "云厂商",
+          "cloudArea": "云区域",
+          "cloudInstanceId": "实例 ID",
+          "cloudRegion": "地域",
+          "vpcId": "VPC",
+          "subnetId": "子网",
+          "createdAt": "创建时间",
+          "updatedAt": "更新时间"
+        },
+        "placement": {
+          "business": "业务 / 集群 / 模块",
+          "pool": "资源池目录"
+        },
+        "audit": {
+          "empty": "暂无变更记录",
+          "loadFailed": "变更记录加载失败",
+          "open": "查看审计记录 #{{id}}"
+        },
+        "messages": {
+          "notFound": "主机不存在",
+          "loadFailed": "主机详情加载失败"
+        }
+      }
+    },
+    "import": {
+      "title": "导入主机",
+      "columns": {
+        "relatedModel": "关联的资源类型",
+        "uniqueIdentifier": "唯一校验标识"
+      },
+      "upload": {
+        "dragText": "将文件拖到此处或",
+        "clickText": "点击上传",
+        "fileHint": "20M 以内的 xlsx 文件",
+        "downloadTemplate": "下载模板"
+      },
+      "steps": {
+        "upload": "上传文件",
+        "configure": "导入配置",
+        "selectModels": "选择关联资源类型",
+        "result": "导入结果",
+        "importRelatedModels": "是否导入关联的类型实例"
+      },
+      "actions": {
+        "startImport": "开始导入"
+      },
+      "uniqueOptions": {
+        "cloudAreaIpv4": "管控区域 + 内网IPv4",
+        "outerIpv4": "外网IPv4",
+        "cloudInstanceVendor": "云主机实例ID + 云厂商",
+        "ipv6CloudArea": "内网IPv6 + 管控区域",
+        "gseAgentId": "GSE Agent ID"
+      },
+      "messages": {
+        "importInfo": "说明：导入编辑需要先导出需要修改的实例，并完成编辑修改后才能进行导入编辑操作",
+        "noRelatedModels": "暂无关联资源类型，无需选择",
+        "importFailed": "导入失败，请确认导入文件信息是否正确",
+        "templateDownloadFailed": "模板下载失败，请确认后端模板接口已启用"
+      },
+      "host": {
+        "label": "主机",
+        "modelText": "(类型本身)",
+        "uniqueLabel": "唯一校验标识"
+      },
+      "result": {
+        "success": "导入成功",
+        "failed": "导入失败",
+        "close": "关闭",
+        "retry": "重新导入"
+      }
+    },
+    "business": {
+      "columns": {
+        "id": "ID",
+        "name": "业务名",
+        "maintainer": "运维人员",
+        "createdAt": "创建时间",
+        "createdBy": "创建人",
+        "updatedAt": "更新时间",
+        "actions": "操作"
+      },
+      "search": {
+        "fields": {
+          "id": "ID",
+          "name": "业务名",
+          "maintainer": "运维人员",
+          "createdAt": "创建时间",
+          "createdBy": "创建人",
+          "updatedAt": "更新时间"
+        },
+        "placeholder": "请输入{{field}}",
+        "dateRange": {
+          "startPlaceholder": "开始时间",
+          "endPlaceholder": "结束时间"
+        }
+      },
+      "actions": {
+        "create": "新建",
+        "batchEdit": "批量编辑",
+        "archive": "归档",
+        "viewDetail": "查看详情"
+      },
+      "tooltips": {
+        "viewArchived": "查看已归档业务"
+      },
+      "messages": {
+        "archiveSuccess": "归档成功",
+        "confirmArchiveTitle": "确认要归档{{name}}",
+        "confirmArchiveDescription": "归档后SaaS将不可访问其下资源，包括作业任务、监控配置等，是否确认不再使用此业务？"
+      },
+      "modify": {
+        "title": {
+          "create": "创建业务",
+          "edit": "批量编辑业务"
+        },
+        "sections": {
+          "basic": "基础信息",
+          "roles": "角色"
+        },
+        "fields": {
+          "name": "业务名",
+          "createdAt": "创建时间",
+          "createdBy": "创建人",
+          "updatedAt": "更新时间",
+          "updatedBy": "更新人",
+          "lifecycle": "生命周期",
+          "timezone": "时区",
+          "language": "语言",
+          "sres": "运维人员",
+          "bizops": "产品人员",
+          "testers": "测试人员",
+          "developers": "开发人员"
+        },
+        "placeholders": {
+          "name": "请输入业务名",
+          "lifecycle": "请选择生命周期",
+          "timezone": "请选择时区",
+          "language": "请选择语言"
+        },
+        "options": {
+          "lifecycle": {
+            "testing": "测试中",
+            "online": "已上线",
+            "offline": "停运"
+          },
+          "language": {
+            "chinese": "中文",
+            "english": "English"
+          }
+        },
+        "confirmLeave": {
+          "title": "确认离开当前页？",
+          "description": "离开将会导致未保存信息丢失"
+        }
+      },
+      "detail": {
+        "tabs": {
+          "attributes": "属性"
+        },
+        "property": {
+          "uniqueId": "唯一标识",
+          "fieldName": "字段名称",
+          "fieldType": "字段类型",
+          "placeholder": "请输入{{label}}"
+        }
+      },
+      "archived": {
+        "columns": {
+          "id": "ID",
+          "name": "业务名",
+          "maintainer": "运维人员",
+          "createdAt": "创建时间",
+          "createdBy": "创建人",
+          "updatedAt": "更新时间",
+          "updatedBy": "更新人",
+          "archivedAt": "归档时间",
+          "actions": "操作"
+        },
+        "actions": {
+          "restore": "恢复",
+          "delete": "删除"
+        },
+        "messages": {
+          "restoreSuccess": "恢复成功",
+          "restoreFailed": "恢复失败",
+          "deleteSuccess": "删除成功",
+          "deleteFailed": "删除失败"
+        },
+        "search": {
+          "placeholder": "请输入业务名"
+        },
+        "restoreModal": {
+          "title": "恢复业务",
+          "nameLabel": "业务名",
+          "namePlaceholder": "请输入业务名"
+        },
+        "deleteConfirm": {
+          "title": "确认彻底删除该业务？",
+          "description": "清除后将无法再恢复，请谨慎操作！"
+        }
+      },
+      "topology": {
+        "tabs": {
+          "hostList": "主机列表",
+          "serviceInstance": "服务实例"
+        },
+        "hostList": {
+          "columns": {
+            "moduleName": "模块名",
+            "clusterName": "集群名"
+          },
+          "transfer": {
+            "hostPoolTip": "主机需在空闲机池下才允许转移至主机池",
+            "otherBusinessTip": "主机需在空闲机池下才允许转移至其他业务"
+          },
+          "menus": {
+            "businessModule": "业务模块",
+            "currentModule": "当前模块",
+            "exportSelected": "导出选中",
+            "exportAll": "导出全部",
+            "importExcel": "导入excel更新"
+          },
+          "empty": {
+            "noModuleCreated": "该集群尚未创建模块",
+            "createNow": "立即创建"
+          },
+          "buttons": {
+            "add": "新增",
+            "edit": "编辑",
+            "transferTo": "转移至",
+            "appendTo": "追加至",
+            "removeFrom": "移出",
+            "copy": "复制",
+            "more": "更多"
+          },
+          "tooltips": {
+            "onlyModuleCanAdd": "仅能在业务模块下新增"
+          },
+          "search": {
+            "placeholder": "请输入IP或固资编号"
+          },
+          "pagination": {
+            "selected": "已选择",
+            "items": "条"
+          }
+        },
+        "nodeInfo": {
+          "selectNodeMessage": "请选择一个节点查看详情"
+        },
+        "addHostModal": {
+          "columns": {
+            "innerIP": "内网IP",
+            "innerIPv6": "内网IPv6",
+            "cloudArea": "管控区域"
+          },
+          "unassigned": "未分配",
+          "messages": {
+            "pleaseInputIP": "请输入IP",
+            "addSuccess": "成功添加 {{count}} 台主机",
+            "noNewHosts": "没有新的主机可添加",
+            "copySuccess": "复制成功",
+            "copyFailed": "复制失败",
+            "ipIncorrectOrNotExists": "IP不正确或主机不存在",
+            "noHostSelected": "暂无主机选中"
+          },
+          "placeholders": {
+            "pleaseInput": "请输入",
+            "searchTopologyNode": "搜索拓扑节点",
+            "inputIPNewline": "请输入IP，换行分隔"
+          },
+          "buttons": {
+            "addToList": "添加至列表",
+            "cancel": "取消",
+            "confirm": "确定",
+            "nextStep": "下一步"
+          },
+          "tabs": {
+            "staticTopology": "静态拓扑",
+            "customInput": "自定义输入",
+            "resultPreview": "结果预览"
+          },
+          "menu": {
+            "copyIP": "复制IP",
+            "removeAll": "移除所有"
+          },
+          "labels": {
+            "selectedCount": "已选择 {{count}} 台主机"
+          },
+          "titles": {
+            "selectHost": "选择主机",
+            "addHostToModule": "新增主机到模块"
+          }
+        }
+      }
+    },
+    "operation": {
+      "title": "操作详情",
+      "meta": {
+        "business": "所属业务",
+        "object": "操作对象",
+        "action": "动作",
+        "modelType": "对象类别",
+        "instance": "操作实例",
+        "description": "操作描述",
+        "time": "操作时间",
+        "user": "操作账号"
+      },
+      "values": {
+        "host": "主机",
+        "delete": "删除",
+        "noBusiness": "--",
+        "deleteDescription": "删除{{name}}"
+      },
+      "columns": {
+        "attribute": "属性",
+        "before": "变更前"
+      },
+      "attributes": {
+        "addressingMethod": "寻址方式",
+        "gseAgentId": "GSE Agent ID",
+        "assetNumber": "固资编号",
+        "backupMaintainer": "备份维护人",
+        "cloudHostStatus": "云主机状态",
+        "cloudArea": "管控区域",
+        "cloudInstanceId": "云主机实例ID",
+        "cloudRegion": "云地域 (Region)",
+        "cloudVendor": "云厂商",
+        "cloudZone": "云可用区 (Zone)",
+        "remark": "备注",
+        "cpuLogicalCores": "CPU逻辑核数",
+        "cpuArchitecture": "CPU架构",
+        "cpuModel": "CPU型号",
+        "createdTime": "创建时间",
+        "createdBy": "创建人",
+        "diskCapacity": "磁盘容量(GB)",
+        "innerIpv4": "内网IPv4",
+        "innerIpv6": "内网IPv6",
+        "hostname": "主机名称",
+        "outerIpv4": "公网IPv4",
+        "outerIpv6": "公网IPv6",
+        "isp": "所属运营商",
+        "innerMac": "内网MAC地址",
+        "memoryCapacity": "内存容量(MB)",
+        "osBit": "操作系统位数",
+        "osName": "操作系统名称",
+        "osType": "操作系统类型",
+        "osVersion": "操作系统版本",
+        "outerMac": "公网MAC地址",
+        "province": "所在省份",
+        "warrantyYears": "质保年限",
+        "slaLevel": "SLA级别",
+        "deviceSn": "设备SN",
+        "currentStatus": "当前状态",
+        "country": "所在国家",
+        "updatedTime": "更新时间",
+        "updatedBy": "更新人",
+        "importTime": "录入时间",
+        "importMethod": "录入方式",
+        "mainMaintainer": "主要维护人"
+      }
+    }
+  },
+  "host": {
+    "directory": {
+      "hostPool": "主机池",
+      "grouped": "分组目录",
+      "add": "新建目录",
+      "input": {
+        "placeholder": "请输入目录名称，回车结束"
+      },
+      "pin": "置顶",
+      "unpin": "取消置顶",
+      "message": {
+        "correctName": "请输入正确的目录名称",
+        "existName": "目录名称已存在",
+        "addSuccess": "新建成功",
+        "addFailed": "新建失败，请稍后重试",
+        "renameSuccess": "重命名成功",
+        "renameFailed": "修改失败，请稍后重试",
+        "deleteSuccess": "删除成功",
+        "deleteFailed": "删除失败，请稍后重试",
+        "pinSuccess": "已置顶",
+        "unpinSuccess": "已取消置顶"
+      },
+      "confirm": {
+        "title": "确定删除目录",
+        "content": "即将删除目录"
+      }
+    },
+    "assign": {
+      "modal": {
+        "title": {
+          "biz": "分配到业务空闲机池",
+          "pool": "分配到主机池其他目录"
+        },
+        "ok": "确定",
+        "cancel": "取消",
+        "selectedPrefix": "已选择",
+        "selectedSuffix": "台主机",
+        "placeholder": {
+          "biz": "请选择业务",
+          "pool": "请选择目录"
+        },
+        "text": {
+          "biz": "业务列表",
+          "pool": "目录列表"
+        },
+        "success": "分配成功",
+        "error": "分配失败，请稍后重试",
+        "failedDetail": "分配失败：成功 {{successful}} 台，失败 {{failed}} 台"
+      }
+    }
+  },
+  "notFound": {
+    "title": "404",
+    "message": "抱歉，您访问的页面不存在。",
+    "backToHome": "返回首页"
+  },
+  "analysis": {
+    "audit": {
+      "tabs": {
+        "host": "主机",
+        "business": "业务",
+        "resource": "资源"
+      },
+      "filters": {
+        "business": "业务",
+        "operationTarget": "操作对象",
+        "action": "动作",
+        "time": "时间",
+        "keyword": "关键词",
+        "timeRange": "时间范围",
+        "actionType": "动作类型",
+        "account": "账号",
+        "instance": "实例",
+        "host": "主机"
+      },
+      "columns": {
+        "object": "操作对象",
+        "action": "动作",
+        "business": "所属业务",
+        "instance": "实例",
+        "description": "操作描述",
+        "time": "时间",
+        "account": "操作账号",
+        "attribute": "属性",
+        "before": "变更前",
+        "after": "变更后",
+        "change": "变更内容"
+      },
+      "buttons": {
+        "search": "查询",
+        "reset": "清空",
+        "expand": "展开",
+        "collapse": "收起"
+      },
+      "placeholders": {
+        "selectOperationTarget": "请选择操作对象",
+        "selectOperationTargetFirst": "请先选择操作对象",
+        "selectAction": "请选择动作",
+        "selectStartDate": "请选择开始日期",
+        "selectEndDate": "请选择结束日期",
+        "enterAccount": "请输入账号",
+        "enterId": "请输入ID",
+        "enterName": "请输入名称",
+        "enterIp": "请输入IP",
+        "enterIpv6": "请输入IPv6",
+        "enter": "请输入"
+      },
+      "operationTargets": {
+        "module": "模块",
+        "cluster": "集群",
+        "node": "节点",
+        "serviceInstance": "服务实例",
+        "dynamicGroup": "动态分组",
+        "business": "业务",
+        "project": "项目"
+      },
+      "actions": {
+        "create": "新增",
+        "update": "修改",
+        "delete": "删除",
+        "archive": "归档",
+        "restore": "恢复",
+        "assignToBusiness": "分配到业务",
+        "returnToPool": "归还到资源池",
+        "transferModule": "转移模块"
+      },
+      "accountFilter": {
+        "include": "包含",
+        "exclude": "不包含"
+      },
+      "instanceFilter": {
+        "name": "名称",
+        "id": "ID",
+        "fuzzy": "模糊"
+      },
+      "detail": {
+        "title": "操作详情",
+        "business": "所属业务",
+        "object": "操作对象",
+        "action": "动作",
+        "modelType": "对象类别",
+        "instance": "操作实例",
+        "description": "操作描述",
+        "time": "操作时间",
+        "account": "操作账号",
+        "flow": "流向"
+      },
+      "change": {
+        "flowTypes": {
+          "import": "导入资源池",
+          "allocate": "分配到业务",
+          "transfer": "转移",
+          "reclaim": "回收到资源池"
+        },
+        "createHost": "新建主机",
+        "create": "新建",
+        "more": "等 {{count}} 项",
+        "listSeparator": "、",
+        "itemSeparator": "；",
+        "unassigned": "无归属",
+        "resourcePool": "资源池",
+        "directoryFallback": "目录 #{{id}}",
+        "yes": "是",
+        "no": "否",
+        "fields": {
+          "host_name": "主机名",
+          "primary_ip": "主 IP",
+          "ip_addresses": "IP 地址",
+          "status": "状态",
+          "business_name": "业务",
+          "module_names": "模块",
+          "cpu": "CPU（核）",
+          "memory": "内存（MB）",
+          "disk_size": "磁盘（GB）",
+          "os_type": "系统类型",
+          "os_version": "系统版本"
+        }
+      },
+      "messages": {
+        "recordNotFound": "审计记录不存在",
+        "recordLoadFailed": "审计记录加载失败，请稍后重试"
+      }
+    },
+    "statistics": {
+      "overview": {
+        "businessTotal": "业务总数",
+        "hostTotal": "主机总数",
+        "modelTotal": "资源类型总数",
+        "instanceTotal": "实例总数",
+        "instanceTooltip": "不包含业务、主机类型及实例"
+      },
+      "host": {
+        "title": "主机统计"
+      },
+      "instance": {
+        "title": "实例统计"
+      },
+      "sampleDataBadge": "示例数据",
+      "sampleDataTip": "图表当前展示示例数据，尚未接入真实统计源",
+      "sampleDataTipHost": "分布图（操作系统/业务/管控区域）已接入真实统计；趋势图与自定义图仍为示例数据",
+      "sampleDataTipInstance": "实例数量统计已接入真实数据；变更趋势与自定义图仍为示例数据",
+      "sampleData": {
+        "hostBusiness": {
+          "blueking": "平台服务",
+          "financeSystem": "财务系统",
+          "officialSiteBusiness": "官网业务",
+          "hrBusiness": "人力资源业务",
+          "miniProgramBusiness": "小程序业务",
+          "ecommerceChannelSystem": "电商渠道系统",
+          "hrSystem": "人力资源系统"
+        },
+        "cloudArea": {
+          "unassigned": "未分配"
+        },
+        "instanceCategory": {
+          "businessSet": "业务集",
+          "switch": "交换机",
+          "loadBalance": "负载均衡",
+          "router": "路由器",
+          "firewall": "防火墙",
+          "project": "项目"
+        },
+        "changeType": {
+          "create": "新增",
+          "update": "更新",
+          "delete": "删除"
+        }
+      },
+      "chart": {
+        "source": {
+          "custom": "自定义",
+          "builtin": "内置"
+        },
+        "type": {
+          "pie": "饼图",
+          "bar": "柱状图",
+          "line": "折线图"
+        },
+        "width": {
+          "half": "50%",
+          "full": "100%"
+        },
+        "loading": "",
+        "noData": "暂无数据",
+        "startDate": "开始日期",
+        "endDate": "结束日期",
+        "unknownType": "未知图表类型"
+      },
+      "chartNames": {
+        "host": {
+          "osType": "按操作系统类型统计",
+          "business": "按业务统计",
+          "cloudArea": "按管控区域统计",
+          "hostCountTrend": "主机数量变化趋势"
+        },
+        "instance": {
+          "instanceCount": "实例数量统计",
+          "instanceChange": "实例变更统计"
+        }
+      },
+      "modal": {
+        "addHostChart": "新增主机统计图表",
+        "addInstanceChart": "新增实例统计图表",
+        "editChart": "编辑【{{name}}】",
+        "submit": "提交",
+        "cancel": "取消"
+      },
+      "form": {
+        "chartSource": "图表来源",
+        "selectChart": "选择图表",
+        "chartName": "图表名称",
+        "statisticsObject": "统计对象",
+        "statisticsDimension": "统计维度",
+        "chartType": "图表类型",
+        "chartWidth": "图表宽度",
+        "xAxisCount": "横轴坐标数量",
+        "required": "该字段是必填项",
+        "enterChartName": "请输入图表名称",
+        "pleaseSelect": "请选择",
+        "pleaseEnter": "请输入"
+      },
+      "container": {
+        "moveUpDisabled": "已置顶，无法上移",
+        "moveDownDisabled": "已置底，无法下移"
+      },
+      "messages": {
+        "deleteSuccess": "删除成功",
+        "addSuccess": "添加成功",
+        "editSuccess": "编辑成功"
+      },
+      "confirm": {
+        "deleteTitle": "确认删除",
+        "deleteContent": "确定要删除该图表吗？"
+      }
+    }
+  },
+  "aiAssistant": {
+    "entry": "AI 助手",
+    "entryNew": "新",
+    "title": "AI 调查助手",
+    "newChat": "新对话",
+    "backToChat": "返回对话",
+    "welcome": {
+      "title": "你好，我是 CMDB 调查助手",
+      "description": "可以问我主机为什么在某个模块、某次变更是谁做的、某条规则是什么意思。回答里的每条事实都带依据，点开就能核对。",
+      "promptsTitle": "试试这些问题",
+      "prompts": {
+        "hostModules": "10.20.1.11 为什么同时在两个模块？",
+        "faultVsReclaim": "故障机和待回收有什么区别？",
+        "recentReclaim": "最近有哪些主机被回收到资源池？"
+      }
+    },
+    "sender": {
+      "placeholder": "输入问题，Enter 发送，Shift + Enter 换行",
+      "send": "发送",
+      "stop": "停止生成"
+    },
+    "answer": {
+      "itemCount_one": "{{count}} 条",
+      "itemCount_other": "{{count}} 条",
+      "showMore_one": "展开其余 {{count}} 条",
+      "showMore_other": "展开其余 {{count}} 条",
+      "showLess": "收起"
+    },
+    "status": {
+      "thinking": "思考中",
+      "tool": "正在查询：{{tool}}",
+      "analyzing": "正在分析查询结果",
+      "answering": "正在生成回答"
+    },
+    "message": {
+      "stopped": "已停止",
+      "stats_one": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens",
+      "stats_other": "工具调用 {{count}} 次 · 耗时 {{elapsed}} · 输入 {{input}} / 输出 {{output}} tokens"
+    },
+    "steps": {
+      "status": {
+        "pending": "执行中",
+        "success": "成功",
+        "error": "失败"
+      },
+      "running_one": "工具调用（已 {{count}} 次）",
+      "running_other": "工具调用（已 {{count}} 次）",
+      "summary_one": "调用了 {{count}} 个工具",
+      "summary_other": "调用了 {{count}} 个工具",
+      "problems_one": "{{count}} 个失败或中断",
+      "problems_other": "{{count}} 个失败或中断",
+      "interrupted": "已中断",
+      "input": "参数",
+      "output": "返回",
+      "noOutput": "（无返回内容）"
+    },
+    "tools": {
+      "search_businesses": "查业务",
+      "get_business_topology": "查业务拓扑",
+      "search_hosts": "查主机",
+      "get_host": "查主机详情",
+      "query_host_changes": "查变更记录",
+      "list_pool_directories": "查资源池目录",
+      "search_knowledge": "查知识库"
+    },
+    "citation": {
+      "setTip": "在业务拓扑中查看这个集群",
+      "setNotFound": "没有找到这个集群，可能已被删除或没有权限查看",
+      "business": "业务 #{{id}}",
+      "module": "模块 #{{id}}",
+      "set": "集群 #{{id}}",
+      "directory": "资源池目录 #{{id}}",
+      "businessTip": "查看这个业务的拓扑",
+      "moduleTip": "在业务拓扑中查看这个模块和它的主机",
+      "moduleNotFound": "没有找到这个模块，可能已被删除或没有权限查看",
+      "record": "审计 #{{id}}",
+      "host": "主机 #{{id}}",
+      "recordTip": "查看这条审计记录的详情",
+      "hostTip": "查看这台主机的详情",
+      "docTip": "查看知识库原文"
+    },
+    "knowledge": {
+      "notFound": "知识库里没有这个小节",
+      "loadFailed": "知识库原文加载失败，请稍后重试"
+    },
+    "errors": {
+      "connectionFailed": "无法连接 AI 服务，请确认服务已启动后重试",
+      "busy": "上一条消息还在处理中，请稍后再试",
+      "quotaExceeded": "今天的 AI 提问次数已用完，请明天再来",
+      "requestFailed": "AI 服务请求失败，请稍后重试",
+      "server": "AI 回答失败",
+      "incomplete": "连接已断开，回答不完整"
+    },
+    "history": {
+      "title": "历史会话",
+      "empty": "还没有历史会话",
+      "untitled": "未命名会话",
+      "loadFailed": "历史会话加载失败",
+      "loadMessagesFailed": "会话内容加载失败",
+      "notFound": "会话不存在或已被删除",
+      "retry": "重试",
+      "delete": "删除",
+      "cancel": "取消",
+      "deleteConfirmTitle": "删除这个会话？",
+      "deleteConfirmContent": "删除后无法恢复。",
+      "deleted": "会话已删除",
+      "deleteFailed": "删除失败，请稍后重试"
+    }
+  }
+}

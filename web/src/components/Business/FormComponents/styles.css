@@ -1,0 +1,41 @@
+/**
+ * Shared styles for all form components
+ * Used by dynamic form components in business topology
+ */
+
+/* Base form component container */
+.form-component {
+  width: 100%;
+}
+
+/* Range input specific styles */
+.range-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Service template component */
+.form-service-template {
+  .template-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--color-bg-spotlight);
+    border: 1px solid var(--color-border);
+    border-radius: 2px;
+    margin-bottom: 8px;
+
+    .template-name {
+      color: var(--color-text-primary);
+      font-size: 12px;
+    }
+
+    .template-id {
+      color: var(--color-text-tertiary);
+      font-size: 11px;
+    }
+  }
+}

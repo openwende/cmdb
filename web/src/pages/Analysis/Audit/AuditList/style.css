@@ -1,0 +1,160 @@
+.audit-list {
+  padding: var(--space-xl);
+  background: var(--color-bg-container);
+  border-radius: 0;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+
+  & > :first-child {
+    margin-bottom: var(--space-lg);
+  }
+
+  .list-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+
+    .list-search {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+
+      .search-date-picker {
+        width: 240px;
+        min-width: 180px;
+      }
+
+      .search-input {
+        width: 200px;
+        min-width: 140px;
+      }
+
+      .search-select {
+        width: 140px;
+        min-width: 120px;
+      }
+    }
+  }
+}
+
+.audit-list-table-shell {
+  overflow-x: auto;
+}
+
+.audit-mobile-list {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .audit-list {
+    padding: var(--space-lg);
+  }
+
+  .audit-list .list-header {
+    justify-content: stretch;
+  }
+
+  .audit-list .list-search,
+  .audit-list .search-date-picker,
+  .audit-list .search-input,
+  .audit-list .search-select {
+    width: 100% !important;
+  }
+
+  .audit-list-table-shell {
+    display: none;
+  }
+
+  .audit-mobile-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .audit-mobile-card {
+    display: grid;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-container);
+    color: inherit;
+    font: inherit;
+    text-align: left;
+  }
+
+  .audit-mobile-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  .audit-mobile-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .audit-mobile-card__title {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .audit-mobile-card__action {
+    flex-shrink: 0;
+    color: var(--color-primary);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-medium);
+  }
+
+  .audit-mobile-card__desc {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+
+  .audit-mobile-card__change {
+    display: block;
+    min-width: 0;
+    color: var(--color-text-primary);
+    font-size: var(--font-size-sm);
+  }
+
+  /* 触屏没有悬停，卡片里换行显示全文 */
+  .audit-mobile-card__change .audit-change-summary {
+    align-items: flex-start;
+  }
+
+  .audit-mobile-card__change .audit-change-summary__text {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .audit-mobile-card__grid {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .audit-mobile-card__grid > span {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .audit-mobile-card__grid > span > span:first-child {
+    color: var(--color-text-quaternary);
+    font-size: var(--font-size-xs);
+  }
+
+  .audit-mobile-card__grid > span > span:last-child {
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+}

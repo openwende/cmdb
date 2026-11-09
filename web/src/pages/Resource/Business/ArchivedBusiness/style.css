@@ -1,0 +1,47 @@
+.archived-business {
+  background-color: var(--color-bg-container);
+  margin: 0 0 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  .list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .list-back {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      h2 {
+        margin: 0;
+      }
+    }
+
+    .list-search {
+      display: flex;
+      gap: 10px;
+    }
+  }
+}
+
+.delete-link {
+  color: var(--color-error);
+}
+
+.delete-link:hover {
+  color: var(--color-error);
+}
+
+/* Customize restore business modal */
+.ant-modal-content .ant-modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.ant-form-item-label > label {
+  color: var(--color-text-secondary);
+}

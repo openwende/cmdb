@@ -1,0 +1,196 @@
+.list-wrapper {
+  position: relative;
+  box-sizing: border-box;
+  padding: 16px 0 24px 24px;
+  background: var(--color-bg-layout);
+}
+
+.host-workspace {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  padding: 16px;
+  background: var(--color-bg-container);
+}
+
+.host-workspace__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.host-workspace__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  /* 占搜索框之外的剩余空间；最窄到最宽的按钮（min-width: auto），放不下时按钮换行 */
+  flex: 1 1 0;
+}
+
+.search-bar {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  /* 宽屏 300px；工具栏不够宽时（如 1024 英文）跟着收窄，按钮不出卡片 */
+  flex: 0 1 300px;
+  min-width: 0;
+}
+
+.search-bar .host-workspace__search {
+  width: 100%;
+}
+
+.host-workspace__table-shell {
+  overflow-x: auto;
+  border: none;
+  border-radius: 0;
+  background: var(--color-bg-container);
+  box-shadow: none;
+}
+
+.topology-host-mobile-list {
+  display: none;
+}
+
+.host-workspace__table-shell .ant-table-wrapper {
+  background: var(--color-bg-container);
+}
+
+.host-workspace__table-shell .ant-table,
+.host-workspace__table-shell .ant-table-container,
+.host-workspace__table-shell .ant-table-content {
+  background: var(--color-bg-container);
+}
+
+.host-workspace__table-shell .ant-table-thead > tr > th {
+  background: var(--color-bg-container);
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 4px;
+}
+
+.host-workspace__pagination-copy {
+  color: var(--color-text-secondary);
+}
+
+.empty-wrapper {
+  margin-top: 15%;
+}
+
+@media (max-width: 767px) {
+  .list-wrapper {
+    padding: 12px;
+  }
+
+  .host-workspace__toolbar,
+  .pagination-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-bar {
+    flex: none;
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .search-bar .ant-input-search {
+    width: 100% !important;
+  }
+
+  .host-workspace__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .host-workspace__actions .ant-btn,
+  .host-workspace__actions .ant-dropdown-trigger {
+    width: 100%;
+  }
+
+  .host-workspace__table-shell {
+    display: none;
+  }
+
+  .topology-host-mobile-list {
+    display: grid;
+    gap: 12px;
+  }
+
+  .topology-host-mobile-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  .topology-host-mobile-card {
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-container);
+  }
+
+  .topology-host-mobile-card__head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .topology-host-mobile-card__title {
+    color: var(--color-text-primary);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-semibold);
+    overflow-wrap: anywhere;
+  }
+
+  .topology-host-mobile-card__meta {
+    color: var(--color-text-quaternary);
+    font-size: var(--font-size-xs);
+    margin-top: 2px;
+  }
+
+  .topology-host-mobile-card__grid {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .topology-host-mobile-card__grid > div {
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .topology-host-mobile-card__grid dt {
+    color: var(--color-text-quaternary);
+    font-size: var(--font-size-xs);
+  }
+
+  .topology-host-mobile-card__grid dd {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Host ID link (opens the host detail drawer) */
+.host-id-link.ant-btn {
+  height: auto;
+  padding: 0;
+}

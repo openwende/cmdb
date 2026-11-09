@@ -1,0 +1,552 @@
+import { useState, useEffect, useRef } from 'react';
+import { Drawer, Form, Input, Button, Space, Collapse, Popconfirm } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
+import {
+  DynamicGroupFormData,
+  ObjectMainLine,
+  PropertyMap,
+  Property,
+  Condition,
+} from '../../Types';
+import { availableModelIds, BUILTIN_MODELS } from '../../constants';
+import {
+  createServiceTemplateProperty,
+  formatDynamicConditions,
+  isValidCondition,
+  processConditionGroups,
+} from '../../utils';
+import SearchTarget from './SearchTarget';
+import ConditionPicker from './ConditionPicker';
+import PropertyList from './PropertyList';
+import PreviewResult from './PreviewResult';
+import DragHandle from '@/components/common/DragHandle';
+import ConfirmModal from '@/components/common/ConfirmModal';
+import {
+  createDynamicGroup,
+  getDynamicGroupMeta,
+  previewDynamicGroup,
+  updateDynamicGroup,
+} from '@/api';
+import { useBusinessStore } from '@/store/BusinessStore';
+import dayjs from 'dayjs';
+import './style.css';
+
+const DRAWER_WIDTH = 1200;
+const MIN_WIDTH = 400;
+const MAX_WIDTH = 500;
+const PADDING = 24;
+
+export enum FormMode {
+  CREATE = 'create',
+  EDIT = 'edit',
+  PREVIEW = 'preview',
+}
+interface DynamicGroupFormProps {
+  title: string;
+  visible: boolean;
+  mode: FormMode;
+  initialData: any;
+  onClose: () => void;
+  onDataChange: () => Promise<void> | void;
+  onModeChange: (mode: FormMode) => void;
+}
+
+const DynamicGroupForm: React.FC<DynamicGroupFormProps> = ({
+  title,
+  visible,
+  mode,
+  initialData,
+  onClose,
+  onDataChange,
+  onModeChange,
+}) => {
+  const { currentBusiness } = useBusinessStore();
+  const { t } = useTranslation();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+  const [groupObject, setGroupObject] = useState<BUILTIN_MODELS>(BUILTIN_MODELS.HOST);
+  const [availableModels, setAvailableModels] = useState<readonly ObjectMainLine[]>([]);
+  const [propertyMap, setPropertyMap] = useState<PropertyMap>({});
+  const [selectedProperties, setSelectedProperties] = useState<Property[]>([]);
+  const [conditions, setConditions] = useState<Record<string, Condition>>({});
+  const [errors, setErrors] = useState<Set<number>>(new Set());
+  // Storage for conditions that are not yet applied
+  const [storageConditions, setStorageConditions] = useState<Record<string, Condition>>({});
+  // State for form section width
+  const [basicInfoWidth, setBasicInfoWidth] = useState<number>(MIN_WIDTH);
+  // State for confirm modal
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingGroupObject, setPendingGroupObject] = useState<BUILTIN_MODELS | null>(null);
+  // State for leave confirm modal
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
+  // Preview result state
+  const [previewData, setPreviewData] = useState<any[]>([]);
+  const [lastUpdateTime, setLastUpdateTime] = useState<string>('');
+  const initialPreviewDoneRef = useRef(false);
+  const disabled = mode === FormMode.PREVIEW;
+
+  useEffect(() => {
+    void loadMeta();
+  }, [currentBusiness?.id]);
+
+  useEffect(() => {
+    if (
+      (mode === FormMode.EDIT || mode === FormMode.PREVIEW) &&
+      initialData &&
+      Object.keys(propertyMap).length > 0
+    ) {
+      initializeFormData(initialData);
+    }
+  }, [mode, initialData, propertyMap]);
+
+  useEffect(() => {
+    if (
+      !initialPreviewDoneRef.current &&
+      (mode === FormMode.EDIT || mode === FormMode.PREVIEW) &&
+      Object.keys(conditions).length > 0
+    ) {
+      initialPreviewDoneRef.current = true;
+      const timeoutId = setTimeout(() => {
+        handlePreview();
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [conditions, mode]);
+
+  useEffect(() => {
+    if (!visible) {
+      initialPreviewDoneRef.current = false;
+    }
+  }, [visible]);
+
+  const loadMeta = async () => {
+    if (!currentBusiness?.id) {
+      setAvailableModels([]);
+      setPropertyMap({});
+      return;
+    }
+
+    try {
+      const response = await getDynamicGroupMeta(currentBusiness.id);
+      const models = (response.data.models || []).filter((model) =>
+        availableModelIds.includes(model.bk_obj_id),
+      );
+      const orderedModels = availableModelIds
+        .map((modelId) => models.find((model) => model.bk_obj_id === modelId))
+        .filter(Boolean) as ObjectMainLine[];
+
+      const nextPropertyMap = { ...(response.data.property_map || {}) };
+      if (nextPropertyMap.module) {
+        nextPropertyMap.module = [createServiceTemplateProperty(t), ...nextPropertyMap.module];
+      }
+
+      setAvailableModels(Object.freeze(orderedModels) as readonly ObjectMainLine[]);
+      setPropertyMap(Object.freeze(nextPropertyMap));
+    } catch (error) {
+      console.error(error);
+      setAvailableModels([]);
+      setPropertyMap({});
+      message.error(t('business.dynamicGroup.messages.loadMetaFailed'));
+    }
+  };
+
+  const initializeFormData = (data: any) => {
+    form.setFieldsValue({
+      groupName: data.name,
+      groupObject: data.bk_obj_id,
+    });
+    setGroupObject(data.bk_obj_id);
+
+    const newSelectedProperties: Property[] = [];
+    const initialConditions: Record<string, Condition> = {};
+
+    const result = processConditionGroups(data.info?.condition || [], propertyMap);
+
+    newSelectedProperties.push(...result.selectedProperties);
+    Object.assign(initialConditions, result.storageConditions);
+
+    setSelectedProperties(newSelectedProperties);
+    setStorageConditions(initialConditions);
+  };
+
+  const handlePropertyChange = (newProperties: Property[]) => {
+    setSelectedProperties(newProperties);
+    // if (!newProperties.length) { setSelectedProperties([]); }
+
+    // const { addSelect, deleteSelect } = getConditionSelect(newProperties, selectedProperties);
+    // updatePropertySelect(selectedProperties, addSelect, deleteSelect, setSelectedProperties, 'unshift');
+  };
+
+  const handleRemoveProperty = (property: Property) => {
+    const newSelectedProperties = selectedProperties.filter((p) => p.id !== property.id);
+    setSelectedProperties(newSelectedProperties);
+
+    // Remove the property from conditions and storageConditions
+    const newConditions = { ...conditions };
+    const newStorageConditions = { ...storageConditions };
+
+    delete newConditions[property.id];
+    delete newStorageConditions[property.id];
+
+    setConditions(newConditions);
+    setStorageConditions(newStorageConditions);
+  };
+
+  const handleConditionChange = (newCondition: Record<string, Condition>) => {
+    // Merge new conditions with existing conditions instead of replacing
+    setConditions((prev) => ({
+      ...prev,
+      ...newCondition,
+    }));
+    setStorageConditions((prev) => ({
+      ...prev,
+      ...newCondition,
+    }));
+  };
+
+  const handleErrors = (propertyId: number, hasError: boolean) => {
+    setErrors((prev) => {
+      const newErrors = new Set(prev);
+      if (hasError) {
+        newErrors.add(propertyId);
+      } else {
+        newErrors.delete(propertyId);
+      }
+      return newErrors;
+    });
+  };
+
+  // Validate all conditions
+  const validateAllConditions = (): boolean => {
+    let isValid = true;
+    const newErrors = new Set<number>();
+
+    Object.values(conditions).forEach((condition) => {
+      if (!isValidCondition(condition.value)) {
+        newErrors.add(condition.property.id);
+        isValid = false;
+      }
+    });
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const values = await form.validateFields();
+
+      if (!currentBusiness?.id) {
+        message.error(t('business.dynamicGroup.messages.noBusinessSelected'));
+        return;
+      }
+
+      // Validate all conditions
+      if (!validateAllConditions()) {
+        setLoading(false);
+        return;
+      }
+
+      const { condition } = formatDynamicConditions(conditions);
+
+      const formData: DynamicGroupFormData = {
+        name: values.groupName,
+        bk_obj_id: values.groupObject,
+        target_model_uid: values.groupObject,
+        condition,
+      };
+
+      if (mode === FormMode.EDIT && initialData?.id) {
+        await updateDynamicGroup(currentBusiness.id, initialData.id, formData);
+        message.success(t('common.message.updateSuccess'));
+      } else {
+        await createDynamicGroup(currentBusiness.id, formData);
+        message.success(t('common.message.createSuccess'));
+      }
+
+      await Promise.resolve(onDataChange());
+
+      handleActualClose();
+    } catch (error) {
+      console.error(error);
+      message.error(
+        mode === FormMode.EDIT
+          ? t('business.dynamicGroup.messages.updateFailed')
+          : t('business.dynamicGroup.messages.createFailed'),
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePreview = async () => {
+    try {
+      setLoading(true);
+
+      if (!currentBusiness?.id) {
+        message.error(t('business.dynamicGroup.messages.noBusinessSelected'));
+        return;
+      }
+
+      // Validate all conditions
+      if (!validateAllConditions()) {
+        setLoading(false);
+        return;
+      }
+
+      const { condition } = formatDynamicConditions(conditions);
+
+      const previewPayload = {
+        bk_obj_id: form.getFieldValue('groupObject') || groupObject,
+        target_model_uid: form.getFieldValue('groupObject') || groupObject,
+        condition,
+        limit: 100,
+      };
+
+      const response = await previewDynamicGroup(currentBusiness.id, previewPayload);
+      setPreviewData(response.data.items || []);
+      setLastUpdateTime(dayjs().format('YYYY-MM-DD HH:mm:ss'));
+    } catch (error) {
+      console.error(error);
+      message.error(t('business.dynamicGroup.messages.previewFailed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (mode !== FormMode.PREVIEW && selectedProperties.length > 0) {
+      setShowLeaveConfirmModal(true);
+      return;
+    }
+    handleActualClose();
+  };
+
+  const handleActualClose = () => {
+    onClose();
+    handleClearConditions();
+    form.resetFields();
+    form.setFieldsValue({ groupObject: BUILTIN_MODELS.HOST });
+    setGroupObject(BUILTIN_MODELS.HOST);
+  };
+
+  const handleLeaveConfirmOk = () => {
+    setShowLeaveConfirmModal(false);
+    handleActualClose();
+  };
+
+  const handleLeaveConfirmCancel = () => {
+    setShowLeaveConfirmModal(false);
+  };
+
+  const handleClearConditions = () => {
+    setSelectedProperties([]);
+    setConditions({});
+    setStorageConditions({});
+    setErrors(new Set());
+    setPreviewData([]);
+    setLastUpdateTime('');
+  };
+
+  const handleGroupObjectChange = (newValue: BUILTIN_MODELS) => {
+    setGroupObject(newValue);
+    form.setFieldsValue({ groupObject: newValue });
+  };
+
+  const handleShowConfirmModal = (id: BUILTIN_MODELS) => {
+    setPendingGroupObject(id);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmOk = () => {
+    if (pendingGroupObject) {
+      handleClearConditions();
+      setGroupObject(pendingGroupObject);
+      form.setFieldsValue({ groupObject: pendingGroupObject });
+    }
+    setShowConfirmModal(false);
+    setPendingGroupObject(null);
+  };
+
+  const handleConfirmCancel = () => {
+    setShowConfirmModal(false);
+    setPendingGroupObject(null);
+  };
+
+  return (
+    <Drawer
+      title={title}
+      open={visible}
+      onClose={handleClose}
+      width={DRAWER_WIDTH}
+      className="dynamic-group-drawer"
+    >
+      <div className="dynamic-group-content">
+        <div className="form-section" style={{ width: basicInfoWidth }}>
+          <div className="form-content">
+            <Form
+              form={form}
+              layout="vertical"
+              initialValues={{
+                groupName: '',
+                groupObject,
+              }}
+            >
+              <div className="section-title">
+                {t('business.dynamicGroupForm.sections.basicInfo')}
+              </div>
+              <Form.Item
+                label={t('business.dynamicGroupForm.form.groupName.label')}
+                name="groupName"
+                rules={[{ required: true, message: t('common.form.rulesMessage') }, { max: 256 }]}
+              >
+                <Input
+                  placeholder={t('business.dynamicGroupForm.form.groupName.placeholder')}
+                  disabled={disabled}
+                />
+              </Form.Item>
+
+              <Form.Item
+                label={t('business.dynamicGroupForm.form.groupObject.label')}
+                name="groupObject"
+                rules={[{ required: true }]}
+              >
+                <SearchTarget
+                  value={groupObject}
+                  showModal={selectedProperties.length > 0}
+                  disabled={disabled}
+                  onChange={handleGroupObjectChange}
+                  onShowModal={handleShowConfirmModal}
+                />
+              </Form.Item>
+
+              <Collapse
+                ghost
+                defaultActiveKey={['conditions']}
+                items={[
+                  {
+                    key: 'conditions',
+                    label: (
+                      <span className="condition-title">
+                        {t('business.dynamicGroupForm.sections.conditions')}
+                      </span>
+                    ),
+                    extra: (
+                      <ConditionPicker
+                        propertyMap={propertyMap!}
+                        models={availableModels}
+                        selected={selectedProperties}
+                        disabled={disabled}
+                        onPropertyChange={handlePropertyChange}
+                      />
+                    ),
+                    children: (
+                      <PropertyList
+                        bizId={currentBusiness?.id || ''}
+                        models={availableModels}
+                        selectedProperties={selectedProperties}
+                        conditions={conditions}
+                        storageConditions={storageConditions}
+                        errors={errors}
+                        disabled={disabled}
+                        onRemove={handleRemoveProperty}
+                        onConditionChange={handleConditionChange}
+                        onUpdateErrors={handleErrors}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </Form>
+          </div>
+
+          <div className="form-actions">
+            <Space>
+              {mode === FormMode.PREVIEW ? (
+                <Button type="primary" onClick={() => onModeChange(FormMode.EDIT)}>
+                  {t('common.edit')}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    type="primary"
+                    onClick={handleSubmit}
+                    loading={loading}
+                    disabled={disabled || selectedProperties.length === 0}
+                  >
+                    {mode === FormMode.CREATE ? t('common.submit') : t('common.save')}
+                  </Button>
+                  <Button
+                    onClick={handlePreview}
+                    disabled={selectedProperties.length === 0}
+                    color="primary"
+                    variant="outlined"
+                  >
+                    {t('business.dynamicGroupForm.buttons.preview')}
+                  </Button>
+                  <Popconfirm
+                    title={t('business.dynamicGroupForm.confirm.clearConditions')}
+                    onConfirm={handleClearConditions}
+                    okText={t('common.confirm')}
+                    cancelText={t('common.cancel')}
+                  >
+                    <Button disabled={disabled || selectedProperties.length === 0}>
+                      {t('business.dynamicGroupForm.buttons.clearConditions')}
+                    </Button>
+                  </Popconfirm>
+                </>
+              )}
+              <Button onClick={handleClose}>{t('common.cancel')}</Button>
+            </Space>
+          </div>
+
+          {/* The drag handle */}
+          <DragHandle
+            minWidth={MIN_WIDTH}
+            maxWidth={MAX_WIDTH}
+            currentWidth={basicInfoWidth}
+            onWidthChange={setBasicInfoWidth}
+          />
+        </div>
+
+        <div
+          className="preview-section"
+          style={{ width: DRAWER_WIDTH - basicInfoWidth - PADDING * 2 }}
+        >
+          <PreviewResult
+            data={previewData}
+            loading={loading}
+            lastUpdateTime={lastUpdateTime}
+            onRefresh={handlePreview}
+          />
+        </div>
+      </div>
+
+      {/* Toggle Confirm Modal */}
+      <ConfirmModal
+        visible={showConfirmModal}
+        title={t('business.dynamicGroupForm.confirm.toggleConfirm')}
+        description={t('business.dynamicGroupForm.confirm.toggleDescription')}
+        onOk={handleConfirmOk}
+        onCancel={handleConfirmCancel}
+        okText={t('common.components.confirmModal.confirm')}
+        cancelText={t('common.components.confirmModal.cancel')}
+      />
+
+      {/* Leave Confirm Modal */}
+      <ConfirmModal
+        visible={showLeaveConfirmModal}
+        title={t('business.dynamicGroupForm.confirm.leaveConfirm')}
+        description={t('business.dynamicGroupForm.confirm.leaveDescription')}
+        onOk={handleLeaveConfirmOk}
+        onCancel={handleLeaveConfirmCancel}
+        okText={t('common.components.confirmModal.confirm')}
+        cancelText={t('common.components.confirmModal.cancel')}
+      />
+    </Drawer>
+  );
+};
+
+export default DynamicGroupForm;

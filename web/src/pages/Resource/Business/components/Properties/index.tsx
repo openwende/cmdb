@@ -1,0 +1,213 @@
+import React, { useState, useEffect } from 'react';
+import { Collapse, Button, Spin, message } from 'antd';
+import { useTranslation } from 'react-i18next';
+import dayjs from 'dayjs';
+import BasicInfo from './BasicInfo/index';
+import RoleInfo from './RoleInfo/index';
+import { getBusinessDetail, updateBusiness } from '@/api';
+import type { BusinessDetail } from '@/api/types/resource';
+import { LIFECYCLE_OPTIONS, LANGUAGE_OPTIONS } from '@/pages/Resource/constants';
+import './style.css';
+
+interface PropertiesProps {
+  businessId: string;
+}
+
+const Properties: React.FC<PropertiesProps> = ({ businessId }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [businessData, setBusinessData] = useState<BusinessDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editValues, setEditValues] = useState<BusinessDetail | null>(null);
+  const [errorFields, setErrorFields] = useState<string[]>([]);
+  const { t } = useTranslation();
+
+  useEffect(() => {
+    fetchBusinessDetail();
+  }, [businessId]);
+
+  const fetchBusinessDetail = async () => {
+    if (!businessId) return;
+
+    try {
+      setLoading(true);
+      const { data } = await getBusinessDetail(Number(businessId));
+      setBusinessData(data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const enhancedBizData = React.useMemo(() => {
+    if (!businessData) return null;
+
+    const lifecycleOption = LIFECYCLE_OPTIONS.find((opt) => opt.value === businessData.lifecycle);
+    const languageOption = LANGUAGE_OPTIONS.find((opt) => opt.value === businessData.language);
+
+    return {
+      ...businessData,
+      lifecycle: lifecycleOption?.label ? t(lifecycleOption.label) : businessData.lifecycle,
+      language: languageOption?.label ? t(languageOption.label) : businessData.language,
+      created_at: dayjs(businessData.created_at).format('YYYY-MM-DD HH:mm:ss') || '',
+      updated_at: dayjs(businessData.updated_at).format('YYYY-MM-DD HH:mm:ss') || '',
+      sres: businessData.sres ? businessData.sres.join(', ') : '',
+      bizops: businessData.bizops ? businessData.bizops.join(', ') : '',
+      testers: businessData.testers ? businessData.testers.join(', ') : '',
+      developers: businessData.developers ? businessData.developers.join(', ') : '',
+    };
+  }, [businessData, t]);
+
+  const handleEdit = () => {
+    if (!businessData || !enhancedBizData) return;
+
+    const editData = {
+      ...businessData,
+      // Keep original values for editing, not the translated ones
+      lifecycle: businessData.lifecycle,
+      language: businessData.language,
+      created_at: enhancedBizData.created_at,
+      updated_at: enhancedBizData.updated_at,
+      sres: businessData.sres || [],
+      bizops: businessData.bizops || [],
+      testers: businessData.testers || [],
+      developers: businessData.developers || [],
+    };
+
+    setEditValues(editData);
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    const errors: string[] = [];
+
+    if (editValues) {
+      if (editValues.name.trim() === '') {
+        errors.push('name');
+      }
+      if (editValues.sres.length === 0) {
+        errors.push('sres');
+      }
+    }
+
+    setErrorFields(errors);
+    if (errors.length > 0) {
+      return;
+    }
+
+    try {
+      const data = await updateBusiness(Number(businessId), editValues!);
+      if (data.success) {
+        setIsEditing(false);
+        fetchBusinessDetail();
+        message.success(t('common.message.updateSuccess'));
+      } else {
+        message.error(t('common.message.updateFailed'));
+      }
+    } catch {
+      message.error(t('common.message.updateFailed'));
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setEditValues(null);
+    setErrorFields([]);
+  };
+
+  const handleValueChange = (key: string, value: string | string[]) => {
+    setEditValues((prev) => {
+      if (prev === null) {
+        return null;
+      }
+
+      return {
+        ...prev,
+        [key]: value,
+      };
+    });
+
+    // Validate field
+    const errors = [...errorFields];
+    const fieldIndex = errors.indexOf(key);
+    const hasValue = Array.isArray(value) ? value.length > 0 : value.trim() !== '';
+
+    if (hasValue && fieldIndex !== -1) {
+      // Remove error if field has value
+      errors.splice(fieldIndex, 1);
+    } else if (!hasValue && fieldIndex === -1) {
+      // Add error if field is empty
+      errors.push(key);
+    }
+
+    setErrorFields(errors);
+  };
+
+  if (loading) {
+    return (
+      <div className="properties-loading">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  const items = [
+    {
+      key: 'basic',
+      label: t('resource.business.modify.sections.basic'),
+      children: (
+        <BasicInfo
+          data={enhancedBizData as unknown as BusinessDetail}
+          isEditing={isEditing}
+          editValues={editValues}
+          onValueChange={handleValueChange}
+          errorFields={errorFields}
+        />
+      ),
+    },
+    {
+      key: 'roles',
+      label: t('resource.business.modify.sections.roles'),
+      children: (
+        <RoleInfo
+          data={enhancedBizData as unknown as BusinessDetail}
+          isEditing={isEditing}
+          editValues={editValues}
+          onValueChange={handleValueChange}
+          errorFields={errorFields}
+        />
+      ),
+    },
+  ];
+
+  return (
+    <>
+      <Collapse
+        items={items}
+        ghost
+        defaultActiveKey={['basic', 'roles']}
+        className="properties-collapse"
+      />
+
+      <div className="properties-actions">
+        <div className="actions-divider"></div>
+        <div className="actions-content">
+          {!isEditing ? (
+            <Button type="primary" onClick={handleEdit}>
+              {t('common.edit')}
+            </Button>
+          ) : (
+            <div className="editing-actions">
+              <Button type="primary" onClick={handleSave}>
+                {t('common.save')}
+              </Button>
+              <Button onClick={handleCancel}>{t('common.cancel')}</Button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Properties;

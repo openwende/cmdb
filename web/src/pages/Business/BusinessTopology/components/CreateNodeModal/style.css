@@ -1,0 +1,31 @@
+.create-modal {
+  .ant-modal-header {
+    margin-bottom: 24px;
+  }
+
+  .ant-form-item {
+    margin-bottom: 15px;
+  }
+
+  .ant-modal-footer {
+    margin-top: 24px;
+  }
+
+  .selected-tip {
+    margin-bottom: 15px;
+  }
+
+  .create-modal-loading {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+  }
+
+  .selected-model-summary {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    color: var(--color-text-secondary);
+    font-size: 12px;
+  }
+}

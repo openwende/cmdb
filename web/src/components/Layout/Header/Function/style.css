@@ -1,0 +1,163 @@
+/* Language component styles */
+.language-container {
+  display: flex;
+  align-items: center;
+
+  .language-button {
+    color: var(--color-header-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    transition: color var(--transition-fast);
+
+    &:hover {
+      color: var(--color-header-text) !important;
+    }
+
+    .language-label {
+      width: 12px;
+      font-size: 10px;
+      margin-top: 6px;
+    }
+  }
+}
+
+.header-auth-button {
+  border: none;
+  background: transparent;
+  color: var(--color-header-text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  font: inherit;
+  height: auto;
+  transition: color var(--transition-fast);
+}
+
+.header-auth-button:hover,
+.header-auth-button:focus-visible {
+  color: var(--color-header-text) !important;
+  background: transparent !important;
+}
+
+.header-auth-trigger {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* AI 助手入口：紫色实心胶囊，首次渲染扫光 3 次后静止 */
+.ant-btn.header-ai-button {
+  position: relative;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid rgba(196, 181, 253, 0.45);
+  border-radius: 999px;
+  background: #6d4fe0;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 2px 10px rgba(109, 79, 224, 0.35);
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.ant-btn.header-ai-button::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-20deg);
+  pointer-events: none;
+  animation: header-ai-sheen 2.4s ease-in-out 0.8s 3;
+}
+
+@keyframes header-ai-sheen {
+  0% {
+    left: -60%;
+  }
+  55%,
+  100% {
+    left: 130%;
+  }
+}
+
+.ant-btn.header-ai-button:hover,
+.ant-btn.header-ai-button:focus-visible {
+  color: #ffffff !important;
+  background: #7c62ea !important;
+  box-shadow: 0 2px 14px rgba(124, 98, 234, 0.5);
+}
+
+.ant-btn.header-ai-button--active,
+.ant-btn.header-ai-button--active:hover {
+  color: #ffffff !important;
+  background: #5b3fd0 !important;
+  box-shadow: 0 0 0 2px rgba(196, 181, 253, 0.6);
+}
+
+.header-ai-button .header-ai-icon {
+  font-size: 16px;
+  transition: transform var(--transition-fast);
+}
+
+.header-ai-button:hover .header-ai-icon {
+  transform: rotate(-12deg) scale(1.12);
+}
+
+.header-ai-badge {
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4c1d95;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.header-ai-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fbbf24;
+  box-shadow: 0 0 0 1.5px #6d4fe0;
+}
+
+.ant-btn.header-ai-button--compact {
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ant-btn.header-ai-button::after {
+    animation: none;
+    display: none;
+  }
+
+  .header-ai-button:hover .header-ai-icon {
+    transform: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .ant-btn.header-ai-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+}

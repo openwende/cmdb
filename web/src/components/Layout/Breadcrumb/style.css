@@ -1,0 +1,29 @@
+.app-breadcrumb {
+  overflow: hidden;
+  position: relative;
+  z-index: 10;
+  align-items: center;
+  background: transparent;
+  box-shadow: none;
+  display: flex;
+  min-height: 28px;
+  flex-shrink: 0;
+  padding: 4px 2px 8px;
+  font-size: 13px;
+
+  .item-link {
+    color: var(--color-primary);
+
+    &:hover {
+      color: var(--color-primary);
+    }
+  }
+
+  .ant-breadcrumb-link a {
+    color: var(--color-primary);
+
+    &:hover {
+      color: var(--color-primary-hover);
+    }
+  }
+}

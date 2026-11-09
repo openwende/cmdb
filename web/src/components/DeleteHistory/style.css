@@ -1,0 +1,13 @@
+.delete-history-wrapper {
+  padding: var(--space-lg);
+}
+
+.delete-history-wrapper .toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.delete-history-wrapper .ant-table-wrapper {
+  margin-bottom: var(--space-lg);
+}

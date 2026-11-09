@@ -1,0 +1,429 @@
+/* AI 调查助手抽屉 */
+.ai-assistant-drawer .ant-drawer-content-wrapper {
+  box-shadow: -6px 0 16px rgba(15, 23, 42, 0.08);
+}
+
+/* 标题单行：标题区可以收缩，给右侧按钮让位，放不下时省略号截断 */
+.ai-assistant-drawer .ant-drawer-header-title,
+.ai-assistant-drawer .ant-drawer-title {
+  min-width: 0;
+}
+
+.ai-assistant-drawer__title {
+  display: block;
+  /* 截断后的省略号和右侧按钮之间留点空 */
+  padding-right: var(--space-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-chat,
+.ai-history {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-history {
+  overflow-y: auto;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.ai-chat__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-chat__list {
+  flex: 1;
+  min-height: 0;
+  padding: var(--space-lg) var(--space-lg) var(--space-sm);
+}
+
+.ai-chat__placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+}
+
+.ai-chat__welcome {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-2xl) var(--space-lg);
+}
+
+.ai-chat__welcome-icon {
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+.ai-chat__sender {
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  border-top: 1px solid var(--color-border-secondary);
+}
+
+/* 气泡 */
+.ai-bubble-user {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ai-chat__list .ai-bubble-assistant {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+}
+
+.ai-message {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+/* 生成中的状态行：流光文字 + 已用时间 */
+.ai-status {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+}
+
+.ai-status__text {
+  color: var(--color-text-quaternary);
+  background: linear-gradient(
+    90deg,
+    var(--color-text-quaternary) 0%,
+    var(--color-text-quaternary) 40%,
+    var(--color-border) 50%,
+    var(--color-text-quaternary) 60%,
+    var(--color-text-quaternary) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: ai-status-shimmer 1.8s linear infinite;
+}
+
+@keyframes ai-status-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+.ai-status__time {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-status__text {
+    animation: none;
+    -webkit-text-fill-color: currentColor;
+  }
+}
+
+.ai-message__stopped {
+  align-self: flex-start;
+}
+
+.ai-message__stats {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-xs);
+}
+
+/* 工具步骤 */
+.ai-tool-step__label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-quaternary);
+  margin: var(--space-xs) 0 2px;
+}
+
+.ai-tool-step__code {
+  margin: 0;
+  padding: var(--space-sm);
+  max-height: 220px;
+  overflow: auto;
+  background: var(--color-bg-spotlight);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* 工具步骤汇总行 */
+.ai-message__steps .ant-collapse-header {
+  padding: 2px 0 !important;
+  color: var(--color-text-quaternary) !important;
+  font-size: var(--font-size-sm);
+}
+
+.ai-message__steps .ant-collapse-content-box {
+  padding: var(--space-xs) 0 0 !important;
+}
+
+/* 分节回答：标题和 .ai-markdown h3 一致 */
+.ai-answer__section + .ai-answer__section {
+  margin-top: var(--space-md);
+}
+
+.ai-answer__heading {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-xs);
+  color: var(--color-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ai-answer__toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-sm);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ai-answer__caret {
+  align-self: center;
+  font-size: 11px;
+  color: var(--color-text-quaternary);
+  transition: transform var(--transition-fast);
+}
+
+.ai-answer__count,
+.ai-answer__empty {
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+}
+
+.ai-answer__more.ant-btn {
+  height: auto;
+  padding: 0;
+  margin-top: 2px;
+}
+
+/* Markdown 回答 */
+.ai-markdown {
+  font-size: var(--font-size-base);
+  line-height: 1.7;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.ai-markdown > :first-child {
+  margin-top: 0;
+}
+
+.ai-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.ai-markdown h1,
+.ai-markdown h2,
+.ai-markdown h3,
+.ai-markdown h4 {
+  margin: var(--space-md) 0 var(--space-xs);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.ai-markdown h1 {
+  font-size: 18px;
+}
+
+.ai-markdown h2 {
+  font-size: 16px;
+}
+
+.ai-markdown h3,
+.ai-markdown h4 {
+  font-size: 15px;
+}
+
+.ai-markdown p {
+  margin: var(--space-xs) 0;
+}
+
+.ai-markdown ul,
+.ai-markdown ol {
+  margin: var(--space-xs) 0;
+  padding-left: 22px;
+}
+
+.ai-markdown code {
+  padding: 1px 4px;
+  background: var(--color-bg-spotlight);
+  border-radius: var(--radius-sm);
+  font-size: 0.92em;
+}
+
+.ai-markdown pre {
+  padding: var(--space-sm);
+  background: var(--color-bg-spotlight);
+  border-radius: var(--radius-sm);
+  overflow: auto;
+}
+
+.ai-markdown pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.ai-markdown__table {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: var(--space-sm) 0;
+}
+
+.ai-markdown table {
+  border-collapse: collapse;
+}
+
+.ai-markdown th,
+.ai-markdown td {
+  border: 1px solid var(--color-border);
+  padding: 4px 8px;
+  min-width: 5em;
+  vertical-align: top;
+}
+
+/*
+ * 回答里的表格（外面有可横向滚动的 .ai-markdown__table）：按内容宽度展开、至少占满气泡，
+ * 单元格统一不换行，IP、主机名、日期等不会被拆开，放不下时整体横向滚动。
+ * 知识库气泡里的表格没有滚动容器，不套用。
+ */
+.ai-markdown__table table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.ai-markdown__table th,
+.ai-markdown__table td {
+  white-space: nowrap;
+}
+
+.ai-markdown blockquote {
+  margin: var(--space-xs) 0;
+  padding-left: var(--space-md);
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+/* 引用标签 */
+.ai-citation-group {
+  display: inline;
+}
+
+.ai-citation.ant-tag {
+  margin: 0 2px;
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  line-height: 18px;
+}
+
+/* 知识库引用可能很长：正文里允许在标签内折行，表格里保持一行（表格可横向滚动） */
+.ai-citation--doc.ant-tag {
+  white-space: normal;
+  word-break: break-all;
+}
+
+.ai-markdown__table .ai-citation.ant-tag {
+  white-space: nowrap;
+  word-break: normal;
+}
+
+.ai-citation-plain {
+  margin: 0 2px;
+  color: var(--color-text-quaternary);
+  font-size: var(--font-size-xs);
+  white-space: nowrap;
+}
+
+.ai-citation-plain + .ai-citation-plain::before {
+  content: '· ';
+}
+
+.ai-citation--link {
+  cursor: pointer;
+}
+
+.ai-citation--link:hover {
+  opacity: 0.85;
+}
+
+/* 知识库原文气泡 */
+.ai-knowledge-popover .ant-popover-inner {
+  max-width: min(420px, calc(100vw - 32px));
+}
+
+.ai-knowledge-section {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.ai-knowledge-section--loading {
+  min-width: 120px;
+  text-align: center;
+}
+
+.ai-knowledge-section--error {
+  color: var(--color-error);
+}
+
+.ai-knowledge-section__title {
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.ai-knowledge-section__content {
+  font-size: var(--font-size-sm);
+}
+
+/* 历史会话 */
+.ai-history__item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.4;
+}
+
+.ai-history__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-history__time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-quaternary);
+}
+
+.ai-history__list .ant-conversations-item {
+  height: auto;
+  min-height: 48px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
