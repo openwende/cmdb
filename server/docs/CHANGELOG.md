@@ -1,6 +1,6 @@
 # 更新日志
 
-本文档记录 WEND CMDB Backend 项目的版本历史和重要变更。
+本文档记录 Wende CMDB Server 项目的版本历史和重要变更。
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
@@ -260,7 +260,7 @@
 
 ## 贡献指南
 
-欢迎贡献！请参阅 [CONTRIBUTING.md](CONTRIBUTING.md) 了解如何参与项目开发。
+参与方式请参阅 [CONTRIBUTING.md](../CONTRIBUTING.md)。
 
 ## 相关链接
 
@@ -272,5 +272,5 @@
 
 ---
 
-**维护者**: WEND CMDB Team
+**维护者**: Wende CMDB Team
 **最后更新**: 2026-02-09

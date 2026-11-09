@@ -125,7 +125,7 @@ type OryValidator struct {
 
 ```
 项目结构：
-wend-cmdb-backend/
+cmdb-server/
 ├── cmd/
 │   ├── cmdb-server/      # CMDB 服务（端口 8080）
 │   └── auth-server/      # 认证服务（端口 8081，独立二进制）

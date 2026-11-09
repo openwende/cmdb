@@ -1,6 +1,8 @@
-# WEND CMDB Backend 快速开始指南
+# Wende CMDB Server 快速开始指南
 
-本指南将帮助您快速部署和测试 WEND CMDB Backend 服务。
+> 本指南使用仓库根目录的开发配置（debug 模式，带密码公开的演示账号），只适合本地试用。要运行包含 Web 界面的完整环境，请看 [deploy/quickstart](../deploy/quickstart/README.zh-CN.md)。
+
+本指南将帮助您快速部署和测试 Wende CMDB Server 服务。
 
 ## 目录
 - [环境要求](#环境要求)
@@ -500,7 +502,7 @@ docker exec -it cmdb-server sh
 ```json
 {
   "info": {
-    "name": "WEND CMDB API",
+    "name": "Wende CMDB API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [

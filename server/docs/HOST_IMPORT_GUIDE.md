@@ -624,4 +624,4 @@ wait
 
 **版本**：v1.0.0
 **更新时间**：2026-01-26
-**文档维护**：WEND CMDB Team
+**文档维护**：Wende CMDB Team

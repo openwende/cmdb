@@ -1,6 +1,6 @@
 # P1 真相收敛：主机归属统一关系表（host_node_memberships）
 
-> 配套 `E2E_FIX_PLAN.md`（C1/C2 的落地设计）、`E2E_REMEDIATION_CHECKLIST.md`（R1-R9）、架构判断 `memory/project_host-membership-arch.md`。
+> 文中的 R1–R9、F1/F3 是早期端到端问题清单和修复计划的编号，这两份文档已不在仓库中。
 > 核心立论（代码 + 蓝鲸双实证）：**host 不进 mainline 树；主机一切归属用一张多对多关系表承载；连资源池也并入，不再独立建表。** 主机的每一次流转 = 改这张表的一行。R1/R2/R3/R7 不是分别修，而是表一收口就消失。
 
 ---
@@ -114,7 +114,7 @@ type HostMembershipService interface {
 | R3 审计零覆盖 | 四套写入口无人落审计 | I5 唯一写入点统一 recordHistory |
 | R7 双重投影 | 资源池表 + v2 EdgeV2 两套 | 单表，v2 投影退役 |
 
-R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前端/横切，独立按 `E2E_FIX_PLAN.md` 处理，不在本表范围。
+R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前端/横切，不在本表范围。
 
 ---
 
@@ -124,7 +124,7 @@ R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前�
 - **阶段 1｜双写 + 读切换**：`HostMembershipService` 写新表，同时旧三表保持双写一段时间；查询读侧逐步切到新表；上线对账校验（新旧计数一致、无游离）。
 - **阶段 2｜退役旧存储**：删 `host_module_relations`/`host_business_relations`/`resource_pool_hosts` 与 v2 `EdgeV2` 主机投影；topology/resource_directory svc 的归属逻辑删空，仅留对 `HostMembershipService` 的调用。
 
-止血层（`E2E_FIX_PLAN.md` F1/F3）可与阶段 0/1 并行先上，互不阻塞。
+止血层（F1/F3）可与阶段 0/1 并行先上，互不阻塞。
 
 ### 实施现状（2026-06-02 复核纠偏）
 
@@ -133,7 +133,7 @@ R5（前端合成假节点）、R8（响应规范）、R9（ID 展示）属前�
 `ImportHostsToPool`、`MoveHostsInPool`、`TransferHosts`（空闲机→业务模块）、`MoveSet`（集群转业务）。
 即新表当时是“只写影子表 + 写洞”，**尚不可作读源**。
 
-- **阶段 1·里程碑 1（已完成，commit `fb76d34`）｜堵写洞使新表权威**：给 `HostMembershipService`
+- **阶段 1·里程碑 1（已完成，commit `685cdb2`）｜堵写洞使新表权威**：给 `HostMembershipService`
   加 `SyncFromLegacy(hostID)` 原语（按旧三表重建该主机新表归属，幂等、business_id/set_id 由 module 推导）；
   上述 4 个写路径在写旧表的同一事务内 guarded 调用之，零改动旧表写语义。容器全生命周期 + 浏览器真实动线 +
   全量对账验证：新表与旧表实时一致。**读侧仍读旧表，UI 行为不变。**

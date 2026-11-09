@@ -1,201 +1,98 @@
-# WEND CMDB Backend
+# Wende CMDB Server
 
-[![Go Version](https://img.shields.io/badge/Go-1.24-blue.svg)](https://golang.org)
-[![Test Coverage](https://img.shields.io/badge/coverage-20%25+-yellow.svg)](docs/TESTING.md)
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/license-MIT-green.svg)]()
+[![CI](https://github.com/openwende/cmdb-server/actions/workflows/ci.yml/badge.svg)](https://github.com/openwende/cmdb-server/actions/workflows/ci.yml)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 
-一个严谨的、生产级的 CMDB 后端服务，基于 Go、Gin 和 PostgreSQL 构建。
+English | [简体中文](README.zh-CN.md)
 
-## 🚀 核心特性
+Wende CMDB is an open-source configuration management database built to be a trustworthy source of facts for both people and AI agents. This repository is its API server, written in Go on PostgreSQL.
 
-*   **清晰架构**: 三层架构设计 (`Handler` → `Service` → `Repository`)
-*   **测试完善**: 50+ 单元测试用例，核心业务逻辑覆盖率 20%+
-*   **云原生设计**: 支持多云环境 IP 隔离，借鉴蓝鲸 CMDB 设计理念
-*   **PostgreSQL 原生**: 充分利用 PostgreSQL 特性（UUID、JSONB、数组等）
-*   **严格迁移管理**: 使用 `golang-migrate` 进行 SQL 迁移，无 ORM 自动迁移
-*   **统一部署**: 单一 `docker-compose.yml` 支持开发、快速启动和生产场景
+> **Status:** early development. APIs and the database schema may change without notice before version 1.0.
 
-## 📂 Project Structure
+## Features
+
+- **Business topology:** a business → set → module → host hierarchy with idle pools and default modules.
+- **Host lifecycle:** import, allocate, transfer and reclaim hosts between businesses and a resource pool, with audit records for every change.
+- **Dynamic models:** define custom resource types, attributes and instances.
+- **Access control:** JWT authentication with admin, editor and viewer roles.
+- **Agent tools over MCP:** read-only tools at `/mcp` for searching businesses and hosts, reading topology and querying change history. Requests run with the caller's own token.
+
+## Project layout
+
+| Repository | Purpose |
+|---|---|
+| **cmdb-server** (this one) | REST API, MCP server, database migrations |
+| [cmdb-web](https://github.com/openwende/cmdb-web) | Web UI |
+| [cmdb-ai](https://github.com/openwende/cmdb-ai) | AI investigation assistant |
 
 ```
-├── cmd/business-server/     # Entrypoint
-├── internal/
-│   ├── api/                 # HTTP Layer
-│   │   ├── handlers/        # Business logic handlers
-│   │   └── server/          # Server setup & routing
-│   ├── core/                # Business Service Layer
-│   ├── storage/             # Repository Layer (Postgres)
-│   └── types/               # Domain Models
-├── pkg/config/              # Configuration loading
-├── migrations/              # SQL Migration files
-├── config/                  # Configuration files
-│   ├── config.yaml          # Local config (gitignored)
-│   └── config.example.yaml  # Config template
-├── deploy/                  # Deployment docs & scripts
-├── docker-compose.yml       # Unified Docker Compose
-└── Makefile                 # Build & Dev commands
+browser ──▶ cmdb-web ──▶ cmdb-server ──▶ PostgreSQL
+               │              ▲
+               ▼              │ MCP
+            cmdb-ai ──────────┘
 ```
 
-## 🛠️ Getting Started
+## Quick start
 
-### 1. Quick Start (Recommended)
-一键启动完整环境(数据库+应用+自动迁移):
+You need Docker with Compose. To run everything from source:
 
 ```bash
-docker-compose up -d
+git clone https://github.com/openwende/cmdb-server.git
+git clone https://github.com/openwende/cmdb-web.git
+git clone https://github.com/openwende/cmdb-ai.git
+
+cd cmdb-server/deploy/quickstart
+./init-env.sh
+docker compose up -d --build
 ```
 
-验证服务运行:
-```bash
-curl http://localhost:8080/health
-```
+Open <http://localhost:3000> and sign in with the username and password that `init-env.sh` printed. See [deploy/quickstart](deploy/quickstart/README.md) for the AI assistant and other options.
 
-### 2. Development (Local)
-本地开发模式(数据库在Docker，应用在本地运行):
+## Development
 
-```bash
-# 启动数据库
-make dev-db
-
-# 运行数据库迁移
-make db-migrate-up
-
-# 运行应用
-make dev
-```
-
-### 3. Build & Test
+You need Go (see `go.mod` for the version) and Docker.
 
 ```bash
-# 构建二进制文件
-make build
-
-# 运行所有测试
-go test ./...
-
-# 查看测试覆盖率
-go test ./... -cover
-
-# 生成覆盖率报告
-go test ./... -coverprofile=coverage.out
-go tool cover -html=coverage.out
-
-# 运行API自动化测试
-chmod +x scripts/test-api.sh
-./scripts/test-api.sh
+make dev-db           # start PostgreSQL on 127.0.0.1:5432
+make db-migrate-up    # apply migrations
+make dev              # run the server in debug mode on :8080
 ```
 
-**当前测试覆盖率**:
-- `internal/core/business`: 23.5%
-- `internal/core/host`: 16.8%
-- `internal/storage`: 14.0%
-- **总体**: 20%+ (目标: 40%)
+`make dev` runs in debug mode, which creates demo accounts with published passwords (`admin` / `admin123456`, `editor` / `editor123456`, `viewer` / `viewer123456`). Use it for local development only.
 
-详细测试指南请参见 **[测试文档](docs/TESTING.md)**
-
-## 📖 文档
-
-### 核心文档
-- **[快速开始](docs/QUICKSTART.md)** - 5 分钟部署指南
-- **[API 文档](docs/API.md)** - 完整 API 参考
-- **[系统架构](docs/ARCHITECTURE.md)** - 架构设计和核心决策
-- **[测试指南](docs/TESTING.md)** - 测试框架和覆盖率
-- **[贡献指南](docs/CONTRIBUTING.md)** - 如何贡献代码
-- **[更新日志](docs/CHANGELOG.md)** - 版本历史
-- **[产品路线图](docs/ROADMAP.md)** - 未来规划
-
-### 特性文档
-- **[动态模型 API](docs/DYNAMIC_MODEL_API.md)** - 动态模型引擎
-- **[拓扑管理 API](docs/TOPOLOGY_API.md)** - 拓扑结构管理
-- **[导入导出指南](docs/IMPORT_EXPORT_GUIDE.md)** - 数据导入导出
-- **[主机导入指南](docs/HOST_IMPORT_GUIDE.md)** - 主机批量导入
-- **[前端集成指南](docs/FRONTEND_INTEGRATION_GUIDE.md)** - 前端对接
-
-### API 端点概览
-
-#### 业务管理
-- `POST /api/v1/businesses` - 创建业务
-- `GET /api/v1/businesses` - 列出业务
-- `GET /api/v1/businesses/:id` - 获取业务详情
-- `PUT /api/v1/businesses/:id` - 更新业务
-- `DELETE /api/v1/businesses/:id` - 删除业务（仅限归档状态）
-
-#### 主机管理
-- `POST /api/v1/hosts` - 创建主机
-- `POST /api/v1/hosts/batch` - 批量导入主机
-- `GET /api/v1/hosts` - 列出主机
-- `GET /api/v1/hosts/:id` - 获取主机详情
-- `PUT /api/v1/hosts/:id/assign` - 分配到业务
-- `PUT /api/v1/hosts/:id/reclaim` - 回收到资源池
-
-#### 云区域管理
-- `POST /api/v1/cloud-areas` - 创建云区域
-- `GET /api/v1/cloud-areas` - 列出云区域
-- `GET /api/v1/cloud-areas/:id` - 获取云区域详情
-
-#### 业务集管理
-- `POST /api/v1/business-sets` - 创建业务集
-- `GET /api/v1/business-sets` - 列出业务集
-- `POST /api/v1/business-sets/:id/members` - 添加成员
-- `GET /api/v1/business-sets/:id/members` - 查看成员
-- `DELETE /api/v1/business-sets/:id/members/:business_id` - 移除成员
-
-#### 动态模型引擎
-- `POST /api/v1/models` - 创建模型
-- `GET /api/v1/models` - 列出模型
-- `POST /api/v1/models/:name/attributes` - 添加属性
-- `POST /api/v1/models/:name/instances` - 创建实例
-- `POST /api/v1/models/:name/instances/batch` - 批量创建实例
-- `GET /api/v1/models/:name/instances` - 查询实例
-
-更多详细信息请查看 **[完整 API 文档](docs/API.md)**
-
-## ⚙️ Configuration
-
-Copy the template to create your local config:
 ```bash
-cp config/config.example.yaml config/config.yaml
+go test ./...         # run tests
+go vet ./...          # static checks
+gofmt -l .            # list unformatted files
 ```
 
-The application loads configuration from `config/config.yaml`. See `config/config.example.yaml` for all available options.
+## Configuration
 
-## 📦 部署
+Settings come from environment variables or a `config/config.yaml` file; [config.example.yaml](config/config.example.yaml) lists them all. The most important variables are:
 
-详细的部署指南（虚拟机、Kubernetes、Docker）请参见 [deploy/README.md](deploy/README.md)。
+| Variable | Description |
+|---|---|
+| `SERVER_MODE` | `release` (default), `debug` or `test` |
+| `AUTH_JWT_SECRET` | Token signing key. Required in release mode; published example values are refused. Generate one with `openssl rand -hex 32` |
+| `AUTH_BOOTSTRAP_ADMIN_PASSWORD` | Password for the initial `admin` account on an empty database. If unset in release mode, a random password is logged once |
+| `AUTH_BOOTSTRAP_SEED_DEMO_USERS` | Set to `true` to create demo accounts in release mode. Only for public demo sites |
+| `DATABASE_HOST`, `DATABASE_PORT`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_NAME` | PostgreSQL connection |
 
-## 🤝 贡献
+## Documentation
 
-欢迎贡献！请参阅 **[贡献指南](docs/CONTRIBUTING.md)** 了解：
-- 开发环境设置
-- 代码规范
-- 提交规范
-- 测试要求
-- Pull Request 流程
+The design documents below are in Chinese; English translations are planned.
 
-## 📊 项目状态
+- [Architecture direction and decisions](docs/ARCHITECTURE_DIRECTION.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [API reference](docs/API.md)
+- [Roadmap](docs/ROADMAP.md)
 
-**当前评分**: 7.5/10
+## Contributing
 
-**已完成**:
-- ✅ 核心业务管理功能
-- ✅ 主机管理和云区域管理
-- ✅ 动态模型引擎
-- ✅ 测试框架（覆盖率 20%+）
-- ✅ 完整文档体系
+We are not accepting outside pull requests yet, but bug reports and feature requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). To report a security issue, follow the [security policy](https://github.com/openwende/.github/blob/main/SECURITY.md) instead of opening a public issue.
 
-**进行中**:
-- 🚧 提升测试覆盖率至 40%
-- 🚧 云资源同步功能
-- 🚧 网络拓扑管理
-- 🚧 IP 地址池管理
+## License
 
-详细路线图请参见 **[ROADMAP.md](docs/ROADMAP.md)**
+Licensed under the [GNU Affero General Public License v3.0](LICENSE).
 
-## 📄 许可证
-
-[MIT License](LICENSE)
-
-## 🙏 致谢
-
-本项目设计借鉴了 [蓝鲸 CMDB (BK-CMDB)](https://github.com/TencentBlueKing/bk-cmdb) 的云区域隔离理念。
+The business model takes inspiration from [BK-CMDB](https://github.com/TencentBlueKing/bk-cmdb). Wende CMDB is an independent project and is not affiliated with it.

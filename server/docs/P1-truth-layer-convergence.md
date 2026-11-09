@@ -1,7 +1,7 @@
 # P1:真相层收敛(5 套 → 三层骨架的第一步)
 
 > - 状态:**核心已实施并验证**(2026-05-31)。下方为原计划,实施结果见"实施记录"。
-> - 隶属:[`ARCHITECTURE_DIRECTION.md`](./ARCHITECTURE_DIRECTION.md) §6 收敛路线
+> - 隶属:[`ARCHITECTURE_DIRECTION.md`](./ARCHITECTURE_DIRECTION.md) §5 收敛路线
 > - 前置:P0 止血已完成(build/test/vet 全绿)
 >
 > ### 实施记录(2026-05-31)
@@ -82,7 +82,7 @@ HTTP /api/v1/mainline/*  ┼─► [若 h.projection/h.commands != nil] ─► v
 4. **切写路径到 legacy+mainline**:移除写方法(`CreateSet`/`CreateModule`/`TransferHosts` 等)的 `h.commands` 优先,统一走 `topology.Service`(写 legacy + 双写 mainline)。
 5. **冻结 v2 投影**:`TopologyHandler`/`MainlineHandler` 不再注入/调用 `projection.*`;`shouldFallbackProjection` 等嗅探逻辑随之移除。v2 引擎代码、`/api/v2/*` 实验端点保留不动。
 6. **退兼容 + 收口(提案阶段3/4)**:legacy 旧表读仅作兼容;评估把 `topology.Service` 逐步收敛为 mainline 的产品包装层(可顺延至 P2 开头)。
-7. **文档**:更新本文为"已完成",在 `ARCHITECTURE_DIRECTION.md` §6 标 P1 ✅。
+7. **文档**:更新本文为"已完成",在 `ARCHITECTURE_DIRECTION.md` §5 标 P1 ✅。
 
 ---
 

@@ -1,6 +1,6 @@
 # 阶段1·里程碑2：读切换（host 归属读路径迁到 host_node_memberships）
 
-> 前置：里程碑1（堵写洞，commit `fb76d34`）已完成——新表 `host_node_memberships` 现与旧三表实时一致（写侧 4 个洞经 `HostMembershipService.SyncFromLegacy` 在同事务回填，allocate/reclaim/transfer-to-pool 早经 hms）。本里程碑把**读侧**从旧三表切到新表。**旧三表仍保持双写作安全网，本里程碑不删旧表**（删除是阶段2）。
+> 前置：里程碑1（堵写洞，commit `685cdb2`）已完成——新表 `host_node_memberships` 现与旧三表实时一致（写侧 4 个洞经 `HostMembershipService.SyncFromLegacy` 在同事务回填，allocate/reclaim/transfer-to-pool 早经 hms）。本里程碑把**读侧**从旧三表切到新表。**旧三表仍保持双写作安全网，本里程碑不删旧表**（删除是阶段2）。
 >
 > 背景与总体设计见 `docs/P1-host-membership-convergence.md`（§2 表结构、§6 实施现状）。
 
@@ -110,7 +110,3 @@ FROM hosts h WHERE h.is_destroyed=false ORDER BY h.display_id;
 ## 收口后
 
 阶段1 完成（写双写 + 读全切新表）。进**阶段2**：删旧三表 + v2 EdgeV2 投影 + 删 SyncFromLegacy/mirror 过渡逻辑 + 清空 topology/resource_directory 残留旧表写、清理 host 级 `/hosts/:id/assign|reclaim`（前端未用、语义遗留）与 projection 死代码。见 P1 §6/§7。
-
-## 运行/验证栈
-
-见 `[[reference_frontend-e2e-harness]]`：容器 `docker compose up -d --build app`(:8080)、前端 Vite :5173、admin/admin123456、preview `wende-frontend`、注入 localStorage `authToken`、antd 树节点定位（list-holder-inner > 第 N 子）。登录 `POST /api/v1/auth/login` 返 `{access_token}`。

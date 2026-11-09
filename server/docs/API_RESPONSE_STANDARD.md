@@ -32,7 +32,7 @@
 新端点用 `response` 包写响应，自动符合规范：
 
 ```go
-import "github.com/wend/cmdb-backend/internal/api/response"
+import "github.com/openwende/cmdb-server/internal/api/response"
 
 response.OK(c, data)                          // {"code":0,"data":data}            200
 response.Created(c, data)                     // {"code":0,"data":data}            201

@@ -1,65 +1,39 @@
-# WEND CMDB Deployment Guide
+# Deployment guide
 
-## 1. Development Environment (Local)
+## Try it
 
-For developers who want to run the Go application locally (e.g. `go run ...`) but need infrastructure dependencies.
+To run the server, web UI and database together, follow the [quick start](quickstart/README.md).
 
-**Command:**
+## Local development
+
+The `docker-compose.yml` in the repository root is for development only. It runs in debug mode, which allows the built-in JWT secret and creates demo accounts with published passwords.
+
 ```bash
-# Start PostgreSQL only
-docker-compose up -d db
-
-# Or via Makefile
-make dev-db
+make dev-db    # start PostgreSQL only, on 127.0.0.1:5432
+make dev-all   # start PostgreSQL and the server, on :8080
 ```
 
-**Connection:**
-- **Host**: `localhost`
-- **Port**: `5432`
-- **Creds**: `cmdb` / `password` (Matches default `config/config.yaml`)
+The database credentials are `cmdb` / `password`.
 
----
+## Production
 
-## 2. Quick Start (Open Source / Demo)
+Build the image, or use the quick start's Compose file as a starting point:
 
-For users who want to quickly spin up the entire system to experience the features.
-
-**Command:**
 ```bash
-# Start full stack (App + DB)
-docker-compose up -d
-
-# Check status
-docker-compose ps
+./deploy/scripts/build.sh --name your-registry/cmdb --tag v1.0.0 --push
 ```
 
-**Access:**
-- **API**: `http://localhost:8080`
-- **Health**: `http://localhost:8080/health`
+Before going live:
 
----
+1. **Secrets:** set `AUTH_JWT_SECRET` to a private random value. In release mode, the server refuses to start with the values published in this repository.
+2. **First account:** set `AUTH_BOOTSTRAP_ADMIN_PASSWORD`, or read the generated password from the first startup's log. Change it after signing in.
+3. **Database:** use a strong `DATABASE_PASSWORD` and back up the PostgreSQL data. Apply `migrations/` with [golang-migrate](https://github.com/golang-migrate/migrate) before starting the server; the server does not run them.
+4. **Network:** put the server behind a reverse proxy that terminates TLS. The API currently allows cross-origin requests from any origin, without credentials, and the `server.cors` settings have no effect. Authentication uses tokens in headers rather than cookies.
 
-## 3. Production Deployment
+### Kubernetes
 
-### VM / Single Node
-You can use the `docker-compose.yml` related features, but ensure you:
-1. Update `docker-compose.yml` environment variables with strong passwords.
-2. Mount a persistent volume for Postgres data that is backed up.
-3. Consider using a reverse proxy (Nginx) in front of port 8080.
+The image runs as a non-root user (UID 1001). Create a Deployment, Service and Secret, inject configuration through environment variables, and use `GET /health` for probes.
 
-### Kubernetes (K8s)
-The Docker image is cloud-native ready (non-root user, health checks, environment config).
+## Configuration
 
-1. **Build & Push Image**:
-   ```bash
-   ./deploy/scripts/build.sh --name your-registry/cmdb --tag v1.0.0 --push
-   ```
-
-2. **Deploy (Minimal Config)**:
-   Create a standard Deployment + Service + Secret.
-   *   **Liveness Probe**: `GET /health`
-   *   **Config**: Inject via Environment Variables (see `config/config.example.yaml` key mappings).
-   *   **Security**: Runs as `UID 1001` (cmdb).
-
-### Configuration
-See `config/config.example.yaml` for all environment variable mappings (e.g., `SERVER_PORT`, `DB_HOST`).
+Environment variables are named after the configuration keys in [config.example.yaml](../config/config.example.yaml), in upper case with `.` replaced by `_`. For example, `database.host` becomes `DATABASE_HOST`, and `auth.jwt.secret` becomes `AUTH_JWT_SECRET`.

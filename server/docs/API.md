@@ -1,4 +1,4 @@
-# WEND CMDB Backend API 文档
+# Wende CMDB Server API 文档
 
 ## 目录
 - [基础信息](#基础信息)

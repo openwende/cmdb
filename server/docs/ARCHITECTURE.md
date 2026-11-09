@@ -1,6 +1,6 @@
 # 系统架构文档
 
-本文档描述 WEND CMDB Backend 的系统架构、核心设计决策和关键技术实现。
+本文档描述 Wende CMDB Server 的系统架构、核心设计决策和关键技术实现。
 
 ## 📐 系统架构概览
 
@@ -39,7 +39,7 @@
 ### 目录结构
 
 ```
-wend-cmdb-backend/
+cmdb-server/
 ├── cmd/
 │   └── server/              # 应用入口
 ├── internal/
@@ -284,7 +284,7 @@ func (s *HostService) ReclaimToPool(ctx context.Context, hostID uuid.UUID) error
 
 ### 4. 动态模型引擎
 
-WEND CMDB 支持动态创建和管理模型，无需修改代码即可扩展新的资源类型。
+Wende CMDB 支持动态创建和管理模型，无需修改代码即可扩展新的资源类型。
 
 #### 核心概念
 
@@ -761,7 +761,7 @@ DELETE /api/v1/businesses/:id    # 删除
 - [API 文档](API.md)
 - [测试指南](TESTING.md)
 - [快速开始](QUICKSTART.md)
-- [贡献指南](CONTRIBUTING.md)
+- [贡献指南](../CONTRIBUTING.md)
 
 ---
 
@@ -800,4 +800,4 @@ DELETE /api/v1/businesses/:id    # 删除
 
 **文档版本**: 1.0
 **最后更新**: 2026-02-09
-**维护者**: WEND CMDB Team
+**维护者**: Wende CMDB Team
